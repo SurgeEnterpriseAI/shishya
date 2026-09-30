@@ -33,6 +33,8 @@ import type { PracticeCatalogRow } from "@/lib/exam-practice-state";
 import { usableNotesSql } from "@/lib/topic-notes";
 import { examWeekAeoLines, loadExamWeekExams, loadExamWeekTally, loadRealPhaseArticles, type RealPhaseArticle } from "@/lib/exam-week-aeo";
 import { istDay } from "@/lib/exam-week";
+import { OFFICIAL_WATCH_SOURCE } from "@/lib/exam-timeline";
+import { officialReleases, releaseMachineLine } from "@/lib/official-release";
 import { INDIAN_LANGUAGE_COUNT, OTHER_INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
 import { schoolClassIdentity } from "@/lib/school/context";
 import { EMPTY_SCHOOL_SURFACE, loadSchoolSurface, schoolLlmsFullLines, schoolSurfaceCounts } from "@/lib/school/surface";
@@ -254,6 +256,37 @@ export async function GET() {
         `- ${r.short} ${r.stage} — declared ${r.declaredOn.toISOString().slice(0, 10)}: ${SITE}/exams/${r.code}/results/${r.id}`,
       );
     }
+    lines.push("");
+  }
+
+  // Official answer keys and results (30 Sep 2026, official watch): only rows
+  // Shishya's own fetch read on the conducting body's page (source
+  // official-watch, official tier), released in the last 30 days — the same
+  // "released" / "published" line the hub and /updates print
+  // (src/lib/official-release.ts). A failed read lists none.
+  const releaseRows = await prisma
+    .$queryRaw<
+      { id: string; label: string; date: Date; isExamDay: boolean; kind: string | null; confidence: string | null; url: string | null; source: string | null; notes: string | null; code: string; short: string; officialUrl: string | null }[]
+    >`
+      SELECT d.id, d.label, d.date, d."isExamDay", d.kind, d.confidence, d.url, d.source, d.notes, e.code, e."shortName" AS short, el."officialUrl"
+      FROM "ExamImportantDate" d JOIN "Exam" e ON e.id = d."examId" LEFT JOIN "ExamEligibility" el ON el."examId" = e.id
+      WHERE d."archivedAt" IS NULL AND d.source = ${OFFICIAL_WATCH_SOURCE} AND d.date >= NOW() - INTERVAL '32 days' AND ${REAL_EXAM_SQL}
+      ORDER BY d.date DESC, d.id DESC LIMIT 200`
+    .catch(() => []);
+  const releaseLines: string[] = [];
+  for (const code of [...new Set(releaseRows.map((r) => r.code))]) {
+    const mine = releaseRows.filter((r) => r.code === code);
+    const rs = officialReleases(mine, mine[0].officialUrl);
+    for (const rel of [rs.answerKey, rs.result]) {
+      if (rel) releaseLines.push(`- ${mine[0].short}: ${releaseMachineLine(rel)} · tracker: ${SITE}/exams/${code}/updates`);
+    }
+  }
+  if (releaseLines.length) {
+    lines.push("## Official answer keys and results — seen on the conducting body's own site (last 30 days)");
+    lines.push(
+      `> Each line was read by Shishya on the body's own page; the link is the body's file. Only these are called "released" / "published" — every other date on Shishya is an announced or expected date with its tier. A "first seen" date is the day Shishya first saw the link (no single release date was printed beside it).`,
+    );
+    lines.push(...releaseLines);
     lines.push("");
   }
 

@@ -21,6 +21,7 @@ import { inLanguage, languageAlternates, localizedPath, localizedUrl, ogLocale, 
 import { getTwinVerdict } from "@/lib/twin-localisation";
 import {
   KIND_ICON,
+  OFFICIAL_WATCH_SOURCE,
   buildTimeline,
   cycleYear,
   fmtDay,
@@ -41,6 +42,8 @@ import { LangTwinLinks } from "@/components/LangTwinLinks";
 import { StateExamsLink } from "@/components/StateExamsLink";
 import { examPageGates } from "@/lib/exam-page-gates";
 import { passedEstimateLine, passedEstimateView } from "@/lib/official-source";
+import { RELEASE_SHOWN_DAYS, officialReleases, releaseLineKey, releaseLineText, titleRelease } from "@/lib/official-release";
+import { OfficialReleaseLine } from "@/components/OfficialReleaseLine";
 import { leadDescription, updatesLead } from "@/lib/answer-lead";
 // 27 Sep 2026: the practice rule (src/lib/exam-practice-state.ts) — no
 // "Take a free mock" box and no "Practice is one tap away" for an exam with
@@ -93,13 +96,28 @@ async function loadTimeline(examId: string) {
   return { rows, officialUrl, timeline: buildTimeline(rows, new Date(), officialUrl) };
 }
 
+/** 30 Sep 2026 (official watch): the answer-key / result rows the watch
+ *  wrote in the last RELEASE_SHOWN_DAYS days — the release line and the
+ *  title read these, not the 60-row tracker list above (oldest first, so a
+ *  busy exam's newest rows can fall outside it). A failed read shows none. */
+async function loadReleaseRows(examId: string) {
+  const since = new Date(Date.now() - (RELEASE_SHOWN_DAYS + 2) * 86_400_000);
+  return prisma.examImportantDate
+    .findMany({
+      where: { examId, archivedAt: null, source: OFFICIAL_WATCH_SOURCE, date: { gte: since } },
+      orderBy: [{ date: "desc" }, { id: "desc" }],
+      take: 10,
+    })
+    .catch(() => []);
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ code: string }> }): Promise<Metadata> {
   const { code } = await params;
   const exam = await loadExam(code);
   if (!exam) return { title: "Exam tracker — Shishya" };
   const urlLocale = await getUrlLocale();
   const tt = tFor(urlLocale) as TFn;
-  const { timeline } = await loadTimeline(exam.id);
+  const [{ timeline, officialUrl: metaOfficialUrl }, metaReleaseRows] = await Promise.all([loadTimeline(exam.id), loadReleaseRows(exam.id)]);
   const year = cycleYear(timeline);
   const { nextExam } = stageOf(timeline);
   // Lead with the answer (the date) so it survives SERP truncation; the
@@ -107,7 +125,17 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
   const dateLead = nextExam
     ? `${tt("tracker.kind.EXAM")} ${fmtDay(nextExam.date, urlLocale)}${nextExam.tier !== "official" ? ` (${tt(nextExam.tier === "expected" ? "tracker.expected" : "tracker.reported").toLowerCase()})` : ""} — `
     : "";
-  const title = `${exam.shortName} ${year} ${dateLead}${tt("tracker.title")} | Shishya`;
+  // 30 Sep 2026 (official watch): while a verified answer key / result (seen
+  // on the conducting body's own page, ≤ 30 days old) is on the page, the
+  // title leads with it — "{exam} answer key {year} (official)" — and the
+  // description with its release line. Never for an AI-cited date.
+  const metaRelease = titleRelease(officialReleases(metaReleaseRows, metaOfficialUrl));
+  const releaseLead = metaRelease
+    ? `${fill(tt(metaRelease.kind === "ANSWER_KEY" ? "release.title.ak" : "release.title.result"), { exam: exam.shortName, year: metaRelease.year })} — `
+    : "";
+  const title = metaRelease
+    ? `${releaseLead}${dateLead}${tt("tracker.title")} | Shishya`
+    : `${exam.shortName} ${year} ${dateLead}${tt("tracker.title")} | Shishya`;
   // 27 Sep 2026: no "Practice is one tap away" where there is no practice (a
   // failed read claims none).
   const metaPractice = await examPracticeState(exam.code);
@@ -121,7 +149,10 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
   const metaLast = [...timeline].reverse().find((r) => r.status === "done" && !r.passedEstimate) ?? null;
   const metaLead =
     urlLocale === "en" ? updatesLead({ short: exam.shortName, year, nextExam, next: stageOf(timeline).next, last: metaLast }) : null;
-  const description = metaLead ? leadDescription(metaLead, baseDescription) : baseDescription;
+  const answerDescription = metaLead ? leadDescription(metaLead, baseDescription) : baseDescription;
+  const description = metaRelease
+    ? `${releaseLineText(tt(releaseLineKey(metaRelease)), metaRelease, urlLocale)}. ${answerDescription}`.slice(0, 300)
+    : answerDescription;
   const path = `/exams/${exam.code}/updates`;
   const url = localizedUrl(path, urlLocale);
   const image = `https://shishya.in/exams/${exam.code}/opengraph-image`;
@@ -210,6 +241,9 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
     examPageGates(exam.code),
   ]);
   const dataUpdatedAt = dataTs[0]?.t ? new Date(dataTs[0].t) : null;
+  // 30 Sep 2026 (official watch): the verified answer-key / result rows for
+  // the release line under the status strip.
+  const releaseRows = await loadReleaseRows(exam.id);
   // Practice (27 Sep 2026): the box below offers a mock and the quiz only
   // where the exam has practice questions; a failed read offers none.
   const practice = await examPracticeState(exam.code);
@@ -413,6 +447,11 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
           {nextLine && <span className="rounded-full border border-ink-200 bg-white px-3 py-1 text-ink-800">{nextLine}</span>}
           {lastLine && <span className="rounded-full border border-ink-200 bg-white px-3 py-1 text-ink-600">{lastLine}</span>}
         </div>
+        {/* 30 Sep 2026 (official watch): "Official answer key released — {date}
+            — {host}" / "Official result published — …" — only rows our own
+            fetch saw on the conducting body's page, for 30 days; above the
+            sign-up line and outside the soft wall (content first). */}
+        <OfficialReleaseLine rows={releaseRows} officialUrl={officialUrl} locale={locale} />
 
         {/* 30 Sep 2026 (sign-up build 3): the guest sign-up line, once per page, right after the answer — client-only, never on Class 1-7 (src/lib/content-signup.ts). */}
         <SignupInline surface="exam-updates" exam={short} practice={practice.hasPractice} />

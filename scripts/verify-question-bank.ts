@@ -70,11 +70,24 @@
 // !! guard, with no ceiling, and stopped only on the "credit balance" error,
 // !! i.e. once the tutor was already down. --live is refused, not ignored,
 // !! so an old command line cannot quietly run in batch mode either.
+// !!
+// !! 30 Sep 2026, the founder's decisions: "use the existing API key;
+// !! credits I can manage" and "I regularly update credits. You don't worry
+// !! about auto reload". Neither weakens the guard above:
+// !!   --allow-shared-key         with no ANTHROPIC_BULK_API_KEY, the batches
+// !!                              run on the shared ANTHROPIC_API_KEY (the
+// !!                              tutor's key). Without the flag the shared key
+// !!                              is still refused; the bulk key wins when set.
+// !!   --founder-manages-credits  in place of --i-confirm-auto-reload. Its
+// !!                              printed statement says auto-reload was NOT
+// !!                              checked, instead of claiming it is ON. The
+// !!                              continue commands a dry run prints carry it.
+// !! --max-usd, --chunk and the production-key probes apply unchanged.
 //
 //   npx dotenv-cli -e .env.local -- npx tsx scripts/verify-question-bank.ts \
 //     --exams UK_UKSSSC,AP_APPSC_GROUP2 --scope unvalidated|validated|all \
-//     [--limit N] [--apply --max-usd <usd> --i-confirm-auto-reload [--chunk 2000]] \
-//     [--resume <runId>] [--journal <path>] [--poll-seconds 60] [--force]
+//     [--limit N] [--apply --max-usd <usd> --i-confirm-auto-reload|--founder-manages-credits [--chunk 2000]] \
+//     [--resume <runId>] [--journal <path>] [--poll-seconds 60] [--force] [--allow-shared-key]
 //
 //   --apply        submit the batches and write verdicts (default: dry run)
 //   --max-usd N    with --apply (required, no default): hard ceiling on the
@@ -85,6 +98,11 @@
 //   --i-confirm-auto-reload  with --apply (required): the operator confirmed
 //                  in the Anthropic Console that auto-reload is ON; the
 //                  statement is printed back before anything is submitted
+//   --founder-manages-credits  with --apply, in place of the flag above (30 Sep
+//                  2026): auto-reload was NOT checked; the founder tops up
+//                  the balance himself. Passing both is refused
+//   --allow-shared-key  no ANTHROPIC_BULK_API_KEY: run the batches on the
+//                  shared ANTHROPIC_API_KEY (founder decision, 30 Sep 2026)
 //   --resume ID    continue a journaled run (poll / collect / retry / write)
 //   --force        start a fresh run even though an open journal covers rows
 
@@ -97,16 +115,20 @@ import { buildVerifyRequest, parseVerifyVerdict } from "../src/lib/ai/factory/ve
 import type { SolveRun } from "../src/lib/ai/factory/types";
 import type { MessageParams } from "../src/lib/ai/client";
 import {
-  assertBulkKey,
+  ackFlag,
+  ALLOW_SHARED_KEY_FLAG,
   assertProductionKeyProbe,
   awaitsSubmit,
-  CONFIRM_AUTO_RELOAD_FLAG,
-  CONFIRM_AUTO_RELOAD_STATEMENT,
+  batchesApiFor,
   chunk,
   DEFAULT_CHUNK,
   describeProbe,
   estimateRequestTokens,
   guardFlags,
+  guardStatement,
+  resolveBulkKey,
+  type BatchesApi,
+  type GuardFlagOpts,
   journalPath,
   loadJournal,
   makeCustomId,
@@ -143,6 +165,10 @@ const LIMIT = arg("--limit") ? Math.max(1, Number(arg("--limit"))) : null;
 // Dry run unless --apply is given; --dry-run always wins (22 Sep 2026).
 const DRY = !process.argv.includes("--apply") || process.argv.includes("--dry-run");
 const FORCE = process.argv.includes("--force");
+/** 30 Sep 2026: the founder allows the shared key; without this flag it is still refused (see the header). */
+const ALLOW_SHARED_KEY = process.argv.includes(ALLOW_SHARED_KEY_FLAG);
+/** 30 Sep 2026: this runner accepts --founder-manages-credits in place of --i-confirm-auto-reload. */
+const GUARD_OPTS: GuardFlagOpts = { founderCreditsAck: true };
 const RESUME = arg("--resume") ?? null;
 const JOURNAL_DIR = "D:/CodexProjects/shishya-data/bank-verify-batches";
 const JOURNAL_FILE = arg("--journal") ?? null;
@@ -340,7 +366,8 @@ const fmtUsd = (n: number) => `$${n.toFixed(2)}`;
 /** The command line that continues a journal, with the guard flags (26 Sep 2026): the numbers the operator passed, or placeholders on a dry run. */
 const SCRIPT = "npx dotenv-cli -e .env.local -- npx tsx scripts/verify-question-bank.ts";
 function applyFlags(g?: { maxUsd: number; chunkSize: number } | null): string {
-  return `--apply --max-usd ${g ? g.maxUsd : "<usd>"} --chunk ${g ? g.chunkSize : DEFAULT_CHUNK} ${CONFIRM_AUTO_RELOAD_FLAG}`;
+  // 30 Sep 2026: echo the acknowledgement the operator passed, and --allow-shared-key when it was passed.
+  return `--apply --max-usd ${g ? g.maxUsd : "<usd>"} --chunk ${g ? g.chunkSize : DEFAULT_CHUNK} ${ackFlag(process.argv, GUARD_OPTS)}${ALLOW_SHARED_KEY ? ` ${ALLOW_SHARED_KEY_FLAG}` : ""}`;
 }
 /**
  * --resume takes the journal FILE's name, not its runId: the full-bank
@@ -406,8 +433,8 @@ function printEstimate(title: string, solveReqs: MessageParams[], verifyReqs: Me
   console.log(`   Prompt tokens are a character-count estimate (no count_tokens call was made).`);
 }
 
-/** `apply` is null on a dry run; on --apply it carries the guard main() built and the pre-flight probe it already passed. */
-async function runBatchMode(apply: { guard: SpendGuard; preflight: ProbeResult } | null) {
+/** `apply` is null on a dry run; on --apply it carries the guard main() built, the pre-flight probe it already passed and the Batches client on the key it resolved. */
+async function runBatchMode(apply: { guard: SpendGuard; preflight: ProbeResult; api: BatchesApi } | null) {
   // 1. journal
   let journal: Journal;
   let file: string;
@@ -499,17 +526,17 @@ async function runBatchMode(apply: { guard: SpendGuard; preflight: ProbeResult }
     if (RESUME) {
       // A dry look at a journaled run must not move it; the estimate above is what is still to submit.
       console.log(`\nJournal untouched: ${file} (phase ${journal.phase})`);
-      console.log(`To continue it (needs the founder's go-ahead + the bulk key; name the ceiling):\n   ${resumeCommand(file)}`);
+      console.log(`To continue it (needs the founder's go-ahead + the bulk key or ${ALLOW_SHARED_KEY_FLAG}; name the ceiling):\n   ${resumeCommand(file)}`);
     } else {
       journal.phase = "built";
       saveJournal(file, journal);
       console.log(`\nJournal written: ${file}`);
-      console.log(`To submit exactly these requests (needs the founder's go-ahead + the bulk key; name the ceiling):\n   ${resumeCommand(file)}`);
+      console.log(`To submit exactly these requests (needs the founder's go-ahead + the bulk key or ${ALLOW_SHARED_KEY_FLAG}; name the ceiling):\n   ${resumeCommand(file)}`);
     }
     return;
   }
   if (!apply) throw new Error("internal: --apply without a spend guard");
-  const { guard, preflight } = apply;
+  const { guard, preflight, api } = apply;
 
   // Spend guard header (26 Sep 2026): what this invocation may submit, priced
   // before the first batch goes out, the ceiling it runs under, the chunk
@@ -520,9 +547,10 @@ async function runBatchMode(apply: { guard: SpendGuard; preflight: ProbeResult }
     est.solveReqs,
     est.verifyReqs,
   );
-  console.log(`   ${CONFIRM_AUTO_RELOAD_STATEMENT}`);
+  console.log(`   ${guardStatement(process.argv, GUARD_OPTS)}`);
   journal.args.lastGuard = { at: new Date().toISOString(), maxUsd: guard.maxUsd, chunk: guard.chunkSize };
-  const deps = { pollIntervalMs: POLL_MS, ledgerParallel: LEDGER_PARALLEL, saveEvery: COLLECT_SAVE_EVERY, guard };
+  // `api`: every submit, poll and collect of this run goes to the key main() resolved (30 Sep 2026), not the bulk-only default client.
+  const deps = { api, pollIntervalMs: POLL_MS, ledgerParallel: LEDGER_PARALLEL, saveEvery: COLLECT_SAVE_EVERY, guard };
 
   if (journal.phase === "new" || journal.phase === "built") {
     journal.phase = "solve";
@@ -650,26 +678,28 @@ async function main() {
   // read, and never silently downgraded to a batch run.
   if (process.argv.includes("--live")) {
     throw new Error(
-      `--live was removed on 26 Sep 2026: it billed per call at full price on the shared ${PRODUCTION_KEY_ENV} (the tutor's key) outside the spend guard. Run batch mode instead: drop --live (and --concurrency), dry-run first, then --resume <runId> --apply --max-usd <usd> --chunk ${DEFAULT_CHUNK} ${CONFIRM_AUTO_RELOAD_FLAG}.`,
+      `--live was removed on 26 Sep 2026: it billed per call at full price on the shared ${PRODUCTION_KEY_ENV} (the tutor's key) outside the spend guard. Run batch mode instead: drop --live (and --concurrency), dry-run first, then --resume <runId> --apply --max-usd <usd> --chunk ${DEFAULT_CHUNK} ${ackFlag(process.argv, GUARD_OPTS)}.`,
     );
   }
   if (!EXAMS.length && !RESUME) throw new Error("--exams CODE[,CODE…] is required (or --resume <runId>)");
-  // Spend gate (22 Sep 2026): nothing that can bill starts while the bulk key
-  // is absent, before the first database read.
-  if (!DRY) assertBulkKey();
+  // Spend gate (22 Sep 2026): nothing that can bill starts without a key it
+  // may use, before the first database read. 30 Sep 2026: that is the bulk
+  // key, or the shared key only when --allow-shared-key was passed.
+  const key = DRY ? null : resolveBulkKey(process.env, ALLOW_SHARED_KEY);
   // Spend guard (26 Sep 2026): the flags, the operator's statement and the
   // pre-flight probe of the production key — all before the first database
   // read, so an empty balance or a missing flag costs nothing.
-  const flags = guardFlags(process.argv, !DRY);
-  let apply: { guard: SpendGuard; preflight: ProbeResult } | null = null;
-  if (!DRY) {
+  const flags = guardFlags(process.argv, !DRY, GUARD_OPTS);
+  let apply: { guard: SpendGuard; preflight: ProbeResult; api: BatchesApi } | null = null;
+  if (!DRY && key) {
     const maxUsd = flags.maxUsd!;
     console.log(`\n=== spend guard: --max-usd ${fmtUsd(maxUsd)} (hard ceiling on this journal's ledgered spend, batch prices) · --chunk ${flags.chunkSize} requests per batch, one batch at a time`);
-    console.log(`   ${CONFIRM_AUTO_RELOAD_STATEMENT}`);
+    console.log(`   batches run on ${key.env}${key.shared ? ` — the SHARED key the live tutor uses (${ALLOW_SHARED_KEY_FLAG}, founder decision 30 Sep 2026)` : ""}`);
+    console.log(`   ${guardStatement(process.argv, GUARD_OPTS)}`);
     const preflight = await probeProductionKey();
     console.log(`   ${preflight.ok ? "✓" : "✗"} production key probe before the run (${PRODUCTION_KEY_ENV}, ${PROBE_MODEL}, max_tokens 1): ${describeProbe(preflight)}`);
     assertProductionKeyProbe(preflight);
-    apply = { guard: { maxUsd, chunkSize: flags.chunkSize, probe: probeProductionKey }, preflight };
+    apply = { guard: { maxUsd, chunkSize: flags.chunkSize, probe: probeProductionKey }, preflight, api: batchesApiFor(key.key) };
   }
   await runBatchMode(apply);
 }

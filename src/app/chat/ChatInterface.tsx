@@ -60,6 +60,20 @@
 // elsewhere is restored and continued instead of imported twice. Storage,
 // TTL and decisions: src/lib/guest-chat-carry.ts. A school chat never keeps
 // one, and the under-13 line drops a kept one.
+//
+// Saved chats (30 Sep 2026, "the tutor remembers" — src/lib/recent-chats.ts):
+// with `resume` (a signed-in member's own conversation, reopened by
+// /chat?session=<id> in its own scope) the chat starts on its stored turns
+// and the next message continues it; a question that never got a reply shows
+// "Not answered", and on the latest turn its Retry re-sends it in place. A
+// "New chat" link starts a fresh one. The signed-in empty state lists the
+// member's recent chats (`recentChats`) under the starters — it blocks
+// nothing. A mistake review from the results page (its first question is
+// the results seed) offers three quick replies under each complete tutor
+// reply — "Next mistake", "Give me a similar question", "Explain it more
+// simply" — each an ordinary turn; never in a school chat. The results seed
+// carries its attempt (`reviewAttemptId`) on its own turn only, so the new
+// conversation is tagged and the results page can reopen it.
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -85,6 +99,19 @@ import {
   retryableTurn,
   withLastReplyFailed,
 } from "@/lib/chat-reply-status";
+import {
+  REVIEW_CHIPS,
+  isMistakeReviewOpener,
+  reviewChipsVisible,
+  type ChatResume,
+  type RecentChatsList,
+} from "@/lib/recent-chats";
+import {
+  followUpAction,
+  followUpOnceKey,
+  stripFollowUpParam,
+  type PickupFollowUp,
+} from "@/lib/pickup-followup";
 
 interface Message {
   id: string;
@@ -157,8 +184,8 @@ function prettyTool(name?: string): string {
 // Honest words only: signing in keeps THIS conversation in the account (the
 // import, src/lib/guest-chat-carry.ts), and the signed-in exam tutor can read
 // the student's mock mistakes and weak topics (src/lib/ai/tools.ts). No claim
-// that the tutor "remembers it tomorrow" — there is no way to reopen an old
-// chat from a later visit yet.
+// that the tutor "remembers it tomorrow". (30 Sep 2026: a member can now
+// reopen a saved chat from the Recent chats list — the copy is unchanged.)
 const SAVE_COPY = {
   en: {
     saved: "Your guest conversation is saved to your account.",
@@ -259,11 +286,16 @@ export function ChatInterface({
   labels,
   guestSignInHref,
   school,
+  resume,
+  recentChats,
+  reviewAttemptId,
+  followUp,
 }: {
   /** Null when the chat is in "General" mode — exam-agnostic Q&A. The
    *  /api/chat call then sends `general: true` instead of an examCode
-   *  and the tutor uses a generic system prompt with no syllabus /
-   *  student-state / journey injection. */
+   *  and the tutor uses a generic system prompt with no syllabus or
+   *  student-state injection (30 Sep 2026: a signed-in general chat does
+   *  carry the student's own earlier questions — src/lib/tutor-memory.ts). */
   examCode: string | null;
   /** The exam's short name for the empty state ("SSC CGL", not "SSC_CGL") — 27 Sep 2026. */
   examShortName?: string | null;
@@ -281,10 +313,19 @@ export function ChatInterface({
   guestSignInHref?: string | null;
   /** Set for a school chat — see SchoolChat. */
   school?: SchoolChat | null;
+  /** Signed-in: a saved conversation reopened from /chat?session= (30 Sep 2026). */
+  resume?: ChatResume | null;
+  /** Signed-in empty state: the member's own recent chats (30 Sep 2026). */
+  recentChats?: RecentChatsList | null;
+  /** A results-page seed: the attempt it reviews, sent with the seed's own turn (30 Sep 2026). */
+  reviewAttemptId?: string | null;
+  /** A reopened chat from a "Pick up where you left off" link: the one
+   *  follow-up to do once (src/lib/pickup-followup.ts, 30 Sep 2026). */
+  followUp?: PickupFollowUp | null;
 }) {
   const router = useRouter();
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [sessionId, setSessionId] = useState<string | null>(resume?.sessionId ?? null);
+  const [messages, setMessages] = useState<Message[]>(resume?.messages ?? []);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -307,8 +348,12 @@ export function ChatInterface({
   // nudge only appears after two completed tutor replies, so nothing is ever
   // repainted under the reader.
   const [navLang, setNavLang] = useState<"en" | "hi" | "te">("en");
+  // 30 Sep 2026: the mistake review's quick replies wait for this, so a
+  // reopened review never paints them in English and then switches.
+  const [langReady, setLangReady] = useState(false);
   useEffect(() => {
     setNavLang(uiLang());
+    setLangReady(true);
   }, []);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -392,7 +437,9 @@ export function ChatInterface({
   // server-side but not swapped into the screen.
   const sentRef = useRef(false);
   useEffect(() => {
-    if (guestSignInHref || school || importTriedRef.current) return;
+    // A reopened saved chat (30 Sep 2026) shows that conversation; a kept
+    // guest chat waits for its own page, as it does for a seeded chat.
+    if (guestSignInHref || school || resume || importTriedRef.current) return;
     importTriedRef.current = true;
     const kept = readKeptGuestChat();
     // Another chat (other exam, or general) keeps the key for its own page;
@@ -445,8 +492,9 @@ export function ChatInterface({
   // within 30 minutes in this tab — a back-navigation, a restored tab — puts
   // the prompt in the input box unsent. So does an automated browser
   // (navigator.webdriver): JS-running crawlers fired ~188 guest replies in
-  // September. There is no way to reopen a stored conversation on this page,
-  // so a held seed is the honest fallback; for a signed-in student, sending
+  // September. A seeded URL never reopens a stored conversation (the page
+  // ignores ?session= with a seed — 30 Sep 2026), so a held seed is the
+  // honest fallback; for a signed-in student, sending
   // it within 10 minutes replays the stored reply (chat-turn-dedupe.ts) —
   // unless an attempt since then makes that reply describe an older record.
   // A signed-in student's key includes their latest attempt (seedScope), so
@@ -483,9 +531,44 @@ export function ChatInterface({
       return;
     }
     markSeedFired(store, fp);
-    void send(seed);
+    // The results seed names the attempt it reviews on its own turn only.
+    void send(seed, reviewAttemptId ? { reviewAttemptId } : {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialSeed]);
+
+  // Pick up where you left off (30 Sep 2026, src/lib/pickup-followup.ts): a
+  // reopened chat opened from the card or a morning mail with ?f= does ONE
+  // thing, once — f=answer re-sends the unanswered last turn through Retry
+  // (same row, same turnId: the route answers in place), f=practice / f=next
+  // sends our fixed follow-up under the last complete reply, and nothing
+  // happens when the chat's state does not fit. It waits for the UI language
+  // (the words go out in it); ?f= leaves the URL and a per-tab key stops a
+  // repeat, so a reload or a back-navigation never sends it twice. Never in a
+  // school chat (the page passes none there).
+  const followUpFiredRef = useRef(false);
+  useEffect(() => {
+    if (!followUp || !resume || school || !langReady || followUpFiredRef.current) return;
+    followUpFiredRef.current = true;
+    try {
+      const stripped = stripFollowUpParam(window.location.href);
+      if (stripped) window.history.replaceState(window.history.state, "", stripped);
+    } catch {
+      /* the URL keeps ?f=; the per-tab key below still holds */
+    }
+    const key = followUpOnceKey(resume.sessionId, followUp, messages);
+    try {
+      if (window.sessionStorage.getItem(key)) return;
+      window.sessionStorage.setItem(key, "1");
+    } catch {
+      /* storage blocked — once per mount still holds */
+    }
+    const action = followUpAction({ kind: followUp, messages, busy, closed: capped || under13, lang: navLang });
+    if (!action) return;
+    beacon({ cta: "pickup-follow-up", surface: "chat", examCode, kind: followUp });
+    if (action.type === "retry") retryLastTurn();
+    else void send(action.text);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [langReady]);
 
   // The reply never arrived, or stopped part-way: the bubble becomes "Not
   // answered — Retry", or keeps its text under "Reply incomplete — Retry"
@@ -506,7 +589,7 @@ export function ChatInterface({
     void send(turn.text, { retry: true, turnId: turn.turnId });
   }
 
-  async function send(text: string, opts: { retry?: boolean; turnId?: string } = {}) {
+  async function send(text: string, opts: { retry?: boolean; turnId?: string; reviewAttemptId?: string } = {}) {
     if (!text.trim() || busy || capped || under13) return;
     sentRef.current = true;
     setImportedNote(null);
@@ -549,6 +632,7 @@ export function ChatInterface({
           history: priorHistory,
           retry: opts.retry ? true : undefined,
           turnId,
+          reviewAttemptId: opts.reviewAttemptId && !sessionId ? opts.reviewAttemptId : undefined,
         }),
       });
       if (!res.ok || !res.body) {
@@ -697,8 +781,26 @@ export function ChatInterface({
       ]
     : labels.starters;
 
+  // A mistake review (30 Sep 2026): its first question is the results seed —
+  // this page's seed, or a reopened conversation's opener (which may sit
+  // outside the loaded turns). Never a school chat.
+  const reviewMode =
+    !school && (resume?.mistakeReview === true || isMistakeReviewOpener(messages.find((m) => m.role === "user")?.content));
+  const showReviewChips =
+    langReady && reviewChipsVisible({ reviewMode, school: !!school, busy, closed: capped || under13, messages });
+
   return (
     <div className="mt-4 flex flex-1 flex-col rounded-md border border-ink-200 bg-white">
+      {/* A reopened saved chat (30 Sep 2026): when it was last active, and a way to start fresh. */}
+      {resume && (
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-ink-200 bg-ink-50 px-4 py-2 text-xs text-ink-600">
+          <p>{resume.note}</p>
+          <a href={resume.newChatHref} className="font-medium text-saffron-700 hover:underline">
+            + {resume.newChatLabel}
+          </a>
+        </div>
+      )}
+
       {/* Topic-focus chip */}
       {topicFocus && (
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-saffron-200 bg-saffron-50/60 px-4 py-2 text-xs">
@@ -765,6 +867,30 @@ export function ChatInterface({
               ))}
             </ul>
             )}
+            {/* The member's recent chats in this scope (30 Sep 2026) — under
+                the starters, so nothing is pushed out of the way. */}
+            {recentChats && recentChats.items.length > 0 && !capped && !under13 && (
+              <div className="mt-6 text-left">
+                <p className="text-xs font-semibold uppercase tracking-wide text-ink-500">{recentChats.heading}</p>
+                <ul className="mt-2 divide-y divide-ink-100 overflow-hidden rounded-md border border-ink-200 bg-white">
+                  {recentChats.items.map((c) => (
+                    <li key={c.id}>
+                      <a
+                        href={c.href}
+                        onClick={() => beacon({ cta: "chat-recent-open", surface: "chat", examCode, unanswered: c.unanswered })}
+                        className="flex items-center justify-between gap-3 px-3 py-2 hover:bg-saffron-50/40"
+                      >
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm text-ink-800">{c.title}</span>
+                          <span className={`block text-[11px] ${c.unanswered ? "text-rose-700" : "text-ink-500"}`}>{c.meta}</span>
+                        </span>
+                        <span className="shrink-0 text-xs font-medium text-saffron-700">{recentChats.continueLabel} →</span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         )}
 
@@ -825,6 +951,27 @@ export function ChatInterface({
             </div>
           );
         })}
+
+        {/* The mistake review keeps going (30 Sep 2026): three quick replies
+            under the latest complete tutor reply — each an ordinary turn.
+            Never under a failed reply, never while answering, never twice. */}
+        {showReviewChips && (
+          <div className="flex flex-wrap gap-2">
+            {REVIEW_CHIPS[navLang].map((chip, i) => (
+              <button
+                key={chip}
+                type="button"
+                onClick={() => {
+                  beacon({ cta: "chat-review-chip", surface: "chat", examCode, chip: i });
+                  void send(chip);
+                }}
+                className="rounded-full border border-emerald-300 bg-white px-3 py-1 text-xs font-medium text-emerald-800 hover:bg-emerald-50"
+              >
+                {chip}
+              </button>
+            ))}
+          </div>
+        )}
 
         {importedNote && (
           <p className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">✓ {importedNote}</p>

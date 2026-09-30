@@ -1,6 +1,8 @@
 // Shared types for the Shishya AI pipeline.
 // Every AI service consumes/produces these so the UI and DB layers are decoupled.
 
+import type { TutorJourney } from "@/lib/tutor-memory";
+
 export type Language = "EN" | "HI" | "TE" | "TA" | "KN" | "ML" | "MR" | "BN" | "GU" | "PA";
 
 export type Difficulty = "EASY" | "MEDIUM" | "HARD";
@@ -138,23 +140,14 @@ export interface TutorInput {
   };
   /** Cross-session memory — past chats, today's brief, last mock, open
    *  recommended actions. Lets the tutor feel continuous instead of
-   *  starting from scratch each session. */
-  journey?: {
-    examCode: string;
-    threads: Array<{
-      startedAt: string;
-      examShort: string;
-      openingMessage: string;
-      topicCodes: string[];
-    }>;
-    topAskedTopics: Array<{ topicCode: string; count: number }>;
-    todayBrief: { reflection: string; mockTitle: string | null } | null;
-    lastMock: { date: string; scorePct: number; mockTitle: string; examShort: string } | null;
-    openActions: Array<{ kind: string; topicCode?: string; reason: string }>;
-  };
+   *  starting from scratch each session. 30 Sep 2026: typed questions with
+   *  answered flags, folded mistake reviews, asked weak topics; general
+   *  chats get it too (src/lib/tutor-memory.ts). */
+  journey?: TutorJourney;
   /** True when the chat is in exam-agnostic "General Interaction" mode.
-   *  Tutor skips syllabus + journey blocks, doesn't expose tools, and
-   *  uses a generic persona suited to cross-exam Q&A. */
+   *  Tutor skips the syllabus block, doesn't expose tools, and uses a
+   *  generic persona suited to cross-exam Q&A. 30 Sep 2026: a signed-in
+   *  general chat carries the student's journey (their own questions). */
   generalMode?: boolean;
 }
 

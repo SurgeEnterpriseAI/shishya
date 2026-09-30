@@ -2,6 +2,7 @@
 // when sent to Claude — keep it stable across requests.
 
 import { OTHER_INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
+import { JOURNEY_MAX_CHARS, type TutorJourney } from "@/lib/tutor-memory";
 
 // 26 Sep 2026 (whole-education identity): the persona names the sections
 // Shishya has — school, entrance and government exams, colleges,
@@ -137,29 +138,54 @@ export function syllabusBlock(args: {
  * knows: what we talked about across the last N sessions, today's brief, the
  * last mock score, and any recommended actions left dangling from prior
  * replies. Renders compactly to keep dynamic-prompt cost bounded.
+ *
+ * 30 Sep 2026 ("the tutor remembers", src/lib/tutor-memory.ts): the student's
+ * own typed questions (up to 8 threads, 30 days) each marked answered or "no
+ * reply yet", mistake-review openers folded into one line, the weak topics
+ * the student chose to ask about, and — only when journey.offer is set (the
+ * newest conversation's unanswered typed question, 72 hours, never a review;
+ * tutor-memory.ts offerOf) — one instruction naming that question to offer
+ * first. A general chat (examCode null) gets the block too, headed as the
+ * student's own earlier chats: typed questions and the study buttons they
+ * pressed, no scores (general mode has no exam data). Capped at
+ * JOURNEY_MAX_CHARS by dropping the oldest threads. It is part of the turn's
+ * dynamic context, never the cached system prompt.
  */
-export function journeyBlock(journey: {
-  examCode: string;
-  threads: Array<{
-    startedAt: string;
-    examShort: string;
-    openingMessage: string;
-    topicCodes: string[];
-  }>;
-  topAskedTopics: Array<{ topicCode: string; count: number }>;
-  todayBrief: { reflection: string; mockTitle: string | null } | null;
-  lastMock: { date: string; scorePct: number; mockTitle: string; examShort: string } | null;
-  openActions: Array<{ kind: string; topicCode?: string; reason: string }>;
-}): string {
+export function journeyBlock(journey: TutorJourney): string {
+  const reviews = journey.reviews ?? null;
+  const weak = journey.askedWeakTopics ?? [];
   const empty =
     journey.threads.length === 0 &&
+    !reviews &&
+    weak.length === 0 &&
     !journey.todayBrief &&
     !journey.lastMock &&
     journey.openActions.length === 0;
   if (empty) return "";
+  let keep = journey.threads.length;
+  let text = renderJourney(journey, keep);
+  while (text.length > JOURNEY_MAX_CHARS && keep > 0) {
+    keep -= 1;
+    text = renderJourney(journey, keep);
+  }
+  return text;
+}
 
+function renderJourney(journey: TutorJourney, threadCount: number): string {
+  const general = journey.examCode == null;
+  const reviews = journey.reviews ?? null;
+  const weak = journey.askedWeakTopics ?? [];
+  const threads = journey.threads.slice(0, threadCount);
   const lines: string[] = [];
   lines.push(`# Recent journey (cross-session memory — use this to feel continuous)`);
+  if (general) {
+    // 30 Sep 2026 (review): the block also carries the review line and the
+    // weak topics from study buttons, so it no longer says "questions they
+    // typed" only.
+    lines.push(
+      `This student is signed in. Below are their own earlier chats with you: questions they typed and study buttons they pressed (mistake reviews, weak topics). No scores or marks, and this chat has no exam data. Use them only for continuity.`,
+    );
+  }
 
   if (journey.todayBrief) {
     lines.push(`\n## Today's brief (overnight reflection by you)`);
@@ -176,13 +202,35 @@ export function journeyBlock(journey: {
     );
   }
 
-  if (journey.threads.length > 0) {
-    lines.push(`\n## Past chats (most recent first — refer back if relevant)`);
-    for (const t of journey.threads) {
+  if (threads.length > 0) {
+    lines.push(`\n## Questions they asked in past chats (most recent first — refer back if relevant)`);
+    for (const t of threads) {
       const when = formatDateAgo(t.startedAt);
       const topics = t.topicCodes.length ? ` · topics: ${t.topicCodes.map((c) => `\`${c}\``).join(", ")}` : "";
-      lines.push(`- ${when} (${t.examShort}): "${t.openingMessage}"${topics}`);
+      const scope = t.examShort || "general";
+      if (t.answered === false) {
+        const last = t.waiting ? ` — then asked, still with no reply: "${t.waiting}"` : "";
+        lines.push(`- ${when} (${scope}) · NO REPLY YET: "${t.openingMessage}"${last}${topics}`);
+      } else {
+        lines.push(`- ${when} (${scope}): "${t.openingMessage}"${topics}`);
+      }
     }
+  }
+
+  if (reviews) {
+    const exams = reviews.examShorts.length ? ` (${reviews.examShorts.join(", ")})` : "";
+    const weakest = reviews.latestWeakest ? `; the latest (${formatDateAgo(reviews.latestAt)}) named weakest: ${reviews.latestWeakest}` : "";
+    const noReply = reviews.latestAnswered ? "" : "; the latest review got NO REPLY YET";
+    lines.push(
+      `\n## Mistake reviews\nReviewed their mock mistakes with you ${reviews.count} time${reviews.count === 1 ? "" : "s"} in the last 30 days${exams}${weakest}${noReply}.`,
+    );
+  }
+
+  if (weak.length > 0) {
+    lines.push(
+      `\n## Weak topics they chose to ask about (most recent first)\n` +
+        weak.map((w) => (w.examShort ? `${w.name} (${w.examShort})` : w.name)).join("; "),
+    );
   }
 
   if (journey.topAskedTopics.length > 0) {
@@ -205,6 +253,16 @@ export function journeyBlock(journey: {
   lines.push(
     `\nUse this memory implicitly — reference it naturally when relevant ("last week we discussed X", "your earlier mock showed Y"). Don't list it back at the student verbatim.`,
   );
+  // 30 Sep 2026 (review fix): NO REPLY YET above is information only; the
+  // offer is one named question and only when journey.offer is set
+  // (tutor-memory.ts offerOf — newest chat, 72 hours, typed, never a review).
+  if (journey.offer?.text) {
+    lines.push(
+      `Anything marked NO REPLY YET never got your answer (the reply failed on Shishya's side). At the start of your reply, offer in one short line to answer "${journey.offer.text}" now, then answer the student's new message. Offer only once — not if the conversation above shows you already did, and not if the new message is that same question (then just answer it).`,
+    );
+  } else if (threads.some((t) => t.answered === false) || (reviews && !reviews.latestAnswered)) {
+    lines.push(`Anything marked NO REPLY YET never got your answer (the reply failed on Shishya's side). Do not offer to answer it unless the student brings it up.`);
+  }
 
   return lines.join("\n");
 }

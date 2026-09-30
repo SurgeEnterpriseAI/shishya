@@ -32,6 +32,7 @@ import {
   withdrawnLine,
 } from "@/lib/served-paper";
 import { MockPlayer } from "./MockPlayer";
+import { AnonQuizRecall } from "@/components/AnonQuizRecall";
 import { headers } from "next/headers";
 import { classifyClient } from "@/lib/client-class";
 import { loadGuestPaper } from "@/lib/guest-paper-db";
@@ -486,7 +487,13 @@ export default async function MockPlayerPage({
     submitAgain: t("player.submit.again"),
   };
 
+  // 30 Sep 2026 (quiz carry, src/lib/quiz-carry.ts): a guest who met the
+  // sign-in gate here, played its quiz and signed in lands on this paper —
+  // the guest result is carried into the account's weak topics now, with
+  // nothing drawn over the paper (`silent`). Not on school practice.
   return (
+    <>
+    {mock.generatedBy !== "school-chapter" && <AnonQuizRecall signedIn silent />}
     <MockPlayer
       mock={{
         id: mock.id,
@@ -514,5 +521,6 @@ export default async function MockPlayerPage({
       }
       labels={labels}
     />
+    </>
   );
 }

@@ -50,6 +50,8 @@ import { examPeerProof } from "@/lib/peer-proof";
 import { REHEARSAL_CLOSE_IST_HOUR } from "@/lib/live-test";
 import { INDIAN_LANGUAGE_COUNT, OTHER_INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
 import { OfficialPapersBlock } from "@/components/OfficialPapersBlock";
+import { OfficialReleaseLine } from "@/components/OfficialReleaseLine";
+import { MemberPickupStrip } from "@/components/MemberPickupStrip";
 import { OfficialSamplePapersBlock } from "@/components/OfficialSamplePapersBlock";
 import { hubPyqPhrase } from "@/lib/pyq-naming";
 import { examHubCopy, fillHub, type ExamHubCopy } from "@/lib/exam-hub-copy";
@@ -956,7 +958,11 @@ export default async function ExamPage({
           brand colour beneath the ribbon. */}
       <div className={`h-1.5 w-full ${theme.ribbon}`} aria-hidden />
       <section className="container-prose py-10">
-        <AnonQuizRecall examCode={exam.code} />
+        {/* 30 Sep 2026: a signed-in member's guest quiz is carried into their
+            weak topics once (src/lib/quiz-carry.ts); a guest gets the same
+            element as before (it reads its language after mount) and nothing
+            is sent — the guest render, and so the public HTML, is unchanged. */}
+        {userId ? <AnonQuizRecall examCode={exam.code} signedIn locale={locale} /> : <AnonQuizRecall examCode={exam.code} />}
         <p className="text-xs text-ink-500">
           {/* 26 Sep 2026 (G3): the dashboard crumb only for a signed-in
               student — for everyone else (and crawlers) it was a link to a
@@ -996,6 +1002,12 @@ export default async function ExamPage({
         {/* The answer first (26 Sep 2026, G3): what the searcher came for, from
             stored rows only — the date the title states, with its tier. */}
         {hubLeadText && <p className="mt-2 max-w-3xl text-base leading-relaxed text-ink-800">{hubLeadText}</p>}
+        {/* 30 Sep 2026 (official watch): "Official answer key released — {date}
+            — {host}" / "Official result published — …" for 30 days, whatever
+            the exam-week phase — only rows our own fetch saw on the conducting
+            body's page (src/lib/official-release.ts). Every live row from 120
+            days back (titleDates), not the capped Important Dates list. */}
+        <OfficialReleaseLine rows={shared.titleDates.length > 0 ? shared.titleDates : importantDates} officialUrl={officialUrl} locale={locale} />
         <p className="mt-1 text-sm text-ink-600">{exam.name}</p>
         <p className="mt-4 max-w-3xl text-sm text-ink-700">{exam.description}</p>
         {/* The state page link (15 Sep 2026): hubs named their state only in
@@ -1208,6 +1220,16 @@ export default async function ExamPage({
             </div>
           </div>
         )}
+
+        {/* Pick up where you left off (30 Sep 2026, src/lib/pickup.ts): the
+            first member block on their own enrolled exam's hub — their last
+            question to this exam's tutor (answered or not, one tap back into
+            that chat or its answer) and their last result here with its
+            weakest topics. Mounted only for a signed-in member enrolled here,
+            and a client island that fetches after mount (GET /api/me/pickup):
+            guests and crawlers get exactly the HTML they got before, and the
+            hub's server time does not grow. */}
+        {userId && isEnrolled && <MemberPickupStrip examCode={exam.code} locale={locale} />}
 
         {/* Coach entry — the exam hub is where most organic visitors
             actually land (not the homepage), so this is the coach's

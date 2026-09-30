@@ -10,6 +10,13 @@ const OURS = [
   'On Q4 of my NDA mock (topic: Trigonometry), I picked B but the answer was C. The question was: "If cos A = 4/5" — walk me through it.',
   "I'm studying Number System for TS Police PC. Be my tutor for this topic.",
   "I'm weak in Syllogism for SBI Clerk. Tutor me on this topic.",
+  // 30 Sep 2026: the home page's weak-topic seed (HomeForYou) and the mistake review's quick replies
+  "Percentage is one of my weakest topics for SSC CGL. Explain the key ideas and give me one practice question.",
+  "Next mistake",
+  "Give me a similar question",
+  "Explain it more simply",
+  "अगली गलती",
+  "దీన్ని ఇంకా సులభంగా వివరించండి",
   "Teach me Simple Interest for SSC GD — concepts, formulas, examples.",
   "Tutor me on Tourism in MP — that's my weakest area in MPESB Group.",
   "Go deeper on Telangana History, Movement & Culture for TS Police SI — examples and edge cases I should know.",

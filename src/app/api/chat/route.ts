@@ -1,5 +1,5 @@
 // POST /api/chat — streaming chat with the AI tutor.
-// Body: { examCode, sessionId?, message, lang?, retry?, turnId? }
+// Body: { examCode, sessionId?, message, lang?, retry?, turnId?, reviewAttemptId? }
 //
 // Returns a Server-Sent Events stream:
 //   event: meta\ndata: {"sessionId":"..."}\n\n
@@ -58,6 +58,8 @@ import { schoolCapFrames, schoolTutorCapReached, schoolUiLang } from "@/lib/scho
 import { isMinorBand, schoolBandOfProfile, type SchoolBand } from "@/lib/school/student-classes";
 import type { SchoolChapterFocus } from "@/lib/school/tutor-persona";
 import { chatScopeReply, chatScopeFrames, CHAT_SCOPE_CODE } from "@/lib/chat-scope";
+import { reviewSnapshot, shouldTouchSession, type ReviewTag } from "@/lib/recent-chats";
+import { isOurTutorPrompt } from "@/lib/tutor-templates";
 
 const Body = z
   .object({
@@ -91,6 +93,12 @@ const Body = z
     // review). Stored on the signed-in USER row, so a Retry replays only the
     // reply to the turn that failed, never an earlier turn with the same text.
     turnId: z.string().min(1).max(64).optional(),
+    // 30 Sep 2026: the attempt a results-page "Explain my mistakes" seed
+    // reviews. Sent only with that seed's own turn; when it starts a new
+    // conversation of the student's own attempt on this exam, the
+    // conversation is tagged with it (contextSnapshot), so the results page
+    // can reopen the review later (src/lib/db/recent-chats.ts).
+    reviewAttemptId: z.string().min(1).max(64).optional(),
   })
   .refine((b) => b.general === true || (typeof b.examCode === "string" && b.examCode.length > 0), {
     message: "examCode is required when general is not true",
@@ -191,9 +199,10 @@ async function handleChat(req: Request, turn: TurnRow): Promise<Response> {
   // ── General mode (no exam scope) ──────────────────────────────────
   // /chat and ?general=1 with no exam named (27 Sep 2026: the default chat,
   // for any study question — school, entrance and government exams,
-  // college, scholarships, careers). No exam, no syllabus, no student-state,
-  // no journey injection — Shishya's persona, scope and safety rules plus
-  // the general-mode note (src/lib/ai/prompts.ts GENERAL_MODE_NOTE).
+  // college, scholarships, careers). No exam, no syllabus, no student-state
+  // — Shishya's persona, scope and safety rules plus the general-mode note
+  // (src/lib/ai/prompts.ts GENERAL_MODE_NOTE). 30 Sep 2026: a signed-in
+  // general chat does get the journey (the student's own earlier questions).
   const isGeneral = body.general === true;
   const examCodeForChat = isGeneral ? null : body.examCode!;
 
@@ -443,12 +452,28 @@ async function handleChat(req: Request, turn: TurnRow): Promise<Response> {
   }
   const reusedRowId = decision.kind === "reuse" && chatSession ? decision.userRowId : null;
 
+  // A conversation the student named and continues now (not one created below).
+  const continuedSession = chatSession;
   if (userId && !chatSession) {
+    // 30 Sep 2026: a mistake review started from the results page is tagged
+    // with its attempt — only the student's own attempt on this exam (the
+    // results page exists for finished ones only), never on a school chat —
+    // so "Continue your mistake review" can
+    // find it. One keyed read, on the first turn of such a chat only.
+    let reviewTag: ReviewTag | null = null;
+    if (body.reviewAttemptId && exam && !schoolCtx) {
+      const reviewed = await prisma.attempt.findFirst({
+        where: { id: body.reviewAttemptId, userId, mock: { examId: exam.id } },
+        select: { id: true, mock: { select: { title: true } } },
+      });
+      if (reviewed) reviewTag = { attemptId: reviewed.id, mockTitle: reviewed.mock.title };
+    }
     chatSession = await prisma.chatSession.create({
       data: {
         userId,
         // examId is nullable in the schema — null = general-mode session.
         examId: exam?.id ?? null,
+        ...(reviewTag ? { contextSnapshot: reviewSnapshot(reviewTag) } : {}),
       },
     });
   }
@@ -495,6 +520,17 @@ async function handleChat(req: Request, turn: TurnRow): Promise<Response> {
       });
       turn.id = created.id;
     }
+    // 30 Sep 2026: a saved chat continued now moves up the Recent chats lists
+    // and stays in the tutor's 30-day memory — both read ChatSession.updatedAt,
+    // which a new message row never touches. At most once per
+    // SESSION_TOUCH_MS per conversation; best-effort.
+    if (continuedSession && shouldTouchSession(continuedSession.updatedAt, Date.now())) {
+      try {
+        await prisma.chatSession.update({ where: { id: continuedSession.id }, data: { updatedAt: new Date() } });
+      } catch (err) {
+        console.error("[chat] could not mark the conversation active:", err);
+      }
+    }
   }
 
   // Exam-scoped context. The syllabus loads for EVERYONE with an exam so
@@ -506,15 +542,30 @@ async function handleChat(req: Request, turn: TurnRow): Promise<Response> {
   // mastery or briefs for a class); its syllabus is the class, built by the
   // school context loader, and the real-exam-keyed getStudentState /
   // getStudentJourney are never called for it.
+  // 30 Sep 2026 ("the tutor remembers"): a signed-in GENERAL chat gets the
+  // journey too, loaded by userId only (the student's own earlier questions;
+  // no brief, mock or topic codes — src/lib/tutor-memory.ts). The
+  // conversation being continued is left out of it: its turns are the history.
+  // Memory never fails a turn: without it the tutor answers as before.
+  const journeyOpts = { excludeSessionId: chatSession?.id ?? null };
+  const journeyFailed = (err: unknown) => {
+    console.error("[chat] tutor memory read failed:", err);
+    return null;
+  };
   const [studentState, syllabus, journey] = exam
     ? schoolCtx
       ? ([null, schoolCtx.syllabus, null] as const)
       : await Promise.all([
           userId ? getStudentState(userId, examCodeForChat!) : Promise.resolve(null),
           getSyllabusContext(examCodeForChat!),
-          userId ? getStudentJourney(userId, examCodeForChat!) : Promise.resolve(null),
+          userId ? getStudentJourney(userId, examCodeForChat!, journeyOpts).catch(journeyFailed) : Promise.resolve(null),
         ])
-    : ([null, null, null] as const);
+    : ([null, null, userId ? await getStudentJourney(userId, null, journeyOpts).catch(journeyFailed) : null] as const);
+  // 30 Sep 2026 (review fix): a turn that is one of Shishya's own prompts —
+  // the results-page review seed, a weak-topic button, a starter or a review
+  // quick reply — never opens with the "answer your earlier question first"
+  // offer; the student pressed a button for something specific.
+  const journeyForTurn = journey && isOurTutorPrompt(body.message) ? { ...journey, offer: null } : journey;
 
   // For general / anonymous chats we need a minimal StudentState for the
   // tutor's prompt-builder (it needs preferredLang at minimum). Build one
@@ -642,7 +693,7 @@ async function handleChat(req: Request, turn: TurnRow): Promise<Response> {
           userMessage: tutorMessageFor(body.message, history.some((t) => t.role === "assistant")),
           language: replyLanguage,
           topicFocus: topicFocus ?? undefined,
-          journey: journey ?? undefined,
+          journey: journeyForTurn ?? undefined,
           generalMode: isGeneral,
           // 26 Sep 2026: the school persona, class block, chapter focus and
           // any stored band (src/lib/school/tutor-persona.ts); tools stay

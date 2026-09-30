@@ -73,7 +73,7 @@ import {
 } from "@/lib/exam-week";
 import { applyShiftDay, shiftableDays } from "@/lib/exam-week-student";
 import { buildTimeline, type SourceTier, type TimelineInput, type TimelineRow } from "@/lib/exam-timeline";
-import { passedEstimateLine, passedEstimateView, sourceTier, supersedingRow } from "@/lib/official-source";
+import { passedEstimateLine, passedEstimateView, sourceHostLabel, sourceTier, supersedingRow } from "@/lib/official-source";
 import { getVerdictTally, publicTally, VERDICT_MIN_N } from "@/lib/exam-verdict";
 import { fullPaperFitsSitting } from "@/lib/marking-scheme";
 import { sittingVerdict } from "@/lib/score-sitting";
@@ -468,8 +468,30 @@ export async function ExamWeekBlock({
 
   // Answer-key / result status from the tracker (dates with tier, or "not
   // announced yet" — never guessed): the post week and an open-ended window.
+  // 30 Sep 2026 (official watch): "released {date} on {host}" only for a row
+  // our own fetch saw on the conducting body's page (TimelineRow.verified,
+  // source official-watch); any other official row stays "{date} (official)"
+  // — an announced date, not a release anyone saw. Review, 30 Sep 2026: a
+  // verified row dated the day the watch FIRST SAW the link (the body printed
+  // no single release date — TimelineRow.firstSeen) says "released — first
+  // seen {date} on {host}", never "released {date}", as on the hub line.
+  const releasedText = (r: TimelineRow, kind: "released" | "published") =>
+    fill(
+      t(
+        kind === "released"
+          ? r.firstSeen
+            ? "ew.post.releasedFirstSeen"
+            : "ew.post.released"
+          : r.firstSeen
+            ? "ew.post.publishedFirstSeen"
+            : "ew.post.published",
+      ),
+      { date: dayLabel(r.date, locale), host: r.url ? sourceHostLabel(r.url) : "" },
+    );
   const keyText = state.answerKey
-    ? dateWithTier(state.answerKey, tierWord(state.answerKey.tier), locale)
+    ? state.answerKey.verified && state.answerKey.url
+      ? releasedText(state.answerKey, "released")
+      : dateWithTier(state.answerKey, tierWord(state.answerKey.tier), locale)
     : t("ew.post.notAnnounced");
   // Passed estimates (24 Sep 2026, src/lib/official-source.ts): a result
   // estimate whose day has gone by is never printed as a date — it reads "No
@@ -484,7 +506,9 @@ export async function ExamWeekBlock({
     ? t("ew.post.notAnnounced")
     : resultView === "line" || resultView === "unsure"
       ? passedEstimateLine("RESULT", locale, resultView)
-      : dateWithTier(resultRow, tierWord(resultRow.tier), locale);
+      : resultRow.verified && resultRow.url
+        ? releasedText(resultRow, "published")
+        : dateWithTier(resultRow, tierWord(resultRow.tier), locale);
   const noticeLink = (r: TimelineRow | null) =>
     r?.url ? (
       <>

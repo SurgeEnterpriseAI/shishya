@@ -19,6 +19,30 @@
 // container as "the exam" and render the exam island on it), a declared
 // 13-17 account is sent to its class chat from every other /chat URL, and a
 // school-only adult account on plain /chat lands on its class chat too.
+//
+// Saved chats (30 Sep 2026, "the tutor remembers" — src/lib/recent-chats.ts):
+// a signed-in member's ?session=<id> reopens their own conversation, only in
+// its own scope — a general chat on ?general=1, an exam chat on its exam, a
+// Class 8-12 school chat only in that class's school branch; any other URL
+// for it is redirected once to that scope, and a conversation whose scope
+// this page cannot open (an exam no longer active) is simply not reopened.
+// The last 30 turns load oldest first and the next message continues it (the
+// API's owner and scope checks are unchanged). A seeded URL never reopens one
+// (the seed starts its own conversation). The signed-in empty state lists the
+// member's recent chats: the exam's own in an exam chat, the class's own in a
+// school chat, and in the general chat the general AND real-exam chats —
+// plain /chat opens the general chat for members with several exams, and 99%
+// of chats are exam-scoped; each item opens in its own scope. Guests have no
+// saved chats (theirs stay in the browser until sign-in). Classes 1-7 still
+// 404 here, before anything is read.
+//
+// Pick up where you left off (30 Sep 2026, src/lib/pickup-followup.ts): a
+// reopened conversation may carry ?f=answer | practice | next — the card on
+// home / dashboard / the hub and the morning mails' line send the member
+// back into their chat with ONE fixed follow-up (its unanswered turn re-sent
+// through Retry, or our own follow-up words), done once by the chat island.
+// Only with a conversation this page reopens for its owner, never with a
+// seed, never in a school chat.
 
 import Link from "next/link";
 import { Header } from "@/components/Header";
@@ -37,11 +61,24 @@ import { isMinorBand, isStudentModeClass, schoolBandOfProfile, schoolContainerCl
 import { schoolOnlyChatPath } from "@/lib/school/tutor-scope";
 import { countSchoolTutorMessagesToday, getSchoolChapterFocus, getSchoolTutorContext } from "@/lib/school/tutor-context";
 import { SCHOOL_TUTOR_CAP_COPY, schoolTutorCapReached, schoolTutorMessagesLeft, schoolUiLang } from "@/lib/school/tutor-cap";
+import { listRecentChats, loadResumableChat, type RecentChatsScope, type ResumableChat } from "@/lib/db/recent-chats";
+import {
+  RECENT_CHATS_LIMIT,
+  chatResumeHref,
+  chatResumeView,
+  isResumeUrlCanonical,
+  recentChatsCopy,
+  recentChatsList,
+  resumeSessionParam,
+  reviewAttemptParam,
+  type RecentChatsList,
+} from "@/lib/recent-chats";
+import { pickupFollowUpParam } from "@/lib/pickup-followup";
 
 export default async function ChatPage({
   searchParams,
 }: {
-  searchParams: Promise<{ examCode?: string; topicCode?: string; seed?: string; general?: string }>;
+  searchParams: Promise<{ examCode?: string; topicCode?: string; seed?: string; general?: string; session?: string; review?: string; f?: string }>;
 }) {
   const session = await auth();
   const sp = await searchParams;
@@ -64,6 +101,31 @@ export default async function ChatPage({
   // save-conversation, suggested actions). Nothing here enrols, reads
   // mastery or touches the exam dropdown below.
   const schoolCls = !generalMode && sp.examCode ? schoolContainerClassOf(sp.examCode) : null;
+  // Classes 1-7 have no tutor: 404 before anything else is read (30 Sep 2026:
+  // the saved-chat read below comes after this).
+  if (schoolCls !== null && !isStudentModeClass(schoolCls)) notFound();
+
+  // Saved chats (30 Sep 2026 — see the header). The member's own conversation
+  // named by ?session=, read once; sent to its own scope's URL if this is not it.
+  const viewerId = session?.user?.id ?? null;
+  const resumeId = viewerId ? resumeSessionParam(sp) : null;
+  // 30 Sep 2026: the one follow-up a pick-up link asks for (see the header).
+  const followUp = viewerId ? pickupFollowUpParam(sp) : null;
+  const saved: ResumableChat | null = viewerId && resumeId ? await loadResumableChat(viewerId, resumeId) : null;
+  if (saved && !isResumeUrlCanonical(sp, saved)) redirect(chatResumeHref({ examCode: saved.examCode, sessionId: saved.id }));
+  const chatsCopy = recentChatsCopy(locale);
+  const now = new Date();
+  /** The reopened conversation, when it belongs to the scope this branch renders. */
+  const resumeIn = (examId: string | null, newChatHref: string) =>
+    saved && saved.examId === examId ? chatResumeView(saved, newChatHref, chatsCopy, now) : null;
+  /** The member's recent chats for this branch's empty state — none for a
+   *  seeded or reopened chat (it is never empty). Best-effort. */
+  const recentFor = async (scope: RecentChatsScope, reopened: boolean): Promise<RecentChatsList | null> => {
+    if (!viewerId || reopened || (sp.seed && sp.seed.trim())) return null;
+    const rows = await listRecentChats(viewerId, scope, { limit: RECENT_CHATS_LIMIT, now }).catch(() => []);
+    return rows.length ? recentChatsList(rows, chatsCopy, now) : null;
+  };
+
   if (schoolCls !== null) {
     if (!isStudentModeClass(schoolCls)) notFound();
     const examCode = sp.examCode!;
@@ -76,6 +138,11 @@ export default async function ChatPage({
     // 27 Sep 2026 (founder, content first): guests get the class tutor with no sign-in and nobody is asked an age band; the safeguards come from this context — the school persona, the study-only pre-filter and the daily cap (per account, or per browser for a guest, in POST /api/chat).
     const memberId = session?.user?.id ?? null;
     const usedToday = memberId ? await countSchoolTutorMessagesToday(memberId) : 0;
+    // 30 Sep 2026: a member's saved school chat reopens only here, in its own
+    // class chat, and its turns still count toward the daily cap (the API's
+    // scope check is unchanged); the list shows this class's chats only.
+    const schoolResume = resumeIn(ctx.exam.id, `/chat?examCode=${encodeURIComponent(examCode)}${focus ? `&topicCode=${encodeURIComponent(focus.code)}` : ""}`);
+    const schoolRecent = await recentFor({ examId: ctx.exam.id }, schoolResume != null);
     const starters = focus
       ? [t("chat.school.starter.1"), t("chat.school.starter.2"), t("chat.school.starter.3"), t("chat.school.starter.4")]
       : [
@@ -103,11 +170,14 @@ export default async function ChatPage({
             <p className="mt-0.5 text-[11px] text-ink-500">{t("chat.school.ageLine")}</p>
           </div>
 
-          <ChatOpenedBeacon props={{ examCode, topicCode: sp.topicCode ?? null, general: false, anon: memberId == null, school: true }} />
+          <ChatOpenedBeacon props={{ examCode, topicCode: sp.topicCode ?? null, general: false, anon: memberId == null, school: true, ...(schoolResume ? { resumed: true } : {}) }} />
           <ChatInterface
+            key={schoolResume?.sessionId ?? "new"}
             examCode={examCode}
             topicFocus={focus ? { code: focus.code, name: focus.name, subjectName: focus.subjectName, examShortName: classLabel } : null}
             initialSeed={sp.seed ?? null}
+            resume={schoolResume}
+            recentChats={schoolRecent}
             school={{
               aiLine: t("chat.school.aiLine"),
               classLabel,
@@ -301,6 +371,10 @@ export default async function ChatPage({
   // dropdown's first option. A student with exactly one enrolment lands on
   // that exam's chat, whose dropdown offers this one too.
   if (general) {
+    // 30 Sep 2026: a saved general chat reopens here; the list shows the
+    // member's general and real-exam chats, each opening in its own scope.
+    const generalResume = resumeIn(null, "/chat?general=1");
+    const generalRecent = await recentFor("general", generalResume != null);
     return (
       <main className="min-h-screen bg-ink-50/40">
         <Header />
@@ -316,11 +390,15 @@ export default async function ChatPage({
             {enrollments.length > 0 && <ExamSwitcher current="" generalLabel={t("chat.general.tile.title")} options={enrollments.map((e) => ({ code: e.exam.code, shortName: e.exam.shortName }))} label={`${t("nav.exams")}:`} />}
           </div>
 
-          <ChatOpenedBeacon props={{ examCode: null, general: true, anon: false }} />
+          <ChatOpenedBeacon props={{ examCode: null, general: true, anon: false, ...(generalResume ? { resumed: true } : {}) }} />
           <ChatInterface
+            key={generalResume?.sessionId ?? "new"}
             examCode={null}
             topicFocus={null}
             initialSeed={sp.seed ?? null}
+            resume={generalResume}
+            recentChats={generalRecent}
+            followUp={generalResume ? followUp : null}
             labels={{
               placeholder: t("chat.placeholder"),
               send: t("chat.send"),
@@ -417,6 +495,11 @@ export default async function ChatPage({
       )
     : null;
 
+  // 30 Sep 2026: a saved chat of this exam reopens here; the list shows this
+  // exam's chats. A results-page seed carries the attempt it reviews.
+  const examResume = currentEnrollment ? resumeIn(currentEnrollment.examId, `/chat?examCode=${encodeURIComponent(examCode)}`) : null;
+  const examRecent = currentEnrollment ? await recentFor({ examId: currentEnrollment.examId }, examResume != null) : null;
+
   return (
     <main className="min-h-screen bg-ink-50/40">
       <Header />
@@ -438,13 +521,18 @@ export default async function ChatPage({
           )}
         </div>
 
-        <ChatOpenedBeacon props={chatOpenedProps} />
+        <ChatOpenedBeacon props={examResume ? { ...chatOpenedProps, resumed: true } : chatOpenedProps} />
         <ChatInterface
+          key={examResume?.sessionId ?? "new"}
           examCode={examCode}
           examShortName={examShort}
           topicFocus={topicFocus}
           initialSeed={sp.seed ?? null}
           seedScope={seedScope}
+          resume={examResume}
+          recentChats={examRecent}
+          followUp={examResume ? followUp : null}
+          reviewAttemptId={reviewAttemptParam(sp)}
           labels={{
             placeholder: t("chat.placeholder"),
             send: t("chat.send"),

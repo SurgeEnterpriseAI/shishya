@@ -7,6 +7,13 @@
 // class, and their streak — all from their own rows, nothing guessed.
 // Server component; renders nothing for a brand-new account with no
 // activity (the home page itself is then their starting point).
+//
+// 30 Sep 2026 ("pick up where you left off", src/lib/pickup.ts): the grid
+// opens with the card — the member's last tutor question (answered or not,
+// one tap back into that saved chat, or into its answer) and their last
+// result with its weakest topics. Real exams and the general chat only, so
+// no school chat or practice is read. The "Your last result" tile is left out
+// when the card already shows that same attempt.
 
 import Link from "next/link";
 import { prisma } from "@/lib/db/prisma";
@@ -14,6 +21,9 @@ import { getStudyStreak } from "@/lib/db/streak";
 import { schoolContainerClassOf } from "@/lib/school/student-classes";
 import { formatDisplayScorePct } from "@/lib/scoring";
 import { REAL_EXAM_WHERE, SCHOOL_CATEGORY } from "@/lib/db/exam-scope";
+import { loadPickup } from "@/lib/db/pickup";
+import { pickupView } from "@/lib/pickup";
+import { PickupCard } from "@/components/PickupCard";
 
 type L = "en" | "hi" | "te";
 const COPY: Record<L, {
@@ -26,7 +36,7 @@ const COPY: Record<L, {
 
 export async function HomeForYou({ userId, locale }: { userId: string; locale: string }) {
   const c = COPY[(locale === "hi" || locale === "te" ? locale : "en") as L];
-  const [inProgress, last, weak, examEnrolls, schoolEnrolls, streak] = await Promise.all([
+  const [inProgress, last, weak, examEnrolls, schoolEnrolls, streak, pickupData] = await Promise.all([
     prisma.attempt
       .findFirst({
         where: { userId, status: "IN_PROGRESS" },
@@ -67,6 +77,7 @@ export async function HomeForYou({ userId, locale }: { userId: string; locale: s
       })
       .catch(() => []),
     getStudyStreak(userId).catch(() => null),
+    loadPickup(userId).catch(() => null),
   ]);
 
   const exams = examEnrolls.map((e) => e.exam);
@@ -74,7 +85,9 @@ export async function HomeForYou({ userId, locale }: { userId: string; locale: s
     .map((e) => schoolContainerClassOf(e.exam.code))
     .filter((n): n is number => n !== null && n >= 8);
   const resume = inProgress && inProgress.mock.generatedBy !== "live-test" ? inProgress : null;
-  const hasAnything = resume || last || weak.length > 0 || exams.length > 0 || classes.length > 0;
+  const pickup = pickupView(pickupData, locale, new Date());
+  const showLast = !!last && !(pickup?.mock && pickup.mock.attemptId === last.id);
+  const hasAnything = pickup || resume || last || weak.length > 0 || exams.length > 0 || classes.length > 0;
   if (!hasAnything) return null;
 
   return (
@@ -87,13 +100,14 @@ export async function HomeForYou({ userId, locale }: { userId: string; locale: s
         </span>
       </div>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        {pickup && <PickupCard view={pickup} surface="home" className="sm:col-span-2" />}
         {resume && (
           <Link href={`/mocks/${resume.mockId}`} className="rounded-xl border border-saffron-300 bg-saffron-50 p-3 hover:bg-saffron-100">
             <p className="text-xs font-semibold uppercase tracking-wider text-saffron-800">{c.resume}</p>
             <p className="mt-1 truncate text-sm font-medium text-ink-900">{resume.mock.title}</p>
           </Link>
         )}
-        {last && (
+        {last && showLast && (
           <Link href={`/attempts/${last.id}/results`} className="rounded-xl border border-ink-200 p-3 hover:bg-ink-50">
             <p className="text-xs font-semibold uppercase tracking-wider text-ink-500">{c.last}</p>
             <p className="mt-1 truncate text-sm font-medium text-ink-900">

@@ -120,6 +120,16 @@ export function factUrlsForExam(code: string, stateSlug: string | null | undefin
   ];
 }
 
+/** The pages an official answer key / result changes (30 Sep 2026, official
+ *  watch — src/lib/answer-key-watch-db.ts): every page that prints the
+ *  exam's dates (factUrlsForExam), the exam-week set (its after-the-paper
+ *  pages print the key / result status; /cutoff only when it renders), and
+ *  the exam's context file, which lists the release. Callers MUST pass the
+ *  result through gateTwinUrls. */
+export function officialReleaseUrls(code: string, stateSlug: string | null | undefined, gates: Pick<ExamPageGates, "cutoff">): string[] {
+  return [...new Set([...factUrlsForExam(code, stateSlug), ...examWeekUrls(code, gates), `${SITE_ORIGIN}/exams/${code}/context.md`])];
+}
+
 /** The pages an official-data import changes: the hub (official papers and
  *  published cutoffs are summarised there), /cutoff when cutoff rows were
  *  written AND the page renders (it 404s without rank bands), and each

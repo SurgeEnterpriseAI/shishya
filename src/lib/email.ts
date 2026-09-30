@@ -73,6 +73,19 @@ export interface EmailPayload {
    *  BCC, without the user-keyed opt-out/budget machinery (which needs a
    *  userId). When `unsubUserId` is ALSO set, that path wins. */
   bulk?: { unsubscribeUrl: string; unsubscribeApiUrl: string };
+  /** 30 Sep 2026: exact substrings of `html` / `text` that are the
+   *  recipient's own words (the next-day line quoting their last tutor
+   *  question — src/lib/pickup.ts). They are cut from the founder's wave
+   *  copy below, so a quote only ever reaches the student who wrote it. */
+  privateParts?: string[];
+}
+
+/** `s` with every private part removed (the founder's wave copy). */
+export function withoutPrivateParts(s: string, parts: readonly string[] | undefined): string;
+export function withoutPrivateParts(s: string | undefined, parts: readonly string[] | undefined): string | undefined;
+export function withoutPrivateParts(s: string | undefined, parts: readonly string[] | undefined): string | undefined {
+  if (s == null || !parts || parts.length === 0) return s;
+  return parts.filter((p) => p.length > 0).reduce((acc, p) => acc.split(p).join(""), s);
 }
 
 /** One founder copy per marketing tag per invocation (a cron run is one
@@ -193,8 +206,8 @@ export async function sendEmail(payload: EmailPayload): Promise<boolean> {
             from,
             to: addr,
             subject: `[wave: ${payload.tag}] ${payload.subject}`,
-            html: payload.html,
-            text: payload.text,
+            html: withoutPrivateParts(payload.html, payload.privateParts),
+            text: withoutPrivateParts(payload.text, payload.privateParts),
             tags: [{ name: "kind", value: "founder-copy" }],
           })
           .catch(() => {});
@@ -585,6 +598,10 @@ export async function sendDailyFiveEmail(p: {
   examWeek?: { text: string; html: string } | null;
   /** Set when the enrolled exam is over: "Your X is done. Next: Y on date (tier)". */
   rollover?: MailRollover | null;
+  /** 30 Sep 2026: the student's own last tutor question, quoted (<= 60
+   *  characters, escaped) with a link back into that chat — built by
+   *  src/lib/pickup.ts pickupEmailLine; omitted/null = no line. */
+  pickup?: { text: string; html: string } | null;
 }): Promise<boolean> {
   const first = (p.name ?? "").split(" ")[0] || "Aspirant";
   const streak = p.streakCurrent ?? 0;
@@ -618,7 +635,7 @@ export async function sendDailyFiveEmail(p: {
   const text = `${first},
 
 Your Daily 5 is ready — 5 quick questions on ${weakText}. ${streakLineText}
-${peerText}${p.examWeek ? `\n${p.examWeek.text}\n` : ""}${roll.text ? `\n${roll.text}\n` : ""}${p.liveTest ? `\n${p.liveTest.text}\n` : ""}
+${p.pickup ? `\n${p.pickup.text}\n` : ""}${peerText}${p.examWeek ? `\n${p.examWeek.text}\n` : ""}${roll.text ? `\n${roll.text}\n` : ""}${p.liveTest ? `\n${p.liveTest.text}\n` : ""}
 
 Start now: https://shishya.in/today?utm_source=email&utm_medium=daily-five
 
@@ -643,6 +660,7 @@ ${
        style="display:inline-block;background:#f59e0b;color:#fff;text-decoration:none;font-weight:700;font-size:14px;border-radius:10px;padding:12px 22px;">
       Start today's 5 →
     </a>
+    ${p.pickup?.html ?? ""}
     ${peerHtml}
     ${p.examWeek?.html ?? ""}
     ${roll.html}
@@ -662,7 +680,7 @@ ${
     <p style="font-size:11px;color:#94a3b8;margin:10px 0 0;">Reply to this email to stop the daily reminder.</p>
   </div>
 </body></html>`;
-  return sendEmail({ to: p.to, subject, html, text, tag: "daily-five", unsubUserId: p.userId });
+  return sendEmail({ to: p.to, subject, html, text, tag: "daily-five", unsubUserId: p.userId, privateParts: p.pickup ? [p.pickup.html, p.pickup.text] : undefined });
 }
 
 /** The coach's morning email — a DEDICATED, standalone "here's your plan
@@ -689,6 +707,9 @@ export async function sendCoachDayEmail(p: {
   /** Set when the plan's exam is over: rolls the mail to the next exam in
    *  the track and offers "Set up my next plan". */
   rollover?: MailRollover | null;
+  /** 30 Sep 2026: the student's own last tutor question, quoted — as in
+   *  sendDailyFiveEmail (src/lib/pickup.ts pickupEmailLine). */
+  pickup?: { text: string; html: string } | null;
 }): Promise<boolean> {
   const first = (p.name ?? "").split(" ")[0] || "Aspirant";
   const dl = p.daysLeft == null ? null : `${p.daysLeft} ${p.daysLeft === 1 ? "day" : "days"}`;
@@ -722,7 +743,7 @@ export async function sendCoachDayEmail(p: {
 Your coach rebuilt your plan around what you did — here's today${withText}:
 
 ${taskLines}
-${p.note ? `\n${p.note}\n` : ""}${p.examWeek ? `\n${p.examWeek.text}\n` : ""}${roll.text ? `\n${roll.text}\n` : ""}${nextPlanText}
+${p.note ? `\n${p.note}\n` : ""}${p.pickup ? `\n${p.pickup.text}\n` : ""}${p.examWeek ? `\n${p.examWeek.text}\n` : ""}${roll.text ? `\n${roll.text}\n` : ""}${nextPlanText}
 Do just these today and you're a day closer. Open your plan: https://shishya.in/coach
 
 Your report (strong & weak areas, days left): https://shishya.in/me/report
@@ -755,6 +776,7 @@ Today's study pack, built from your weakest topics: https://shishya.in/me/report
        style="display:inline-block;background:#ea580c;color:#fff;text-decoration:none;font-weight:700;font-size:14px;border-radius:10px;padding:12px 24px;">
       Open my plan →
     </a>
+    ${p.pickup?.html ?? ""}
     ${p.examWeek?.html ?? ""}
     ${roll.html}
     ${nextPlanHtml}
@@ -769,7 +791,7 @@ Today's study pack, built from your weakest topics: https://shishya.in/me/report
   </div>
 </body></html>`;
 
-  return sendEmail({ to: p.to, subject, html, text, tag: "coach-morning", unsubUserId: p.userId });
+  return sendEmail({ to: p.to, subject, html, text, tag: "coach-morning", unsubUserId: p.userId, privateParts: p.pickup ? [p.pickup.html, p.pickup.text] : undefined });
 }
 
 /** Evening streak-rescue — sent ~8:30 PM IST ONLY to students whose
@@ -1635,6 +1657,11 @@ export async function sendResultDayEmail(p: {
   resultWhen: string;
   /** The conducting body's notice (the result row's URL — official tier only). */
   officialUrl: string;
+  /** 30 Sep 2026: set ONLY for a row the official watch wrote (source
+   *  official-watch — our own fetch read the result link on the body's
+   *  page): the host, and the mail says "published on {host}". Omitted /
+   *  null → the announced-date wording, never a claim of publication. */
+  publishedHost?: string | null;
   /** Next stage for cleared candidates, as the tracker has it; null → "not announced yet". */
   nextStage: { label: string; when: string } | null;
   /** Next exam in the student's track (7–60 days out): plain IST day + its tier word. */
@@ -1652,7 +1679,18 @@ export async function sendResultDayEmail(p: {
   const first = (p.name ?? "").split(" ")[0] || "Aspirant";
   const hub = `https://shishya.in/exams/${p.examCode}`;
   const cutoffUrl = p.hasCutoffPage === true ? `${hub}/cutoff` : null;
-  const subject = `${first}, ${p.examShort} result day: ${p.resultWhen}`;
+  const published = p.publishedHost ? p.publishedHost : null;
+  const subject = published ? `${first}, ${p.examShort} result published on ${published}` : `${first}, ${p.examShort} result day: ${p.resultWhen}`;
+  // Seen on the body's page (official-watch) → "published on {host}"; an
+  // announced date → "that date is what the body announced", as before.
+  const leadText = published
+    ? `The ${p.examShort} result was published on ${published}: ${p.resultLine}.
+Check the list for your own name; nothing else counts: ${p.officialUrl}`
+    : `The tracker's ${p.examShort} result date: ${p.resultLine}.
+That date is what the conducting body announced — it is not a promise the list is already on screen. Check the notice for your own name; nothing else counts: ${p.officialUrl}`;
+  const leadHtml = published
+    ? `${esc(first)}, the result is on ${esc(published)} — we saw it on the conducting body's own page. Check your own name there; nothing else counts.`
+    : `${esc(first)}, that is the date the conducting body announced — only its own notice says whether the list is up. Check your own name there; nothing else counts.`;
   const nextStageText = p.nextStage
     ? `Next stage: ${p.nextStage.label} — ${p.nextStage.when}`
     : `Next stage: ${tk("ew.post.notAnnounced")}`;
@@ -1662,8 +1700,7 @@ export async function sendResultDayEmail(p: {
 
   const text = `${first},
 
-The tracker's ${p.examShort} result date: ${p.resultLine}.
-That date is what the conducting body announced — it is not a promise the list is already on screen. Check the notice for your own name; nothing else counts: ${p.officialUrl}
+${leadText}
 
 If you cleared:
 • ${nextStageText}
@@ -1683,9 +1720,9 @@ One result does not measure you. Selection lists change every year; the routine 
 <body style="margin:0;padding:0;background:#fff7ed;font-family:system-ui,sans-serif;color:#0f172a;">
   <div style="max-width:520px;margin:0 auto;padding:28px 24px;">
     <div style="font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#b45309;">${esc(p.examShort)} · result day</div>
-    <div style="font-weight:700;font-size:19px;margin-top:6px;">${esc(p.examShort)} result day: ${esc(p.resultWhen)}</div>
+    <div style="font-weight:700;font-size:19px;margin-top:6px;">${published ? `${esc(p.examShort)} result published on ${esc(published)}` : `${esc(p.examShort)} result day: ${esc(p.resultWhen)}`}</div>
     <p style="font-size:13px;font-weight:600;margin:6px 0 0;color:#b45309;">${esc(p.resultLine)}</p>
-    <p style="font-size:14px;line-height:1.6;margin:12px 0 14px;">${esc(first)}, that is the date the conducting body announced — only its own notice says whether the list is up. Check your own name there; nothing else counts.</p>
+    <p style="font-size:14px;line-height:1.6;margin:12px 0 14px;">${leadHtml}</p>
     <a href="${esc(p.officialUrl)}" style="display:inline-block;background:#f97316;color:#fff;text-decoration:none;font-weight:700;font-size:14px;border-radius:10px;padding:12px 22px;">Official notice ↗</a>
     <div style="border:1px solid #bbf7d0;background:#f0fdf4;border-radius:10px;padding:12px 14px;margin:18px 0 0;">
       <p style="font-size:12px;font-weight:700;margin:0 0 6px;color:#14532d;">If you cleared</p>

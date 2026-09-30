@@ -15,7 +15,10 @@
 //     page (src/components/home/HomeForYou.tsx) and the dashboard;
 //   • the tutor uses your weak topics — signed-in exam chats read the
 //     student's WeaknessMap (src/lib/ai/tools.ts);
-//   • mocks, scores and chats are saved; a free day-by-day plan — /coach;
+//   • mocks, scores and chats are saved; a free day-by-day plan — /coach.
+//     "Chats" became true in full on 30 Sep 2026: a member sees their recent
+//     chats on /chat and the dashboard and reopens one where it left off
+//     (src/lib/recent-chats.ts); until then they were stored but invisible;
 //   • a daily 5 picked for the student (/today, src/lib/study-day-five.ts)
 //     and the study streak (src/lib/db/streak.ts). (Date alerts are NOT
 //     listed: any visitor can subscribe on a tracker without an account.)

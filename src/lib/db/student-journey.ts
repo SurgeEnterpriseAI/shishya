@@ -7,45 +7,45 @@
 //
 // Cost: ~700 tokens added to the dynamic (uncached) block per call. Capped
 // at hard limits below so we never explode the budget.
+//
+// 30 Sep 2026 ("the tutor remembers"; why and rules in src/lib/tutor-memory.ts):
+// 30 days instead of 14, the student's own typed questions (up to 8 threads)
+// marked answered or not, mistake-review openers folded into one line, the
+// weak topics they chose to ask about. `examCode` null = a general chat: the
+// memory is loaded by userId only, with no brief, mock, topic codes or
+// actions. The conversation being continued is left out (its turns are
+// already the history), and so are school sessions — a Class 8-12 chat stays
+// inside the school chat. Reads: the sessions (no message text), the
+// student's own rows' text, and the tutor rows' metadata (never their text).
 
 import { prisma } from "./prisma";
-import { realExamKey } from "./exam-scope";
+import { NOT_SCHOOL_WHERE, realExamKey } from "./exam-scope";
 import { istDayNumber } from "@/lib/exam-phase";
+import { MEMORY_WINDOW_DAYS, summariseChatMemory, type MemorySession, type TutorJourney } from "@/lib/tutor-memory";
 
-const MAX_THREADS = 5;            // how many recent sessions to surface
-const MAX_TOPICS = 8;             // how many distinct topics to list
-const MAX_ACTIONS = 4;            // how many open recommended actions
-const JOURNEY_WINDOW_DAYS = 14;   // look-back window for chat memory
-const OPENING_CHARS = 140;        // how many chars of the opening message to keep
+/** Sessions scanned for memory (most recently active first). */
+const MAX_SESSIONS = 30;
+/** Rows read across those sessions (metadata / the student's text only). */
+const MAX_ROWS = 600;
 
-export interface StudentJourney {
-  examCode: string;
-  threads: Array<{
-    sessionId: string;
-    startedAt: string;
-    examShort: string;
-    openingMessage: string;
-    topicCodes: string[];
-  }>;
-  topAskedTopics: Array<{ topicCode: string; count: number }>;
-  todayBrief: { reflection: string; mockTitle: string | null } | null;
-  lastMock: { date: string; scorePct: number; mockTitle: string; examShort: string } | null;
-  openActions: Array<{ kind: string; topicCode?: string; reason: string }>;
-}
+export type StudentJourney = TutorJourney;
 
 export async function getStudentJourney(
   userId: string,
-  examCode: string,
+  examCode: string | null,
+  opts: { excludeSessionId?: string | null } = {},
 ): Promise<StudentJourney> {
-  const since = new Date(Date.now() - JOURNEY_WINDOW_DAYS * 24 * 60 * 60 * 1000);
+  const since = new Date(Date.now() - MEMORY_WINDOW_DAYS * 24 * 60 * 60 * 1000);
   // The daily brief's key: the IST day (midnight UTC of that calendar day).
   const todayUtc = new Date(istDayNumber(new Date()) * 86_400_000);
 
-  const exam = await prisma.exam.findUnique({
-    where: realExamKey({ code: examCode }),
-    select: { id: true },
-  });
-  if (!exam) {
+  const exam = examCode
+    ? await prisma.exam.findUnique({
+        where: realExamKey({ code: examCode }),
+        select: { id: true },
+      })
+    : null;
+  if (examCode && !exam) {
     return {
       examCode,
       threads: [],
@@ -56,101 +56,101 @@ export async function getStudentJourney(
     };
   }
 
-  const [chatThreads, todayBrief, lastMock] = await Promise.all([
-    // Chat threads in the look-back window. Pull the opening user message
-    // and up to a few assistant messages so we can mine tool_use topic codes
-    // and any pending suggestedActions.
+  const [sessions, todayBrief, lastMock] = await Promise.all([
+    // The student's conversations active in the window (updatedAt moves
+    // when a saved chat is continued — src/app/api/chat/route.ts), real
+    // exams and general only.
     prisma.chatSession.findMany({
-      where: { userId, createdAt: { gte: since } },
-      include: {
-        exam: { select: { shortName: true } },
-        messages: {
-          orderBy: { createdAt: "asc" },
-          take: 8,
-          select: { role: true, content: true, metadata: true, createdAt: true },
-        },
+      where: {
+        userId,
+        updatedAt: { gte: since },
+        ...(opts.excludeSessionId ? { id: { not: opts.excludeSessionId } } : {}),
+        OR: [{ examId: null }, { exam: NOT_SCHOOL_WHERE }],
       },
+      select: { id: true, updatedAt: true, exam: { select: { shortName: true } } },
       orderBy: { updatedAt: "desc" },
-      take: MAX_THREADS,
+      take: MAX_SESSIONS,
     }),
     // Today's brief for the active exam (the cron writes one per user-exam
     // overnight; we surface its reflection so the tutor can pick up on it).
-    prisma.dailyBrief.findFirst({
-      where: { userId, examId: exam.id, briefDate: todayUtc },
-      include: { mock: { select: { title: true } } },
-    }),
+    exam
+      ? prisma.dailyBrief.findFirst({
+          where: { userId, examId: exam.id, briefDate: todayUtc },
+          include: { mock: { select: { title: true } } },
+        })
+      : Promise.resolve(null),
     // Last submitted attempt for this exam — used for "earlier today you
     // scored X on Y mock" style references.
-    prisma.attempt.findFirst({
-      where: {
-        userId,
-        mock: { exam: { code: examCode } },
-        status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] },
-        scorePct: { not: null },
-      },
-      orderBy: { startedAt: "desc" },
-      select: {
-        startedAt: true,
-        scorePct: true,
-        mock: { select: { title: true, exam: { select: { shortName: true } } } },
-      },
-    }),
+    examCode
+      ? prisma.attempt.findFirst({
+          where: {
+            userId,
+            mock: { exam: { code: examCode } },
+            status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] },
+            scorePct: { not: null },
+          },
+          orderBy: { startedAt: "desc" },
+          select: {
+            startedAt: true,
+            scorePct: true,
+            mock: { select: { title: true, exam: { select: { shortName: true } } } },
+          },
+        })
+      : Promise.resolve(null),
   ]);
 
-  const threads: StudentJourney["threads"] = [];
-  const topicCounts = new Map<string, number>();
-  const seenActions = new Map<string, { kind: string; topicCode?: string; reason: string }>();
+  const ids = sessions.map((s) => s.id);
+  const [rows, userText] = ids.length
+    ? await Promise.all([
+        // Every row's role, time and metadata — no text (the tutor's replies are long).
+        prisma.chatMessage.findMany({
+          where: { sessionId: { in: ids } },
+          orderBy: { createdAt: "desc" },
+          take: MAX_ROWS,
+          select: { sessionId: true, role: true, createdAt: true, metadata: true },
+        }),
+        // The student's own messages (at most 2,000 characters each).
+        prisma.chatMessage.findMany({
+          where: { sessionId: { in: ids }, role: "USER" },
+          orderBy: { createdAt: "desc" },
+          take: MAX_ROWS,
+          select: { sessionId: true, content: true },
+        }),
+      ])
+    : [[], []];
 
-  for (const t of chatThreads) {
-    const opener = t.messages.find((m) => m.role === "USER");
-    const topicCodes = new Set<string>();
-    for (const m of t.messages) {
-      const md = m.metadata as any;
-      const calls = (md?.toolCalls ?? []) as Array<{ args?: any }>;
-      for (const c of calls) {
-        const code = c?.args?.topic_code;
-        if (typeof code === "string") {
-          topicCodes.add(code);
-          topicCounts.set(code, (topicCounts.get(code) ?? 0) + 1);
-        }
-      }
-      const actions = (md?.actions ?? []) as Array<{
-        kind?: string;
-        topicCode?: string;
-        reason?: string;
-      }>;
-      for (const a of actions) {
-        if (!a?.kind || !a?.reason) continue;
-        const key = `${a.kind}|${a.topicCode ?? ""}|${a.reason}`;
-        if (!seenActions.has(key)) {
-          seenActions.set(key, {
-            kind: a.kind,
-            topicCode: a.topicCode,
-            reason: a.reason,
-          });
-        }
-      }
-    }
-    threads.push({
-      sessionId: t.id,
-      startedAt: t.createdAt.toISOString(),
-      examShort: t.exam?.shortName ?? "",
-      openingMessage:
-        (opener?.content ?? "").slice(0, OPENING_CHARS) +
-        ((opener?.content?.length ?? 0) > OPENING_CHARS ? "…" : ""),
-      topicCodes: [...topicCodes].slice(0, 4),
+  // Newest rows were read first (so a cut drops the oldest); walk them oldest first.
+  rows.reverse();
+  userText.reverse();
+
+  const bySession = new Map<string, MemorySession>();
+  for (const s of sessions) {
+    bySession.set(s.id, {
+      id: s.id,
+      lastAt: s.updatedAt,
+      examShort: s.exam?.shortName ?? "",
+      userRows: [],
+      lastRole: null,
+      assistantMeta: [],
     });
   }
+  for (const r of rows) {
+    const m = bySession.get(r.sessionId);
+    if (!m) continue;
+    m.lastRole = r.role;
+    if (r.createdAt > m.lastAt) m.lastAt = r.createdAt;
+    if (r.role === "ASSISTANT") m.assistantMeta.push(r.metadata);
+  }
+  for (const u of userText) bySession.get(u.sessionId)?.userRows.push({ content: u.content });
 
-  const topAskedTopics = [...topicCounts.entries()]
-    .map(([topicCode, count]) => ({ topicCode, count }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, MAX_TOPICS);
+  const memory = summariseChatMemory(
+    [...bySession.values()].filter((s) => s.lastRole != null),
+    { exam: examCode != null },
+  );
 
   return {
     examCode,
-    threads,
-    topAskedTopics,
+    ...memory,
     todayBrief: todayBrief
       ? {
           reflection: todayBrief.reflection ?? "",
@@ -165,6 +165,5 @@ export async function getStudentJourney(
           examShort: lastMock.mock.exam.shortName,
         }
       : null,
-    openActions: [...seenActions.values()].slice(0, MAX_ACTIONS),
   };
 }

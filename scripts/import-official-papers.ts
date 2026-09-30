@@ -40,6 +40,15 @@
 // checks above cannot tell, say, the 68th from the 69th exam of the same
 // year): [{ "url": "...", "reason": "..." }]. They are skipped, never written,
 // and archived if an earlier run stored them.
+// --from-watch-hits (30 Sep 2026, official watch): also reads the answer-key
+// PDFs the weekly watch queued ("OfficialWatchHit" rows with importStatus
+// 'needs-import', src/lib/answer-key-watch-db.ts) and puts each through the
+// SAME checks as a research file (official hosts, %PDF, the year beside the
+// link or on page 1). The date row and the official link went live when the
+// watch saw them; only the PDF block waits for this run (curl and pdftotext
+// are not on Vercel). With --apply, each hit is marked 'imported' or
+// 'rejected' (with the reason); a dry run marks nothing. Run weekly after the
+// Monday plan: … --from-watch-hits (dry), then … --from-watch-hits --apply --indexnow.
 
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
@@ -78,7 +87,45 @@ interface ListingJson {
   keywords?: string[];
   handChecked?: string;
 }
+interface WatchHit {
+  id: string;
+  code: string;
+  url: string;
+  listingUrl: string;
+  host: string;
+  anchorText: string;
+  cycleYear: string;
+  stage: string;
+}
+
+/** The official watch's queue (30 Sep 2026): answer-key PDFs whose date row is
+ *  live and whose file waits for these checks. None when the table does not
+ *  exist yet. Scripts are outside the src/ exam-scope scan; the join still
+ *  keeps real exams only, as the watch wrote them. */
+async function loadWatchHits(): Promise<WatchHit[]> {
+  const exists = await prisma.$queryRaw<{ ok: boolean }[]>`
+    SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = current_schema() AND table_name = 'OfficialWatchHit') AS ok`;
+  if (!exists[0]?.ok) return [];
+  return prisma.$queryRaw<WatchHit[]>`
+    SELECT h.id, e.code, h.url, h."listingUrl", h.host, h."anchorText", h."cycleYear", h.stage
+    FROM "OfficialWatchHit" h JOIN "Exam" e ON e.id = h."examId"
+    WHERE h."importStatus" = 'needs-import' AND h.kind = 'ANSWER_KEY' AND e.category::text <> 'SCHOOL_BOARD'
+    ORDER BY e.code, h."createdAt"`.catch(() => [] as WatchHit[]);
+}
+
+function groupBy<T>(items: readonly T[], key: (x: T) => string): Map<string, T[]> {
+  const out = new Map<string, T[]>();
+  for (const x of items) out.set(key(x), [...(out.get(key(x)) ?? []), x]);
+  return out;
+}
+
+/** A failure that says nothing about the file (the host did not answer):
+ *  the hit stays queued for next week instead of being rejected. */
+const TRANSIENT_FAIL = /download failed|not reachable|large-file check failed|listing page not reachable/i;
+
 interface Passed {
+  /** The URL as the source listed it (a www host may be kept bare in `url`). */
+  sourceUrl?: string;
   examId: string;
   code: string;
   year: string;
@@ -227,7 +274,12 @@ async function main() {
   // 26 Sep 2026: IndexNow only after real writes — never on a dry run.
   const indexNow = apply && process.argv.includes("--indexnow");
   if (process.argv.includes("--indexnow") && !apply) console.log("--indexnow ignored without --apply (dry run: nothing is written or submitted)");
-  if (dirs.length === 0 && !listingsFile) throw new Error("--dir <research folder> (repeatable) and/or --listings <file.json> is required");
+  const fromWatchHits = process.argv.includes("--from-watch-hits");
+  if (dirs.length === 0 && !listingsFile && !fromWatchHits) {
+    throw new Error("--dir <research folder> (repeatable), --listings <file.json> and/or --from-watch-hits is required");
+  }
+  // Why each file failed, by URL — the watch hits carry it back (30 Sep 2026).
+  const failReason = new Map<string, string>();
   const rejected = new Map<string, string>(
     rejectedFile
       ? (JSON.parse(readFileSync(rejectedFile, "utf8")) as { url: string; reason: string }[]).map((r) => [r.url, r.reason])
@@ -278,9 +330,35 @@ async function main() {
     return listings.get(url) ?? null;
   }
 
+  // Research files, then (30 Sep 2026) the watch's queued answer-key PDFs —
+  // one shape, one set of checks.
+  const sources: { label: string; data: ExamJson }[] = [];
   for (const dir of dirs) {
     for (const f of readdirSync(dir).filter((x) => x.endsWith(".json")).sort()) {
-      const data = JSON.parse(readFileSync(join(dir, f), "utf8")) as ExamJson;
+      sources.push({ label: f, data: JSON.parse(readFileSync(join(dir, f), "utf8")) as ExamJson });
+    }
+  }
+  const watchHits = fromWatchHits ? await loadWatchHits() : [];
+  for (const [code, hits] of groupBy(watchHits, (h) => h.code)) {
+    sources.push({
+      label: "official watch hits",
+      data: {
+        exam: code,
+        papers: hits.map((h) => ({
+          year: h.cycleYear,
+          paper: [h.stage, h.anchorText].filter(Boolean).join(" — ").replace(/\s+/g, " ").slice(0, 200) || "Answer key",
+          kind: "answer key",
+          url: h.url,
+          listingUrl: h.listingUrl,
+          publisher: h.host,
+        })),
+      },
+    });
+  }
+  if (fromWatchHits) console.log(`official watch: ${watchHits.length} answer-key files queued for import`);
+
+  for (const { label: f, data } of sources) {
+    {
       if (only && !only.has(data.exam)) continue;
       const papers = data.papers ?? [];
       if (papers.length === 0) continue;
@@ -289,6 +367,7 @@ async function main() {
       if (!exam) {
         console.log("   x not a Shishya exam code: skipped");
         failed += papers.length;
+        for (const p of papers) failReason.set(p.url, "not a Shishya exam code");
         continue;
       }
       const seen = new Set<string>();
@@ -298,6 +377,7 @@ async function main() {
         const label = `${p.year} · ${p.kind} · ${p.paper}`.replace(/\s+/g, " ").slice(0, 110);
         if (rejected.has(p.url)) {
           failed++;
+          failReason.set(p.url, `rejected in the hand check (${rejected.get(p.url)})`);
           console.log(`   SKIP ${label}: rejected in the hand check (${rejected.get(p.url)})`);
           continue;
         }
@@ -312,6 +392,7 @@ async function main() {
         if (!isOfficialHost(listingHost, exam.portalHost)) reasons.push(`listing host not official (${listingHost ?? "bad URL"})`);
         if (reasons.length) {
           failed++;
+          failReason.set(p.url, reasons.join("; "));
           console.log(`   FAIL ${label}: ${reasons.join("; ")}`);
           continue;
         }
@@ -430,10 +511,12 @@ async function main() {
         }
         if (reasons.length) {
           failed++;
+          failReason.set(p.url, reasons.join("; "));
           console.log(`   FAIL ${label}: ${reasons.join("; ")}`);
           continue;
         }
         passed.push({
+          sourceUrl: p.url,
           examId: exam.id,
           code: data.exam,
           year: p.year.trim(),
@@ -550,6 +633,28 @@ async function main() {
       const accepted = await submitIndexNow(list);
       console.log(`IndexNow: ${list.length} URLs for ${byExamWritten.size} exams — ${accepted ? "accepted" : "not accepted (the weekly sitemap submission will carry them)"}`);
       for (const u of list) console.log(`   ${u}`);
+    }
+  }
+
+  // The watch's queue (30 Sep 2026): passed → 'imported', failed on the file
+  // itself → 'rejected' with the reason; a host that did not answer, or a hit
+  // this run never reached (--only), stays queued. Marked only with --apply.
+  if (fromWatchHits && watchHits.length) {
+    const passedUrls = new Set(passed.map((p) => p.sourceUrl ?? p.url));
+    console.log(`\nofficial watch hits${apply ? "" : " (dry run: none marked)"}:`);
+    for (const h of watchHits) {
+      const ok = passedUrls.has(h.url);
+      const why = failReason.get(h.url);
+      if (!ok && (!why || TRANSIENT_FAIL.test(why))) {
+        console.log(`   QUEUED ${h.code} ${h.url}${why ? ` (${why})` : ""}`);
+        continue;
+      }
+      const status = ok ? "imported" : "rejected";
+      const note = ok ? "imported to OfficialPaper" : why!;
+      console.log(`   ${status.toUpperCase()} ${h.code} ${h.url}${ok ? "" : ` (${note})`}`);
+      if (apply) {
+        await prisma.$executeRaw`UPDATE "OfficialWatchHit" SET "importStatus" = ${status}, "importNote" = ${note.slice(0, 600)} WHERE id = ${h.id}`;
+      }
     }
   }
   rmSync(work, { recursive: true, force: true });

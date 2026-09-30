@@ -54,6 +54,8 @@ import { servedPaperCopy } from "@/lib/served-paper";
 import { isStudentModeContainer, schoolTutorHref } from "@/lib/school/student-classes";
 import { schoolMockConfigOf } from "@/lib/school/student-db";
 import { schoolMistakesHeading, schoolMistakesSeed, schoolResultsCopy } from "@/lib/school/student-copy";
+import { findMistakeReviewChat } from "@/lib/db/recent-chats";
+import { chatResumeHref, continueReviewNoteText, recentChatsCopy } from "@/lib/recent-chats";
 
 export default async function ResultsPage({
   params,
@@ -301,6 +303,28 @@ export default async function ResultsPage({
     schoolCfg
       ? schoolTutorHref({ examCode: schoolCfg.examCode, topicCode: schoolCfg.topicCode, chapterName: schoolCfg.chapterName, cls: schoolCfg.cls, subjectName: schoolCfg.subjectName }, seed)
       : `/chat?examCode=${attempt.mock.exam.code}&seed=${encodeURIComponent(seed)}`;
+  // 30 Sep 2026 (the mistake review keeps going — src/lib/recent-chats.ts): 809
+  // of 1,266 chats in the 30 days to 29 Sep started from this card and only 23
+  // got a second student message; nothing reopened a review. When a review of
+  // THIS attempt exists, the card reopens it ("Continue your mistake review");
+  // otherwise its seed carries the attempt id, so the new conversation is
+  // tagged with it. Exam attempts only — the school card keeps its own seed —
+  // and only while the exam is active (/chat opens a saved chat in its exam's
+  // scope, which needs an active exam).
+  const reviewChat =
+    !school && wrongCount > 0 && attempt.mock.exam.active
+      ? await findMistakeReviewChat(session.user.id, {
+          attemptId: attempt.id,
+          examId: attempt.mock.examId,
+          finishedAt: attempt.finishedAt,
+          seed: mistakeSeed,
+        }).catch(() => null)
+      : null;
+  // The card around it is English-only today, so its button is too.
+  const reviewCopy = recentChatsCopy("en");
+  const mistakesHref = reviewChat
+    ? chatResumeHref({ examCode: attempt.mock.exam.code, sessionId: reviewChat.id })
+    : `/chat?examCode=${attempt.mock.exam.code}&seed=${encodeURIComponent(mistakeSeed)}&review=${encodeURIComponent(attempt.id)}`;
 
   // Score-spiral detection (founder call, 16 Aug): an aspirant re-testing
   // 3+ times in a day with scores stuck under 35% is doing the WRONG kind
@@ -720,14 +744,19 @@ export default async function ResultsPage({
                   Your free AI tutor walks through each mistake — why the right answer is right,
                   and how to nail it next time.
                 </p>
+                {reviewChat && (
+                  <p className="mt-1 text-xs text-emerald-800">
+                    {continueReviewNoteText(reviewChat.startedAt, new Date(), reviewCopy)}
+                  </p>
+                )}
               </div>
               <ResultsCtaLink
-                href={`/chat?examCode=${attempt.mock.exam.code}&seed=${encodeURIComponent(mistakeSeed)}`}
+                href={mistakesHref}
                 cta="results-tutor-first"
-                props={{ ...tutorBeaconProps, variant: "mistakes" }}
+                props={{ ...tutorBeaconProps, variant: reviewChat ? "mistakes-continue" : "mistakes" }}
                 className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-300"
               >
-                Explain my mistakes →
+                {reviewChat ? reviewCopy.continueReview : "Explain my mistakes →"}
               </ResultsCtaLink>
             </div>
           </div>

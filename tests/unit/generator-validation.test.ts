@@ -4,6 +4,9 @@
 // scripts/generate-questions.ts) so this stays a pure unit test without
 // needing to import the script's CJS entry. If the validator drifts, this
 // test will go red — and the right fix is to re-mirror the change here.
+// 30 Sep 2026: the validator moved, unchanged, to validateGenerated in
+// src/lib/ai/question-gen-run.ts; tests/unit/generate-questions-guard.test.ts
+// runs the same cases against the real one.
 
 import { describe, it, expect } from "vitest";
 

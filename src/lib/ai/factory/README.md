@@ -65,8 +65,11 @@ result.questions; // ACCEPT + REVIEW items, each with provenance
 result.stats;     // generated / accepted / needsReview / rejected / costUsd / byVerdict
 ```
 
-`scripts/generate-questions.ts --verify` runs the full factory instead of the
-legacy single-pass path.
+`scripts/generate-questions.ts --verify` used to run the full factory instead of
+the legacy single-pass path. It was removed on 30 Sep 2026 (the script refuses
+it): it checked per call at full price on the shared key with no ceiling. Bank
+questions are answer-checked with `scripts/verify-question-bank.ts` (Message
+Batches, spend guard).
 
 ## Where this fits
 

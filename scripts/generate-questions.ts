@@ -7,145 +7,132 @@
 // This is the *production* version of the proof-of-concept that produced
 // `seed/questions/ssc-cgl-quant.ts`. The same SME-validation gate applies.
 //
+// ── Spend guard, ledger and journal (30 Sep 2026) ──────────────────────────
+// The state-exam depth plan (30 Sep 2026) runs ~3,750 questions through this
+// script. It had no ceiling and wrote no AiUsage rows, and it spends from
+// the credit balance the live tutor shares. The rules and their tests live
+// in src/lib/ai/question-gen-run.ts; this file is the glue:
+//   • --max-usd is REQUIRED for any run that calls the API, dry runs too.
+//     The next call is not made when its worst case would cross it. Every
+//     reply is priced from its usage and ledgered as AiUsage
+//     "state-depth-gen" (ref = exam code).
+//   • Each batch is saved as it arrives. A journal under
+//     D:/CodexProjects/shishya-data/generate-question-runs/ records the run's
+//     spend and, per topic, what is saved. A stopped run continues with
+//     --resume <runId> and never regenerates what it already saved.
+//   • The key: ANTHROPIC_BULK_API_KEY when set, else the shared
+//     ANTHROPIC_API_KEY only with --allow-shared-key (founder, 30 Sep 2026).
+//   • An API error (empty balance, spend limit, bad key) stops the run. The
+//     SDK's own retries are off. A 429 or 529 (not billed) is called again
+//     after 20 s and then 60 s. A 400 about one topic's request gives up on
+//     that topic, and the same refusal on the next topic stops the run.
+//   • If the run dies on a database error, the resume command is printed.
+//   • --verify and --auto-validate are REFUSED: they checked at full price on
+//     the shared key with no ceiling. Answer-check with
+//     scripts/verify-question-bank.ts (batch prices, its own spend guard).
+//   • --no-ai runs only with --dry-run: it writes placeholder rows, and
+//     .env.local is the production database.
+//   • An unknown flag is refused rather than warned about.
+//
 // USAGE
-//   tsx scripts/generate-questions.ts --exam SSC_CGL --topic quant.percentage --count 30
-//   tsx scripts/generate-questions.ts --exam SSC_CGL --subject QUANT --count 20
-//   tsx scripts/generate-questions.ts --exam SSC_CGL --all --count 15
-//   tsx scripts/generate-questions.ts --exam SSC_CGL --topic quant.percentage --count 5 --dry-run
+//   npx tsx --env-file=.env.local scripts/generate-questions.ts --exam SSC_CGL --topic quant.percentage --count 2 --no-ai --dry-run   (free plumbing test)
+//   npx tsx --env-file=.env.local scripts/generate-questions.ts --exam TS_ICET --all --count 5 --max-usd 3
+//   npx tsx --env-file=.env.local scripts/generate-questions.ts --exam TS_TET --all --skip-subjects LANG1,LANG2 --count 2 --max-usd 2.5
+//   npx tsx --env-file=.env.local scripts/generate-questions.ts --resume <runId> --max-usd 4
 //
 // FLAGS
-//   --exam <CODE>            required (e.g. SSC_CGL, RRB_NTPC)
+//   --exam <CODE>            required for a fresh run (e.g. SSC_CGL, RRB_NTPC)
 //   --topic <code>           single topic; e.g. quant.percentage
 //   --subject <code>         all topics in this subject; e.g. QUANT
 //   --all                    all topics in the exam
+//   --skip-subjects <A,B>    leave these subjects out (language papers this generator cannot write)
 //   --count <n>              questions per topic (default 20)
 //   --batch-size <n>         questions per Claude call (default 10)
 //   --difficulty <mix>       e.g. "EASY:0.3,MEDIUM:0.5,HARD:0.2" (default same)
 //   --avoid-recent <n>       load N most-recent Q bodies per topic and ask Claude to avoid (default 50)
-//   --dry-run                print first batch JSON; don't save to DB
-//   --no-ai                  use offline stub generator (for plumbing tests, no API spend)
+//   --retry <n>              extra calls per batch when a reply is unusable (default 1)
 //   --language <EN|HI>       HI writes stems, options and solutions in Hindi (General Hindi topics)
+//   --max-usd <usd>          hard ceiling on the run's spend at list price; required unless --no-ai
+//   --dry-run                one batch per topic, printed; nothing saved, no journal (the calls are still billed and ledgered)
+//   --no-ai                  offline stub generator, no API spend; only with --dry-run
+//   --resume <runId>         continue a stopped run from its journal (its own settings; name a --max-usd)
+//   --journal <path>         journal file instead of <journal folder>/<runId>.json
+//   --force                  start a fresh run although an unfinished journal covers the exam
+//   --allow-shared-key       with no ANTHROPIC_BULK_API_KEY, run on the shared ANTHROPIC_API_KEY
 
+import fs from "node:fs";
+import path from "node:path";
 import Anthropic from "@anthropic-ai/sdk";
-import { PrismaClient, Difficulty, QuestionSource, Language } from "@prisma/client";
-import { verifyCandidates } from "../src/lib/ai/factory";
-import type { FactoryQuestion } from "../src/lib/ai/factory";
+import { PrismaClient, QuestionSource, Language } from "@prisma/client";
+import { resolveBulkKey } from "../src/lib/ai/batch";
+import { recordAiUsageAwaited } from "../src/lib/ai/usage";
+import {
+  GEN_JOURNAL_DIR,
+  GEN_LEDGER_FEATURE,
+  GEN_MAX_TOKENS,
+  VERIFY_SCRIPT,
+  assertGenSettings,
+  genCrashResumeHint,
+  genJournalPath,
+  genResumeCommand,
+  genRunId,
+  loadGenJournal,
+  newGenJournal,
+  openGenJournals,
+  parseGenArgs,
+  planSummary,
+  reconcileSaved,
+  resolveGenRunMode,
+  runGeneration,
+  saveGenJournal,
+  selectTargets,
+  settingsFromArgs,
+  worstCaseCallUsd,
+  type GenJournal,
+  type GenTopicContext,
+  type GenTopicInput,
+  type GeneratedQuestion,
+} from "../src/lib/ai/question-gen-run";
+import type { Difficulty } from "../src/lib/ai/types";
 
 // ─────────────────────────────────────────────────────────────────────────
-// Types & constants
+// Constants
 // ─────────────────────────────────────────────────────────────────────────
-interface CliArgs {
-  exam: string;
-  topic?: string;
-  subject?: string;
-  all: boolean;
-  count: number;
-  batchSize: number;
-  difficulty: Record<Difficulty, number>;
-  avoidRecent: number;
-  dryRun: boolean;
-  noAi: boolean;
-  retry: number;
-  verify: boolean;
-  autoValidate: boolean;
-  language: "EN" | "HI";
-}
-
-interface GeneratedQuestion {
-  body: string;
-  options: { key: string; text: string }[];
-  answerKey: string;
-  solution: string;
-  difficulty: Difficulty;
-  tags: string[];
-}
-
 const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-sonnet-4-5-20250929";
-const DEFAULT_DIFFICULTY: Record<Difficulty, number> = {
-  EASY: 0.3,
-  MEDIUM: 0.5,
-  HARD: 0.2,
-};
-
-// Pricing for token-spend estimate (USD per 1M tokens). Approximate; adjust if Anthropic publishes new rates.
-const PRICE_INPUT_PER_M = 3.0;
-const PRICE_OUTPUT_PER_M = 15.0;
-const PRICE_CACHE_WRITE_PER_M = 3.75;
-const PRICE_CACHE_READ_PER_M = 0.3;
-
-// ─────────────────────────────────────────────────────────────────────────
-// CLI
-// ─────────────────────────────────────────────────────────────────────────
-function parseArgs(argv: string[]): CliArgs {
-  const args: any = { all: false, count: 20, batchSize: 10, avoidRecent: 50, dryRun: false, noAi: false, retry: 1, verify: false, autoValidate: false, language: "EN" };
-  for (let i = 2; i < argv.length; i++) {
-    const a = argv[i];
-    const next = () => argv[++i];
-    switch (a) {
-      case "--exam": args.exam = next(); break;
-      case "--topic": args.topic = next(); break;
-      case "--subject": args.subject = next(); break;
-      case "--all": args.all = true; break;
-      case "--count": args.count = parseInt(next(), 10); break;
-      case "--batch-size": args.batchSize = parseInt(next(), 10); break;
-      case "--avoid-recent": args.avoidRecent = parseInt(next(), 10); break;
-      case "--difficulty": args.difficulty = parseDifficultyMix(next()); break;
-      case "--retry": args.retry = parseInt(next(), 10); break;
-      case "--dry-run": args.dryRun = true; break;
-      case "--no-ai": args.noAi = true; break;
-      case "--verify": args.verify = true; break;
-      case "--auto-validate": args.autoValidate = true; break;
-      case "--language": args.language = next() === "HI" ? "HI" : "EN"; break;
-      case "--help": case "-h": printHelpAndExit();
-      default:
-        if (a.startsWith("--")) console.warn(`(warn) unknown flag: ${a}`);
-    }
-  }
-  if (!args.exam) {
-    console.error("error: --exam is required");
-    printHelpAndExit(1);
-  }
-  if (!args.topic && !args.subject && !args.all) {
-    console.error("error: must pass --topic, --subject, or --all");
-    printHelpAndExit(1);
-  }
-  if (!args.difficulty) args.difficulty = DEFAULT_DIFFICULTY;
-  return args as CliArgs;
-}
-
-function parseDifficultyMix(spec: string): Record<Difficulty, number> {
-  const out: any = { EASY: 0, MEDIUM: 0, HARD: 0 };
-  for (const part of spec.split(",")) {
-    const [k, v] = part.split(":").map((s) => s.trim());
-    if (!["EASY", "MEDIUM", "HARD"].includes(k)) throw new Error(`bad difficulty key: ${k}`);
-    out[k] = parseFloat(v);
-  }
-  const sum = out.EASY + out.MEDIUM + out.HARD;
-  if (Math.abs(sum - 1) > 0.05) throw new Error(`difficulty mix must sum to 1.0 (got ${sum})`);
-  return out;
-}
+const fmtUsd = (n: number) => `$${n.toFixed(2)}`;
 
 function printHelpAndExit(code = 0): never {
   console.log(
-    `Bulk-generate Shishya questions via Claude.
+    `Bulk-generate Shishya questions via Claude, under a spend ceiling.
 
 Usage:
-  tsx scripts/generate-questions.ts --exam SSC_CGL --topic quant.percentage --count 30
-  tsx scripts/generate-questions.ts --exam SSC_CGL --subject QUANT --count 20
-  tsx scripts/generate-questions.ts --exam SSC_CGL --all --count 15
+  npx tsx --env-file=.env.local scripts/generate-questions.ts --exam SSC_CGL --topic quant.percentage --count 2 --no-ai --dry-run
+  npx tsx --env-file=.env.local scripts/generate-questions.ts --exam TS_ICET --all --count 5 --max-usd 3
+  npx tsx --env-file=.env.local scripts/generate-questions.ts --exam TS_TET --all --skip-subjects LANG1,LANG2 --count 2 --max-usd 2.5
+  npx tsx --env-file=.env.local scripts/generate-questions.ts --resume <runId> --max-usd 4
 
 Required:
-  --exam <CODE>          exam code (e.g. SSC_CGL)
+  --exam <CODE>          exam code (e.g. SSC_CGL); not with --resume
   one of: --topic | --subject | --all
+  --max-usd <usd>        hard ceiling on the run's spend (list price), checked before every call;
+                         required for every run that calls the API, dry runs included
 
 Optional:
+  --skip-subjects <A,B>  leave these subjects out (language papers)
   --count <n>            questions per topic (default 20)
   --batch-size <n>       Qs per Claude call (default 10)
   --difficulty <mix>     "EASY:0.3,MEDIUM:0.5,HARD:0.2"
   --avoid-recent <n>     load N recent Q bodies per topic to dedupe (default 50)
-  --retry <n>            retries per batch on JSON parse / validation failure (default 1)
-  --dry-run              print first batch; don't save
-  --no-ai                use offline stub (no API call)
+  --retry <n>            retries per batch on an unusable reply (default 1)
+  --language <EN|HI>     HI writes the questions in Hindi
+  --dry-run              print one batch per topic; don't save (still billed + ledgered)
+  --no-ai                use offline stub (no API call); only with --dry-run
+  --resume <runId>       continue a stopped run from its journal
+  --journal <path>       journal file (default ${GEN_JOURNAL_DIR}/<runId>.json)
+  --force                start a fresh run although an unfinished journal covers the exam
+  --allow-shared-key     no ANTHROPIC_BULK_API_KEY: run on the shared ANTHROPIC_API_KEY
+
+Removed (refused): --verify, --auto-validate. Answer-check with scripts/verify-question-bank.ts.
 `);
   process.exit(code);
 }
@@ -196,33 +183,18 @@ Rules:
 - Each "options" array MUST have exactly 4 entries with keys A, B, C, D in order.
 - Tags are 1-3 short kebab-case strings (e.g. "percentage", "successive-discount").`;
 
-// ─────────────────────────────────────────────────────────────────────────
-// Generation
-// ─────────────────────────────────────────────────────────────────────────
-interface TokenStats {
-  inputTokens: number;
-  outputTokens: number;
-  cacheCreationTokens: number;
-  cacheReadTokens: number;
-  calls: number;
-}
-
-const totals: TokenStats = { inputTokens: 0, outputTokens: 0, cacheCreationTokens: 0, cacheReadTokens: 0, calls: 0 };
-
-async function generateBatch(
-  client: Anthropic,
-  args: {
-    examName: string;
-    examCode: string;
-    syllabusBlock: string;
-    topic: { code: string; name: string; description?: string | null };
-    fewShotBlock: string;
-    avoidBlock: string;
-    count: number;
-    difficultyTargets: Record<Difficulty, number>;
-    language?: "EN" | "HI";
-  }
-): Promise<{ questions: GeneratedQuestion[]; rawText: string }> {
+/** One call's params: the same prompt the pre-30-Sep generateBatch sent, built before the call so the guard can price it. */
+function buildParams(args: {
+  model: string;
+  examName: string;
+  examCode: string;
+  syllabusBlock: string;
+  topic: GenTopicInput;
+  ctx: GenTopicContext;
+  count: number;
+  difficultyTargets: Record<Difficulty, number>;
+  language: "EN" | "HI";
+}): Anthropic.Messages.MessageCreateParamsNonStreaming {
   const userPrompt = `Generate exactly ${args.count} questions on this topic.
 
 # Topic
@@ -236,115 +208,70 @@ ${args.language === "HI" ? LANGUAGE_HI_BLOCK : ""}
 - MEDIUM: ${args.difficultyTargets.MEDIUM}
 - HARD: ${args.difficultyTargets.HARD}
 
-${args.fewShotBlock}
+${args.ctx.fewShotBlock}
 
-${args.avoidBlock}
+${args.ctx.avoidBlock}
 
 ${OUTPUT_SCHEMA}`;
 
-  const response = await client.messages.create({
-    model: MODEL,
-    max_tokens: 8000,
+  return {
+    model: args.model,
+    max_tokens: GEN_MAX_TOKENS,
     system: [
       { type: "text", text: SYSTEM_PERSONA, cache_control: { type: "ephemeral" } },
       { type: "text", text: args.syllabusBlock, cache_control: { type: "ephemeral" } },
     ],
     messages: [{ role: "user", content: userPrompt }],
-  });
-
-  totals.calls += 1;
-  totals.inputTokens += response.usage.input_tokens;
-  totals.outputTokens += response.usage.output_tokens;
-  totals.cacheCreationTokens += response.usage.cache_creation_input_tokens ?? 0;
-  totals.cacheReadTokens += response.usage.cache_read_input_tokens ?? 0;
-
-  const text = response.content
-    .filter((b): b is Anthropic.TextBlock => b.type === "text")
-    .map((b) => b.text)
-    .join("\n");
-
-  const cleaned = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/i, "").trim();
-  let parsed: any;
-  try {
-    parsed = JSON.parse(cleaned);
-  } catch (err) {
-    throw new Error(`Claude returned invalid JSON: ${(err as Error).message}\nRaw: ${cleaned.slice(0, 500)}`);
-  }
-  if (!Array.isArray(parsed)) throw new Error("Claude must return a JSON array of questions");
-  return { questions: parsed, rawText: cleaned };
-}
-
-// ─────────────────────────────────────────────────────────────────────────
-// Validation
-// ─────────────────────────────────────────────────────────────────────────
-function validateGenerated(q: any): { ok: true; q: GeneratedQuestion } | { ok: false; reason: string } {
-  if (!q || typeof q !== "object") return { ok: false, reason: "not an object" };
-  if (typeof q.body !== "string" || q.body.trim().length < 10) return { ok: false, reason: "body too short" };
-  if (!Array.isArray(q.options) || q.options.length !== 4) return { ok: false, reason: "must have 4 options" };
-  const keys = q.options.map((o: any) => o?.key);
-  const expected = ["A", "B", "C", "D"];
-  if (JSON.stringify(keys) !== JSON.stringify(expected)) return { ok: false, reason: "options must be keyed A/B/C/D in order" };
-  for (const o of q.options) {
-    if (typeof o.text !== "string" || o.text.trim().length === 0) return { ok: false, reason: "empty option text" };
-  }
-  if (!expected.includes(q.answerKey)) return { ok: false, reason: `answerKey must be A/B/C/D, got ${q.answerKey}` };
-  if (typeof q.solution !== "string" || q.solution.trim().length < 20) return { ok: false, reason: "solution too short" };
-  if (!["EASY", "MEDIUM", "HARD"].includes(q.difficulty)) return { ok: false, reason: `invalid difficulty: ${q.difficulty}` };
-  const tags = Array.isArray(q.tags) ? q.tags.filter((t: any) => typeof t === "string") : [];
-
-  return {
-    ok: true,
-    q: {
-      body: q.body.trim(),
-      options: q.options.map((o: any) => ({ key: o.key, text: o.text.trim() })),
-      answerKey: q.answerKey,
-      solution: q.solution.trim(),
-      difficulty: q.difficulty,
-      tags,
-    },
   };
-}
-
-function dedupeAgainst(existing: Set<string>, q: GeneratedQuestion): boolean {
-  const key = q.body.toLowerCase().replace(/\s+/g, " ").slice(0, 120);
-  if (existing.has(key)) return false;
-  existing.add(key);
-  return true;
-}
-
-// ─────────────────────────────────────────────────────────────────────────
-// Offline stub (used when --no-ai)
-// ─────────────────────────────────────────────────────────────────────────
-function offlineStub(count: number, topicCode: string, mix: Record<Difficulty, number>): GeneratedQuestion[] {
-  const diffs: Difficulty[] = [];
-  diffs.push(...Array(Math.round(count * mix.EASY)).fill("EASY"));
-  diffs.push(...Array(Math.round(count * mix.MEDIUM)).fill("MEDIUM"));
-  while (diffs.length < count) diffs.push("HARD");
-  return diffs.slice(0, count).map((d, i) => ({
-    body: `[STUB ${topicCode} #${i + 1}] What is 2 + 2?`,
-    options: [
-      { key: "A", text: "3" },
-      { key: "B", text: "4" },
-      { key: "C", text: "5" },
-      { key: "D", text: "22" },
-    ],
-    answerKey: "B",
-    solution: "Two plus two equals four. This is a placeholder generated in --no-ai mode for plumbing tests.",
-    difficulty: d,
-    tags: ["stub"],
-  }));
 }
 
 // ─────────────────────────────────────────────────────────────────────────
 // Main
 // ─────────────────────────────────────────────────────────────────────────
 async function main() {
-  const args = parseArgs(process.argv);
+  const args = parseGenArgs(process.argv.slice(2));
+  if (args.help) printHelpAndExit();
+  // Refusals first (--verify, --no-ai without --dry-run, no --max-usd), before any key or row is read.
+  const mode = resolveGenRunMode(args);
   const prisma = new PrismaClient();
 
   try {
+    // 1. A resumed run reads its own settings from its journal.
+    let journal: GenJournal | null = null;
+    let file: string | null = null;
+    if (args.resume) {
+      file = args.journal ?? genJournalPath(GEN_JOURNAL_DIR, args.resume);
+      journal = loadGenJournal(file);
+      if (args.exam && args.exam !== journal.exam) throw new Error(`--exam ${args.exam} does not match the journal's exam ${journal.exam}`);
+      console.log(`\n=== resuming ${journal.runId} from ${file} (${journal.status}; ${fmtUsd(journal.spentUsd)} spent over ${journal.calls} calls)`);
+      if (journal.status === "done") {
+        console.log("   The run is done; nothing to generate.");
+        return;
+      }
+    }
+    const settings = journal?.settings ?? settingsFromArgs(args, MODEL);
+    assertGenSettings(settings);
+    const examCode = journal?.exam ?? args.exam!;
+
+    // 2. The key and the model's price, still before the first database read.
+    let client: Anthropic | null = null;
+    if (mode.callsApi) {
+      const worstReply = worstCaseCallUsd(settings.model, 0, GEN_MAX_TOKENS); // throws for a model the guard cannot price
+      const key = resolveBulkKey(process.env, args.allowSharedKey);
+      console.log(
+        `=== spend guard: --max-usd ${fmtUsd(mode.maxUsd!)} (list price, checked before every call) · model ${settings.model} · a reply filling ${GEN_MAX_TOKENS} tokens costs ${fmtUsd(worstReply)} · ` +
+          `key ${key.env}${key.shared ? " (the SHARED key the live tutor uses; --allow-shared-key, founder decision 30 Sep 2026)" : ""} · ledger feature "${GEN_LEDGER_FEATURE}"`,
+      );
+      // maxRetries 0 (30 Sep 2026 review): the SDK's own retries also re-send a call that
+      // timed out or lost its connection, which the server may have finished and billed,
+      // so the cap would count one of two paid calls. runGeneration retries only a 429/529
+      // (refused before any work, not billed), and each of its retries goes through the guard.
+      client = new Anthropic({ apiKey: key.key, maxRetries: 0 });
+    }
+
+    // 3. Exam and topics.
     const exam = await prisma.exam.findUnique({
-      where: { code: args.exam },
+      where: { code: examCode },
       include: {
         subjects: {
           include: {
@@ -359,211 +286,94 @@ async function main() {
         },
       },
     });
-    if (!exam) throw new Error(`Exam ${args.exam} not found. Did you run \`npm run seed:exams\`?`);
+    if (!exam) throw new Error(`Exam ${examCode} not found. Did you run \`npm run seed:exams\`?`);
 
     // Build syllabus block (cached on every Claude call for this run)
     const syllabusBlock = renderSyllabusBlock(exam);
+    const topicsById = new Map<string, GenTopicInput>();
+    for (const s of exam.subjects) for (const t of s.topics) topicsById.set(t.id, { id: t.id, code: t.code, name: t.name, description: t.description });
 
-    // Decide which topics to generate for
-    const allTopics = exam.subjects.flatMap((s) => s.topics);
-    let targets: typeof allTopics = [];
-    if (args.topic) {
-      const t = allTopics.find((x) => x.code === args.topic);
-      if (!t) throw new Error(`Topic ${args.topic} not found in ${args.exam}.`);
-      targets = [t];
-    } else if (args.subject) {
-      const s = exam.subjects.find((x) => x.code === args.subject);
-      if (!s) throw new Error(`Subject ${args.subject} not found in ${args.exam}.`);
-      targets = s.topics;
-    } else if (args.all) {
-      targets = allTopics;
-    }
-    if (targets.length === 0) throw new Error("No target topics resolved.");
-
-    const client = args.noAi ? null : new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? "" });
-    if (!args.noAi && !process.env.ANTHROPIC_API_KEY) {
-      throw new Error("ANTHROPIC_API_KEY not set. Use --no-ai to test plumbing without spending.");
-    }
-
-    console.log(`Generating ${args.count} Qs for ${targets.length} topic(s) in ${args.exam}...`);
-    if (args.dryRun) console.log("[DRY RUN] No DB writes will occur.");
-
-    let totalAccepted = 0;
-    let totalRejected = 0;
-
-    for (const topic of targets) {
-      console.log(`\n→ ${topic.code} — ${topic.name}`);
-
-      // Few-shot examples: pick up to 3 validated questions on this topic
-      const fewShot = await prisma.question.findMany({
-        where: { topicId: topic.id, validated: true },
-        take: 3,
-        orderBy: { createdAt: "asc" },
-      });
-      const fewShotBlock = fewShot.length
-        ? "# Style examples (already validated for this topic — match this style)\n" +
-          fewShot
-            .map((q, i) => {
-              const opts = (q.options as { key: string; text: string }[])
-                .map((o) => `${o.key}. ${o.text}`)
-                .join("  ");
-              return `Example ${i + 1} [${q.difficulty}]\nQ: ${q.body}\n${opts}\nAnswer: ${q.answerKey}\nSolution: ${q.solution}`;
-            })
-            .join("\n\n")
-        : "";
-
-      // Avoid recent
-      const recent = args.avoidRecent > 0
-        ? await prisma.question.findMany({
-            where: { topicId: topic.id },
-            take: args.avoidRecent,
-            orderBy: { createdAt: "desc" },
-            select: { body: true },
-          })
-        : [];
-      const avoidBlock = recent.length
-        ? "# Avoid generating questions whose stem is essentially the same as any of these\n" +
-          recent.map((r, i) => `${i + 1}. ${r.body.slice(0, 200)}`).join("\n")
-        : "";
-      const dedupeSet = new Set(recent.map((r) => r.body.toLowerCase().replace(/\s+/g, " ").slice(0, 120)));
-
-      // Generate in batches
-      const accepted: GeneratedQuestion[] = [];
-      let pending = args.count;
-
-      while (pending > 0) {
-        const want = Math.min(pending, args.batchSize);
-        const batchTargets: Record<Difficulty, number> = {
-          EASY: Math.round(want * args.difficulty.EASY) / want,
-          MEDIUM: Math.round(want * args.difficulty.MEDIUM) / want,
-          HARD: 1 - (Math.round(want * args.difficulty.EASY) / want) - (Math.round(want * args.difficulty.MEDIUM) / want),
-        };
-
-        let batch: GeneratedQuestion[] = [];
-        if (args.noAi) {
-          batch = offlineStub(want, topic.code, args.difficulty);
-        } else {
-          // Retry up to args.retry times on JSON parse / shape errors.
-          let lastErr: Error | null = null;
-          for (let attempt = 0; attempt <= args.retry; attempt++) {
-            try {
-              const result = await generateBatch(client!, {
-                examName: exam.name,
-                examCode: exam.code,
-                syllabusBlock,
-                topic,
-                fewShotBlock,
-                avoidBlock,
-                count: want,
-                difficultyTargets: batchTargets,
-                language: args.language,
-              });
-              batch = result.questions;
-              lastErr = null;
-              break;
-            } catch (e: any) {
-              lastErr = e;
-              const remaining = args.retry - attempt;
-              if (remaining > 0) {
-                console.warn(`   ⚠ batch failed (${e.message?.slice(0, 100)}), retrying… (${remaining} attempt${remaining === 1 ? "" : "s"} left)`);
-              }
-            }
-          }
-          if (lastErr) {
-            console.error(`   ✗ batch failed after retries: ${lastErr.message}`);
-            break; // stop this topic; move on to the next
-          }
+    if (!journal) {
+      const targets = selectTargets(examCode, exam.subjects, settings);
+      const runId = genRunId(examCode);
+      if (mode.writes) {
+        // An unfinished run over this exam still owes its topics: resume it rather than paying for them twice.
+        for (const o of openGenJournals(GEN_JOURNAL_DIR, examCode)) {
+          const msg = `run ${o.runId} (${o.status}) over ${examCode} is unfinished: ${o.questions} questions still to go, ${fmtUsd(o.spentUsd)} spent. Continue it with ${genResumeCommand(path.join(GEN_JOURNAL_DIR, `${o.file}.json`), { maxUsd: "<usd>", allowSharedKey: args.allowSharedKey })}`;
+          if (!args.force) throw new Error(`${msg}, or pass --force to start a new run regardless`);
+          console.warn(`   ! ${msg}`);
         }
-
-        // Validate each
-        let batchAccepted = 0;
-        let batchRejected = 0;
-        for (const raw of batch) {
-          const v = validateGenerated(raw);
-          if (!v.ok) {
-            console.warn(`  ⚠ rejected: ${v.reason}`);
-            batchRejected++;
-            continue;
-          }
-          if (!dedupeAgainst(dedupeSet, v.q)) {
-            console.warn(`  ⚠ rejected: duplicate body`);
-            batchRejected++;
-            continue;
-          }
-          accepted.push(v.q);
-          batchAccepted++;
-        }
-        totalAccepted += batchAccepted;
-        totalRejected += batchRejected;
-
-        console.log(`   batch: ${batchAccepted} ok / ${batchRejected} rejected (running total: ${accepted.length}/${args.count})`);
-
-        if (args.dryRun && accepted.length > 0) {
-          console.log("\n[DRY RUN] First accepted question for this topic:");
-          console.log(JSON.stringify(accepted[0], null, 2));
-          break; // single batch in dry-run
-        }
-        if (batchAccepted === 0) {
-          console.warn(`   no accepts in last batch — stopping for ${topic.code}`);
-          break;
-        }
-        pending -= batchAccepted;
+        file = args.journal ?? genJournalPath(GEN_JOURNAL_DIR, runId);
+        if (fs.existsSync(file)) throw new Error(`journal ${file} already exists: continue it with --resume, or name another --journal`);
       }
-
-      // Verification firewall (opt-in via --verify): solve blind + adjudicate
-      // before persisting. Rejected items never reach the DB.
-      if (args.verify && !args.noAi && accepted.length > 0) {
-        console.log(`   running verification firewall over ${accepted.length} candidates…`);
-        const result = await verifyCandidates(
-          accepted.map((q) => ({
-            body: q.body,
-            options: q.options,
-            answerKey: q.answerKey,
-            solution: q.solution,
-            difficulty: q.difficulty,
-            tags: q.tags,
-          })),
-          [`syllabus:${exam.code}`, `topic.syllabusText:${topic.code}`],
-          { autoValidateOnAccept: args.autoValidate },
-        );
-        const v = result.stats.byVerdict;
-        console.log(
-          `   firewall: ${result.stats.accepted} accept · ${result.stats.needsReview} review · ${result.stats.rejected} reject (${result.stats.errors} unusable replies) ` +
-            `(verdicts CORRECT:${v.CORRECT} MISMATCH:${v.MISMATCH} AMBIGUOUS:${v.AMBIGUOUS} FLAWED:${v.FLAWED}) ` +
-            `~$${result.stats.costUsd.toFixed(4)}`,
-        );
-        if (!args.dryRun && result.questions.length > 0) {
-          await saveVerifiedQuestions(prisma, exam.id, topic.id, result.questions, args.autoValidate);
-          console.log(`   saved ${result.questions.length} verified questions to DB`);
-        }
-        continue; // skip the legacy save path for this topic
+      journal = newGenJournal(runId, examCode, settings, targets);
+      if (mode.writes) {
+        saveGenJournal(file!, journal);
+        console.log(`\n=== run ${runId} → ${file}`);
       }
-
-      // Save (skip in dry-run) — legacy single-pass path.
-      if (!args.dryRun && accepted.length > 0) {
-        await saveQuestions(prisma, exam.id, topic.id, accepted);
-        console.log(`   saved ${accepted.length} questions to DB (validated:false, source:AI_GENERATED)`);
-      }
+    } else {
+      // The database is the truth for what an earlier invocation saved.
+      const fixed = reconcileSaved(journal, await savedCountsForRun(prisma, exam.id, journal.runId));
+      if (fixed.length) console.log(`   saved counts taken from the database for: ${fixed.join(", ")}`);
+      journal.status = "running";
+      saveGenJournal(file!, journal);
     }
+
+    const plan = planSummary(journal);
+    console.log(
+      `Generating ${plan.questions} Qs over ${plan.topics} topic(s) in ${examCode} (~${plan.calls} calls of up to ${settings.batchSize})` +
+        `${settings.skipSubjects.length ? ` · skipping subjects ${settings.skipSubjects.join(", ")}` : ""}` +
+        `${mode.callsApi ? ` · spent so far ${fmtUsd(journal.spentUsd)} of ${fmtUsd(mode.maxUsd!)}` : ""}...`,
+    );
+    if (!mode.writes) console.log(`[DRY RUN] One batch per topic; no DB writes, no journal.${mode.callsApi ? " The calls are billed and ledgered." : " No API call."}`);
+
+    const runJournal = journal;
+    const journalFile = file;
+    const result = await runGeneration(runJournal, topicsById, {
+      examCode,
+      mode,
+      buildParams: (topic, want, ctx, mix) =>
+        buildParams({ model: settings.model, examName: exam.name, examCode: exam.code, syllabusBlock, topic, ctx, count: want, difficultyTargets: mix, language: settings.language }),
+      context: (topic) => topicContext(prisma, topic, settings.avoidRecent),
+      call: (params) => client!.messages.create(params),
+      ledger: (message, latencyMs) => recordAiUsageAwaited(GEN_LEDGER_FEATURE, message, { model: message.model || settings.model, ref: examCode, latencyMs }),
+      save: (topic, qs) => saveQuestions(prisma, exam.id, topic.id, qs, settings.model, runJournal.runId),
+      persist: mode.writes ? (j) => saveGenJournal(journalFile!, j) : undefined,
+    }).catch((e: unknown) => {
+      // 30 Sep 2026 review: a database error in save or context leaves the journal "running",
+      // and a fresh run over this exam is refused until it is resumed: say how.
+      const hint = genCrashResumeHint(mode, journalFile, args.allowSharedKey);
+      if (hint) console.error(`\n   ${hint}`);
+      throw e;
+    });
 
     // Cost summary
-    console.log("\n──────── Token usage ────────");
-    console.log(`  Calls:          ${totals.calls}`);
-    console.log(`  Input:          ${totals.inputTokens.toLocaleString()}`);
-    console.log(`  Output:         ${totals.outputTokens.toLocaleString()}`);
-    console.log(`  Cache create:   ${totals.cacheCreationTokens.toLocaleString()}`);
-    console.log(`  Cache read:     ${totals.cacheReadTokens.toLocaleString()}`);
-    const cost =
-      (totals.inputTokens / 1_000_000) * PRICE_INPUT_PER_M +
-      (totals.outputTokens / 1_000_000) * PRICE_OUTPUT_PER_M +
-      (totals.cacheCreationTokens / 1_000_000) * PRICE_CACHE_WRITE_PER_M +
-      (totals.cacheReadTokens / 1_000_000) * PRICE_CACHE_READ_PER_M;
-    console.log(`  Estimated cost: $${cost.toFixed(4)}`);
+    console.log("\n──────── Token usage (this invocation) ────────");
+    console.log(`  Calls:          ${result.calls}`);
+    console.log(`  Input:          ${result.tokens.input.toLocaleString()}`);
+    console.log(`  Output:         ${result.tokens.output.toLocaleString()}`);
+    console.log(`  Cache create:   ${result.tokens.cacheWrite.toLocaleString()}`);
+    console.log(`  Cache read:     ${result.tokens.cacheRead.toLocaleString()}`);
+    console.log(`  Spent:          ${fmtUsd(result.spentUsd)} (from each reply's usage; ledgered as AiUsage "${GEN_LEDGER_FEATURE}", ref ${examCode})`);
+    if (mode.writes) console.log(`  Run total:      ${fmtUsd(runJournal.spentUsd)} over ${runJournal.calls} calls · ceiling ${fmtUsd(mode.maxUsd ?? 0)} · journal ${journalFile}`);
     console.log(`\n──────── Result ────────`);
-    console.log(`  Accepted: ${totalAccepted}`);
-    console.log(`  Rejected: ${totalRejected}`);
-    if (args.dryRun) console.log("  [DRY RUN] nothing was saved — re-run without --dry-run to persist.");
-    else console.log("  Review at: /admin/questions?source=AI_GENERATED&validated=false");
+    console.log(`  Accepted: ${result.accepted}`);
+    console.log(`  Rejected: ${result.rejected}`);
+    if (result.gaveUp.length) console.log(`  Topics given up: ${result.gaveUp.join(", ")}`);
+    if (!mode.writes) {
+      console.log("  [DRY RUN] nothing was saved — re-run without --dry-run to persist.");
+    } else {
+      console.log(`  Saved:    ${result.saved} (validated:false, source:AI_GENERATED)`);
+      console.log("  Review at: /admin/questions?source=AI_GENERATED&validated=false");
+      console.log(`  Answer-check next (dry run first): ${VERIFY_SCRIPT} --exams ${examCode} --scope unvalidated`);
+    }
+    if (result.stop) {
+      console.log(`\n=== STOPPED by the spend guard (${result.stop.reason}): ${result.stop.remainingQuestions} questions still to go`);
+      if (mode.writes && journalFile) {
+        console.log(`   To continue${result.stop.reason === "api-error" ? " once the cause above is fixed" : ""}:\n${genResumeCommand(journalFile, { maxUsd: result.stop.suggestedMaxUsd, allowSharedKey: args.allowSharedKey })}`);
+      }
+      process.exitCode = 2;
+    }
   } finally {
     await prisma.$disconnect();
   }
@@ -587,31 +397,88 @@ function renderSyllabusBlock(exam: any): string {
   return lines.join("\n");
 }
 
+/** Few-shot examples and the stems to avoid for one topic (read-only). */
+async function topicContext(prisma: PrismaClient, topic: GenTopicInput, avoidRecent: number): Promise<GenTopicContext> {
+  // Few-shot examples: pick up to 3 validated questions on this topic
+  const fewShot = await prisma.question.findMany({
+    where: { topicId: topic.id, validated: true },
+    take: 3,
+    orderBy: { createdAt: "asc" },
+  });
+  const fewShotBlock = fewShot.length
+    ? "# Style examples (already validated for this topic — match this style)\n" +
+      fewShot
+        .map((q, i) => {
+          const opts = (q.options as { key: string; text: string }[])
+            .map((o) => `${o.key}. ${o.text}`)
+            .join("  ");
+          return `Example ${i + 1} [${q.difficulty}]\nQ: ${q.body}\n${opts}\nAnswer: ${q.answerKey}\nSolution: ${q.solution}`;
+        })
+        .join("\n\n")
+    : "";
+
+  // Avoid recent
+  const recent = avoidRecent > 0
+    ? await prisma.question.findMany({
+        where: { topicId: topic.id },
+        take: avoidRecent,
+        orderBy: { createdAt: "desc" },
+        select: { body: true },
+      })
+    : [];
+  const avoidBlock = recent.length
+    ? "# Avoid generating questions whose stem is essentially the same as any of these\n" +
+      recent.map((r, i) => `${i + 1}. ${r.body.slice(0, 200)}`).join("\n")
+    : "";
+  return { fewShotBlock, avoidBlock, recentBodies: recent.map((r) => r.body) };
+}
+
+/**
+ * One batch, all or nothing, as soon as it arrives (30 Sep 2026: saved per
+ * batch, not per topic, so a stop mid-topic keeps what was paid for).
+ * metadata.genRun names the run; a resume counts it to reconcile its journal.
+ */
 async function saveQuestions(
   prisma: PrismaClient,
   examId: string,
   topicId: string,
-  qs: GeneratedQuestion[]
-) {
-  for (const q of qs) {
-    await prisma.question.create({
-      data: {
-        examId,
-        topicId,
-        type: "MCQ",
-        difficulty: q.difficulty,
-        body: q.body,
-        options: q.options,
-        answerKey: q.answerKey,
-        solution: q.solution,
-        language: questionLanguage(q.body),
-        source: "AI_GENERATED" as QuestionSource,
-        validated: false,
-        tags: q.tags,
-        metadata: { generator: MODEL, batch: `bulk-${new Date().toISOString().slice(0, 10)}` },
-      },
-    });
-  }
+  qs: GeneratedQuestion[],
+  model: string,
+  runId: string,
+): Promise<string[]> {
+  const created = await prisma.$transaction(
+    qs.map((q) =>
+      prisma.question.create({
+        data: {
+          examId,
+          topicId,
+          type: "MCQ",
+          difficulty: q.difficulty,
+          body: q.body,
+          options: q.options,
+          answerKey: q.answerKey,
+          solution: q.solution,
+          language: questionLanguage(q.body),
+          source: "AI_GENERATED" as QuestionSource,
+          validated: false,
+          tags: q.tags,
+          metadata: { generator: model, batch: `bulk-${new Date().toISOString().slice(0, 10)}`, genRun: runId },
+        },
+        select: { id: true },
+      }),
+    ),
+  );
+  return created.map((c) => c.id);
+}
+
+/** Rows each topic already holds from this run (metadata.genRun), keyed by topic id. */
+async function savedCountsForRun(prisma: PrismaClient, examId: string, runId: string): Promise<Record<string, number>> {
+  const rows = await prisma.$queryRaw<Array<{ topicId: string; n: number }>>`
+    SELECT q."topicId" AS "topicId", COUNT(*)::int AS n
+      FROM "Question" q
+     WHERE q."examId" = ${examId} AND q.metadata->>'genRun' = ${runId}
+     GROUP BY q."topicId"`;
+  return Object.fromEntries(rows.map((r) => [r.topicId, Number(r.n)]));
 }
 
 // A question written mostly in Devanagari (General Hindi topics — MP RAEO,
@@ -621,42 +488,6 @@ function questionLanguage(body: string): Language {
   const latin = body.match(/[A-Za-z]/g)?.length ?? 0;
   const devanagari = body.match(/[ऀ-ॿ]/g)?.length ?? 0;
   return devanagari > 0 && devanagari >= latin ? ("HI" as Language) : ("EN" as Language);
-}
-
-// Save questions that passed the verification firewall, with full provenance.
-// ACCEPT items are auto-validated only when --auto-validate is set; otherwise
-// everything lands in the SME queue (validated:false) — just a much cleaner one.
-async function saveVerifiedQuestions(
-  prisma: PrismaClient,
-  examId: string,
-  topicId: string,
-  qs: FactoryQuestion[],
-  autoValidate: boolean,
-) {
-  for (const fq of qs) {
-    const accepted = fq.provenance.gate.decision === "ACCEPT";
-    const validated = autoValidate && accepted;
-    await prisma.question.create({
-      data: {
-        examId,
-        topicId,
-        type: "MCQ",
-        difficulty: fq.finalDifficulty,
-        body: fq.candidate.body,
-        options: fq.candidate.options,
-        answerKey: fq.finalAnswerKey,
-        solution: fq.candidate.solution,
-        language: questionLanguage(fq.candidate.body),
-        source: "AI_GENERATED" as QuestionSource,
-        validated,
-        validatedBy: validated ? "factory-v1:auto" : null,
-        validatedAt: validated ? new Date() : null,
-        tags: fq.candidate.tags,
-        // round-trip to a plain JSON object for Prisma's Json input type
-        metadata: JSON.parse(JSON.stringify({ provenance: fq.provenance })),
-      },
-    });
-  }
 }
 
 main().catch((err) => {

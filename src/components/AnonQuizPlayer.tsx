@@ -179,6 +179,10 @@ export function AnonQuizPlayer({
       // 2026) — the CTA promises to "track your weak topics", so stash
       // score + the questions they missed. A post-signup recall on the
       // exam hub reads and clears this.
+      // 30 Sep 2026 (quiz carry, src/lib/quiz-carry.ts): + the question ids
+      // and the option chosen for each, so the first signed-in page can carry
+      // the result into the account's weak topics — re-graded on the server
+      // against the stored keys (the score here is never trusted).
       try {
         const missed = qs
           .filter((_, i) => !nextAnswers[i]?.correct)
@@ -194,6 +198,8 @@ export function AnonQuizPlayer({
             total: qs.length,
             missed,
             at: Date.now(),
+            questionIds: qs.map((qq) => qq.id),
+            choices: nextAnswers.map((a) => a.key),
           }),
         );
       } catch {

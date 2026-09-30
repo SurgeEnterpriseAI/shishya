@@ -57,6 +57,12 @@ import { SCHOOL_CONTAINER_WHERE } from "@/lib/school/scope";
 import { dashboardStartCopy } from "@/lib/dashboard-start-copy";
 import { schoolDashboardCopy } from "@/lib/school/student-copy";
 import { schoolBoardForExamCode, schoolClassPath } from "@/lib/school/surface";
+import { listRecentChats } from "@/lib/db/recent-chats";
+import { DASHBOARD_CHATS_LIMIT, recentChatItem, recentChatsCopy } from "@/lib/recent-chats";
+import { loadPickup } from "@/lib/db/pickup";
+import { pickupView } from "@/lib/pickup";
+import { PickupCard } from "@/components/PickupCard";
+import { AnonQuizRecall } from "@/components/AnonQuizRecall";
 
 // ?joined=1 (JoinBatchButton) is read below; the utm_* tags only by the
 // signed-out redirect. Next hands over every query param, so the type says so.
@@ -194,6 +200,16 @@ async function renderDashboard(searchParams: Promise<DashboardSearchParams>) {
   void onbCompletedAt;
   void onbStage;
 
+  // 30 Sep 2026 (saved chats, src/lib/recent-chats.ts): the member's recent
+  // tutor chats (general and real exams; school chats stay in the school
+  // chat), each reopening where it left off. Started here to run alongside
+  // the reads below; best-effort — a failure lists none.
+  const recentChatsP = listRecentChats(userId, "not-school", { limit: DASHBOARD_CHATS_LIMIT }).catch(() => []);
+  // 30 Sep 2026 ("pick up where you left off", src/lib/pickup.ts): the
+  // member's last tutor question (answered or not) and last result with its
+  // weakest topics — real exams and the general chat only. Started here to
+  // run alongside the reads below; best-effort.
+  const pickupP = loadPickup(userId).catch(() => null);
   const [allExams, enrollments, recentAttempts, stalledAttempts, weakness, chatRecent, dailyBriefs, dueRevisions, streak, dailyPick] =
     await Promise.all([
       getDashboardExams(),
@@ -681,6 +697,10 @@ async function renderDashboard(searchParams: Promise<DashboardSearchParams>) {
   }
   const topAskedTopics = [...topicAskCounts.values()].sort((a, b) => b.count - a.count).slice(0, 3);
   const totalChatSessions = chatRecent.length;
+  const chatsCopy = recentChatsCopy(locale);
+  const chatsNow = new Date();
+  const recentChatItems = (await recentChatsP).map((r) => recentChatItem(r, chatsCopy, chatsNow));
+  const pickup = pickupView(await pickupP, locale, chatsNow);
 
   const enrolledIds = new Set(enrollments.map((e) => e.examId));
   // The picker below hides exams the student already has, so a search for
@@ -782,6 +802,17 @@ async function renderDashboard(searchParams: Promise<DashboardSearchParams>) {
           <LiveTestTodayBanner data={await loadTodaysLiveTests()} />
           <SundayLiveTestBanner data={await loadUpcomingSunday()} signedIn />
         </div>
+
+        {/* 30 Sep 2026: a guest quiz taken before signing in is carried into
+            this account's weak topics once (src/lib/quiz-carry.ts), then the
+            card says what was saved. Any exam's quiz. */}
+        <AnonQuizRecall signedIn locale={locale} />
+
+        {/* Pick up where you left off (30 Sep 2026, src/lib/pickup.ts): the
+            last tutor question — "did not get an answer" only when the stored
+            last row is the student's — one tap back into that saved chat or
+            its answer, and the last result with its weakest topics. */}
+        {pickup && <PickupCard view={pickup} surface="dashboard" className="mt-5" />}
 
         {joinedBatch && <JoinedBanner batchName={joinedBatch.batch.name} locale={locale} />}
 
@@ -1245,6 +1276,33 @@ async function renderDashboard(searchParams: Promise<DashboardSearchParams>) {
                 )}
               </div>
             </div>
+          </section>
+        )}
+
+        {/* Your recent chats (30 Sep 2026) — each opens where it left off
+            (/chat?session=…, in its own scope); "no reply yet" when the
+            student's last message there never got an answer. */}
+        {recentChatItems.length > 0 && (
+          <section className="mt-10">
+            <div className="flex items-baseline justify-between gap-3">
+              <h2 className="text-base font-semibold text-ink-800">{chatsCopy.heading}</h2>
+              <Link href="/chat?general=1" prefetch={false} className="text-xs font-medium text-saffron-700 hover:text-saffron-800">
+                {chatsCopy.moreInTutor}
+              </Link>
+            </div>
+            <ul className="mt-3 divide-y divide-ink-200 overflow-hidden rounded-md border border-ink-200 bg-white">
+              {recentChatItems.map((c) => (
+                <li key={c.id}>
+                  <Link href={c.href} prefetch={false} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-ink-50/60">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-ink-900">{c.title}</p>
+                      <p className={`text-xs ${c.unanswered ? "text-rose-700" : "text-ink-500"}`}>{c.meta}</p>
+                    </div>
+                    <span className="shrink-0 text-xs font-medium text-saffron-700">{chatsCopy.continue} →</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </section>
         )}
 

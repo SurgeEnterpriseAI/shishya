@@ -59,14 +59,53 @@ export interface BatchesApi {
  * founder put every bulk AI job on hold until a separate key exists. So the
  * batch client is built from this variable alone, and a caller that wants to
  * submit anything asks for it up front (assertBulkKey) before touching the
- * database.
+ * database. Until 30 Sep 2026; since then a runner may pass
+ * --allow-shared-key (ALLOW_SHARED_KEY_FLAG below) and hand runJournalPhase a
+ * client from batchesApiFor(). The default client (liveApi) still refuses it.
  */
 export const BULK_KEY_ENV = "ANTHROPIC_BULK_API_KEY";
 
-export function assertBulkKey(): string {
-  const key = process.env[BULK_KEY_ENV];
-  if (!key) throw new Error(`${BULK_KEY_ENV} is not set: bulk jobs must not run on the shared ANTHROPIC_API_KEY (hold since 15 Sep 2026)`);
-  return key;
+/**
+ * 30 Sep 2026, the founder's decision: "you don't need a separate bulk API
+ * key; use the existing API key; credits I can manage." The refusal stays
+ * the default: only an explicit --allow-shared-key on a runner's command
+ * line lets a bulk job run on ANTHROPIC_API_KEY, the key the live tutor
+ * serves students with. The separate key still wins whenever it is set
+ * (the flag allows the shared key, it never forces it), and the spend guard
+ * below (--max-usd, one chunk at a time, the production-key probe) applies
+ * either way.
+ */
+export const ALLOW_SHARED_KEY_FLAG = "--allow-shared-key";
+
+export interface BulkKeyChoice {
+  key: string;
+  /** The variable the key came from: the only thing a runner ever logs about it. */
+  env: string;
+  /** true = the tutor's own ANTHROPIC_API_KEY, allowed by --allow-shared-key. */
+  shared: boolean;
+}
+
+/** Which key a bulk job may use: the separate bulk key when set, else the shared key only when the operator passed --allow-shared-key. Pure over `env`. */
+export function resolveBulkKey(env: Readonly<Record<string, string | undefined>>, allowSharedKey: boolean): BulkKeyChoice {
+  const bulk = env[BULK_KEY_ENV];
+  if (bulk) return { key: bulk, env: BULK_KEY_ENV, shared: false };
+  if (!allowSharedKey) {
+    throw new Error(
+      `${BULK_KEY_ENV} is not set: bulk jobs must not run on the shared ${PRODUCTION_KEY_ENV} (hold since 15 Sep 2026). Since 30 Sep 2026 the founder allows the shared key: pass ${ALLOW_SHARED_KEY_FLAG} to run this job on it, under the spend guard.`,
+    );
+  }
+  const shared = env[PRODUCTION_KEY_ENV];
+  if (!shared) throw new Error(`${ALLOW_SHARED_KEY_FLAG} was passed, but neither ${BULK_KEY_ENV} nor ${PRODUCTION_KEY_ENV} is set`);
+  return { key: shared, env: PRODUCTION_KEY_ENV, shared: true };
+}
+
+export function assertBulkKey(opts: { allowSharedKey?: boolean } = {}): string {
+  return resolveBulkKey(process.env, !!opts.allowSharedKey).key;
+}
+
+/** A Batches API client on a key the runner resolved itself (resolveBulkKey), passed as PhaseDeps.api so every submit, poll and collect of the run uses that key. */
+export function batchesApiFor(key: string): BatchesApi {
+  return new Anthropic({ apiKey: key }).messages.batches;
 }
 
 let bulkClient: Anthropic | null = null;
@@ -462,7 +501,12 @@ export function openJournalsCovering(
 //     Only the outcome is ever logged, never the key.
 //   • --i-confirm-auto-reload: a literal flag the operator passes after
 //     checking in the Console that auto-reload is ON; the runner prints the
-//     statement back before submitting. Friction, not a check.
+//     statement back before submitting. Friction, not a check. Since 30 Sep
+//     2026 a runner may opt in to --founder-manages-credits in its place
+//     (the founder waived the auto-reload check; see FOUNDER_CREDITS_FLAG).
+//   • the key (30 Sep 2026): ANTHROPIC_BULK_API_KEY when set, else the
+//     shared ANTHROPIC_API_KEY only with --allow-shared-key
+//     (resolveBulkKey); the guard above is the same on either key.
 
 export const PRODUCTION_KEY_ENV = "ANTHROPIC_API_KEY";
 /** The probe's model: the cheapest tier, pinned so the probe never drifts to an id the production key cannot use. */
@@ -472,6 +516,46 @@ export const DEFAULT_CHUNK = 2000;
 export const CONFIRM_AUTO_RELOAD_FLAG = "--i-confirm-auto-reload";
 export const CONFIRM_AUTO_RELOAD_HELP = `${CONFIRM_AUTO_RELOAD_FLAG}  the operator has opened the Anthropic Console (Plans & Billing) and confirmed that auto-reload is ON for this organisation, so the balance the tutor shares refills before a bulk run can drain it. --apply refuses to start without it; it is a friction step, not a check.`;
 export const CONFIRM_AUTO_RELOAD_STATEMENT = "Operator statement (--i-confirm-auto-reload): I checked the Anthropic Console (Plans & Billing) before this run and auto-reload is ON for this organisation.";
+
+/**
+ * 30 Sep 2026: the founder waived the auto-reload check ("I regularly update
+ * credits. You don't worry about auto reload"). --i-confirm-auto-reload
+ * makes the operator print "auto-reload is ON", which nobody checks any
+ * more, so a runner that opts in (guardFlags(argv, apply, {
+ * founderCreditsAck: true }); scripts/verify-question-bank.ts only) takes
+ * this flag in its place. It is the same friction step, and its printed
+ * statement says what is true: the check was NOT made. The ceiling, one
+ * chunk at a time and the production-key probes are unchanged, and passing
+ * both flags is refused.
+ */
+export const FOUNDER_CREDITS_FLAG = "--founder-manages-credits";
+export const FOUNDER_CREDITS_HELP = `${FOUNDER_CREDITS_FLAG}  in place of ${CONFIRM_AUTO_RELOAD_FLAG}, on runners that accept it: auto-reload was NOT checked; the founder waived that check on 30 Sep 2026 and tops up the shared balance himself. The runner prints that statement back.`;
+export const FOUNDER_CREDITS_STATEMENT = `Operator statement (${FOUNDER_CREDITS_FLAG}): auto-reload was NOT checked. On 30 Sep 2026 the founder waived that check; he tops up the shared credit balance himself. The --max-usd ceiling, one chunk at a time and the production-key probes are what protect the tutor's balance on this run.`;
+
+export interface GuardFlagOpts {
+  /** Accept FOUNDER_CREDITS_FLAG in place of CONFIRM_AUTO_RELOAD_FLAG (30 Sep 2026). */
+  founderCreditsAck?: boolean;
+}
+
+/** The operator statement to print back for the acknowledgement flag on this command line; null when there is none. */
+export function guardStatement(argv: readonly string[], opts: GuardFlagOpts = {}): string | null {
+  if (argv.includes(CONFIRM_AUTO_RELOAD_FLAG)) return CONFIRM_AUTO_RELOAD_STATEMENT;
+  if (opts.founderCreditsAck && argv.includes(FOUNDER_CREDITS_FLAG)) return FOUNDER_CREDITS_STATEMENT;
+  return null;
+}
+
+/**
+ * The acknowledgement flag a printed continue command carries: the one the
+ * operator passed; with neither on the command line (always so on a dry run),
+ * the founder flag on a runner that opted in, else the auto-reload flag.
+ * 30 Sep 2026: an opted-in runner used to default to --i-confirm-auto-reload,
+ * so the dry run → paste-the-continue-command flow made the operator print
+ * "auto-reload is ON", which nobody checks since the founder waived it.
+ */
+export function ackFlag(argv: readonly string[], opts: GuardFlagOpts = {}): string {
+  if (opts.founderCreditsAck) return argv.includes(CONFIRM_AUTO_RELOAD_FLAG) ? CONFIRM_AUTO_RELOAD_FLAG : FOUNDER_CREDITS_FLAG;
+  return CONFIRM_AUTO_RELOAD_FLAG;
+}
 
 export type ProbeKind = "ok" | "billing" | "auth" | "error";
 
@@ -561,8 +645,8 @@ export interface GuardFlags {
   confirmed: boolean;
 }
 
-/** Reads --max-usd, --chunk and --i-confirm-auto-reload; an --apply run is refused without the first and the last. */
-export function guardFlags(argv: readonly string[], apply: boolean): GuardFlags {
+/** Reads --max-usd, --chunk and --i-confirm-auto-reload (or, when opts.founderCreditsAck, --founder-manages-credits); an --apply run is refused without the ceiling and an acknowledgement. */
+export function guardFlags(argv: readonly string[], apply: boolean, opts: GuardFlagOpts = {}): GuardFlags {
   // A flag given without a value (last on the line) is malformed, not absent.
   const arg = (name: string): string | undefined => {
     const i = argv.indexOf(name);
@@ -575,14 +659,25 @@ export function guardFlags(argv: readonly string[], apply: boolean): GuardFlags 
   const chunkSize = rawChunk == null ? DEFAULT_CHUNK : Number(rawChunk);
   if (!rawChunk && rawChunk != null) throw new Error(`--chunk must be a whole number of requests per batch, 1 to ${BATCH_CHUNK_MAX} (got "")`);
   if (!Number.isInteger(chunkSize) || chunkSize < 1 || chunkSize > BATCH_CHUNK_MAX) throw new Error(`--chunk must be a whole number of requests per batch, 1 to ${BATCH_CHUNK_MAX} (got "${rawChunk}")`);
-  const confirmed = argv.includes(CONFIRM_AUTO_RELOAD_FLAG);
+  const autoReload = argv.includes(CONFIRM_AUTO_RELOAD_FLAG);
+  const founderAck = !!opts.founderCreditsAck && argv.includes(FOUNDER_CREDITS_FLAG);
+  if (autoReload && founderAck) {
+    throw new Error(`pass ${CONFIRM_AUTO_RELOAD_FLAG} or ${FOUNDER_CREDITS_FLAG}, not both: one says auto-reload was checked and is ON, the other that it was not checked`);
+  }
+  const confirmed = autoReload || founderAck;
   if (apply) {
     if (maxUsd == null) {
       throw new Error(
         `--apply needs --max-usd <usd>: a hard ceiling on this run's ledgered spend at batch prices, checked before every chunk against the chunk's worst case (26 Sep 2026: two bulk runs emptied the balance the tutor shares). There is no default — name the number.`,
       );
     }
-    if (!confirmed) throw new Error(`--apply needs ${CONFIRM_AUTO_RELOAD_FLAG}.\n   ${CONFIRM_AUTO_RELOAD_HELP}`);
+    if (!confirmed) {
+      throw new Error(
+        opts.founderCreditsAck
+          ? `--apply needs ${CONFIRM_AUTO_RELOAD_FLAG} or ${FOUNDER_CREDITS_FLAG}.\n   ${CONFIRM_AUTO_RELOAD_HELP}\n   ${FOUNDER_CREDITS_HELP}`
+          : `--apply needs ${CONFIRM_AUTO_RELOAD_FLAG}.\n   ${CONFIRM_AUTO_RELOAD_HELP}`,
+      );
+    }
   }
   return { maxUsd, chunkSize, confirmed };
 }

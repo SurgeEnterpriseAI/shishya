@@ -30,6 +30,12 @@
 // the next exam appears only inside the rollover block; the subject, the
 // weakest-topic line and the exam-week line go generic unless the student
 // is actually enrolled in that next exam too.
+// Pick up where you left off (30 Sep 2026, src/lib/pickup.ts): one line
+// quoting the student's own last typed tutor question from the last 3 IST
+// days (<= 60 characters, escaped), linking back into that saved chat — or
+// into its answer when it never got one. Skipped when there is none, and for
+// a student the coach-morning mail already quoted it to today (one quote a
+// morning). No new email type; a dry run reports only how many would carry it.
 // Auth: Bearer ${CRON_SECRET}. Daily per vercel.json.
 
 export const runtime = "nodejs";
@@ -56,6 +62,8 @@ import {
 } from "@/lib/exam-week-mail";
 import { shiftDayIso } from "@/lib/exam-week-student";
 import { practiceExamCodes } from "@/lib/db/exam-practice";
+import { loadEmailQuestions } from "@/lib/db/pickup";
+import { pickupEmailLine } from "@/lib/pickup";
 
 const MAX_SENDS = 200;
 
@@ -134,6 +142,19 @@ export async function GET(req: Request) {
   const since = new Date(now.getTime() - 90 * 86_400_000);
   const daysByUser = await loadStudyDays(userIds, since);
   const todayIdx = istDay(now);
+
+  // The next-day line (see the header): coach-morning recipients of the last
+  // 20 hours already had it; everyone else, their own last typed question.
+  const coachQuoted = new Set(
+    (
+      await prisma
+        .$queryRaw<{ userId: string }[]>`
+          SELECT DISTINCT "userId" FROM "EmailTouch"
+          WHERE tag = 'coach-morning' AND "sentAt" > NOW() - INTERVAL '20 hours' AND "userId" = ANY(${userIds})`
+        .catch(() => [] as { userId: string }[])
+    ).map((r) => r.userId),
+  );
+  const lastQuestions = await loadEmailQuestions(userIds.filter((id) => !coachQuoted.has(id)), now);
 
   // Students who already committed to a coach plan — they get the plain
   // mail; everyone else gets the coach invitation at the end.
@@ -215,7 +236,7 @@ export async function GET(req: Request) {
   // every enrolment (the old behaviour) rather than stopping the run.
   const practiceCodes = await practiceExamCodes();
 
-  let sent = 0, failed = 0;
+  let sent = 0, failed = 0, withPickup = 0;
   const modes: Record<string, number> = {};
   const sample: { name: string | null; short: string | null; mode: string; examWeek: string | null }[] = [];
   for (const u of users) {
@@ -258,6 +279,8 @@ export async function GET(req: Request) {
       mode = `generic:${resolved.done.code}`;
     }
     modes[mode] = (modes[mode] ?? 0) + 1;
+    const pickup = pickupEmailLine(lastQuestions.get(u.id), now);
+    if (pickup) withPickup++;
     if (dry) {
       if (sample.length < 10) sample.push({ name: u.name, short: examShort, mode, examWeek: examWeek?.text ?? null });
       continue;
@@ -274,10 +297,11 @@ export async function GET(req: Request) {
       liveTest,
       examWeek: examWeek ? { text: examWeek.text, html: examWeek.html } : null,
       rollover,
+      pickup,
     }).catch(() => false);
     if (ok) sent++; else failed++;
   }
 
-  if (dry) return Response.json({ ok: true, dry: true, candidates: candidates.length, users: users.length, modes, sample });
-  return Response.json({ ok: true, candidates: candidates.length, sent, failed, modes });
+  if (dry) return Response.json({ ok: true, dry: true, candidates: candidates.length, users: users.length, modes, withPickup, sample });
+  return Response.json({ ok: true, candidates: candidates.length, sent, failed, modes, withPickup });
 }

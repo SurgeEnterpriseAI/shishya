@@ -56,6 +56,7 @@ import { ageEligibilityLine, relatedExamLines } from "@/lib/page-gates-copy";
 import { usableNotesSql } from "@/lib/topic-notes";
 import { passedEstimateLine, passedEstimateView, sourceHostLabel } from "@/lib/official-source";
 import { buildTimeline, focusExamRow, type TimelineRow } from "@/lib/exam-timeline";
+import { officialReleases, releaseMachineLine, type OfficialRelease } from "@/lib/official-release";
 import { istDay } from "@/lib/exam-week";
 import { markingSchemeVerdict } from "@/lib/marking-scheme";
 import { examWeekAeoLines, loadExamWeekExams, loadExamWeekTally, loadRealPhaseArticles, type RealPhaseArticle } from "@/lib/exam-week-aeo";
@@ -291,6 +292,19 @@ export async function GET(
       if (!dated.length) L.push(...footer);
       L.push("");
     }
+  }
+
+  // Official releases (30 Sep 2026, official watch): an answer key / result
+  // Shishya's own fetch read on the conducting body's page (source
+  // official-watch), released in the last 30 days — the only rows any
+  // Shishya surface calls "released" / "published" (src/lib/official-release.ts).
+  // Its own section: the Key dates grammar above is parsed by truth-lint.
+  const releases = officialReleases(dates, e?.officialUrl, now);
+  const releaseList = [releases.answerKey, releases.result].filter((r): r is OfficialRelease => !!r);
+  if (releaseList.length) {
+    L.push("## Official release — seen on the conducting body's own site");
+    for (const r of releaseList) L.push(`- ${releaseMachineLine(r)}`);
+    L.push("");
   }
 
   // Exam Week Mode (6 Sep 2026): present only while a TYPED exam-day row

@@ -13,9 +13,15 @@
 // counts. When a template changes, change it here too — the test lists one
 // real instance of every template.
 
+/** The results page's "Explain my mistakes" seed — a mistake review
+ *  (src/app/attempts/[id]/results/page.tsx). 30 Sep 2026: named so the chat
+ *  can offer its next-mistake chips and the tutor's memory can fold these
+ *  openers into one line (src/lib/recent-chats.ts, src/lib/tutor-memory.ts). */
+export const MISTAKE_REVIEW_OPENER = /^I just took a (.{1,80}) mock and got (\d+) questions? wrong/u;
+
 const TEMPLATES: readonly RegExp[] = [
   // results page, anonymous quiz, study-day links
-  /^I just took a .{1,80} mock and got \d+ questions? wrong/u,
+  MISTAKE_REVIEW_OPENER,
   /^I just took a quick .{1,120} quiz for .{1,80} and scored \d+\/\d+/u,
   /^I just finished a .{1,80} mock and scored /u,
   /^On my last .{1,80} mock I got \d+\/\d+ on /u,
@@ -23,6 +29,9 @@ const TEMPLATES: readonly RegExp[] = [
   // topic pages, tutor chips, dashboards
   /^I'm studying .{1,160} for .{1,80}\. Be my tutor for this topic/u,
   /^I'm weak in .{1,160} for .{1,80}\. Tutor me on this topic/u,
+  // 30 Sep 2026: the home page's weak-topic "Ask the tutor" seed
+  // (src/components/home/HomeForYou.tsx) was missing from this list.
+  /^.{1,160} is one of my weakest topics for .{1,80}\. Explain the key ideas and give me one practice question/u,
   /^Teach me .{1,160} for .{1,80} — /u,
   /^Tutor me on .{1,160} — that's my weakest area in /u,
   /^Go deeper on .{1,160} for .{1,80} — examples and edge cases I should know/u,
@@ -102,6 +111,22 @@ const EXACT = new Set([
   "క్లాస్ టెస్ట్ రాబోతోంది — ఒక అధ్యాయాన్ని బాగా రివైజ్ ఎలా చేయాలి?",
   "నాకు కష్టంగా ఉన్న ఒక టాపిక్ వివరించండి — ఏదో నేను చెబుతాను.",
   "నేను ఇప్పుడే చదివిన అధ్యాయంపై నన్ను 3 చిన్న ప్రశ్నలు అడగండి.",
+  // 30 Sep 2026: the mistake review's quick replies (src/lib/recent-chats.ts
+  // REVIEW_CHIPS, en / hi / te) — our words, not the student's.
+  "Next mistake",
+  "Give me a similar question",
+  "Explain it more simply",
+  "अगली गलती",
+  "ऐसा ही एक और सवाल दीजिए",
+  "इसे और आसान तरीके से समझाइए",
+  "తర్వాతి తప్పు",
+  "ఇలాంటి ఇంకో ప్రశ్న ఇవ్వండి",
+  "దీన్ని ఇంకా సులభంగా వివరించండి",
+  // 30 Sep 2026: the practice follow-up of "Pick up where you left off"
+  // (src/lib/pickup-followup.ts PRACTICE_FOLLOW_UP, en / hi / te) — our words.
+  "Give me 3 practice questions on this",
+  "इस पर मुझे 3 अभ्यास प्रश्न दीजिए",
+  "దీనిపై నాకు 3 ప్రాక్టీస్ ప్రశ్నలు ఇవ్వండి",
 ]);
 
 /** True when a tutor message is one of Shishya's own prefilled prompts. */

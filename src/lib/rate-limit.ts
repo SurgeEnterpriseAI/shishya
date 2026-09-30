@@ -35,6 +35,7 @@ const limits = {
   schoolGuest: { limit: 20, windowSec: 86_400 }, // a guest's school-tutor turns per browser (or IP) per day = SCHOOL_TUTOR_DAILY_CAP (27 Sep 2026)
   guestPaper: { limit: 60, windowSec: 3_600 },  // whole-paper grades for guests per IP per hour (27 Sep 2026, content first; no writes)
   examGoal: { limit: 10, windowSec: 3_600 },    // exam changes from the "Your Shishya is ready" strip per user per hour (30 Sep 2026)
+  quizCarry: { limit: 10, windowSec: 3_600 },   // guest quiz results carried into the account per user per hour (30 Sep 2026, src/lib/quiz-carry.ts)
 } as const;
 
 export type LimitName = keyof typeof limits;

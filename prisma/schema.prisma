@@ -2283,6 +2283,66 @@ model OfficialPaper {
   @@index([examId, archivedAt])
 }
 
+// Official watch (30 Sep 2026): the conducting body's own answer-key /
+// result listing pages, found once by scripts/crawl-official-answer-keys.ts
+// and re-read by /api/cron/answer-key-watch (src/lib/answer-key-watch.ts).
+// baselineLinks = every link the page carried when first read (old cycles),
+// so a link already there is never taken for a new release. lastCycle =
+// {examDay, releasedOn, url} of the previous cycle — it only drives the
+// "expected" window, never a tracker row. Tables are created by the raw-SQL
+// ensure in src/lib/answer-key-watch-db.ts (never prisma migrate / db push);
+// queried with raw SQL.
+model OfficialWatch {
+  id            String    @id @default(cuid())
+  examId        String
+  kind          String // ANSWER_KEY | RESULT
+  listingUrl    String
+  host          String
+  fetchMode     String    @default("html") // html | browser-only | blocked
+  singleExam    Boolean   @default(false) // the page is about this exam alone (its heading names it)
+  heading       String    @default("") @db.Text
+  examTerms     String[]  @default([]) // how the body names the exam on this page
+  baselineLinks String[]  @default([])
+  lastCycle     Json?
+  lagDays       Int?
+  verifiedAt    DateTime  @default(now())
+  lastCheckedAt DateTime?
+  lastStatus    String?
+  createdAt     DateTime  @default(now())
+  archivedAt    DateTime?
+
+  @@unique([examId, kind, listingUrl])
+  @@index([examId])
+}
+
+// One verified release the watch (or the crawl) wrote: the ExamImportantDate
+// row it created (dateRowId), and — for an answer-key PDF — the local
+// importer's queue (importStatus needs-import → imported | rejected, read by
+// scripts/import-official-papers.ts --from-watch-hits).
+model OfficialWatchHit {
+  id           String   @id @default(cuid())
+  examId       String
+  watchId      String?
+  kind         String // ANSWER_KEY | RESULT
+  url          String
+  listingUrl   String   @default("")
+  host         String
+  anchorText   String   @default("") @db.Text
+  releasedOn   DateTime
+  dateSource   String // printed | first-seen
+  via          String // html | ai | crawl
+  dateRowId    String?
+  isPdf        Boolean  @default(false)
+  cycleYear    String   @default("")
+  stage        String   @default("")
+  importStatus String   @default("n/a") // needs-import | imported | rejected | n/a
+  importNote   String?  @db.Text
+  createdAt    DateTime @default(now())
+
+  @@unique([examId, url])
+  @@index([importStatus])
+}
+
 // Demand mining (1 Sep 2026): free-form user text (tutor chat, PulseAsk
 // notes, teacher requests, /ideas) is classified daily by one Claude
 // call into a controlled vocabulary of demand clusters; /admin/demand
@@ -2656,4 +2716,26 @@ model StudyGroupMember {
 
   @@unique([groupId, userId])
   @@index([userId, leftAt])
+}
+
+// Guest quiz carried into an account's weak topics at sign-in (30 Sep 2026,
+// src/lib/quiz-carry.ts): one row per account and guest-quiz stash (source
+// 'guest-quiz'); the topics go to WeaknessMap in the same transaction. Table
+// created by scripts/create-quiz-carry-table.ts (the raw-SQL ensure in
+// src/lib/db/quiz-carry.ts — never prisma migrate / db push); queried with
+// raw SQL. Mirrored here so a schema diff never proposes dropping it.
+model QuizCarry {
+  id            String   @id
+  userId        String
+  examId        String
+  stashKey      String
+  source        String   @default("guest-quiz")
+  questionCount Int
+  correctCount  Int
+  topics        Json     @default("[]")
+  quizAt        DateTime
+  createdAt     DateTime @default(now())
+
+  @@unique([userId, stashKey])
+  @@index([userId])
 }

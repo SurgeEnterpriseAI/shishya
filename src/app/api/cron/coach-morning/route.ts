@@ -35,6 +35,13 @@
 //     the tracker still lands on a different day the line is dropped rather
 //     than printed as a second countdown.
 //
+// Pick up where you left off (30 Sep 2026, src/lib/pickup.ts): one line
+// quoting the student's own last typed tutor question from the last 3 IST
+// days (<= 60 characters, escaped), linking back into that saved chat — or
+// into its answer when it never got one; skipped when there is none. The
+// Daily-5 mail leaves the line out for anyone this mail reached in the last
+// 20 hours (one quote a morning). A dry run reports only the count.
+//
 // Dedup: EmailTouch tag 'coach-morning', one per user per day.
 // Auth: Bearer ${CRON_SECRET}.
 
@@ -58,6 +65,8 @@ import {
   type NextExam,
 } from "@/lib/exam-week-mail";
 import { shiftDayIso } from "@/lib/exam-week-student";
+import { loadEmailQuestions } from "@/lib/db/pickup";
+import { pickupEmailLine } from "@/lib/pickup";
 
 const MAX_SENDS = 500;
 
@@ -233,6 +242,11 @@ export async function GET(req: Request) {
     prepared.push({ row: r, tasks, examShort: r.short, daysLeft: r.daysLeft, rollover: null, examWeek, mode: "same" });
   }
 
+  // Pick up where you left off (see the header): each student's own last
+  // typed tutor question, one read for the batch.
+  const lastQuestions = await loadEmailQuestions(prepared.map((p) => p.row.userId), now);
+  const pickupFor = (userId: string) => pickupEmailLine(lastQuestions.get(userId), now);
+
   if (dry) {
     const modes: Record<string, number> = {};
     for (const p of prepared) modes[p.mode] = (modes[p.mode] ?? 0) + 1;
@@ -242,6 +256,7 @@ export async function GET(req: Request) {
       eligible: rows.length,
       prepared: prepared.length,
       modes,
+      withPickup: prepared.filter((p) => pickupFor(p.row.userId) != null).length,
       sample: prepared.slice(0, 5).map((p) => ({ name: p.row.name, short: p.examShort, daysLeft: p.daysLeft, mode: p.mode, examWeek: p.examWeek?.text ?? null })),
     });
   }
@@ -258,6 +273,7 @@ export async function GET(req: Request) {
       note: p.row.note,
       examWeek: p.examWeek ? { text: p.examWeek.text, html: p.examWeek.html } : null,
       rollover: p.rollover,
+      pickup: pickupFor(p.row.userId),
     }).catch(() => false);
     if (ok) {
       sent++;

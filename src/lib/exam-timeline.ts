@@ -83,6 +83,16 @@ export interface TimelineRow {
   displayStatus: TimelineDisplayStatus;
   /** IST calendar-day delta from today (negative = past). */
   daysFromToday: number;
+  /** 30 Sep 2026: an official-tier row the official watch wrote (source
+   *  OFFICIAL_WATCH_SOURCE) — the conducting body's page was seen showing
+   *  it. Only these may be worded "released" / "published". Optional so
+   *  rows built outside buildTimeline (truth-lint) need not carry it. */
+  verified?: boolean;
+  /** Review, 30 Sep 2026: a verified row whose date is the day the watch
+   *  FIRST SAW the link (its notes start FIRST_SEEN_NOTE_PREFIX — the body
+   *  printed no single release date). Surfaces say "first seen {date} on
+   *  {host}", never "released {date}". */
+  firstSeen?: boolean;
 }
 
 const KIND_ORDER: Record<DateKind, number> = {
@@ -126,6 +136,22 @@ export const KIND_ICON: Record<DateKind, string> = {
  *  one. Starts with "ai-generated" so provenance checks still read it as
  *  generated. */
 export const SUPPRESSED_SOURCE = "ai-generated:claude:suppressed";
+
+/** Provenance tag of an answer-key / result row the official watch wrote (30
+ *  Sep 2026, src/lib/answer-key-watch.ts): our own fetch read the link on the
+ *  conducting body's own page, answered 200 (a PDF began %PDF), and the row
+ *  beside it named the key or result, the exam and the cycle year. The only
+ *  rows a surface may call "released" / "published" (TimelineRow.verified,
+ *  src/lib/official-release.ts); every other official row is an announced
+ *  DATE. Not "ai-generated…", so the refresh writer treats it as curated and
+ *  never overrides it. */
+export const OFFICIAL_WATCH_SOURCE = "official-watch";
+
+/** The note an official-watch row carries when its date is the day the
+ *  watch first saw the link, not a date the body printed beside it
+ *  (src/lib/answer-key-watch.ts gate 5; read by TimelineRow.firstSeen and
+ *  src/lib/official-release.ts). */
+export const FIRST_SEEN_NOTE_PREFIX = "first seen on ";
 
 /** A label that names an answer key ("Answer key (expected)", "answer-keys out"). */
 export const ANSWER_KEY_LABEL = /answer[\s-]*keys?\b/i;
@@ -220,6 +246,8 @@ export function buildTimeline(rows: TimelineInput[], now: Date = new Date(), off
       passedEstimate,
       displayStatus: passedEstimate ? "passed-estimate" : status,
       daysFromToday: delta,
+      verified: tier === "official" && (r.source ?? "") === OFFICIAL_WATCH_SOURCE,
+      firstSeen: tier === "official" && (r.source ?? "") === OFFICIAL_WATCH_SOURCE && (r.notes ?? "").toLowerCase().startsWith(FIRST_SEEN_NOTE_PREFIX),
     });
   }
   // Same-date, same-kind rows (16 Sep 2026): best tier first, then id, so

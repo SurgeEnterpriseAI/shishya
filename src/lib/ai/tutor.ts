@@ -142,6 +142,39 @@ export function tutorSystemBlocks(args: {
     : cachedSystemHourFirst(STATIC_PROMPT, syllabusText);
 }
 
+/**
+ * The per-turn context put before the student's message (never cached).
+ * Pure and exported for tests.
+ *
+ * 30 Sep 2026 ("the tutor remembers"): a signed-in GENERAL chat gets the
+ * journey too — the student's own earlier questions (src/lib/tutor-memory.ts;
+ * the route loads it by userId only). A general chat still gets no student
+ * state block (no exam to scope it) and no actions line; a school chat still
+ * gets its own context and no journey. An exam chat's context is unchanged.
+ */
+export function tutorTurnContext(args: {
+  school: SchoolTurn | null;
+  generalMode?: boolean;
+  studentState: TutorInput["studentState"];
+  journey?: TutorInput["journey"];
+  focusBlock: string;
+  language: TutorInput["language"];
+}): string {
+  const { school, generalMode, studentState, journey, focusBlock, language } = args;
+  if (school) return schoolTurnContext(school, language);
+  const journeyText = journey ? journeyBlock(journey) : "";
+  // In general mode we don't show studentStateBlock either — there's no
+  // useful exam-scoped data to reference.
+  if (generalMode) return `${journeyText ? `${journeyText}\n\n` : ""}Reply language: ${language}.`;
+  return `${studentStateBlock(studentState)}
+${journeyText ? `\n${journeyText}\n` : ""}${focusBlock ? `\n${focusBlock}\n` : ""}
+Reply language: ${language}.
+
+If you suggest follow-up actions to the student, append a single line in this format:
+<<ACTIONS>>{"actions":[{"kind":"TAKE_MOCK","topicCode":"quant.percentage","reason":"...","priority":1}]}<<END>>
+Skip if no clear next step.`;
+}
+
 /** Streaming version — yields {delta} for text chunks, {tool} for tool events, {done} when complete. */
 export async function* tutorStream(
   input: TutorInput & { ctx?: ToolContext; school?: SchoolTurn | null }
@@ -164,21 +197,7 @@ export async function* tutorStream(
 ${topicFocus.notesExcerpt ? `\nReference notes (already shown to the student — do not re-paste verbatim; build on them):\n${topicFocus.notesExcerpt}\n` : ""}`
     : "";
 
-  const journeyText = journey && !generalMode ? journeyBlock(journey) : "";
-
-  // In general mode we don't show studentStateBlock either — there's no
-  // useful exam-scoped data to reference.
-  const dynamicContext = school
-    ? schoolTurnContext(school, language)
-    : generalMode
-    ? `Reply language: ${language}.`
-    : `${studentStateBlock(studentState)}
-${journeyText ? `\n${journeyText}\n` : ""}${focusBlock ? `\n${focusBlock}\n` : ""}
-Reply language: ${language}.
-
-If you suggest follow-up actions to the student, append a single line in this format:
-<<ACTIONS>>{"actions":[{"kind":"TAKE_MOCK","topicCode":"quant.percentage","reason":"...","priority":1}]}<<END>>
-Skip if no clear next step.`;
+  const dynamicContext = tutorTurnContext({ school, generalMode, studentState, journey, focusBlock, language });
 
   // Build the conversation. History first, then the user's new message with the dynamic context block.
   const messages: Anthropic.Messages.MessageParam[] = [
