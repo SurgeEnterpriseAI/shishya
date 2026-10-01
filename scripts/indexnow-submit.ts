@@ -16,6 +16,13 @@
 // USAGE: npx tsx scripts/indexnow-submit.ts                          # every sitemap URL
 //        npx tsx scripts/indexnow-submit.ts --match "/checklist$|/ideas$"
 
+// 1 Oct 2026: a module, not a global script. With no import/export its
+// top-level `main` shared the global scope with any other script file that
+// declares one (scripts/tmp-audit-chk-school-c.ts that day), so tsc — and the
+// type check of a plain local `next build`, which includes **/*.ts — failed
+// with TS2393 "Duplicate function implementation". Behaviour is unchanged.
+export {};
+
 const HOST = "shishya.in";
 const KEY = "7e0b8421fc95cdb98187e2b89a6e2437";
 const SITEMAP = `https://${HOST}/sitemap.xml`;
