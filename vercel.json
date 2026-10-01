@@ -3,6 +3,11 @@
   "regions": [
     "sin1"
   ],
+  "functions": {
+    "src/app/api/cron/answer-key-watch/**/route.ts": {
+      "regions": ["bom1"]
+    }
+  },
   "redirects": [
     {
       "source": "/exams",

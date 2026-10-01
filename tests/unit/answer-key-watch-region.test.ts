@@ -19,3 +19,14 @@ describe("answer-key watch crons run in India", () => {
     expect(src).toContain(`export const runtime = "nodejs";`);
   });
 });
+
+// 1 Oct 2026: preferredRegion alone did not move them (x-vercel-id read
+// bom1::sin1 — Mumbai edge, Singapore function): the project-level "regions"
+// wins. vercel.json's per-function "regions" overrides it for these routes.
+describe("vercel.json pins the watch functions to Mumbai", () => {
+  it("functions[src/app/api/cron/answer-key-watch/**/route.ts].regions = [bom1]", () => {
+    const v = JSON.parse(fs.readFileSync(path.join(ROOT, "vercel.json"), "utf8"));
+    expect(v.regions).toEqual(["sin1"]);
+    expect(v.functions["src/app/api/cron/answer-key-watch/**/route.ts"].regions).toEqual(["bom1"]);
+  });
+});
