@@ -5,7 +5,9 @@
 // registry (src/data/paths): the lead from the option's own copy and its
 // duration fact; the board table from CONFIRMED rows only (an unconfirmed
 // board appears only as a "check {board}'s official site" link); what the
-// option keeps open or closes from its sourced edges; exam chips linked only
+// option keeps open or closes from its sourced edges (one line per fact: an
+// exam line that a course-family line restates from the same document is
+// folded into it as its chip, 1 Oct 2026); exam chips linked only
 // while the exam is live; next links through the course families to college
 // streams and careers; the tutor entry; and one "Sources and last checked"
 // list. Nothing unconfirmed is ever in the model.
@@ -46,12 +48,14 @@ import {
   type StreamOption,
   type StreamOptionSlug,
 } from "@/data/paths";
+import { familyRuleExam } from "@/data/paths/edges";
 import { ALL_STREAMS } from "@/lib/colleges-data";
 import { clipDescription, fitTitle } from "@/lib/section-seo";
 import { fillCopy, pathCopy } from "./copy";
 import {
   STREAM_PAGE_ROOT,
   absoluteUrl,
+  examChip,
   examChips,
   factSources,
   pathNodeHref,
@@ -141,6 +145,11 @@ export interface StreamEdgeLine {
   href: string | null;
   note: string | null;
   source: PathSource | null;
+  /** The exam whose own rule this course-family line quotes, folded in from
+   *  the option's line to that exam (same rule, same document) — printed as
+   *  the line's chip. Empty on an exam's own line and on a family line whose
+   *  rule is no exam's (architecture, the AICTE diploma). 1 Oct 2026 fix. */
+  exams: ExamChip[];
 }
 
 export interface LinkItem {
@@ -189,9 +198,34 @@ export interface StreamPageModel {
   indexable: boolean;
 }
 
+/** The option's lines to an exam that a course-family line of the same kind
+ *  restates: the family's rule quotes that exam's own rule (familyRuleExam)
+ *  and both cite the same document. Map: exam node → the family node it
+ *  folds into. A line on a different document is a different read and stays. */
+export function foldedExamLines(slug: StreamOptionSlug, kind: "keeps-open" | "closes"): Map<PathNodeId, PathNodeId> {
+  const edges = edgesFrom(`stream:${slug}`).filter((e) => e.kind === kind);
+  const folded = new Map<PathNodeId, PathNodeId>();
+  for (const e of edges) {
+    if (!e.to.startsWith("course:") || !e.source) continue;
+    const code = familyRuleExam(e.to.slice("course:".length), slug);
+    if (!code) continue;
+    const twin = edges.find((x) => x.to === `exam:${code}` && x.source?.url === e.source!.url);
+    if (twin && !folded.has(twin.to)) folded.set(twin.to, e.to);
+  }
+  return folded;
+}
+
 function edgeLines(slug: StreamOptionSlug, kind: "keeps-open" | "closes", live: LiveExams): StreamEdgeLine[] {
+  // 1 Oct 2026 (fix): "What it keeps open" printed CLAT, NDA, CUET UG, NEET UG
+  // and JEE Main twice — once as the exam's line, once inside the course
+  // family whose rule is that exam's rule, same document ("CLAT — No stream
+  // is named…" beside "Law … — CLAT names no stream…"). The family line
+  // stays, with the exam as its chip, and the exam's own line goes; the
+  // family note carries every fact the exam line held (src/data/paths/edges.ts
+  // familyRule), and the source is the same one, so nothing is lost.
+  const folded = foldedExamLines(slug, kind);
   return edgesFrom(`stream:${slug}`)
-    .filter((e) => e.kind === kind)
+    .filter((e) => e.kind === kind && !folded.has(e.to))
     .map((e) => ({
       kind,
       to: e.to,
@@ -202,6 +236,7 @@ function edgeLines(slug: StreamOptionSlug, kind: "keeps-open" | "closes", live: 
       note: e.note ?? null,
       // A note that states a rule carries its source; a plain path has none.
       source: e.source ?? null,
+      exams: [...folded].filter(([, family]) => family === e.to).map(([exam]) => examChip(exam.slice("exam:".length), live)),
     }));
 }
 

@@ -17,7 +17,9 @@
 //   4. the nine stream pages: confirmed board rows only, unread boards only as
 //      "check the official site", the pending line with no rows, sources,
 //      tutor, robots = schoolRobots(isStreamPageIndexable), 404 for any
-//      other slug, the context.md route wiring;
+//      other slug, the context.md route wiring, and one item per fact in
+//      "What it keeps open" (1 Oct 2026: CLAT and NDA once, on the family line
+//      with the exam's chip);
 //   5. /schooling/streams keeps its sections and links all nine pages;
 //   6. /career-map: Class 1-8 and working rows, stage ids, hub links, tutor
 //      only from after-10th on.
@@ -559,6 +561,31 @@ describe("StreamOptionView", () => {
     expect(out).toContain('id="keeps-open"');
     expect(out).toContain('id="closes"');
     for (const l of [...m.keepsOpen, ...m.closes]) if (l.note) expect(textOf(out)).toContain(l.note);
+  });
+
+  // 1 Oct 2026 (fix): "What it keeps open" printed CLAT and NDA twice (the
+  // exam's line and the course family's line, same rule and source). One
+  // item each now: the family line, with the exam as its chip.
+  it.each(STREAM_OPTION_SLUGS.map((s) => [s]))("%s: 'What it keeps open' names CLAT and NDA once, on the law and defence lines, with the exam's chip", (slug) => {
+    const m = streamPageModel(slug, FIXTURE_CODES)!;
+    const out = render(StreamOptionView, { model: m });
+    const section = out.match(/<section id="keeps-open"[\s\S]*?<\/section>/)?.[0] ?? "";
+    const items = section.split('<li class="text-sm text-ink-800">').slice(1).map(textOf);
+    expect(items.length).toBe(m.keepsOpen.length);
+    expect(new Set(items).size).toBe(items.length);
+    for (const [label, family] of [["CLAT", "course:law"], ["NDA", "course:defence"]] as const) {
+      const naming = items.filter((t) => new RegExp(`\\b${label}\\b`).test(t));
+      expect(naming.length, `${slug} ${label}`).toBe(m.keepsOpen.some((l) => l.to === family) ? 1 : 0);
+    }
+    for (const l of m.keepsOpen.filter((x) => x.exams.length > 0)) {
+      const item = items.find((t) => t.includes(l.label));
+      expect(item, `${slug} ${l.label}`).toBeTruthy();
+      for (const c of l.exams) {
+        expect(item, `${slug} ${l.label}`).toContain(c.label);
+        if (c.href) expect(section).toContain(`href="${c.href}"`);
+      }
+    }
+    if (m.keepsOpen.some((l) => l.to === "course:law")) expect(textOf(section)).toContain("CLAT · no Shishya page yet");
   });
 });
 

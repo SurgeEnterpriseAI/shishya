@@ -121,21 +121,42 @@ export const STREAM_EDGES: readonly PathEdge[] = [
  *  `label` narrows the printed name when the rule covers only part of the
  *  family (30 Sep 2026 review fix): the COA rule read for diploma holders is
  *  about B.Arch (no B.Planning rule for them was read), and without
- *  Mathematics only the NDA Army wing stays open. */
-function familyRule(familyId: string, from: StreamOptionSlug): { note: string; source: PathSource; label?: string } | null {
+ *  Mathematics only the NDA Army wing stays open.
+ *
+ *  `exam` (1 Oct 2026 fix): the exam whose own eligibility rule the note
+ *  quotes, from the same document as the option's line to that exam above
+ *  (STREAM_EDGES). The stream pages printed both lines — "CLAT — No stream is
+ *  named…" and "Law … — CLAT names no stream…", "NDA — Only the Army wing…"
+ *  and "NDA Army wing only — …" — so one fact showed twice. A page now prints
+ *  the family line with the exam as its chip and drops the exam's own line
+ *  when both rest on the same source (src/lib/paths/stream-pages.ts), so each
+ *  note here carries every fact either line held: BiPC's "the Air Force and
+ *  Navy wings need Mathematics too", the routes CUET UG lists by name for
+ *  vocational, the diploma and NIOS, and "open to any Class 12 stream".
+ *  Architecture quotes the Council of Architecture rule and the diploma
+ *  family AICTE's — neither is an exam's own rule, so neither has `exam`. */
+function familyRule(familyId: string, from: StreamOptionSlug): { note: string; source: PathSource; label?: string; exam?: string } | null {
   switch (familyId) {
     case "engineering":
-      return { note: "B.Tech seats at NITs, IIITs and other central institutes need Physics and Mathematics in Class 12.", source: S.jeeMainBulletin };
+      return { note: "B.Tech seats at NITs, IIITs and other central institutes need Physics and Mathematics in Class 12.", source: S.jeeMainBulletin, exam: "JEE_MAIN" };
     case "medical":
-      return { note: "NEET UG asks for Physics, Chemistry, Biology or Biotechnology, and English.", source: S.neetBulletin };
+      return { note: "NEET UG asks for Physics, Chemistry, Biology or Biotechnology, and English.", source: S.neetBulletin, exam: "NEET_UG" };
     case "law":
-      return { note: "CLAT names no stream for the UG programme.", source: S.clatEligibility };
+      return { note: "CLAT names no stream for the UG programme.", source: S.clatEligibility, exam: "CLAT" };
     case "university":
-      return { note: "CUET UG accepts this route as a qualifying examination; each university sets its own programme rules.", source: S.cuetBulletin };
+      return { note: universityNote(from), source: S.cuetBulletin, exam: "CUET_UG" };
     case "defence":
       return from === "mpc-pcm" || from === "pcmb"
-        ? { note: "All three NDA wings stay open.", source: S.ndaNotice }
-        : { note: "The NDA Army wing asks for a Class 12 pass and names no subjects.", source: S.ndaNotice, label: "NDA Army wing only" };
+        ? { note: "All three NDA wings stay open, including the Air Force and Navy.", source: S.ndaNotice, exam: "NDA" }
+        : {
+            note:
+              from === "bipc-pcb"
+                ? "The NDA Army wing asks for a Class 12 pass and names no subjects; the Air Force and Navy wings need Mathematics too."
+                : "The NDA Army wing asks for a Class 12 pass and names no subjects.",
+            source: S.ndaNotice,
+            label: "NDA Army wing only",
+            exam: "NDA",
+          };
     case "architecture":
       return from === "diploma-polytechnic"
         ? {
@@ -151,6 +172,36 @@ function familyRule(familyId: string, from: StreamOptionSlug): { note: string; s
     default:
       return null;
   }
+}
+
+/** CUET UG's rule for the university family, per option (1 Oct 2026 fix):
+ *  the route the bulletin lists by name where the option is not a plain
+ *  Class 12 stream (the same words as that option's CUET UG line above). */
+function universityNote(from: StreamOptionSlug): string {
+  const tail = "each university sets its own programme rules.";
+  switch (from) {
+    case "vocational":
+      return `CUET UG lists the Higher Secondary Certificate Vocational Examination as a qualifying examination; ${tail}`;
+    case "diploma-polytechnic":
+      return `CUET UG lists a diploma of at least three years from AICTE or a State board of technical education as a qualifying examination; ${tail}`;
+    case "nios":
+      return `CUET UG lists NIOS Senior Secondary with at least five subjects as a qualifying examination; ${tail}`;
+    case "mpc-pcm":
+    case "bipc-pcb":
+    case "pcmb":
+    case "commerce-cec-mec":
+    case "arts-hec-humanities":
+      return `CUET UG is open to any Class 12 stream; ${tail}`;
+    default:
+      return `CUET UG accepts this route as a qualifying examination; ${tail}`;
+  }
+}
+
+/** The exam whose own rule the option → family line quotes (familyRule's
+ *  `exam`), or null. 1 Oct 2026: the stream pages fold that exam's line into
+ *  the family line when both cite the same document. */
+export function familyRuleExam(familyId: string, from: StreamOptionSlug): string | null {
+  return familyRule(familyId, from)?.exam ?? null;
 }
 
 /** Stage chain in life order (govt-job-prep is reached from several stages). */

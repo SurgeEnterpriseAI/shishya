@@ -12,6 +12,9 @@
 //   3. nothing unconfirmed is ever in a model — no unconfirmed fact text, no
 //      board row for a board not read, which appears only as a link to its
 //      own site;
+//   3b. one line per fact (1 Oct 2026): an exam line a course-family line
+//      restates from the same document is folded into it as its chip, on all
+//      nine pages, with no fact, source or read day lost;
 //   4. exam chips link only live codes (a fixture live set);
 //   5. every printed fact's source is in the model's source list;
 //   6. /schooling/streams keeps its five section ids and links all nine
@@ -29,9 +32,12 @@ import {
   careersForFamily,
   confirmedBoardCount,
   courseFamiliesAfter,
+  edgesFrom,
   isAllowedSourceUrl,
   type PathFact,
+  type StreamOptionSlug,
 } from "@/data/paths";
+import { familyRuleExam } from "@/data/paths/edges";
 import { CAREERS } from "@/data/careers";
 import {
   STREAM_INDEX_MIN_CONFIRMED,
@@ -41,6 +47,7 @@ import {
   streamDurationIso,
   streamIndexVerdict,
   streamPageModel,
+  type StreamEdgeLine,
 } from "@/lib/paths/stream-pages";
 import {
   STAGE_HUB_MIN_LIVE_OPTIONS,
@@ -475,6 +482,146 @@ describe("stream page models — only confirmed facts", () => {
 
   it("every stream page has a tutor entry", () => {
     for (const m of models) expect(m.tutorHref, m.slug).toMatch(/^\/chat\?general=1&seed=/);
+  });
+});
+
+// ── 3b. one line per fact ────────────────────────────────────────────────
+// 1 Oct 2026 (fix): "What it keeps open" printed CLAT and NDA twice — once as
+// the exam's own line ("CLAT — No stream is named for the UG programme") and
+// once inside the course family whose rule is that exam's rule, from the same
+// document ("Law (integrated LL.B after Class 12) — CLAT names no stream…").
+// The same held for CUET UG, NEET UG and JEE Main. The family line now stays,
+// with the exam as its chip; these pins keep one line per fact on all nine
+// pages and prove no fact, source or read day was lost in the fold.
+
+describe("stream pages print each fact once (1 Oct 2026 fix)", () => {
+  const models = allStreamPageModels(FIXTURE_CODES);
+  /** The exams a line rests on: an exam line's own code, a family line's chips. */
+  const examsOf = (l: StreamEdgeLine): string[] => (l.to.startsWith("exam:") ? [l.to.slice("exam:".length)] : l.exams.map((c) => c.code ?? c.label));
+  const linesOf = (m: (typeof models)[number], kind: "keeps-open" | "closes") => (kind === "keeps-open" ? m.keepsOpen : m.closes);
+  /** The exam rules a line rests on: its exams, plus the exam whose rule a
+   *  family line's note quotes (familyRuleExam) whether or not it was folded. */
+  const restsOn = (l: StreamEdgeLine, slug: StreamOptionSlug): string[] => {
+    const rule = l.to.startsWith("course:") ? familyRuleExam(l.to.slice("course:".length), slug) : null;
+    return [...new Set([...examsOf(l), ...(rule ? [rule] : [])])];
+  };
+
+  it("no page has two lines on the same source resting on the same exam's rule", () => {
+    for (const m of models) {
+      for (const kind of ["keeps-open", "closes"] as const) {
+        const keys = linesOf(m, kind).flatMap((l) => (l.source ? restsOn(l, m.slug).map((e) => `${l.source!.url} | ${e}`) : []));
+        const twice = keys.filter((k, i) => keys.indexOf(k) !== i);
+        expect(twice, `${m.slug} ${kind}`).toEqual([]);
+      }
+    }
+  });
+
+  it("CLAT and NDA are named once in 'What it keeps open', on the law and defence lines", () => {
+    for (const m of models) {
+      for (const [code, family] of [["CLAT", "course:law"], ["NDA", "course:defence"]] as const) {
+        const raw = edgesFrom(`stream:${m.slug}`).some((e) => e.kind === "keeps-open" && e.to === `exam:${code}`);
+        const naming = m.keepsOpen.filter((l) => examsOf(l).includes(code));
+        expect(naming.map((l) => l.to), `${m.slug} ${code}`).toEqual(raw ? [family] : []);
+        expect(m.keepsOpen.some((l) => l.to === `exam:${code}`), `${m.slug} ${code}`).toBe(false);
+      }
+    }
+  });
+
+  it("the folds on all nine pages: each family line carries the exam whose rule it restates", () => {
+    const folds = Object.fromEntries(
+      models.map((m) => [m.slug, m.keepsOpen.filter((l) => l.exams.length > 0).map((l) => `${l.to.slice("course:".length)} < ${examsOf(l).join(", ")}`)]),
+    );
+    const common = ["law < CLAT", "university < CUET_UG", "defence < NDA"];
+    expect(folds).toEqual({
+      "mpc-pcm": ["engineering < JEE_MAIN", ...common],
+      "bipc-pcb": ["medical < NEET_UG", ...common],
+      pcmb: ["engineering < JEE_MAIN", "medical < NEET_UG", ...common],
+      "commerce-cec-mec": common,
+      "arts-hec-humanities": common,
+      vocational: ["university < CUET_UG"],
+      "diploma-polytechnic": ["university < CUET_UG"],
+      iti: [],
+      nios: ["university < CUET_UG"],
+    });
+    for (const m of models) expect(m.closes.filter((l) => l.exams.length > 0), m.slug).toEqual([]);
+    // A chip links the exam's hub only while it is live (CLAT had no Exam row on 26 Sep 2026).
+    const commerce = models.find((m) => m.slug === "commerce-cec-mec")!;
+    expect(commerce.keepsOpen.find((l) => l.to === "course:law")!.exams).toEqual([{ code: "CLAT", label: "CLAT", href: null }]);
+    const defence = commerce.keepsOpen.find((l) => l.to === "course:defence")!;
+    expect(defence.exams).toEqual([{ code: "NDA", label: "NDA", href: "/exams/NDA" }]);
+    expect(defence.label).toBe("NDA Army wing only");
+  });
+
+  it("a different rule on the same document is not folded: B.Arch (COA rule) stays its own line beside the JEE Main ones", () => {
+    for (const slug of ["mpc-pcm", "pcmb", "diploma-polytechnic"] as const) {
+      const arch = models.find((x) => x.slug === slug)!.keepsOpen.find((l) => l.to === "course:architecture")!;
+      expect(arch.exams, slug).toEqual([]);
+      expect(arch.note, slug).toMatch(/Council of Architecture/);
+    }
+    // Vocational, the diploma and NIOS keep JEE Main as its own line: no family line there restates its rule.
+    for (const slug of ["vocational", "diploma-polytechnic", "nios"] as const) {
+      expect(models.find((x) => x.slug === slug)!.keepsOpen.map((l) => l.to), slug).toContain("exam:JEE_MAIN");
+    }
+  });
+
+  it("nothing is lost: every sourced edge is printed, or folded into a line on the same document and read day that names its exam", () => {
+    for (const m of models) {
+      for (const kind of ["keeps-open", "closes"] as const) {
+        const lines = linesOf(m, kind);
+        for (const e of edgesFrom(`stream:${m.slug}`).filter((x) => x.kind === kind)) {
+          const own = lines.find((l) => l.to === e.to);
+          if (own) {
+            expect(own.note, `${m.slug} ${e.to}`).toBe(e.note ?? null);
+            expect(own.source, `${m.slug} ${e.to}`).toEqual(e.source ?? null);
+            continue;
+          }
+          expect(e.to.startsWith("exam:"), `${m.slug} ${e.to} dropped`).toBe(true);
+          const host = lines.find((l) => l.exams.some((c) => `exam:${c.code}` === e.to));
+          expect(host, `${m.slug} ${e.to} has no line`).toBeTruthy();
+          expect(host!.to.startsWith("course:")).toBe(true);
+          expect(host!.source, `${m.slug} ${e.to}`).toEqual(e.source);
+        }
+      }
+      const cited = edgesFrom(`stream:${m.slug}`).flatMap((e) => (e.kind !== "leads-to" && e.source ? [e.source.url] : []));
+      expect(m.sources.map((s) => s.url), m.slug).toEqual(expect.arrayContaining(cited));
+    }
+  });
+
+  // Our reading of each folded pair (1 Oct 2026): the words that carry a fact
+  // in the exam's own note. Each must be in that note (proof it came from
+  // there) and in the family line's note (proof it is still printed). A new
+  // fold fails here until someone checks its facts the same way.
+  const CLAT_WORDS = ["no stream", "UG programme"];
+  const CUET_WORDS = ["open to any Class 12 stream", "each university sets its own programme rules"];
+  const JEE_WORDS = ["Physics and Mathematics in Class 12", "NITs, IIITs and other central institutes"];
+  const NEET_WORDS = ["Physics", "Chemistry", "Biology", "English"];
+  const FOLDED_FACTS: Record<string, Record<string, readonly string[]>> = {
+    "mpc-pcm": { JEE_MAIN: JEE_WORDS, CLAT: CLAT_WORDS, CUET_UG: CUET_WORDS, NDA: ["All three", "including the Air Force and Navy"] },
+    "bipc-pcb": { NEET_UG: NEET_WORDS, CLAT: CLAT_WORDS, CUET_UG: CUET_WORDS, NDA: ["Army wing", "the Air Force and Navy wings need Mathematics too"] },
+    pcmb: { JEE_MAIN: JEE_WORDS, NEET_UG: NEET_WORDS, CLAT: CLAT_WORDS, CUET_UG: CUET_WORDS, NDA: ["All three", "including the Air Force and Navy"] },
+    "commerce-cec-mec": { CLAT: CLAT_WORDS, CUET_UG: CUET_WORDS, NDA: ["Army wing", "Class 12 pass and names no subjects"] },
+    "arts-hec-humanities": { CLAT: CLAT_WORDS, CUET_UG: CUET_WORDS, NDA: ["Army wing", "Class 12 pass and names no subjects"] },
+    vocational: { CUET_UG: ["Higher Secondary Certificate Vocational Examination", "qualifying examination"] },
+    "diploma-polytechnic": { CUET_UG: ["diploma of at least three years from AICTE or a State board of technical education", "qualifying examination"] },
+    iti: {},
+    nios: { CUET_UG: ["NIOS Senior Secondary with at least five subjects", "qualifying examination"] },
+  };
+
+  it("every fact a folded exam line held is in its family line's note (BiPC's Air Force and Navy rule, the routes CUET UG lists by name)", () => {
+    const lc = (t: string | null | undefined) => (t ?? "").toLowerCase();
+    for (const m of models) {
+      const expected = FOLDED_FACTS[m.slug];
+      const foldedCodes = m.keepsOpen.flatMap((l) => (l.to.startsWith("course:") ? l.exams.map((c) => c.code ?? c.label) : []));
+      expect(foldedCodes.slice().sort(), m.slug).toEqual(Object.keys(expected).sort());
+      for (const code of foldedCodes) {
+        const examNote = edgesFrom(`stream:${m.slug}`).find((e) => e.kind === "keeps-open" && e.to === `exam:${code}`)!.note;
+        const host = m.keepsOpen.find((l) => l.exams.some((c) => c.code === code))!;
+        for (const phrase of expected[code]) {
+          expect(lc(examNote), `${m.slug} ${code} exam note: ${phrase}`).toContain(lc(phrase));
+          expect(lc(host.note), `${m.slug} ${code} family note: ${phrase}`).toContain(lc(phrase));
+        }
+      }
+    }
   });
 });
 

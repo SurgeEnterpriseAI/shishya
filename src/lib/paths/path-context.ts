@@ -183,7 +183,10 @@ function streamMarkdown(model: StreamPageModel, asOf: string, site: string): str
     if (lines.length === 0) continue;
     L.push(`## ${heading} (${lines.length})`);
     for (const e of lines) {
-      const bits = [`- ${e.label}`, e.href ? abs(e.href, site) : "", e.note ?? "", e.source ? `source: ${sourceText(e.source)}` : ""].filter(Boolean);
+      // 1 Oct 2026: a family line names the exam whose rule it quotes (the
+      // exam's own line, same rule and source, is folded into it — one fact, one line).
+      const exams = e.exams.length ? `${e.exams.length === 1 ? "exam" : "exams"}: ${e.exams.map((c) => chipText(c, site)).join(" · ")}` : "";
+      const bits = [`- ${e.label}`, e.href ? abs(e.href, site) : "", exams, e.note ?? "", e.source ? `source: ${sourceText(e.source)}` : ""].filter(Boolean);
       L.push(bits.join(" — "));
     }
     L.push("");

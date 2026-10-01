@@ -43,6 +43,13 @@ function EdgeLines({ lines, locale }: { lines: readonly StreamEdgeLine[]; locale
           ) : (
             <span className="font-semibold text-ink-900">{l.label}</span>
           )}
+          {/* 1 Oct 2026: the exam whose rule this family line quotes, as its
+              chip — the exam's own line, which said the same, is folded in. */}
+          {l.exams.length > 0 && (
+            <div className="mt-1" data-line-exams="">
+              <ExamChipList chips={l.exams} locale={locale} compact />
+            </div>
+          )}
           {l.note && <span className="block text-xs text-ink-700">{l.note}</span>}
           {l.source && (
             <span className="block break-words text-[11px] text-ink-500">

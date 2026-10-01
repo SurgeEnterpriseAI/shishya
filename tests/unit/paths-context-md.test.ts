@@ -9,7 +9,8 @@
 // every URL is absolute; every printed rule carries its source and read day;
 // nothing unconfirmed is printed (an unconfirmed board is only a "check
 // {board}'s official site" link); no forbidden claim, no salary, no /chat;
-// counts are the lengths of the lists printed.
+// counts are the lengths of the lists printed; one line per fact in "What it
+// keeps open" (1 Oct 2026: the family line names the exam it restates).
 // Run: npx vitest run tests/unit/paths-context-md.test.ts
 
 import { describe, expect, it } from "vitest";
@@ -257,6 +258,44 @@ describe("stream context: board rows confirmed only, each with its source", () =
       for (const s of m.sources) expect(md).toContain(`- ${sourceText(s)}`);
       expect(md).toContain(`## Sources and last checked (${m.sources.length})`);
     }
+  });
+
+  // 1 Oct 2026 (fix): the context file doubled the same lines as the page
+  // ("- CLAT — No stream is named…" beside "- Law … — CLAT names no
+  // stream…", and NDA the same way). One line per fact here too: the family
+  // line names the exam whose rule it quotes, and the exam's own line is gone.
+  it("one line per fact: CLAT and NDA once in 'What it keeps open', named on the law and defence lines; no line twice", () => {
+    const block = (md: string, heading: string): string[] => {
+      const lines = md.split("\n");
+      const start = lines.findIndex((l) => l.startsWith(`## ${heading} (`));
+      if (start < 0) return [];
+      const end = lines.findIndex((l, j) => j > start && !l.startsWith("- "));
+      return lines.slice(start + 1, end < 0 ? undefined : end);
+    };
+    for (const [i, m] of STREAMS.entries()) {
+      const md = streamMd[i];
+      const keeps = block(md, "What it keeps open");
+      expect(keeps.length, m.slug).toBe(m.keepsOpen.length);
+      expect(new Set(keeps).size, m.slug).toBe(keeps.length);
+      for (const [label, family] of [["CLAT", "course:law"], ["NDA", "course:defence"]] as const) {
+        const naming = keeps.filter((l) => new RegExp(`\\b${label}\\b`).test(l));
+        expect(naming.length, `${m.slug} ${label}`).toBe(m.keepsOpen.some((l) => l.to === family) ? 1 : 0);
+        expect(keeps.some((l) => l.startsWith(`- ${label} — `)), `${m.slug} ${label}`).toBe(false);
+      }
+      for (const l of [...m.keepsOpen, ...m.closes].filter((x) => x.exams.length > 0)) {
+        const line = md.split("\n").find((x) => x.startsWith(`- ${l.label} — `) && x.includes(l.source!.url));
+        expect(line, `${m.slug} ${l.label}`).toBeTruthy();
+        for (const c of l.exams) expect(line, `${m.slug} ${l.label}`).toContain(c.href ? `exam: ${c.label} ${SITE}${c.href}` : `exam: ${c.label} (no Shishya page yet)`);
+      }
+    }
+    // CLAT has no Shishya page; NDA links its live hub.
+    const commerce = streamMd[STREAMS.findIndex((m) => m.slug === "commerce-cec-mec")];
+    expect(commerce).toContain(
+      `- Law (integrated LL.B after Class 12) — ${SITE}/colleges/stream/law — exam: CLAT (no Shishya page yet) — CLAT names no stream for the UG programme. — source: `,
+    );
+    expect(commerce).toContain(
+      `- NDA Army wing only — ${SITE}/careers/armed-forces-officer — exam: NDA ${SITE}/exams/NDA — The NDA Army wing asks for a Class 12 pass and names no subjects. — source: `,
+    );
   });
 
   it("every board row the registry marks confirmed has an allowed source (the file prints only those)", () => {
