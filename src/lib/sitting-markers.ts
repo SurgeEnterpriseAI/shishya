@@ -34,6 +34,25 @@
 //            Nursing CET, DPN/PHN CET, B.Ed / M.Ed / B.P.Ed CET, LL.B / Law
 //            CET, MBA/MMS CET, MCA CET … and the AP / TS EAPCET, ECET, ICET,
 //            EdCET, PGECET, PECET, LAWCET, PGLCET
+// 1 Oct 2026 (the review of a326ddb left two pairs of sittings the gate could
+// not tell apart — it only kept the wrong LABEL off them, and let the release
+// through):
+//   postgroup  the post group a recruitment runs a sitting for, a letter A–D:
+//            "Group C", "Group-D", "Group 'C'", "Grp. D", "ग्रुप-डी", "समूह ग"
+//            (HSSC holds one CET for Group C and another for Group D; PSSSB
+//            names its keys "…for Group-D Post…") — never the PCM / PCB
+//            subject group, never a numbered "Group 2" / "Group-IV", never
+//            "GRP" without its dot (the Government Railway Police of UP /
+//            Bihar police notices: "GRP B Company" is no post group)
+//   gender   the sex an event is held for: "Male PE&MT" / "Female PE&MT"
+//            (Delhi Police), "Males" / "Females", "Men" / "Women", "Mahila",
+//            पुरुष / महिला — never "Ex-Service Men", never the Women and Child
+//            Development department ("महिला एवं बाल विकास विभाग")
+// In these two families a value named on its own outranks a list of them:
+// SSC's row "Constable (Executive) Male and Female in Delhi Police
+// Examination, 2026 - Male PE&MT result" is the male result — the list is the
+// exam's own name. A text that names only a list ("Male & Female PE&MT",
+// "Group C and D") names every value in it, as a numbered list does.
 // Parts of ONE sitting (paper, day, shift, set, level, slot, a numbered
 // group) and test types (PET, typing, interview) are never compared: a
 // "Paper-I key" belongs to the sitting whose last day held Paper 2, and
@@ -41,7 +60,20 @@
 
 import { asciiDigits } from "@/lib/official-papers";
 
-export type MarkerFamily = "pm" | "tier" | "phase" | "cbt" | "stage" | "session" | "sitting" | "cen" | "group" | "attempt" | "cet";
+export type MarkerFamily =
+  | "pm"
+  | "tier"
+  | "phase"
+  | "cbt"
+  | "stage"
+  | "session"
+  | "sitting"
+  | "cen"
+  | "group"
+  | "attempt"
+  | "cet"
+  | "postgroup"
+  | "gender";
 
 const ROMAN: Record<string, number> = { i: 1, ii: 2, iii: 3, iv: 4, v: 5 };
 
@@ -103,6 +135,75 @@ const CET_FAMILIES: readonly (readonly [string, RegExp])[] = [
   ["law", /(?<![\p{L}])lawcet(?![\p{L}])/iu],
   ["pglcet", /(?<![\p{L}])pglcet(?![\p{L}])/iu],
 ];
+
+// 1 Oct 2026. Post groups and genders (see the header): each hit is one value
+// on its own, or a list of values ("Group C & D", "Male and Female").
+interface FamilyHit {
+  values: string[];
+  at: number;
+  end: number;
+}
+
+const GROUP_LETTER: Readonly<Record<string, string>> = {
+  a: "a", b: "b", c: "c", d: "d", ए: "a", बी: "b", सी: "c", डी: "d", क: "a", ख: "b", ग: "c", घ: "d",
+};
+// 1 Oct 2026 (review): "grp" only with its dot — a bare "GRP" is the
+// Government Railway Police ("GRP B Company", "Constable GRP a list").
+const GROUP_WORD = "(?:group|grp\\.|ग्रुप|समूह)\\s*[-–:]?\\s*";
+const QUOTE_OPEN = "[\"'‘’“”(]?\\s*";
+const QUOTE_CLOSE = "\\s*[\"'‘’“”)]?";
+const NOT_WORD_AFTER = "(?![\\p{L}\\p{M}\\p{N}])";
+/** A list's later letter: never a bare "a" before a word ("Group C or a
+ *  higher post") — only an "a" that ends the text or a clause. */
+const LATER_LETTER = "(?:[b-d]|a(?=\\s*(?:$|[^\\p{L}\\p{M}\\s]))|ए|बी|सी|डी|क|ख|ग|घ)";
+const LIST_SEP = "\\s*(?:,|&|/|\\+|and|or|एवं|व|तथा|और|या)\\s*";
+const POSTGROUP_RE = new RegExp(
+  `(?<![\\p{L}\\p{M}\\p{N}])${GROUP_WORD}${QUOTE_OPEN}([a-d]|ए|बी|सी|डी|क|ख|ग|घ)${QUOTE_CLOSE}${NOT_WORD_AFTER}` +
+    `((?:${LIST_SEP}(?:${GROUP_WORD})?${QUOTE_OPEN}${LATER_LETTER}${QUOTE_CLOSE}${NOT_WORD_AFTER})*)`,
+  "gu",
+);
+const LATER_LETTER_ALL = new RegExp(`(?<![\\p{L}\\p{M}\\p{N}])${LATER_LETTER}${NOT_WORD_AFTER}`, "gu");
+
+/** "Female(s)", "Women", "Mahila", महिला(ओं) | "Male(s)", "Men", पुरुष(ों).
+ *  1 Oct 2026 (review): plurals read ("List of Females qualified…"); the
+ *  Women and Child Development department is no sex ("Women and Child
+ *  Development Department", "महिला एवं बाल विकास विभाग"). */
+const GENDER_RE =
+  /(?<![\p{L}\p{M}])(?:((?:females?|women|mahila|महिला(?:ओं|एं|ए|ओ)?)(?![\p{L}\p{M}])(?!\s*(?:and|&|एवं|और|व|तथा)\s*(?:child|बाल)))|(males?|(?<!service[\s\-–]?)men|पुरुष(?:ों|ो)?))(?![\p{L}\p{M}])/gu;
+const GENDER_LIST_SEP = new RegExp(`^${LIST_SEP}$`, "u");
+
+/** A value named on its own outranks a list (see the header); only lists →
+ *  every value of every list. */
+function countedHits(hits: FamilyHit[]): FamilyHit[] {
+  const single = hits.filter((h) => h.values.length === 1);
+  return single.length ? single : hits;
+}
+
+function postGroupHits(lower: string): FamilyHit[] {
+  const hits: FamilyHit[] = [];
+  for (const m of lower.matchAll(POSTGROUP_RE)) {
+    const values = new Set([GROUP_LETTER[m[1]]]);
+    for (const l of (m[2] ?? "").replace(new RegExp(GROUP_WORD, "gu"), " ").matchAll(LATER_LETTER_ALL)) values.add(GROUP_LETTER[l[0]]);
+    const at = m.index ?? 0;
+    hits.push({ values: [...values].filter(Boolean), at, end: at + m[0].length });
+  }
+  return hits.filter((h) => h.values.length > 0);
+}
+
+function genderHits(lower: string): FamilyHit[] {
+  const words = [...lower.matchAll(GENDER_RE)].map((m) => ({ value: m[1] ? "female" : "male", at: m.index ?? 0, end: (m.index ?? 0) + m[0].length }));
+  const hits: FamilyHit[] = [];
+  for (let i = 0; i < words.length; i++) {
+    const a = words[i];
+    const b = words[i + 1];
+    // "Male and Female", "Men & Women", "पुरुष एवं महिला": one list.
+    if (b && b.value !== a.value && GENDER_LIST_SEP.test(lower.slice(a.end, b.at))) {
+      hits.push({ values: [a.value, b.value], at: a.at, end: b.end });
+      i++;
+    } else hits.push({ values: [a.value], at: a.at, end: a.end });
+  }
+  return hits;
+}
 
 /** Words before a bracketed numeral that make it a part of one sitting
  *  ("Paper (I)", "Annexure (2)"), not the exam's ordinal. */
@@ -166,6 +267,8 @@ export function sittingMarkers(text: string, names: readonly string[] = []): Set
     if (o) out.add(`attempt:${o}`);
   }
   for (const [value, re] of CET_FAMILIES) if (re.test(lower)) out.add(`cet:${value}`);
+  for (const h of countedHits(postGroupHits(lower))) for (const v of h.values) out.add(`postgroup:${v}`);
+  for (const h of countedHits(genderHits(lower))) for (const v of h.values) out.add(`gender:${v}`);
   return out;
 }
 
@@ -174,8 +277,8 @@ const MAINS_ALL = new RegExp(MAINS_RE.source, "giu");
 const CET_ALL: readonly RegExp[] = CET_FAMILIES.map(([, re]) => new RegExp(re.source, "giu"));
 
 /** 1 Oct 2026 (independent review of the gate fix). The spans of a text that
- *  make a marker — exactly the matches sittingMarkers counts, on the same
- *  normalised text (`text` in the result: Indic digits → ASCII, lower case,
+ *  make a marker — exactly the matches sittingMarkers reads (a post-group /
+ *  gender list it outranks included), on the same normalised text (`text` in the result: Indic digits → ASCII, lower case,
  *  one space per run of white space). A bracketed sitting numeral's span is
  *  the bracket only ("Varg (2)" keeps "varg"); a "(I)" after "Paper" is no
  *  marker and no span. Why: the verified stage dropped every word a marker
@@ -207,6 +310,9 @@ export function markerSpans(text: string, names: readonly string[] = []): { text
   for (const m of lower.matchAll(ATTEMPT_BEFORE_RE)) add(m);
   for (const m of lower.matchAll(ATTEMPT_AFTER_RE)) if (ordinal(m[1])) add(m);
   for (const re of CET_ALL) for (const m of lower.matchAll(re)) add(m);
+  // Every post-group / gender hit, an outranked list too ("Male and Female"
+  // in the exam's own name): its words are marker words, never a claim.
+  for (const h of [...postGroupHits(lower), ...genderHits(lower)]) spans.push([h.at, h.end]);
   spans.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
   const merged: [number, number][] = [];
   for (const s of spans) {

@@ -74,7 +74,7 @@ import { asciiDigits, yearPrinted } from "@/lib/official-papers";
 import { isOfficialSource } from "@/lib/official-source";
 import { OFFICIAL_BODIES } from "@/lib/official-domains";
 import { istDayNumber } from "@/lib/exam-phase";
-import { examFamilyMarkers, familyOf, hasFamily, markerConflict, markerSpans, sittingMarkers, sittingMarkersOf } from "@/lib/sitting-markers";
+import { examFamilyMarkers, familyOf, hasFamily, markerConflict, markerSpans, sittingMarkers, sittingMarkersOf, type MarkerFamily } from "@/lib/sitting-markers";
 import {
   FIRST_SEEN_NOTE_PREFIX,
   OFFICIAL_WATCH_SOURCE,
@@ -1042,7 +1042,9 @@ export function releaseLabel(kind: WatchKind, text: string, stage: string | null
 // Nursing and DPN/PHN CET results. A sibling must (a) name the exam on its
 // OWN row / anchor (a page heading is not enough), (b) name no other stage /
 // sitting / group / attempt / CET than the release (sitting-markers, the file
-// names included), and (c) share the release's printed day or its row. A
+// names included; 1 Oct 2026: a sex / post group that differs between two
+// links of the SAME row is no refusal — one row is one release), and (c)
+// share the release's printed day or its row. A
 // verified link that is no sibling but names the exam on its own row is a
 // release of its own; one named only by the page heading is held (reported,
 // not written).
@@ -1052,11 +1054,29 @@ function sameRow(a: string | undefined, b: string | undefined): boolean {
   return !!n(a) && n(a) === n(b);
 }
 
+/** Marker families that name a PART of one record row when the row's links
+ *  differ only in them (1 Oct 2026, review of the postgroup / gender
+ *  families): SSC's one result record links "List-I (Female)", "List-II
+ *  (Male)" and a write-up; HSSC can post Group C's and Group D's lists under
+ *  one notice. */
+const ROW_PART_FAMILIES: ReadonlySet<MarkerFamily> = new Set<MarkerFamily>(["gender", "postgroup"]);
+
 /** Why `v` is not a sibling of `release` — null when it is. */
 export function siblingRefusal(release: VerifiedRelease, v: VerifiedRelease, ctx: Pick<GateContext, "examTerms" | "ordinalNames">): string | null {
   if (!examNamed(v.text, ctx.examTerms)) return "its own row does not name the exam (only the page heading does)";
-  const mine = sittingMarkers(`${release.text} ${fileWords(release.url)}`, ctx.ordinalNames);
-  const its = sittingMarkers(`${v.text} ${fileWords(v.url)}`, ctx.ordinalNames);
+  let mine = sittingMarkers(`${release.text} ${fileWords(release.url)}`, ctx.ordinalNames);
+  let its = sittingMarkers(`${v.text} ${fileWords(v.url)}`, ctx.ordinalNames);
+  // 1 Oct 2026 (review): one record row is one release. A gender / post-group
+  // clash between two links of the SAME row is two lists of one release, not
+  // two releases — before, the order the links were read decided it (Female
+  // list first → two "Result — SSC GD 2026 CBT exam" rows for one day; the
+  // write-up first → one). Every other family still splits a row (a CBT-1
+  // file beside a CBT-2 file is another stage's).
+  if (sameRow(release.row, v.row)) {
+    const keep = (s: Set<string>) => new Set([...s].filter((m) => !ROW_PART_FAMILIES.has(familyOf(m))));
+    mine = keep(mine);
+    its = keep(its);
+  }
   const clash = markerConflict(mine, its);
   if (clash) return `it names another ${clash} (${[...its].join(", ")}; the release: ${[...mine].join(", ")})`;
   const sameDay = release.dateSource === "printed" && v.dateSource === "printed" && release.releasedOn.getTime() === v.releasedOn.getTime();

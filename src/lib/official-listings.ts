@@ -46,8 +46,36 @@
 //          request carries the session cookies the region page sets — the
 //          reader loads the region page first (the fetch layer keeps cookies).
 //
+// 1 Oct 2026 (the crawl of 30 Sep FAILed CLAT, GATE, IIT JAM, CAT and JEE
+// (Advanced) with "no listing page proposed"; each page below was read with
+// curl that day on the body's own site):
+//   jeeadv jeeadv.ac.in. The home page is the body's notice board: every
+//          announcement is a box "<h4 class=announcement__head>{title}</h4>
+//          {text and links} [ Posted on June 01, 2026, 2:45 IST ]" — JEE
+//          (Advanced) 2026's provisional keys (posted May 25), final keys and
+//          results (June 01) went up there. Plain HTML reads a link's row as
+//          the text box alone, without the title and the posted day; the
+//          adapter reads the whole box as the row. HTML comments are dropped
+//          (the page keeps old boxes commented out). Other links: plain HTML.
+//          Its heading is "" (review, 1 Oct 2026): the page's own title "JEE
+//          (Advanced) 2026" made the crawl read it as a single-exam page, so
+//          every box counted as naming the exam — and the page also carries
+//          JoSAA's and the AAT's boxes. Replayed on the 2026 cycle with RESULT
+//          still due, "Registration for JoSAA 2026" ("…all qualified
+//          candidates…", 3 Jun) and the AAT results box (7 Jun) passed as
+//          "Result — JEE Advanced 2026 exam". Each box prints its own title,
+//          so a row must name the exam itself.
+//   gate   a GATE organising institute's site (gate{year}.iit…/iisc.ac.in;
+//          GATE 2027: IIT Madras, gate2027.iitm.ac.in — its home page names
+//          the "Organizing Institute"). Its Notifications page is a table
+//          "Date | Activity" whose date cell spans all of that day's rows
+//          (rowspan 2 … 7): plain HTML gives the 2nd–7th notice of a day no
+//          date. The adapter carries a rowspan cell into every row it spans,
+//          as the page shows it ("27<sup>th</sup>" read as "27th").
+//
 // ssc-api and rrb read a feed / category tables with no page heading of the
-// body's: their heading is "" (review, 30 Sep 2026: a made-up heading such as
+// body's, and jeeadv's page speaks for more than one exam (see above): their
+// heading is "" (review, 30 Sep 2026: a made-up heading such as
 // "RRB chandigarh · Objection Tracker" let a research term like "RRB" name
 // the exam for every row, via the crawl's single-exam heading). Headings and
 // page text are only ever what the body served.
@@ -61,7 +89,7 @@
 import { classifyLink, extractLinks, htmlText, pageHeading, type PageLink, type WatchKind } from "@/lib/answer-key-watch";
 import { isOfficialSource } from "@/lib/official-source";
 
-export type ListingAdapter = "html" | "upsc" | "ssc-api" | "ibps" | "rrb";
+export type ListingAdapter = "html" | "upsc" | "ssc-api" | "ibps" | "rrb" | "jeeadv" | "gate";
 
 /** A listing link, with how the body lets it be opened. "login": a
  *  candidate-login page (IBPS results / scores) — our fetch cannot open it. */
@@ -92,8 +120,9 @@ export interface ListingRead {
   /** Final URL of the last page read. */
   pageUrl: string;
   /** The heading the body printed on the page read (UPSC's h1, the page's
-   *  title); "" for ssc-api and rrb, which read a feed / tables with none —
-   *  never one the adapter made up. */
+   *  title); "" for ssc-api and rrb, which read a feed / tables with none,
+   *  and for jeeadv, whose page also carries JoSAA's and the AAT's boxes
+   *  (1 Oct 2026) — never one the adapter made up. */
   heading: string;
   links: ListingLink[];
   /** The text the pages read print (htmlText; SSC: the headlines), capped —
@@ -171,6 +200,10 @@ export const RRB_HOST = "rrb.indianrailways.gov.in";
  *  no region named, the watch reads RRB Chandigarh's (rrbcdg.gov.in's). */
 const RRB_DEFAULT_REGION = "chandigarh";
 
+/** A GATE organising institute's site: gate2027.iitm.ac.in, gate2026.iitg.ac.in,
+ *  gate2024.iisc.ac.in … (1 Oct 2026). */
+const GATE_HOST_RE = /^gate20\d\d\.(?:iit[a-z]{1,8}|iisc)\.ac\.in$/;
+
 export function listingAdapterFor(listingUrl: string): ListingAdapter {
   const u = safeUrl(listingUrl);
   if (!u) return "html";
@@ -179,6 +212,8 @@ export function listingAdapterFor(listingUrl: string): ListingAdapter {
   if (h === "ssc.gov.in" && sscContentType(listingUrl)) return "ssc-api";
   if (h === "ibps.in" && /^\/index\.php\/[a-z0-9-]+\/?$/i.test(u.pathname)) return "ibps";
   if (h === RRB_HOST || h in RRB_LEGACY) return "rrb";
+  if (h === "jeeadv.ac.in") return "jeeadv";
+  if (GATE_HOST_RE.test(h)) return "gate";
   return "html";
 }
 
@@ -480,6 +515,79 @@ export function parseRrbTable(html: string, pageUrl: string): ListingLink[] {
   return out;
 }
 
+// ── jeeadv: announcement boxes (1 Oct 2026) ─────────────────────────────
+
+const HTML_COMMENT_RE = /<!--[\s\S]*?-->/g;
+const ANNOUNCEMENT_HEAD_RE = /<h4\b[^>]*\bclass\s*=\s*["'][^"']*\bannouncement__head\b[^"']*["'][^>]*>/gi;
+
+/** Every link of a page whose notices are announcement boxes (jeeadv.ac.in);
+ *  a link inside a box carries the whole box as its row: title, text and the
+ *  "[ Posted on … ]" day. A box runs from its title to the next title (the
+ *  page leaves one title unclosed); the last one ends with its section. HTML
+ *  comments are no part of the page. [] boxes → plain links. */
+export function parseAnnouncementBoxes(html: string, pageUrl: string): ListingLink[] {
+  const h = (html ?? "").replace(HTML_COMMENT_RE, " ");
+  const heads = [...h.matchAll(ANNOUNCEMENT_HEAD_RE)].map((m) => m.index ?? 0);
+  if (heads.length === 0) return extractLinks(h, pageUrl);
+  const sectionEnd = h.toLowerCase().indexOf("</section>", heads[heads.length - 1]);
+  const lastEnd = sectionEnd === -1 ? h.length : sectionEnd;
+  const out: ListingLink[] = [...extractLinks(h.slice(0, heads[0]), pageUrl)];
+  heads.forEach((at, i) => {
+    const box = h.slice(at, i + 1 < heads.length ? heads[i + 1] : lastEnd);
+    const rowText = htmlText(box).slice(0, 1200);
+    for (const l of extractLinks(box, pageUrl)) out.push({ ...l, rowText });
+  });
+  out.push(...extractLinks(h.slice(lastEnd), pageUrl));
+  return out;
+}
+
+// ── gate: tables whose date cell spans rows (1 Oct 2026) ────────────────
+
+/** "27<sup>th</sup>" → "27th": the ordinal is part of the printed date. */
+const supOrdinals = (html: string) => html.replace(/(\d)\s*<sup\b[^>]*>\s*(st|nd|rd|th)\s*<\/sup\s*>/gi, "$1$2");
+
+/** The rows of one table: their HTML and their text, a cell with rowspan="N"
+ *  carried into the N-1 rows below it (before the row's own cells, as the
+ *  page shows it). */
+function spannedRows(tableHtml: string): { html: string; text: string }[] {
+  const rows: { html: string; text: string }[] = [];
+  let carry: { text: string; left: number }[] = [];
+  for (const r of tableHtml.matchAll(/<tr\b[^>]*>([\s\S]*?)(?=<tr\b|<\/table\s*>|$)/gi)) {
+    const rowHtml = r[1];
+    const carried = carry.map((c) => c.text);
+    carry = carry.map((c) => ({ ...c, left: c.left - 1 })).filter((c) => c.left > 0);
+    for (const c of rowHtml.matchAll(/<t[dh]\b([^>]*)>([\s\S]*?)(?=<t[dh]\b|<\/tr\s*>|$)/gi)) {
+      const span = Number(/\browspan\s*=\s*["']?(\d{1,2})/i.exec(c[1])?.[1] ?? "1");
+      if (span > 1) carry.push({ text: cellText(c[2]), left: span - 1 });
+    }
+    rows.push({ html: rowHtml, text: [...carried, cellText(rowHtml)].filter(Boolean).join(" · ").slice(0, 1200) });
+  }
+  return rows;
+}
+
+/** The texts of a page's table rows, rowspan cells carried (what a reader
+ *  sees on each row). */
+export function tableRowTexts(html: string): string[] {
+  const h = supOrdinals((html ?? "").replace(HTML_COMMENT_RE, " "));
+  return [...h.matchAll(/<table\b[\s\S]*?<\/table\s*>/gi)].flatMap((t) => spannedRows(t[0]).map((r) => r.text));
+}
+
+/** Every link of a page; a link in a table row carries the row's text with
+ *  the rowspan cells above it (GATE's day of the notice). */
+export function parseRowspanTables(html: string, pageUrl: string): ListingLink[] {
+  const h = supOrdinals((html ?? "").replace(HTML_COMMENT_RE, " "));
+  const out: ListingLink[] = [];
+  let at = 0;
+  for (const t of h.matchAll(/<table\b[\s\S]*?<\/table\s*>/gi)) {
+    const start = t.index ?? 0;
+    out.push(...extractLinks(h.slice(at, start), pageUrl));
+    at = start + t[0].length;
+    for (const r of spannedRows(t[0])) for (const l of extractLinks(r.html, pageUrl)) out.push({ ...l, rowText: r.text });
+  }
+  out.push(...extractLinks(h.slice(at), pageUrl));
+  return out;
+}
+
 // ── the reader ──────────────────────────────────────────────────────────
 
 export interface ReadListingOptions {
@@ -647,6 +755,18 @@ export async function readOfficialListing(listingUrl: string, kind: WatchKind, f
     return ok(cycles[0], heading, links, `IBPS cycle pages: ${notes.join("; ")}`);
   }
 
+  if (adapter === "jeeadv" || adapter === "gate") {
+    // What the page shows: never the text of its HTML comments.
+    const shown = first.body.replace(HTML_COMMENT_RE, " ");
+    texts.push(htmlText(shown));
+    // jeeadv: no heading (review, 1 Oct 2026). The title "JEE (Advanced) 2026"
+    // would make the crawl read the page as one exam's, and its JoSAA / AAT
+    // boxes would pass as JEE (Advanced) results; each box names its own exam.
+    return adapter === "jeeadv"
+      ? ok(first.url, "", parseAnnouncementBoxes(shown, first.url), "read as announcement boxes (title, text and posted day per row)")
+      : ok(first.url, pageHeading(shown), parseRowspanTables(shown, first.url), "read as a GATE notice table (a date cell spanning rows is carried into each)");
+  }
+
   texts.push(htmlText(first.body));
   return ok(first.url, pageHeading(first.body), extractLinks(first.body, first.url), "plain HTML");
 }
@@ -699,7 +819,8 @@ export class ListingReadCache {
  *  tables and What's New; SSC: its answer-key and candidate-result pages
  *  (read through the records endpoint); RRB: the region's objection-tracker
  *  and exam-results tables. IBPS has one index per exam — the research names
- *  it. */
+ *  it. 1 Oct 2026: JEE (Advanced), GATE 2027 and JAM 2027 by their portal's
+ *  host (KNOWN_LISTINGS). */
 export function bodyListingsFor(portalUrl: string | null | undefined, kind: WatchKind): string[] {
   const u = safeUrl(portalUrl ?? "");
   if (!u) return [];
@@ -716,8 +837,41 @@ export function bodyListingsFor(portalUrl: string | null | undefined, kind: Watc
     const region = rrbRegionOf(portalUrl!);
     return RRB_CATEGORIES[kind].map((c) => rrbCategoryUrl(region, c));
   }
-  return [];
+  return [...(KNOWN_LISTINGS[h]?.[kind] ?? [])];
 }
+
+/** 1 Oct 2026: the listings of bodies the crawl of 30 Sep FAILed with "no
+ *  listing page proposed", by the exam portal's host — each read that day on
+ *  the body's own site (curl) and confirmed as where it posts the kind, or the
+ *  notice page that announces it. Not here, and why (unconfirmed — never
+ *  guessed at): CLAT (consortiumofnlus.ac.in lists its notices through a
+ *  script feed whose files sit on s3.ap-south-1.amazonaws.com, a host the gate
+ *  rightly refuses), CAT (iimcat.ac.in is a script-built portal; its results
+ *  and responses are candidate logins on cdn.digialm.com). */
+const KNOWN_LISTINGS: Readonly<Record<string, Readonly<Record<WatchKind, readonly string[]>>>> = {
+  // JEE (Advanced): the home page's announcement boxes — "JEE (Advanced) 2026
+  // Provisional Answer Keys [ Posted on May 25, 2026 ]", "… Final Answer Keys
+  // [ Posted on June 01, 2026 ]", "JEE (Advanced) 2026 Results" (adapter
+  // "jeeadv"). The host stays jeeadv.ac.in whichever IIT organises the year.
+  "jeeadv.ac.in": { ANSWER_KEY: ["https://jeeadv.ac.in/"], RESULT: ["https://jeeadv.ac.in/"] },
+  // GATE 2027, organised by IIT Madras: "Notifications", the dated list of
+  // every GATE 2027 notice (adapter "gate"); "Announcement of results: 19th
+  // March 2027" on its Important Dates. GATE 2026's organiser (IIT Guwahati)
+  // announced its keys and results in its notices the same way ("Master
+  // Question Papers and Answer Keys … are released", "GATE 2026 results are
+  // live at GOAPS portal").
+  "gate2027.iitm.ac.in": { ANSWER_KEY: ["https://gate2027.iitm.ac.in/notifications"], RESULT: ["https://gate2027.iitm.ac.in/notifications"] },
+  // JAM 2027, organised by IIT Kharagpur: "All Announcements for JAM 2027
+  // examination", and the "Question Papers & Answer Keys" page its Examination
+  // menu links (qp-key26.html: "Master Question Papers & Answer Keys", today
+  // JAM 2026's final keys and cut-offs, its key buttons "#"). Results are on
+  // the JOAPS candidate portal; the announcements page is where they are
+  // announced.
+  "jam.iitkgp.ac.in": {
+    ANSWER_KEY: ["https://jam.iitkgp.ac.in/announcements.html", "https://jam.iitkgp.ac.in/qp-key26.html"],
+    RESULT: ["https://jam.iitkgp.ac.in/announcements.html"],
+  },
+};
 
 /** An IBPS listing proposed for one kind also lists the other kind's notices
  *  (a cycle page carries every notice of the recruitment). */

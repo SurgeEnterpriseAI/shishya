@@ -18,6 +18,8 @@ import {
   istDdMmYyyy,
   listingAdapterFor,
   listingReadKey,
+  parseAnnouncementBoxes,
+  parseRowspanTables,
   parseRrbTable,
   parseSscRecords,
   parseUpscItemFiles,
@@ -30,11 +32,12 @@ import {
   sscContentType,
   sscFileUrl,
   sscRecordsUrl,
+  tableRowTexts,
   UPSC_ITEM_MAX,
   type ListingFetch,
   type ListingPage,
 } from "@/lib/official-listings";
-import { classifyLink, examNamed, examTermsFor, releaseGate, type GateContext, type LinkFetch, type ReleaseCandidate, type WatchKind } from "@/lib/answer-key-watch";
+import { classifyLink, examNamed, examTermsFor, extractLinks, parsePrintedDates, releaseGate, type GateContext, type LinkFetch, type ReleaseCandidate, type WatchKind } from "@/lib/answer-key-watch";
 import { markerConflict, sittingMarkers } from "@/lib/sitting-markers";
 
 const FIX = path.join(process.cwd(), "tests/fixtures/official-listings");
@@ -578,5 +581,227 @@ describe("one read per listing for a run / crawl", () => {
     expect(stopped.read.timeGuard).toBe(true);
     const again = await guarded.read("https://ssc.gov.in/home/answer-key", "ANSWER_KEY", fetchPage, o);
     expect([again.fresh, again.read.fetchMode]).toEqual([true, "html"]);
+  });
+});
+
+// ── 1 Oct 2026: listings for the exams the crawl of 30 Sep FAILed with "no
+// listing page proposed" (CLAT, GATE, IIT JAM, CAT, JEE (Advanced)). Pages
+// saved from the bodies' own sites that day; CLAT and CAT stay unlisted (see
+// KNOWN_LISTINGS in src/lib/official-listings.ts).
+
+describe("known listings by the portal's host (JEE Advanced, GATE 2027, JAM 2027)", () => {
+  it("adapters: jeeadv.ac.in's boxes; any GATE organising institute's site; everything else plain HTML", () => {
+    expect(listingAdapterFor("https://jeeadv.ac.in/")).toBe("jeeadv");
+    expect(listingAdapterFor("https://www.jeeadv.ac.in")).toBe("jeeadv");
+    expect(listingAdapterFor("https://gate2027.iitm.ac.in/notifications")).toBe("gate");
+    expect(listingAdapterFor("https://gate2026.iitg.ac.in/")).toBe("gate");
+    expect(listingAdapterFor("https://gate2024.iisc.ac.in/")).toBe("gate");
+    expect(listingAdapterFor("http://gate.iitd.ac.in")).toBe("html");
+    expect(listingAdapterFor("https://jam.iitkgp.ac.in/announcements.html")).toBe("html");
+    expect(listingAdapterFor("https://cdata.jeeadv.ac.in/result2026/")).toBe("html");
+  });
+
+  it("the listings, by kind; CLAT and CAT none (unconfirmed — never guessed)", () => {
+    expect(bodyListingsFor("https://jeeadv.ac.in", "ANSWER_KEY")).toEqual(["https://jeeadv.ac.in/"]);
+    expect(bodyListingsFor("https://jeeadv.ac.in", "RESULT")).toEqual(["https://jeeadv.ac.in/"]);
+    expect(bodyListingsFor("https://gate2027.iitm.ac.in/", "ANSWER_KEY")).toEqual(["https://gate2027.iitm.ac.in/notifications"]);
+    expect(bodyListingsFor("https://gate2027.iitm.ac.in/", "RESULT")).toEqual(["https://gate2027.iitm.ac.in/notifications"]);
+    expect(bodyListingsFor("https://jam.iitkgp.ac.in/", "ANSWER_KEY")).toEqual(["https://jam.iitkgp.ac.in/announcements.html", "https://jam.iitkgp.ac.in/qp-key26.html"]);
+    expect(bodyListingsFor("https://jam.iitkgp.ac.in/", "RESULT")).toEqual(["https://jam.iitkgp.ac.in/announcements.html"]);
+    expect(bodyListingsFor("https://consortiumofnlus.ac.in/", "ANSWER_KEY")).toEqual([]);
+    expect(bodyListingsFor("https://iimcat.ac.in", "RESULT")).toEqual([]);
+    // GATE_CSE's stored portal is an older organiser's: no listing is made up for it.
+    expect(bodyListingsFor("http://gate.iitd.ac.in", "RESULT")).toEqual([]);
+    // A caller's copy never changes the table.
+    bodyListingsFor("https://jeeadv.ac.in", "RESULT").push("x");
+    expect(bodyListingsFor("https://jeeadv.ac.in", "RESULT")).toEqual(["https://jeeadv.ac.in/"]);
+  });
+});
+
+describe("JEE (Advanced): each announcement box is the row of its links", () => {
+  const HOME = "https://jeeadv.ac.in/";
+  const links = () => parseAnnouncementBoxes(fx("jeeadv-home.html"), HOME);
+  const at = (url: string) => links().find((l) => l.url === url)!;
+
+  it("a box's link carries its title, its text and its posted day", () => {
+    const fin = at("https://jeeadv.ac.in/documents/p1_solutions_final.pdf");
+    expect(fin.anchorText).toBe("Final Answer Key Paper 1");
+    expect(fin.rowText.startsWith("JEE (Advanced) 2026 Final Answer Keys Final Answer Keys of JEE (Advanced) 2026 are now available")).toBe(true);
+    expect(fin.rowText).toMatch(/\[ Posted on June 01, 2026, 2:45 IST \]$/);
+    expect(parsePrintedDates(fin.rowText)).toEqual(["2026-06-01"]);
+    const prov = at("https://jeeadv.ac.in/documents/p2_provisional_keys.pdf");
+    expect(prov.rowText).toMatch(/^JEE \(Advanced\) 2026 Provisional Answer Keys .*Posted on May 25, 2026, 09:40 IST \]$/);
+    const res = at("https://cdata.jeeadv.ac.in/result2026/");
+    expect(res.rowText).toMatch(/^JEE \(Advanced\) 2026 Results .*Posted on June 01, 2026/);
+    // Plain HTML read the text box alone: no title, no day.
+    const plain = extractLinks(fx("jeeadv-home.html"), HOME).find((l) => l.url === fin.url)!;
+    expect(parsePrintedDates(plain.rowText)).toEqual([]);
+  });
+
+  it("an unclosed title still opens its box; a commented-out box or link is no part of the page; other links stay plain", () => {
+    const admit = at("https://cdata.jeeadv.ac.in/admit_cards_2026.html");
+    expect(admit.rowText.startsWith("Admit Card for JEE(Advanced) 2026 Examination Click on Link 1")).toBe(true);
+    expect(admit.rowText).toMatch(/Updated on May 11, 2026, 12:00 IST \]$/);
+    expect(links().filter((l) => l.url === "https://cdata.jeeadv.ac.in/admit_cards_2026.html")).toHaveLength(1); // the commented copy is gone
+    expect(links().some((l) => l.url === "https://resultint.jeeadv.ac.in/")).toBe(false);
+    const iit = at("https://www.iitbhilai.ac.in/");
+    expect(iit.rowText).toBe("IIT Bhilai");
+  });
+
+  it("the final key passes the unchanged gate on the crawl's first read, with the posted day", () => {
+    const fin = at("https://jeeadv.ac.in/documents/p1_solutions_final.pdf");
+    const c = ctx({
+      portalUrl: "https://jeeadv.ac.in",
+      examTerms: examTermsFor({ shortName: "JEE Advanced", name: "Joint Entrance Examination — Advanced" }, ["JEE (Advanced)", "JEE Advanced"]),
+      cycleYears: ["2026"],
+      notBefore: day("2026-05-17"),
+      sittingLabels: ["JEE Advanced 2026 exam"],
+      now: new Date("2026-06-02T06:30:00Z"),
+    });
+    const v = releaseGate(cand("ANSWER_KEY", fin, HOME), c, pdf);
+    expect(v.ok && [v.release.dateSource, v.release.releasedOn.toISOString().slice(0, 10)]).toEqual(["printed", "2026-06-01"]);
+    // The same link read as plain HTML has no day: refused on a first read (gate 5).
+    const plain = extractLinks(fx("jeeadv-home.html"), HOME).find((l) => l.url === fin.url)!;
+    expect(releaseGate(cand("ANSWER_KEY", plain, HOME), c, pdf)).toMatchObject({ ok: false, gate: 5 });
+  });
+
+  it("the reader: one request, no heading (the page carries JoSAA's and the AAT's boxes too), every box read", async () => {
+    const { fetchPage, calls } = fakeFetch({ [HOME]: html(fx("jeeadv-home.html")) });
+    const r = await readOfficialListing(HOME, "ANSWER_KEY", fetchPage, { portalUrl: "https://jeeadv.ac.in" });
+    expect(calls).toEqual([HOME]);
+    expect(r).toMatchObject({ adapter: "jeeadv", fetchMode: "html", heading: "" });
+    expect(r.status).toMatch(/^read as announcement boxes/);
+    // The page's own words still reach the crawl's term check.
+    expect(r.pageText).toContain("JEE (Advanced) 2026 Final Answer Keys");
+    expect(r.links.filter((l) => classifyLink(`${l.anchorText} ${l.rowText}`).ak).map((l) => new URL(l.url).pathname)).toEqual(
+      expect.arrayContaining(["/documents/p1_solutions_final.pdf", "/documents/p2_solutions_final.pdf", "/documents/p1_provisional_keys.pdf", "/documents/p2_provisional_keys.pdf"]),
+    );
+  });
+
+  // 1 Oct 2026 (review): the reader returned the page's title "JEE (Advanced)
+  // 2026" as its heading, so the crawl took the home page for a single-exam
+  // page and every box on it "named" the exam. Replayed on the 2026 cycle with
+  // RESULT still due, the "Registration for JoSAA 2026" box (its text says
+  // "qualified candidates", 3 Jun) and the AAT results box (7 Jun) passed as
+  // "Result — JEE Advanced 2026 exam". With no heading, a box must name the
+  // exam itself.
+  it("regression: the JoSAA and AAT boxes are refused as the exam's result (gate 3); its own keys and result still pass", async () => {
+    const { fetchPage } = fakeFetch({ [HOME]: html(fx("jeeadv-home.html")) });
+    const r = await readOfficialListing(HOME, "RESULT", fetchPage, { portalUrl: "https://jeeadv.ac.in" });
+    const terms = examTermsFor({ shortName: "JEE Advanced", name: "Joint Entrance Examination — Advanced" }, ["JEE (Advanced)", "JEE Advanced"]);
+    // The crawl's single-exam heading (scripts/crawl-official-answer-keys.ts): the heading, only when it names the exam.
+    const single = r.heading && examNamed(r.heading, terms) ? r.heading : null;
+    expect(single).toBeNull();
+    const at = (now: string) =>
+      ctx({
+        portalUrl: "https://jeeadv.ac.in",
+        examTerms: terms,
+        cycleYears: ["2026"],
+        notBefore: day("2026-05-17"),
+        sittingLabels: ["JEE Advanced 2026 exam"],
+        singleExamHeading: single,
+        now: new Date(now),
+      });
+    const box = (url: string, title: string) => r.links.find((l) => l.url === url && l.rowText.startsWith(title))!;
+    const page: LinkFetch = { status: 200, contentType: "text/html", head: "<html>", finalUrl: null };
+    const notNamed = { ok: false, gate: 3, reason: "the exam is not named beside the link" };
+
+    const josaa = box("https://josaa.nic.in/", "Registration for JoSAA 2026");
+    expect(classifyLink(`${josaa.anchorText} ${josaa.rowText}`).result).toBe(true); // "qualified candidates": only the exam's name can refuse it
+    expect(releaseGate(cand("RESULT", josaa, HOME), at("2026-06-04T06:30:00Z"), page)).toMatchObject(notNamed);
+    const aat = box("https://josaa.admissions.nic.in/applicant/root/candidatelogin.aspx", "Architecture Aptitude Test (AAT) 2026 Results");
+    expect(classifyLink(`${aat.anchorText} ${aat.rowText}`).result).toBe(true);
+    expect(releaseGate(cand("RESULT", aat, HOME), at("2026-06-08T06:30:00Z"), page)).toMatchObject(notNamed);
+
+    // The exam's own boxes name it on their own row: unchanged.
+    const res = box("https://cdata.jeeadv.ac.in/result2026/", "JEE (Advanced) 2026 Results");
+    const rv = releaseGate(cand("RESULT", res, HOME), at("2026-06-02T06:30:00Z"), page);
+    expect(rv.ok && [rv.release.dateSource, rv.release.releasedOn.toISOString().slice(0, 10)]).toEqual(["printed", "2026-06-01"]);
+    const prov = box("https://jeeadv.ac.in/documents/p1_provisional_keys.pdf", "JEE (Advanced) 2026 Provisional Answer Keys");
+    const pv = releaseGate(cand("ANSWER_KEY", prov, HOME), at("2026-05-26T06:30:00Z"), pdf);
+    expect(pv.ok && [pv.release.dateSource, pv.release.releasedOn.toISOString().slice(0, 10)]).toEqual(["printed", "2026-05-25"]);
+    const fin = box("https://jeeadv.ac.in/documents/p1_solutions_final.pdf", "JEE (Advanced) 2026 Final Answer Keys");
+    const fv = releaseGate(cand("ANSWER_KEY", fin, HOME), at("2026-06-02T06:30:00Z"), pdf);
+    expect(fv.ok && [fv.release.dateSource, fv.release.releasedOn.toISOString().slice(0, 10)]).toEqual(["printed", "2026-06-01"]);
+  });
+});
+
+describe("GATE 2027 (IIT Madras): a notice table whose date cell spans the day's rows", () => {
+  const NOTIF = "https://gate2027.iitm.ac.in/notifications";
+
+  it("every row reads its day, the 2nd–7th notice of a day too ('27<sup>th</sup>' read as '27th')", () => {
+    const rows = tableRowTexts(fx("gate2027-iitm-notifications.html"));
+    expect(rows[0]).toBe("Date Activity");
+    expect(rows).toContain(
+      "17th September 2026 · GATE aspirants have an option of registering through unverified digilocker account. They can select the default ID proof during application filling process. These candidates' applications will be scrutinized after the registration deadline for necessary documents. Additionally, the original documents will be verified at the examination halls for the candidates registered with unverified digilocker accounts. It is recommended to the aspirants to use verified digilocker account for smoother experience at the examination venue.",
+    );
+    expect(rows).toContain("23rd July 2026 · Please note updates on BT syllabus & Two-paper Combinations.");
+    expect(rows[rows.length - 1]).toBe("20th July 2026 · GATE 2027 Website Launched.");
+    expect(rows.filter((r) => r.startsWith("20th July 2026 · "))).toHaveLength(6); // the 2nd–7th rows under the rowspan="7" cell
+    // A row that prints its own day is read as it is.
+    expect(rows).toContain("2nd September 2026 Application Portal is LIVE now.");
+  });
+
+  it("links: a table row's link carries the row (its day); other links stay plain", () => {
+    const links = parseRowspanTables(fx("gate2027-iitm-notifications.html"), NOTIF);
+    const faq = links.find((l) => l.url === "https://gate2027ib.iitm.ac.in/GATE2027_Registration_Issues_and_solutions.pdf")!;
+    expect(faq.anchorText).toBe("Frequently Faced Issues");
+    expect(parsePrintedDates(faq.rowText)).toEqual(["2026-09-26"]);
+    expect(links.find((l) => l.url === "https://gate2027.iitm.ac.in/download")!.rowText).toBe("Download");
+  });
+
+  // The shape of the page (a day's cell spanning two notices), not a real
+  // notice: GATE 2027's keys are due after its February 2027 exam.
+  const KEY_DAY = [
+    "<table><tbody>",
+    '<tr><td class="text-left align-content-center" rowspan="2">25<sup>th</sup> February 2027</td>',
+    '<td class="text-left">GATE 2027 Candidate responses are available on the <a href="https://goaps.iitm.ac.in/login">GOAPS portal</a>.</td></tr>',
+    '<tr><td class="text-left">GATE 2027 Provisional Answer Keys of all test papers are released: <a href="/static/doc/GATE2027_Provisional_Answer_Keys.pdf">Answer Keys</a></td></tr>',
+    "</tbody></table>",
+  ].join("\n");
+
+  it("a key posted as the 2nd notice of its day keeps the day, and passes the unchanged gate on a first read", () => {
+    const links = parseRowspanTables(KEY_DAY, NOTIF);
+    const key = links.find((l) => l.url === "https://gate2027.iitm.ac.in/static/doc/GATE2027_Provisional_Answer_Keys.pdf")!;
+    expect(key.rowText.startsWith("25th February 2027 · GATE 2027 Provisional Answer Keys")).toBe(true);
+    const c = ctx({
+      portalUrl: "https://gate2027.iitm.ac.in/",
+      examTerms: examTermsFor({ shortName: "GATE CE", name: "Graduate Aptitude Test in Engineering — Civil Engineering" }, ["GATE", "GATE 2027"]),
+      cycleYears: ["2027"],
+      notBefore: day("2027-02-06"),
+      lastExamDay: day("2027-02-14"),
+      now: new Date("2027-02-26T06:30:00Z"),
+    });
+    const v = releaseGate(cand("ANSWER_KEY", key, NOTIF), c, pdf);
+    expect(v.ok && [v.release.dateSource, v.release.releasedOn.toISOString().slice(0, 10)]).toEqual(["printed", "2027-02-25"]);
+    // Plain HTML gave that row no day: refused on a first read.
+    const plain = extractLinks(KEY_DAY, NOTIF).find((l) => l.url === key.url)!;
+    expect(releaseGate(cand("ANSWER_KEY", plain, NOTIF), c, pdf)).toMatchObject({ ok: false, gate: 5 });
+  });
+
+  it("the reader: one request, the page's own heading", async () => {
+    const { fetchPage, calls } = fakeFetch({ [NOTIF]: html(fx("gate2027-iitm-notifications.html")) });
+    const r = await readOfficialListing(NOTIF, "RESULT", fetchPage, { portalUrl: "https://gate2027.iitm.ac.in/" });
+    expect(calls).toEqual([NOTIF]);
+    expect(r).toMatchObject({ adapter: "gate", fetchMode: "html", heading: "GATE 2027" });
+    expect(r.pageText).toContain("GATE 2027 Website Launched.");
+    // Nothing of either kind is posted yet: the crawl reads it "empty", never browser-only.
+    expect(r.links.filter((l) => classifyLink(`${l.anchorText} ${l.rowText}`).result)).toEqual([]);
+  });
+});
+
+describe("JAM 2027 (IIT Kharagpur): plain HTML pages with nothing posted yet", () => {
+  it("the answer-key page names JAM 2027 and its kind, and links nothing yet (its buttons are '#'): read, empty", async () => {
+    const QP = "https://jam.iitkgp.ac.in/qp-key26.html";
+    const ANN = "https://jam.iitkgp.ac.in/announcements.html";
+    const { fetchPage } = fakeFetch({ [QP]: html(fx("jam-iitkgp-qp-key26.html")), [ANN]: html(fx("jam-iitkgp-announcements.html")) });
+    const qp = await readOfficialListing(QP, "ANSWER_KEY", fetchPage, { portalUrl: "https://jam.iitkgp.ac.in/" });
+    expect(qp).toMatchObject({ adapter: "html", fetchMode: "html" });
+    expect(qp.pageText).toContain("Master Question Papers & Answer Keys");
+    expect(qp.pageText).toContain("JOINT ADMISSION TEST FOR MASTERS (JAM) 2027");
+    expect(qp.links.filter((l) => classifyLink(`${l.anchorText} ${l.rowText}`).ak)).toEqual([]);
+    const ann = await readOfficialListing(ANN, "RESULT", fetchPage, { portalUrl: "https://jam.iitkgp.ac.in/" });
+    expect(ann.pageText).toContain("All Announcements for JAM 2027 examination");
+    expect(ann.links.filter((l) => classifyLink(`${l.anchorText} ${l.rowText}`).result)).toEqual([]);
   });
 });

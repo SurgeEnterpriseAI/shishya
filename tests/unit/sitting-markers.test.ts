@@ -117,6 +117,93 @@ describe("group / attempt / cet — the families of a body that runs several CET
   });
 });
 
+// 1 Oct 2026 (review of a326ddb): sittings that differ only by the post group
+// (HSSC's CET for Group C vs Group D) or the sex the event is held for (Delhi
+// Police's Male vs Female PE&MT). The rows are shaped as the bodies print
+// them (HSSC / PSSSB / SSC / UP Police wording, file names included).
+describe("postgroup / gender — sittings that differ only by group or sex", () => {
+  it("post groups A–D in the bodies' spellings: 'Group C', 'Group-D', \"Group 'C'\", 'Grp. D', ग्रुप-डी, समूह ग", () => {
+    expect(m("CET Group C 2026 Result of Common Eligibility Test")).toEqual(["postgroup:c"]);
+    expect(m("Result of Common Eligibility Test (CET) for Group-D posts, 2026")).toEqual(["postgroup:d"]);
+    expect(m("Answer Key of CET Group 'C' (Main Written Exam) 2026")).toEqual(["pm:mains", "postgroup:c"]); // HSSC's Group C mains
+    expect(m("Grp. D CET 2026 result")).toEqual(["postgroup:d"]);
+    expect(m("Provisinal-Answer-Key-for-Group-D-Post-Advt-08-of-2025Set-D")).toEqual(["postgroup:d"]);
+    expect(m("सीईटी ग्रुप-डी परीक्षा 2026 का परिणाम")).toEqual(["postgroup:d"]);
+    expect(m("समूह 'ग' भर्ती परीक्षा की उत्तर कुंजी")).toEqual(["postgroup:c"]);
+  });
+  it("never a subject group, a numbered group, a discussion, a set, or an 'a' that is a word", () => {
+    expect(m("TSPSC Group-II Services Preliminary Key")).toEqual([]);
+    expect(m("Group 4 Services result")).toEqual([]);
+    expect(m("MHT-CET 2026 (PCM Group) result")).toEqual(["cet:mht", "group:pcm"]);
+    expect(m("Schedule of Group Discussion")).toEqual([]);
+    expect(m("Answer key Set-D")).toEqual([]);
+    expect(m("Group C or a higher post")).toEqual(["postgroup:c"]);
+  });
+  // 1 Oct 2026 (review of the new families): GRP is the Government Railway
+  // Police in UP / Bihar police notices; only "Grp." with its dot is a group.
+  it("a bare 'GRP' (Government Railway Police) is never a post group", () => {
+    expect(m("GRP B Company")).toEqual([]);
+    expect(m("Constable GRP a list")).toEqual([]);
+    expect(m("Result of Constable GRP C Company 2026")).toEqual([]);
+  });
+  it("sexes: Male / Female, Men / Women, Mahila, पुरुष / महिला — never 'Ex-Service Men' or a name", () => {
+    expect(m("Female PE&MT")).toEqual(["gender:female"]);
+    expect(m("Male PE&MT result")).toEqual(["gender:male"]);
+    expect(m("Result of Women Constable recruitment")).toEqual(["gender:female"]);
+    expect(m("Mahila Supervisor exam result")).toEqual(["gender:female"]);
+    expect(m("आरक्षी नागरिक पुलिस (महिला) परीक्षा परिणाम")).toEqual(["gender:female"]);
+    expect(m("पुरुषों का शारीरिक दक्षता परीक्षण")).toEqual(["gender:male"]);
+    expect(m("Vacancies for Ex-Service Men and Ex-Servicemen")).toEqual([]);
+    expect(m("पुरुषोत्तम नगर परीक्षा केंद्र")).toEqual([]);
+  });
+  // 1 Oct 2026 (review of the new families): plurals are read; the Women and
+  // Child Development department names no sex.
+  it("plurals 'Females' / 'Males' read; the Women and Child Development department is no sex", () => {
+    expect(m("List of Females qualified for PE&MT")).toEqual(["gender:female"]);
+    expect(m("Males PE&MT result")).toEqual(["gender:male"]);
+    expect(m("Result of PE&MT (Males & Females)")).toEqual(["gender:female", "gender:male"]);
+    expect(m("Supervisor, Women and Child Development Department: result")).toEqual([]);
+    expect(m("Department of Women & Child Development — Supervisor answer key")).toEqual([]);
+    expect(m("महिला एवं बाल विकास विभाग पर्यवेक्षक परीक्षा परिणाम")).toEqual([]);
+    // The department's name never hides a sex the row names on its own.
+    expect(m("Women and Child Development Department — Female Supervisor result")).toEqual(["gender:female"]);
+    expect(markerConflict(sittingMarkersOf(["WCD Supervisor (Male) exam"]), sittingMarkers("महिला एवं बाल विकास विभाग पर्यवेक्षक परीक्षा परिणाम"))).toBeNull();
+  });
+  it("a value named on its own outranks a list (the exam's own name); a list alone names every value", () => {
+    // SSC's row: the list is the exam's name, the event is the male PE&MT.
+    expect(m("Constable (Executive) Male and Female in Delhi Police Examination, 2026 - Male PE&MT result")).toEqual(["gender:male"]);
+    expect(m("Result of PE&MT (Male & Female)")).toEqual(["gender:female", "gender:male"]);
+    expect(m("पुरुष एवं महिला अभ्यर्थियों का परिणाम")).toEqual(["gender:female", "gender:male"]);
+    expect(m("Common Eligibility Test (CET) for Group C and D posts")).toEqual(["postgroup:c", "postgroup:d"]);
+    expect(m("Common Eligibility Test (CET) for Group C and Group D posts")).toEqual(["postgroup:c", "postgroup:d"]);
+    expect(m("CET for Group C & D posts — Group D result")).toEqual(["postgroup:d"]);
+    expect(m("Male PE&MT and Female PE&MT schedule")).toEqual(["gender:female", "gender:male"]); // two events named on their own
+  });
+  it("conflicts: the other group / the other sex; a combined notice or a silent row never conflicts", () => {
+    const hsscD = sittingMarkersOf(["HSSC CET Group D 2026 exam"]);
+    expect(markerConflict(hsscD, sittingMarkers("CET Group C 2026 Result of Common Eligibility Test 20/09/2026"))).toBe("postgroup");
+    expect(markerConflict(hsscD, sittingMarkers("CET Group D 2026 Result"))).toBeNull();
+    expect(markerConflict(hsscD, sittingMarkers("Common Eligibility Test (CET) for Group C and D posts: result"))).toBeNull();
+    expect(markerConflict(hsscD, sittingMarkers("CET 2026 result"))).toBeNull();
+    const female = sittingMarkersOf(["Female PE&MT"]);
+    const maleRow = "Constable (Executive) Male and Female in Delhi Police Examination, 2026 - Male PE&MT result 15/09/2026";
+    expect(markerConflict(female, sittingMarkers(maleRow))).toBe("gender");
+    expect(markerConflict(sittingMarkersOf(["Male PE&MT"]), sittingMarkers(maleRow))).toBeNull();
+    expect(markerConflict(female, sittingMarkers("Result of PE&MT (Male & Female)"))).toBeNull();
+    expect(markerConflict(sittingMarkersOf(["आरक्षी पुरुष शारीरिक परीक्षा"]), sittingMarkers("आरक्षी (महिला) परीक्षा परिणाम"))).toBe("gender");
+  });
+  it("spans: the words are marker words (an outranked list too), every other word stays a claim", () => {
+    const strip = (t: string) => stripMarkerSpans(t).replace(/\s+/g, " ").trim();
+    expect(strip("HSSC CET Group D 2026 exam")).toBe("hssc cet 2026 exam");
+    expect(strip("Female PE&MT")).toBe("pe&mt");
+    expect(strip("Constable (Executive) Male and Female in Delhi Police - Male PE&MT")).toBe("constable (executive) in delhi police - pe&mt");
+    for (const t of ["CET for Group C & D posts — Group D result", "Male and Female PE&MT", "Constable (Executive) Male and Female in Delhi Police - Female PE&MT"]) {
+      expect(sittingMarkers(t).size).toBeGreaterThan(0);
+      expect([...sittingMarkers(stripMarkerSpans(t))]).toEqual([]);
+    }
+  });
+});
+
 // 1 Oct 2026 (independent review of the gate fix): the verified stage
 // compares only a marker's own span as a marker; every other word of a
 // tracker label is a claim the body must print.

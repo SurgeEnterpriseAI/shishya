@@ -455,6 +455,68 @@ describe("siblings (C)", () => {
   });
 });
 
+// 1 Oct 2026 (review of the postgroup / gender families): siblingRefusal
+// refused on a gender clash before it looked at the row, so the male and
+// female lists of ONE SSC result record split into two releases when the
+// female list was read first (two "Result — SSC GD 2026 CBT exam" rows for
+// one day), and stayed one when the write-up was read first. One record row
+// is one release; two rows that differ by sex are still two.
+describe("siblings: the male and female lists of one record row are one release", () => {
+  const GD: Exam = { shortName: "SSC GD", name: "SSC GD Constable", portal: "https://ssc.gov.in" };
+  const GD_SITTING: Sitting = { notBefore: "2026-02-04", lastDay: "2026-02-25", labels: ["SSC GD 2026 CBT exam"], otherSittingThisYear: false, cycleYears: ["2026"] };
+  const ctx = crawlCtx(GD, ["Constable (GD) in Central Armed Police Forces"], GD_SITTING);
+  const RESULTS = "https://ssc.gov.in/home/candidate-result";
+  const file = (f: string) => `https://ssc.gov.in/api/attachment/uploads/masterData/Results/${encodeURIComponent(f)}`;
+  // As the SSC adapter builds a results row: "dd-MM-yyyy · headline", anchors "Result" / "Write Up".
+  const ROW =
+    "06-04-2026 · Constable (GD) in Central Armed Police Forces (CAPFs), SSF, Rifleman (GD) in Assam Rifles and Sepoy in NCB Examination, 2026: Declaration of result for PET/PST";
+  const att = (anchorText: string, f: string): ReleaseCandidate => ({ kind: "RESULT", url: file(f), listingUrl: RESULTS, anchorText, rowText: ROW, via: "html" });
+  const FEMALE = att("Result", "List-I (Female).pdf");
+  const MALE = att("Result", "List-II (Male).pdf");
+  const WRITEUP = att("Write Up", "Write-up GD 2026.pdf");
+
+  it("each list passes the gate (the due sitting names no sex)", () => {
+    const r = gateAll([FEMALE, MALE, WRITEUP], ctx);
+    expect(r.refused).toEqual([]);
+    expect(r.passed).toHaveLength(3);
+  });
+  it("female list read first → one release, the male list and the write-up its siblings", () => {
+    const r = gateAll([FEMALE, MALE, WRITEUP], ctx);
+    expect(r.groups).toHaveLength(1);
+    expect(r.groups[0].release.url).toBe(FEMALE.url);
+    expect(r.groups[0].siblings.map((s) => s.url)).toEqual([MALE.url, WRITEUP.url]);
+    expect(r.held).toEqual([]);
+  });
+  it("any read order → one release with two siblings", () => {
+    for (const order of [
+      [MALE, FEMALE, WRITEUP],
+      [WRITEUP, FEMALE, MALE],
+      [FEMALE, WRITEUP, MALE],
+    ]) {
+      const r = gateAll(order, ctx);
+      expect(r.groups.map((g) => g.siblings.length)).toEqual([2]);
+    }
+  });
+  it("two rows that differ by sex, printed the same day, are still two releases", () => {
+    const pe = (sex: "Male" | "Female"): ReleaseCandidate => ({
+      kind: "RESULT",
+      url: file(`PE&MT ${sex} result.pdf`),
+      listingUrl: RESULTS,
+      anchorText: "Result",
+      rowText: `15-09-2026 · Constable (Executive) Male and Female in Delhi Police Examination, 2026 - ${sex} PE&MT result`,
+      via: "html",
+    });
+    const dp = crawlCtx(
+      { shortName: "Delhi Police Constable", name: "Delhi Police Constable (Executive)", portal: "https://ssc.gov.in" },
+      ["Constable (Executive) Male and Female in Delhi Police Examination", "Delhi Police Examination"],
+      { notBefore: "2026-08-01", lastDay: "2026-08-01", labels: ["Delhi Police Constable PE&MT"], otherSittingThisYear: false, cycleYears: ["2026"] },
+    );
+    const r = gateAll([pe("Female"), pe("Male")], dp);
+    expect(r.passed).toHaveLength(2);
+    expect(r.groups.map((g) => g.siblings.length)).toEqual([0, 0]);
+  });
+});
+
 // ── the independent review of the gate fix (1 Oct 2026) ───────────────────
 //
 // The first fix still let a label name a stage the row does not print: the
@@ -503,22 +565,41 @@ describe("review: a label never names a paper / level / phase / group the row do
     expect(r.from).toBe("body");
     expect(r.label).not.toMatch(/primary/i);
   });
-  it("C2 Delhi Police: a 'Male PE&MT' row is never labelled 'Female PE&MT' ('Male and Female' elsewhere in the row is no phrase)", () => {
+  // 1 Oct 2026 (review of a326ddb): these two rows were let through with the
+  // body's own label; the post group and the sex are now marker families
+  // (sitting-markers "postgroup" / "gender"), so the gate refuses the other
+  // sitting's row outright — and the label step still never names it.
+  it("C2 Delhi Police: a 'Male PE&MT' row is refused while the Female PE&MT is due, and never labelled 'Female PE&MT'", () => {
     const ctx = crawlCtx(
       exam("Delhi Police Constable", "Delhi Police Constable (Executive)", "https://ssc.gov.in"),
       ["Constable (Executive) Male and Female in Delhi Police Examination", "Delhi Police Examination"],
       sitting(["Female PE&MT"]),
     );
-    const r = stageOf("RESULT", ctx, "https://ssc.gov.in/api/x/male.pdf", "Constable (Executive) Male and Female in Delhi Police Examination, 2026 - Male PE&MT result 15/09/2026", "Result");
-    expect(r.from).toBe("body");
-    expect(r.label).toMatch(/Male PE&MT/);
-    expect(r.label).not.toMatch(/— Female/);
+    const rowText = "Constable (Executive) Male and Female in Delhi Police Examination, 2026 - Male PE&MT result 15/09/2026";
+    const c = { kind: "RESULT" as const, url: "https://ssc.gov.in/api/x/male.pdf", listingUrl: "https://ssc.gov.in/list", anchorText: "Result", rowText, via: "html" as const };
+    expect(releaseGate(c, ctx, pdf)).toMatchObject({ ok: false, gate: 3, reason: expect.stringMatching(/^the text names another sitting\/stage \(gender: gender:male; due: gender:female\)/) });
+    expect(verifiedStage(c, ctx)).toMatchObject({ from: "body", stage: expect.stringMatching(/Male PE&MT/) });
+    expect(verifiedStage(c, ctx).stage).not.toMatch(/^Female/);
+    // The male sitting's own row passes, labelled with the sitting it names.
+    const male = stageOf("RESULT", { ...ctx, sittingLabels: ["Male PE&MT"] }, c.url, rowText, "Result");
+    expect(male).toMatchObject({ stage: "Male PE&MT", from: "sitting" });
   });
-  it("HSSC CET: a 'Group C' row is never labelled 'Group D' (the crawl's real kept terms 'CET', 'CET Group D')", () => {
+  it("HSSC CET: a 'Group C' row is refused while the Group D CET is due (the crawl's real kept terms 'CET', 'CET Group D')", () => {
     const ctx = crawlCtx(exam("HSSC CET", "Haryana Staff Selection Common Eligibility Test (HSSC CET)", "https://hssc.gov.in"), ["CET", "CET Group D"], sitting(["HSSC CET Group D 2026 exam"]));
-    const r = stageOf("RESULT", ctx, "https://hssc.gov.in/results/cet-group-c-2026.pdf", "CET Group C 2026 Result of Common Eligibility Test 20/09/2026", "Result");
-    expect(r.from).toBe("body");
-    expect(r.label).not.toMatch(/group d/i);
+    const c = {
+      kind: "RESULT" as const,
+      url: "https://hssc.gov.in/results/cet-group-c-2026.pdf",
+      listingUrl: "https://hssc.gov.in/list",
+      anchorText: "Result",
+      rowText: "CET Group C 2026 Result of Common Eligibility Test 20/09/2026",
+      via: "html" as const,
+    };
+    expect(releaseGate(c, ctx, pdf)).toMatchObject({ ok: false, gate: 3, reason: expect.stringMatching(/^the text names another sitting\/stage \(postgroup: /) });
+    expect(verifiedStage(c, ctx).stage).not.toMatch(/group d/i);
+    // A Group D row passes; a notice for both groups is no conflict.
+    const d = stageOf("RESULT", ctx, "https://hssc.gov.in/results/cet-group-d-2026.pdf", "CET Group D 2026 Result of Common Eligibility Test 20/09/2026", "Result");
+    expect(d.label).toMatch(/Group D/);
+    expect(releaseGate({ ...c, url: "https://hssc.gov.in/results/cet-2026.pdf", rowText: "CET 2026 for Group C and D posts: Result of Common Eligibility Test 20/09/2026" }, ctx, pdf).ok).toBe(true);
   });
   it("the pinned labels still verify: each reduces to words the row prints", () => {
     const cgl = { examTerms: examTermsFor({ shortName: "SSC CGL", name: "SSC Combined Graduate Level" }), ordinalNames: ["SSC CGL"], examNames: ["SSC Combined Graduate Level"] };
