@@ -10,6 +10,12 @@
 export const runtime = "nodejs";
 export const maxDuration = 300;
 export const dynamic = "force-dynamic";
+// 1 Oct 2026: run from Mumbai, not the project's Singapore region. The first
+// scheduled check (12:00 IST) could not reach IBPS, RRB, TNPSC, KEA, MP ESB,
+// MPPSC or GSSSB from sin1 ("fetch failed") — sites a laptop in India read the
+// night before; Indian government sites refuse foreign data-centre addresses.
+// The database stays in Singapore (a few tens of ms per query for a cron).
+export const preferredRegion = "bom1";
 
 import { handleAnswerKeyWatchCron } from "@/lib/answer-key-watch-run";
 
