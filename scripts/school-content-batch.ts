@@ -56,12 +56,27 @@
 // !! production key is probed with one Haiku call before the run and after
 // !! every chunk, and any failure stops the run with the journal saved, what
 // !! was collected written, and the resume command printed.
+// !!
+// !! 2 Oct 2026: before anything is submitted, --apply passes bulkPreflight()
+// !! (src/lib/ai/batch.ts), which prints the cap as days of student use
+// !! (about $5.3 a day) and that the balance is not reloaded automatically.
+// !!
+// !! 2 Oct 2026 (review): this runner now takes --founder-manages-credits in
+// !! place of --i-confirm-auto-reload, as scripts/verify-question-bank.ts has
+// !! since 30 Sep. The founder tops the balance up by hand and does not use
+// !! auto-reload, so the only way to run or resume this script was to print
+// !! "auto-reload is ON" — a statement that is false — one line above the
+// !! pre-flight's "not reloaded automatically". The founder flag prints what
+// !! is true (auto-reload was NOT checked), and the continue commands a dry
+// !! run prints carry it. --i-confirm-auto-reload is still accepted for an
+// !! operator who did check and found it on; passing both is refused.
+// !! --max-usd, --chunk, the probes and the bulk-key rule are unchanged.
 //
 //   npx tsx --env-file=.env.local scripts/school-content-batch.ts \
 //     --exams NCERT_C06,NCERT_C07,NCERT_C08,NCERT_C09,NCERT_C10 \
 //     [--subjects Mathematics,Science] [--topics fegp1.ch01,…] [--limit N] \
 //     [--phase notes|generate|all] [--target 40] [--force] [--model <id>] \
-//     [--apply --max-usd <usd> --i-confirm-auto-reload [--chunk 2000]] \
+//     [--apply --max-usd <usd> --founder-manages-credits|--i-confirm-auto-reload [--chunk 2000]] \
 //     [--resume <runId>] [--journal <path>] [--poll-seconds 60] [--force-journal]
 //
 //   --model ID        notes + MCQ model (default: the factory's generate tier,
@@ -78,9 +93,13 @@
 //                     every chunk against the chunk's worst case
 //   --chunk N         requests per batch (default 2000, max 10,000), submitted
 //                     one at a time, each collected before the next is priced
-//   --i-confirm-auto-reload  with --apply (required): the operator confirmed
-//                     in the Anthropic Console that auto-reload is ON; the
-//                     statement is printed back before anything is submitted
+//   --founder-manages-credits  with --apply (this or the next flag is
+//                     required): auto-reload was NOT checked; the founder tops
+//                     up the balance himself. The statement is printed back
+//                     before anything is submitted
+//   --i-confirm-auto-reload  with --apply, in place of the flag above, ONLY
+//                     when the operator checked in the Anthropic Console that
+//                     auto-reload is ON. Passing both is refused
 //   --resume ID       continue a journaled run
 //   --force-journal   start a fresh run (or resume a never-submitted journal)
 //                     although another journal has submitted batches over
@@ -91,18 +110,19 @@ import { PrismaClient, Prisma } from "@prisma/client";
 import type Anthropic from "@anthropic-ai/sdk";
 import {
   BULK_KEY_ENV,
-  CONFIRM_AUTO_RELOAD_FLAG,
-  CONFIRM_AUTO_RELOAD_STATEMENT,
   DEFAULT_CHUNK,
   PROBE_MODEL,
   PRODUCTION_KEY_ENV,
+  ackFlag,
   assertBulkKey,
   assertProductionKeyProbe,
   awaitsSubmit,
+  bulkPreflight,
   chunk,
   describeProbe,
   estimateRequestTokens,
   guardFlags,
+  guardStatement,
   journalPath,
   loadJournal,
   makeCustomId,
@@ -113,6 +133,7 @@ import {
   saveJournal,
   tokensUsd,
   type BatchJournal,
+  type GuardFlagOpts,
   type JournalRequest,
   type PhaseStop,
   type ProbeResult,
@@ -162,6 +183,8 @@ let TARGET = Math.max(MCQ_SET_SIZE, Number(arg("--target") ?? MCQ_SET_SIZE * MCQ
 let FORCE = process.argv.includes("--force");
 // Dry run unless --apply is given; --dry-run always wins (as the bank verifier).
 const DRY = !process.argv.includes("--apply") || process.argv.includes("--dry-run");
+/** 2 Oct 2026 (review): this runner accepts --founder-manages-credits in place of --i-confirm-auto-reload (see the header). */
+const GUARD_OPTS: GuardFlagOpts = { founderCreditsAck: true };
 const FORCE_JOURNAL = process.argv.includes("--force-journal");
 const RESUME = arg("--resume") ?? null;
 const JOURNAL_DIR = "D:/CodexProjects/shishya-data/school-content-batches";
@@ -223,7 +246,7 @@ function journalFileFor(runId: string): string {
 /** The command line that continues a journal, with the guard flags (26 Sep 2026): the numbers the operator passed, or placeholders on a dry run. */
 const SCRIPT = "npx tsx --env-file=.env.local scripts/school-content-batch.ts";
 function applyFlags(g?: { maxUsd: number; chunkSize: number } | null): string {
-  return `--apply --max-usd ${g ? g.maxUsd : "<usd>"} --chunk ${g ? g.chunkSize : DEFAULT_CHUNK} ${CONFIRM_AUTO_RELOAD_FLAG}`;
+  return `--apply --max-usd ${g ? g.maxUsd : "<usd>"} --chunk ${g ? g.chunkSize : DEFAULT_CHUNK} ${ackFlag(process.argv, GUARD_OPTS)}`;
 }
 /** --resume takes the journal FILE's name (a renamed journal resumes by that name, never by its runId); one outside JOURNAL_DIR needs --journal as well. */
 function resumeCommand(file: string, g?: { maxUsd: number; chunkSize: number } | null): string {
@@ -421,12 +444,16 @@ async function main() {
   // Spend guard (26 Sep 2026): the flags, the operator's statement and the
   // pre-flight probe of the production key — still before the first database
   // read, so an empty balance or a missing flag costs nothing.
-  const flags = guardFlags(process.argv, !DRY);
+  const flags = guardFlags(process.argv, !DRY, GUARD_OPTS);
   let apply: { guard: SpendGuard; preflight: ProbeResult } | null = null;
   if (!DRY) {
     const maxUsd = flags.maxUsd!;
     console.log(`\n=== spend guard: --max-usd ${fmtUsd(maxUsd)} (hard ceiling on this journal's ledgered spend, batch prices) · --chunk ${flags.chunkSize} requests per batch, one batch at a time`);
-    console.log(`   ${CONFIRM_AUTO_RELOAD_STATEMENT}`);
+    // 2 Oct 2026 (review): the statement of the flag the operator passed — never "auto-reload is ON" for the founder flag.
+    console.log(`   ${guardStatement(process.argv, GUARD_OPTS)}`);
+    // 2 Oct 2026: the shared pre-flight every bulk script passes before its first call. It refuses
+    // without a cap and prints the cap as days of student use on a balance nothing reloads.
+    bulkPreflight({ script: "school-content-batch.ts", maxUsd });
     const preflight = await probeProductionKey();
     console.log(`   ${preflight.ok ? "✓" : "✗"} production key probe before the run (${PRODUCTION_KEY_ENV}, ${PROBE_MODEL}, max_tokens 1): ${describeProbe(preflight)}`);
     assertProductionKeyProbe(preflight);
@@ -609,7 +636,7 @@ async function main() {
   // before the first batch goes out, the ceiling it runs under, the chunk
   // size, the probe it passed and the operator's statement.
   estimate(`TO SUBMIT under the spend guard — --max-usd ${fmtUsd(guard.maxUsd)} · --chunk ${guard.chunkSize} · ledgered by this journal so far ${fmtUsd(journal.spentUsd ?? 0)} · production key probe: ${describeProbe(preflight)}`);
-  console.log(`   ${CONFIRM_AUTO_RELOAD_STATEMENT}`);
+  console.log(`   ${guardStatement(process.argv, GUARD_OPTS)}`);
   journal.args.lastGuard = { at: new Date().toISOString(), maxUsd: guard.maxUsd, chunk: guard.chunkSize };
   const deps = { pollIntervalMs: POLL_MS, guard };
 
@@ -729,7 +756,7 @@ function printVerifyCommand(journal: Journal) {
   for (const code of exams) {
     console.log(`   npx tsx --env-file=.env.local scripts/verify-question-bank.ts --exams ${code} --scope unvalidated            # dry run: journal + estimate`);
   }
-  console.log(`   npx tsx --env-file=.env.local scripts/verify-question-bank.ts --resume <runId-it-prints> --apply --max-usd <usd> --chunk ${DEFAULT_CHUNK} ${CONFIRM_AUTO_RELOAD_FLAG}   # submit + write verdicts (per run; name the ceiling)`);
+  console.log(`   npx tsx --env-file=.env.local scripts/verify-question-bank.ts --resume <runId-it-prints> --apply --max-usd <usd> --chunk ${DEFAULT_CHUNK} ${ackFlag(process.argv, GUARD_OPTS)}   # submit + write verdicts (per run; name the ceiling)`);
   console.log(`   Its ACCEPT sets validated:true (source → AI_VALIDATED); the SCHOOL_BOARD exam rows stay inactive, so nothing is served either way.`);
 }
 

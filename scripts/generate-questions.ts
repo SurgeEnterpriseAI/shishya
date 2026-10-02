@@ -22,6 +22,9 @@
 //     --resume <runId> and never regenerates what it already saved.
 //   • The key: ANTHROPIC_BULK_API_KEY when set, else the shared
 //     ANTHROPIC_API_KEY only with --allow-shared-key (founder, 30 Sep 2026).
+//   • 2 Oct 2026: before the first call the run passes bulkPreflight()
+//     (src/lib/ai/batch.ts), which prints the cap as days of student use
+//     (about $5.3 a day) and that the balance is not reloaded automatically.
 //   • An API error (empty balance, spend limit, bad key) stops the run. The
 //     SDK's own retries are off. A 429 or 529 (not billed) is called again
 //     after 20 s and then 60 s. A 400 about one topic's request gives up on
@@ -64,7 +67,7 @@ import fs from "node:fs";
 import path from "node:path";
 import Anthropic from "@anthropic-ai/sdk";
 import { PrismaClient, QuestionSource, Language } from "@prisma/client";
-import { resolveBulkKey } from "../src/lib/ai/batch";
+import { bulkPreflight, resolveBulkKey } from "../src/lib/ai/batch";
 import { recordAiUsageAwaited } from "../src/lib/ai/usage";
 import {
   GEN_JOURNAL_DIR,
@@ -262,6 +265,9 @@ async function main() {
         `=== spend guard: --max-usd ${fmtUsd(mode.maxUsd!)} (list price, checked before every call) · model ${settings.model} · a reply filling ${GEN_MAX_TOKENS} tokens costs ${fmtUsd(worstReply)} · ` +
           `key ${key.env}${key.shared ? " (the SHARED key the live tutor uses; --allow-shared-key, founder decision 30 Sep 2026)" : ""} · ledger feature "${GEN_LEDGER_FEATURE}"`,
       );
+      // 2 Oct 2026: the shared pre-flight every bulk script passes before its first call. It refuses
+      // without a cap and prints the cap as days of student use on a balance nothing reloads.
+      bulkPreflight({ script: "generate-questions.ts", maxUsd: mode.maxUsd });
       // maxRetries 0 (30 Sep 2026 review): the SDK's own retries also re-send a call that
       // timed out or lost its connection, which the server may have finished and billed,
       // so the cap would count one of two paid calls. runGeneration retries only a 429/529

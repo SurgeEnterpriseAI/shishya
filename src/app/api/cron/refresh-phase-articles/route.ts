@@ -1,6 +1,11 @@
 // GET /api/cron/refresh-phase-articles — Vercel cron entry.
 //
-// Runs daily at 07:00 IST (per vercel.json). Finds every (examId, phase)
+// Runs at 07:00, 12:00 and 21:00 IST (vercel.json "30 1,6,15 * * *"). The
+// 21:00 run was added on 2 Oct 2026 when the GitHub Actions schedule that
+// fired this job again was deleted (.github/workflows/refresh-portal.yml is
+// a manual button now): an exam day turns "evening" at 18:00 IST, and the
+// late GitHub run was the only one after it, so it wrote 5 of the 6
+// exam-week pages of the ten days before. Finds every (examId, phase)
 // pair currently in an exam-week phase (typed tracker rows only), scrapes
 // free public sources, summarises via Claude, and writes a new article
 // version ONLY when the result is real (>= 2 cited sources, no

@@ -1,5 +1,12 @@
 // GET /api/cron/refresh-discussions
 //
+// NOT scheduled since 2 Oct 2026: its vercel.json cron entry and the GitHub
+// Actions step that also called it were removed (8 seed threads, 0 replies,
+// 12 page views in ten days; one model call a run from a credit balance
+// that is topped up by hand). The route still answers a manual call with
+// the cron secret. Seed threads stored before that date stay as they are.
+// Check: tests/unit/spend-schedules.test.ts
+//
 // Keeps the homepage right-rail (DiscussionsSidebar) feeling alive by
 // seeding 6-8 plausible "sample" discussion threads for the most-
 // imminent upcoming exam — but ONLY when the rail would otherwise

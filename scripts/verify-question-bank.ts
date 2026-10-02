@@ -83,6 +83,10 @@
 // !!                              checked, instead of claiming it is ON. The
 // !!                              continue commands a dry run prints carry it.
 // !! --max-usd, --chunk and the production-key probes apply unchanged.
+// !!
+// !! 2 Oct 2026: before anything is submitted, --apply passes bulkPreflight()
+// !! (src/lib/ai/batch.ts), which prints the cap as days of student use
+// !! (about $5.3 a day) and that the balance is not reloaded automatically.
 //
 //   npx dotenv-cli -e .env.local -- npx tsx scripts/verify-question-bank.ts \
 //     --exams UK_UKSSSC,AP_APPSC_GROUP2 --scope unvalidated|validated|all \
@@ -120,6 +124,7 @@ import {
   assertProductionKeyProbe,
   awaitsSubmit,
   batchesApiFor,
+  bulkPreflight,
   chunk,
   DEFAULT_CHUNK,
   describeProbe,
@@ -696,6 +701,9 @@ async function main() {
     console.log(`\n=== spend guard: --max-usd ${fmtUsd(maxUsd)} (hard ceiling on this journal's ledgered spend, batch prices) · --chunk ${flags.chunkSize} requests per batch, one batch at a time`);
     console.log(`   batches run on ${key.env}${key.shared ? ` — the SHARED key the live tutor uses (${ALLOW_SHARED_KEY_FLAG}, founder decision 30 Sep 2026)` : ""}`);
     console.log(`   ${guardStatement(process.argv, GUARD_OPTS)}`);
+    // 2 Oct 2026: the shared pre-flight every bulk script passes before its first call. It refuses
+    // without a cap and prints the cap as days of student use on a balance nothing reloads.
+    bulkPreflight({ script: "verify-question-bank.ts", maxUsd });
     const preflight = await probeProductionKey();
     console.log(`   ${preflight.ok ? "✓" : "✗"} production key probe before the run (${PRODUCTION_KEY_ENV}, ${PROBE_MODEL}, max_tokens 1): ${describeProbe(preflight)}`);
     assertProductionKeyProbe(preflight);

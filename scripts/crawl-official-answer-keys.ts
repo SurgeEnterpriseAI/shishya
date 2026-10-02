@@ -50,6 +50,11 @@
 //   --only CODE,CODE     exams to crawl (default: every real exam with a portal)
 //   --max-usd N          REQUIRED whenever research runs, and for --apply (0 =
 //                        no new AI: journal only). Hard cap for the run.
+//                        2 Oct 2026: a run that will research passes
+//                        bulkPreflight() (src/lib/ai/batch.ts) first, which
+//                        prints the cap as days of student use (about $5.3
+//                        a day) and that the balance is not reloaded
+//                        automatically.
 //   --chunk N            exams per chunk (default 8); the key is probed between
 //                        chunks, and any credit / 4xx error stops the crawl
 //   --resume <runId>     reuse <out>/journal.jsonl: exams already researched
@@ -72,6 +77,7 @@ import { istDay } from "../src/lib/exam-week";
 import { isOfficialSource } from "../src/lib/official-source";
 import { probeKey, researchAnswerKeys, type AnswerKeyResearch } from "../src/lib/ai/answer-key-research";
 import { isStopError } from "../src/lib/ai/answer-key-check";
+import { bulkPreflight, creditStopNote } from "../src/lib/ai/batch";
 import {
   AiBudget,
   RESULT_DUE_EXAM_DAYS,
@@ -122,6 +128,11 @@ function arg(name: string): string | null {
   return i !== -1 && process.argv[i + 1] && !process.argv[i + 1].startsWith("--") ? process.argv[i + 1] : null;
 }
 const has = (name: string) => process.argv.includes(name);
+/** 2 Oct 2026: after a credit error the stop line also says, in our own words, that nothing reloads the balance. */
+const creditNote = (err: unknown) => {
+  const note = creditStopNote(err);
+  return note ? ` — ${note}` : "";
+};
 
 interface JournalLine {
   code: string;
@@ -445,6 +456,10 @@ async function main() {
   if (!aiOff && needAi.length > 0 && maxUsd === null) {
     throw new Error(`--max-usd is required: ${needAi.length} exams need research (estimate $${(needAi.length * RESEARCH_COST_USD).toFixed(2)})`);
   }
+  // 2 Oct 2026: the shared pre-flight every bulk script passes before its
+  // first model call. Only a run that will research calls it; --no-ai and
+  // --max-usd 0 make no call and are not held to a cap above zero.
+  if (!aiOff && needAi.length > 0) bulkPreflight({ script: "crawl-official-answer-keys.ts", maxUsd });
   const budget = new AiBudget(maxUsd ?? 0, RESEARCH_COST_USD);
   const skipped: string[] = [];
 
@@ -471,7 +486,7 @@ async function main() {
       try {
         budget.spent += await probeKey(); // ~$0.00001, still counted against --max-usd
       } catch (err) {
-        stopped = `key probe refused (${String((err as { status?: unknown })?.status ?? "error")}): ${String((err as Error)?.message ?? err).slice(0, 160)}`;
+        stopped = `key probe refused (${String((err as { status?: unknown })?.status ?? "error")}): ${String((err as Error)?.message ?? err).slice(0, 160)}${creditNote(err)}`;
         break;
       }
     }
@@ -510,7 +525,7 @@ async function main() {
           const msg = String((err as Error)?.message ?? err).slice(0, 200);
           appendFileSync(journalPath, `${JSON.stringify({ code: e.code, at: new Date().toISOString(), research: null, costUsd: 0, error: msg })}\n`);
           if (isStopError(err)) {
-            stopped = `API refused on ${e.code} (${String((err as { status?: unknown })?.status)}): ${msg}`;
+            stopped = `API refused on ${e.code} (${String((err as { status?: unknown })?.status)}): ${msg}${creditNote(err)}`;
             break;
           }
           console.log(`\n== ${e.code}: research failed (${msg}) — resumable`);

@@ -23,7 +23,11 @@
 //     with --resume <runId> and generates only what is missing. The ceiling
 //     reads the journal's spend, so it covers every invocation of the run.
 //   • An API error stops the whole run: an empty balance or a spend limit
-//     fails every topic alike. A reply that cannot be parsed gives up on its
+//     fails every topic alike. 2 Oct 2026: after a credit error the stop
+//     line says so in our own words (creditStopNote in ./batch: the balance
+//     is empty and is not reloaded automatically, or the account's usage
+//     limit is reached), and the call that discovered it is the last one
+//     the run makes. A reply that cannot be parsed gives up on its
 //     topic. Two more cases (30 Sep 2026 review): a 429 or 529 is refused
 //     before any work, so it is not billed, and is called again after 20 s
 //     and then 60 s (the script's client has SDK retries off, see
@@ -40,7 +44,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import type Anthropic from "@anthropic-ai/sdk";
-import { ALLOW_SHARED_KEY_FLAG, classifyProbeError, describeProbe, estimateRequestTokens } from "./batch";
+import { ALLOW_SHARED_KEY_FLAG, classifyProbeError, creditStopNote, describeProbe, estimateRequestTokens } from "./batch";
 import type { Difficulty } from "./types";
 import { PRICING, usageCostUsd } from "./usage";
 
@@ -856,11 +860,14 @@ export async function runGeneration(journal: GenJournal, topics: ReadonlyMap<str
               break;
             }
             const spent = journal.spentUsd;
+            // 2 Oct 2026: the shared words for a credit error (an empty balance, or the account's
+            // usage limit, which used to stop the run with no line of its own).
+            const creditNote = creditStopNote(outcome.error);
             return stopWith(
               "api-error",
               topic.code,
               (left) =>
-                `${topic.code}: the API refused the call (${describeProbe(p)}); nothing more is sent.${p.kind === "billing" ? " The balance the live tutor shares is empty: add credit first." : ""} ` +
+                `${topic.code}: the API refused the call (${describeProbe(p)}); nothing more is sent.${creditNote ? ` ${creditNote}` : ""} ` +
                 `Spent ${fmtUsd(spent)} so far in this run; ${left.questions} questions in ~${left.calls} calls still to go. Resume once the key answers again.`,
               { suggestedMaxUsd: maxUsd },
             );

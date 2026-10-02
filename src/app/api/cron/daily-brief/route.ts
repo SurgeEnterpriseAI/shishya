@@ -1,8 +1,16 @@
 // GET /api/cron/daily-brief — runs once per day (Vercel Cron) to:
 //   1. For every active enrollment, build (or refresh) a DailyBrief
 //      with a Shishya-written reflection ("you've been weak in X; today
-//      let's drill it") + a pre-built adaptive mock the student can
-//      take with one click on the dashboard.
+//      let's drill it"). The brief is the note alone: mockId is null and
+//      the dashboard card links to the exam hub.
+//
+// No brief mock (2 Oct 2026): until today every model-written brief also
+// built an adaptive practice set through a second model call. 1,629 were
+// built since 10 May 2026; 1 was started and 0 were submitted, for about
+// $0.44 a day from a credit balance that is topped up by hand and is
+// sometimes zero. The build is gone; the note, who gets one, and the rule
+// brief below are unchanged. Sets already stored stay where they are.
+// Tests: tests/unit/daily-brief-no-mock.test.ts
 //
 // Auth: requires Bearer ${CRON_SECRET}. Vercel Cron automatically sets
 // `Authorization: Bearer ${CRON_SECRET}` if the env var is present in
@@ -16,10 +24,10 @@
 // failed call now flips the run to rule briefs: a note built from stored
 // facts only (src/lib/brief-fallback.ts: weakest topics on record, last
 // score, next announced exam day with its tier word), no practice set, and NO further
-// model calls this run — neither the note nor the adaptive-mock build.
+// model calls this run.
 // inputs.source says which path wrote the brief ("ai" | "rule:ai-unavailable").
 
-// Cron job that walks every enrollment + calls Claude per user-exam. We
+// Cron job that walks every enrollment + calls Claude once per user-exam. We
 // stay at 300s (Vercel Pro plan ceiling); the cron itself processes users
 // in batches and is idempotent per (user, exam, day), so a timeout on a
 // busy cohort just means the next invocation picks up the remainder.
@@ -32,22 +40,15 @@ import { prisma } from "@/lib/db/prisma";
 import { NOT_SCHOOL_WHERE } from "@/lib/db/exam-scope";
 import { istDayNumber } from "@/lib/exam-phase";
 import { recordAiUsage } from "@/lib/ai/usage";
-import { generateMock } from "@/lib/ai";
-import { getStudentState } from "@/lib/db/student-state";
-import { getSyllabusContext } from "@/lib/db/syllabus";
-import type { GenerateMockRequest, QuestionRef } from "@/lib/ai/types";
-import { getSeenHistory } from "@/lib/answered-questions";
-import { shapeCandidates } from "@/lib/question-pick";
-import { WITHDRAWN_TAG } from "@/lib/question-withdrawn";
 import { briefSittingName, buildFallbackBrief, rankWeakTopics, RULE_BRIEF_SOURCE, type BriefFacts } from "@/lib/brief-fallback";
 import { buildTimeline } from "@/lib/exam-timeline";
 import { hubDateLead } from "@/lib/hub-title";
 
 const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-sonnet-4-5-20250929";
 
-// Runtime budget so a runaway loop can't blow tokens. Each user costs
-// roughly $0.05 (one short reflection call + one adaptive mock build).
-const PER_USER_BUDGET_USD = 0.5;
+// Runtime budget so a runaway loop can't blow tokens. Each user costs one
+// short reflection call (max_tokens 300). The per-user cap went with the
+// brief mock on 2 Oct 2026: it only decided whether the second call ran.
 const TOTAL_BUDGET_USD = 50;
 
 // Pricing for token-spend telemetry. Approximate.
@@ -58,7 +59,7 @@ const PRICE_CACHE_READ_PER_M = 0.3;
 
 interface Stats {
   in: number; out: number; cacheW: number; cacheR: number;
-  briefsCreated: number; briefsUpdated: number; mocksCreated: number;
+  briefsCreated: number; briefsUpdated: number;
   enrollmentsScanned: number; skipped: number;
 }
 
@@ -92,7 +93,7 @@ export async function GET(req: Request) {
 
   const stats: Stats = {
     in: 0, out: 0, cacheW: 0, cacheR: 0,
-    briefsCreated: 0, briefsUpdated: 0, mocksCreated: 0,
+    briefsCreated: 0, briefsUpdated: 0,
     enrollmentsScanned: 0, skipped: 0,
   };
 
@@ -184,9 +185,6 @@ export async function GET(req: Request) {
       stats.skipped += 1;
       continue;
     }
-
-    // Per-user spend cap — protects total budget against an outlier user.
-    const before = spendUsd(stats);
 
     try {
       // Snapshot inputs for the brief (tutor chats feed only the model prompt)
@@ -305,61 +303,11 @@ Output ONLY the note, no quotes, no formatting markers.`;
         scores: recentAttempts.map((a) => a.scorePct),
       };
 
-      // Per-user spend check (after reflection call)
-      if (modelOk && spendUsd(stats) - before >= PER_USER_BUDGET_USD) {
-        // Persist reflection-only brief and move on
+      // A model-written note is stored as it is, with no practice set (2 Oct
+      // 2026, see the header): mockId is null, as it always was for a rule
+      // brief, and the dashboard card links to the exam hub.
+      if (modelOk) {
         await upsertBrief(enr.userId, enr.examId, briefDate, aiReflection, null, { ...baseInputs, source: "ai" }, stats);
-        continue;
-      }
-
-      // ── Adaptive mock (uses existing generator) ─────────────────────
-      // Model path only: generateMock calls the model too, so a rule brief
-      // is reflection-only (1,416 brief sets since May had 0 attempts).
-      let mockId: string | null = null;
-      if (modelOk) {
-        try {
-          const studentState = await getStudentState(enr.userId, enr.exam.code);
-          const syllabus = await getSyllabusContext(enr.exam.code);
-          const pool = await fetchAdaptivePool(enr.examId, enr.userId);
-          if (pool.length >= 5) {
-            const req: GenerateMockRequest = {
-              type: "ADAPTIVE",
-              questionCount: Math.min(20, pool.length),
-            };
-            const result = await generateMock({
-              studentState, request: req, availableQuestions: pool, syllabus,
-            });
-            if (result.questionIds.length > 0) {
-              const created = await prisma.mock.create({
-                data: {
-                  userId: enr.userId,
-                  examId: enr.examId,
-                  type: "ADAPTIVE",
-                  title: `${enr.exam.shortName} — Today's Adaptive Mock`,
-                  config: {
-                    rationale: result.rationale,
-                    topicMix: result.topicMix,
-                    difficultyMix: result.difficultyMix,
-                    durationMin: result.durationMin,
-                    requestType: "ADAPTIVE",
-                    briefDate: briefDate.toISOString().slice(0, 10),
-                  } as any,
-                  questionIds: result.questionIds,
-                  generatedBy: "cron:daily-brief",
-                  generationContext: { studentSnapshot: studentState as any },
-                },
-              });
-              mockId = created.id;
-              stats.mocksCreated += 1;
-            }
-          }
-        } catch (err) {
-          console.warn(`[daily-brief] mock build failed for user=${enr.userId} exam=${enr.exam.code}:`, err);
-        }
-      }
-
-      if (modelOk) {
-        await upsertBrief(enr.userId, enr.examId, briefDate, aiReflection, mockId, { ...baseInputs, source: "ai" }, stats);
         continue;
       }
 
@@ -398,7 +346,6 @@ Output ONLY the note, no quotes, no formatting markers.`;
     skipped: stats.skipped,
     briefsCreated: stats.briefsCreated,
     briefsUpdated: stats.briefsUpdated,
-    mocksCreated: stats.mocksCreated,
     ruleBriefs,
     aiDown,
     spendUsd: spendUsd(stats).toFixed(4),
@@ -470,30 +417,4 @@ async function loadNextExamDay(exam: NextExamExam): Promise<BriefFacts["nextExam
   } catch {
     return null;
   }
-}
-
-async function fetchAdaptivePool(examId: string, userId: string): Promise<QuestionRef[]> {
-  // Same logic as /api/mocks ADAPTIVE path: validated questions for this
-  // exam, broad pool. The generator picks the topic mix from the
-  // student's weakness map. 25 Sep 2026: withdrawn questions (tag
-  // "rejected") never enter the pool, as in /api/mocks since batch 2a.
-  const qs = await prisma.question.findMany({
-    where: { examId, validated: true, NOT: { tags: { has: WITHDRAWN_TAG } } },
-    include: { topic: true },
-    take: 500,
-  });
-  // Seen-exclusion (11 Sep 2026): the brief's set must not repeat questions
-  // the student met in the last 90 days while unseen ones exist.
-  // 25 Sep 2026: seen = ANSWERED (getSeenHistory). Never-shown questions
-  // first, then shown-but-unanswered, then answered — a question left on
-  // screen in an abandoned mock is not a repeat. Null (failed read) picks
-  // without exclusion.
-  const seen = (await getSeenHistory(userId, examId)) ?? new Map<string, number>();
-  const refs = qs.map((q) => ({
-    id: q.id,
-    topicId: q.topicId,
-    topicCode: q.topic.code,
-    difficulty: q.difficulty,
-  }));
-  return shapeCandidates(refs, seen, 20);
 }

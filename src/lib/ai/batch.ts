@@ -34,6 +34,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import Anthropic from "@anthropic-ai/sdk";
+import { classifyTutorFailure } from "./tutor-failure";
 import { BATCH_PRICE_FACTOR, PRICING, recordAiUsageAwaited } from "./usage";
 
 export type BatchRequest = Anthropic.Messages.BatchCreateParams.Request;
@@ -522,7 +523,8 @@ export const CONFIRM_AUTO_RELOAD_STATEMENT = "Operator statement (--i-confirm-au
  * credits. You don't worry about auto reload"). --i-confirm-auto-reload
  * makes the operator print "auto-reload is ON", which nobody checks any
  * more, so a runner that opts in (guardFlags(argv, apply, {
- * founderCreditsAck: true }); scripts/verify-question-bank.ts only) takes
+ * founderCreditsAck: true }); scripts/verify-question-bank.ts, and since
+ * 2 Oct 2026 scripts/school-content-batch.ts — both batch runners) takes
  * this flag in its place. It is the same friction step, and its printed
  * statement says what is true: the check was NOT made. The ceiling, one
  * chunk at a time and the production-key probes are unchanged, and passing
@@ -620,7 +622,7 @@ export async function probeProductionKey(): Promise<ProbeResult> {
 /** The pre-flight gate: an --apply run starts only on a probe that succeeded. */
 export function assertProductionKeyProbe(p: ProbeResult): void {
   if (p.ok) return;
-  if (p.kind === "billing") throw new Error(`the tutor's balance is empty; add credit first (production key probe: ${describeProbe(p)})`);
+  if (p.kind === "billing") throw new Error(`the tutor's balance is empty; add credit first: it is not reloaded automatically (production key probe: ${describeProbe(p)})`);
   throw new Error(`the production key could not be verified (probe: ${describeProbe(p)}); nothing is submitted until a probe succeeds`);
 }
 
@@ -652,9 +654,8 @@ export function guardFlags(argv: readonly string[], apply: boolean, opts: GuardF
     const i = argv.indexOf(name);
     return i >= 0 ? (argv[i + 1] ?? "") : undefined;
   };
-  const rawMax = arg("--max-usd");
-  const maxUsd = rawMax == null ? null : Number(rawMax);
-  if (maxUsd != null && !(rawMax && Number.isFinite(maxUsd) && maxUsd > 0)) throw new Error(`--max-usd must be a positive number of US dollars (got "${rawMax}")`);
+  // 2 Oct 2026: the same reader bulkPreflight() uses, so every runner parses the cap one way.
+  const maxUsd = maxUsdFromArgv(argv);
   const rawChunk = arg("--chunk");
   const chunkSize = rawChunk == null ? DEFAULT_CHUNK : Number(rawChunk);
   if (!rawChunk && rawChunk != null) throw new Error(`--chunk must be a whole number of requests per batch, 1 to ${BATCH_CHUNK_MAX} (got "")`);
@@ -706,6 +707,135 @@ export interface PhaseStop {
   probe?: ProbeResult;
   /** One paragraph for the operator: what happened and what to pass to continue (the runner adds its command line). */
   message: string;
+}
+
+// ---------------------------------------------------------------------------
+// Bulk pre-flight (2 Oct 2026)
+// ---------------------------------------------------------------------------
+//
+// The founder tops up the credit balance by hand and does not turn on
+// auto-reload, so the balance is sometimes zero, and while it is zero every
+// AI answer a student asks for fails. Bulk scripts took $40.1 of the last
+// $81.3 ledgered; on 2 Oct 2026 two of them took $3.35 in the hour after a
+// top-up while students used $0.35. Four runners (the callers below) refuse
+// to start without --max-usd, each in its own code. This is the one shared
+// gate, so a new bulk script gets the same three things by calling one
+// function before its first model call:
+//   • no cap, no run: bulkPreflight() throws without a --max-usd above zero;
+//   • the price in terms the operator can weigh: the cap as days of student
+//     use (STUDENT_USE_USD_PER_DAY);
+//   • the fact that makes the price matter: the balance is shared with the
+//     live tutor and is not reloaded automatically.
+// It prints; it holds nothing back. A run someone chose to start still runs,
+// under its cap. No network call, no database read.
+//
+// isCreditError() / creditStopNote() are the shared words for "stop at the
+// first credit error": after one, no call can succeed until the founder
+// acts, so a runner stops instead of sending the rest.
+// Callers: scripts/generate-questions.ts, scripts/verify-question-bank.ts,
+// scripts/school-content-batch.ts, scripts/crawl-official-answer-keys.ts.
+// Older one-off scripts that build their own SDK client have no cap at all;
+// tests/unit/bulk-preflight.test.ts lists them by name and fails when a new
+// script builds a client without calling bulkPreflight().
+// Tests: tests/unit/bulk-preflight.test.ts
+
+/**
+ * What students use from the shared balance on a normal day, in USD: the
+ * mean of 23, 24, 25, 26, 29 Sep and 1 Oct 2026 ($4.6 to $5.8 a day, AiUsage
+ * rows of the features a student triggers). A measurement for the printed
+ * line, not a limit; measure again when the student base changes.
+ */
+export const STUDENT_USE_USD_PER_DAY = 5.3;
+
+/** --max-usd from a command line: null when absent; throws when present without a positive number. */
+export function maxUsdFromArgv(argv: readonly string[]): number | null {
+  const i = argv.indexOf("--max-usd");
+  if (i < 0) return null;
+  // A flag given without a value (last on the line) is malformed, not absent.
+  const raw = argv[i + 1] ?? "";
+  const n = Number(raw);
+  if (!(raw && Number.isFinite(n) && n > 0)) throw new Error(`--max-usd must be a positive number of US dollars (got "${raw}")`);
+  return n;
+}
+
+/** A cap as days of student use at STUDENT_USE_USD_PER_DAY. */
+export function capInStudentDays(maxUsd: number): number {
+  return maxUsd / STUDENT_USE_USD_PER_DAY;
+}
+
+/** "about 4.7 days", to one decimal; a cap under an hour or so of use reads "under 0.1 days". */
+export function studentDaysText(maxUsd: number): string {
+  const days = capInStudentDays(maxUsd);
+  if (days < 0.05) return "under 0.1 days";
+  const text = days.toFixed(1);
+  return text === "1.0" ? "about 1 day" : `about ${text} days`;
+}
+
+/** The line every bulk script prints before its first model call. */
+export function bulkPreflightLine(maxUsd: number): string {
+  return (
+    `students use about $${STUDENT_USE_USD_PER_DAY} a day; this cap of $${maxUsd.toFixed(2)} is ${studentDaysText(maxUsd)} of student use. ` +
+    `The balance is shared with the live tutor and is not reloaded automatically: what this run spends is not there for students until the founder tops it up.`
+  );
+}
+
+export interface BulkPreflightOpts {
+  /** The script's file name, for the refusal. */
+  script: string;
+  /** The cap the script parsed itself; null or undefined when none was given. Leave out to have it read from argv. */
+  maxUsd?: number | null;
+  /** Read --max-usd from here when maxUsd is left out. */
+  argv?: readonly string[];
+  /** Where the line goes; console.log when omitted. */
+  log?: (line: string) => void;
+}
+
+export interface BulkPreflightResult {
+  maxUsd: number;
+  studentDays: number;
+  /** What was printed. */
+  line: string;
+}
+
+/**
+ * The gate a bulk script passes before its first model call: refuses to
+ * start without a --max-usd above zero, then prints what that cap means in
+ * days of student use and that the balance is not reloaded automatically.
+ * A run that makes no model call (a free dry run, --no-ai, --max-usd 0 on
+ * the crawl) does not call it.
+ */
+export function bulkPreflight(opts: BulkPreflightOpts): BulkPreflightResult {
+  const maxUsd = opts.maxUsd !== undefined ? opts.maxUsd : opts.argv ? maxUsdFromArgv(opts.argv) : null;
+  if (maxUsd == null || !Number.isFinite(maxUsd) || maxUsd <= 0) {
+    throw new Error(
+      `${opts.script}: refusing to start without --max-usd <usd>. Every bulk run names a hard ceiling on what it may spend: the balance is shared with the live tutor and is not reloaded automatically (students use about $${STUDENT_USE_USD_PER_DAY} a day of it). There is no default; name the number.`,
+    );
+  }
+  const line = bulkPreflightLine(maxUsd);
+  (opts.log ?? ((l: string) => console.log(l)))(`   ${line}`);
+  return { maxUsd, studentDays: capInStudentDays(maxUsd), line };
+}
+
+/**
+ * True when the API refused a call because the account cannot pay for it:
+ * an empty balance (the 400 "credit balance is too low", billing_error,
+ * 402) or the account's own usage limit (the 400 "You have reached your
+ * specified API usage limits"). The same rule the tutor uses
+ * (classifyTutorFailure "credit"). Never true for 401/403, 429, 529, 5xx
+ * or a timeout.
+ */
+export function isCreditError(e: unknown): boolean {
+  return classifyTutorFailure(e) === "credit";
+}
+
+const USAGE_LIMIT_RE = /usage limits?|spend(ing)? limit|regain access/i;
+
+/** What a runner adds to its stop line after a credit error; "" for any other error. Never the provider's own text. */
+export function creditStopNote(e: unknown): string {
+  if (!isCreditError(e)) return "";
+  const p = classifyProbeError(e);
+  if (p.kind !== "billing" && USAGE_LIMIT_RE.test(p.detail)) return "The account's API usage limit is reached: every call is refused until it lifts.";
+  return "The balance the live tutor shares is empty: add credit first. It is not reloaded automatically.";
 }
 
 // ---------------------------------------------------------------------------
@@ -944,7 +1074,7 @@ export async function runJournalPhase<TOutputs>(
       probe,
       message:
         `${phase}: no further chunk is submitted — the production key probe after ${label} failed (${describeProbe(probe)}).` +
-        `${probe.kind === "billing" ? " The tutor's balance is empty; add credit first." : ""} ` +
+        `${probe.kind === "billing" ? " The tutor's balance is empty; add credit first: it is not reloaded automatically." : ""} ` +
         `Journal saved; ${rest.remaining} requests of this phase still to submit (worst case ${fmtUsd(rest.remainingWorstUsd)}); ledgered ${fmtUsd(spent())} so far in this run. Resume once a probe succeeds.`,
     };
   };

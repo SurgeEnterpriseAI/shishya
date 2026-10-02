@@ -1,34 +1,36 @@
-# Every 8 hours, ping the cron endpoints that refresh time-sensitive
-# content on shishya.in:
+# Manual fire-button for the exam-week article job on shishya.in:
 #   - /api/cron/refresh-phase-articles  (Reddit + RSS → Claude →
 #                                        per-exam phase articles)
-#   - /api/cron/refresh-discussions     (Claude → 6-8 sample threads
-#                                        for the top upcoming exam)
 #
-# Why GitHub Actions instead of Vercel Cron:
-# Vercel's Hobby tier allows ONE daily run per cron. The 8-hour
-# cadence (3x/day) is a Pro-tier feature ($20/mo). GitHub Actions'
-# free tier gives us 2,000 minutes/month of compute; this workflow
-# uses about 1 minute/run × 90 runs/month = 90 min. Negligible.
+# No schedule (2 Oct 2026). This workflow used to fire every 8 hours
+# because Vercel's Hobby tier allowed one run a day per cron. vercel.json
+# now runs the same job itself (07:00, 12:00 and 21:00 IST), so the
+# schedule here was a second scheduler for one job: it fired 2.5 to 8
+# hours late and made 32 of the job's 44 web calls in ten days ($7.7 of
+# $10.63), paid from a credit balance that is topped up by hand. The
+# 21:00 IST slot in vercel.json replaces the one thing the late run did
+# that Vercel did not: write the evening REACTIONS pages (an exam day
+# turns "evening" at 18:00 IST).
 #
-# Authentication: each call sends `Authorization: Bearer ${CRON_SECRET}`
+# The seed-discussions step is gone too (2 Oct 2026): 8 threads, 0
+# replies, 12 page views in ten days. Its Vercel cron entry was removed
+# in the same change.
+#
+# Authentication: the call sends `Authorization: Bearer ${CRON_SECRET}`
 # matching the same secret Vercel uses. Stored as a repository secret
 # in GitHub Settings → Secrets and variables → Actions.
+#
+# Check: tests/unit/spend-schedules.test.ts
 
-name: Refresh portal (every 8h)
+name: Refresh exam-week pages (manual)
 
 on:
-  schedule:
-    # 01:30, 09:30, 17:30 UTC = 07:00, 15:00, 23:00 IST.
-    # Picked so the first run lands just before the morning
-    # browse-and-prep window; second covers afternoon; third
-    # captures evening / post-exam-day discussion.
-    - cron: "30 1,9,17 * * *"
-  # Manual fire-button on the Actions tab for ad-hoc refreshes.
+  # Manual fire-button on the Actions tab for ad-hoc refreshes. There is
+  # no `schedule:` on purpose; see the header before adding one back.
   workflow_dispatch:
 
-# Don't let two scheduled runs pile up if a previous one is still
-# in flight — the cron endpoints are idempotent so cancelling the
+# Don't let two manual runs pile up if a previous one is still
+# in flight — the cron endpoint is idempotent so cancelling the
 # older one is safe.
 concurrency:
   group: refresh-portal
@@ -45,17 +47,6 @@ jobs:
           curl --max-time 300 --fail-with-body --silent --show-error \
             -H "Authorization: Bearer ${CRON_SECRET}" \
             "https://shishya.in/api/cron/refresh-phase-articles" \
-            | head -c 4000
-          echo ""
-        env:
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
-
-      - name: Refresh seed discussions (Claude → sample threads)
-        run: |
-          echo "Calling refresh-discussions at $(date -u)…"
-          curl --max-time 90 --fail-with-body --silent --show-error \
-            -H "Authorization: Bearer ${CRON_SECRET}" \
-            "https://shishya.in/api/cron/refresh-discussions" \
             | head -c 4000
           echo ""
         env:

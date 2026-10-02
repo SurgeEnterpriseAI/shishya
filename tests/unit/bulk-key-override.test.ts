@@ -7,8 +7,14 @@
 //   • --founder-manages-credits: a runner that opts in accepts it in place of
 //     --i-confirm-auto-reload, with a statement that says auto-reload was NOT
 //     checked. --max-usd stays required, and passing both flags is refused.
+//   • 2 Oct 2026 (review): scripts/school-content-batch.ts opts in too. The
+//     founder does not use auto-reload, so its only way to run or resume was
+//     to print "auto-reload is ON" (false) above the pre-flight's "not
+//     reloaded automatically". Pinned from the script's source.
 // No network, no database.
 
+import fs from "node:fs";
+import path from "node:path";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/db/prisma", () => ({ prisma: { aiUsage: { create: () => Promise.resolve({}) } } }));
@@ -84,7 +90,7 @@ describe("resolveBulkKey", () => {
 describe("--founder-manages-credits (opt-in per runner)", () => {
   const FOUNDER = { founderCreditsAck: true };
 
-  it("a runner that has not opted in still needs --i-confirm-auto-reload (school-content-batch.ts is unchanged)", () => {
+  it("a runner that has not opted in still needs --i-confirm-auto-reload (the default of guardFlags is unchanged)", () => {
     expect(() => guardFlags(["--apply", "--max-usd", "5", FOUNDER_CREDITS_FLAG], true)).toThrow(/--apply needs --i-confirm-auto-reload\./);
     expect(guardFlags(["--max-usd", "5", FOUNDER_CREDITS_FLAG], false).confirmed).toBe(false);
     expect(guardStatement([FOUNDER_CREDITS_FLAG])).toBeNull();
@@ -124,5 +130,54 @@ describe("--founder-manages-credits (opt-in per runner)", () => {
     expect(ackFlag(["--exams", "TS_ICET", "--dry-run"], FOUNDER)).toBe(FOUNDER_CREDITS_FLAG);
     expect(ackFlag([])).toBe(CONFIRM_AUTO_RELOAD_FLAG);
     expect(ackFlag([], { founderCreditsAck: false })).toBe(CONFIRM_AUTO_RELOAD_FLAG);
+  });
+});
+
+// 2 Oct 2026 (review). The founder tops the credit up by hand and does not
+// use auto-reload. school-content-batch.ts required --i-confirm-auto-reload
+// and printed "auto-reload is ON" directly above the pre-flight line that
+// says the balance "is not reloaded automatically" — so a run or a resume
+// could only start by printing a statement that is false.
+describe("both batch runners take --founder-manages-credits (2 Oct 2026)", () => {
+  const read = (name: string) => fs.readFileSync(path.join(process.cwd(), "scripts", name), "utf8");
+  const RUNNERS = ["verify-question-bank.ts", "school-content-batch.ts"];
+
+  it("each opts in, and reads its flags, its printed statement and its continue commands through the opt-in", () => {
+    for (const name of RUNNERS) {
+      const src = read(name);
+      expect(src, name).toContain("const GUARD_OPTS: GuardFlagOpts = { founderCreditsAck: true };");
+      expect(src, name).toContain("const flags = guardFlags(process.argv, !DRY, GUARD_OPTS);");
+      expect(src, name).not.toMatch(/guardFlags\(process\.argv, !DRY\)/);
+      expect(src, name).toContain("console.log(`   ${guardStatement(process.argv, GUARD_OPTS)}`);");
+      expect(src, name).toContain("${ackFlag(process.argv, GUARD_OPTS)}");
+    }
+  });
+
+  it("school-content-batch.ts never prints the auto-reload claim or flag by itself any more", () => {
+    const src = read("school-content-batch.ts");
+    const code = src
+      .split(/\r?\n/)
+      .filter((l) => !l.trim().startsWith("//"))
+      .join("\n");
+    expect(code).not.toContain("CONFIRM_AUTO_RELOAD_STATEMENT");
+    expect(code).not.toContain("CONFIRM_AUTO_RELOAD_FLAG");
+    // The statement is printed before the pre-flight line and the probe, as before.
+    const at = src.indexOf("console.log(`   ${guardStatement(process.argv, GUARD_OPTS)}`);");
+    expect(at).toBeGreaterThan(-1);
+    expect(at).toBeLessThan(src.indexOf('bulkPreflight({ script: "school-content-batch.ts", maxUsd });'));
+  });
+
+  it("what an opted-in run prints: the true statement with the founder flag, the claim only when the operator made it", () => {
+    const FOUNDER = { founderCreditsAck: true };
+    const founderRun = ["--resume", "r1", "--apply", "--max-usd", "25", FOUNDER_CREDITS_FLAG];
+    expect(guardFlags(founderRun, true, FOUNDER)).toEqual({ maxUsd: 25, chunkSize: DEFAULT_CHUNK, confirmed: true });
+    expect(guardStatement(founderRun, FOUNDER)).toBe(FOUNDER_CREDITS_STATEMENT);
+    expect(guardStatement(founderRun, FOUNDER)).not.toMatch(/auto-reload is ON/);
+    // A dry run's printed continue command carries the founder flag.
+    expect(ackFlag(["--exams", "NCERT_C09"], FOUNDER)).toBe(FOUNDER_CREDITS_FLAG);
+    // The cap is still required with it.
+    expect(() => guardFlags(["--apply", FOUNDER_CREDITS_FLAG], true, FOUNDER)).toThrow(/--apply needs --max-usd/);
+    // An operator who did check may still say so.
+    expect(guardStatement(["--apply", "--max-usd", "25", CONFIRM_AUTO_RELOAD_FLAG], FOUNDER)).toBe(CONFIRM_AUTO_RELOAD_STATEMENT);
   });
 });
