@@ -5,7 +5,8 @@
 // day-3 nudge fires once, evening rescue needs a live streak. Past day
 // ~4 a lapsed student never heard from Shishya again. This closes that.
 //
-// Selection: enrolled users with email, last activity 7–60 days ago.
+// Selection: enrolled users with email, last activity 7–60 days ago — and
+// (2 Oct 2026, wave W1b) never a school-age account: src/lib/school-age.ts.
 // Anti-nag guarantees (hard rules):
 //   • max 2 win-backs per user EVER, at least 21 days apart (EmailTouch)
 //   • max 60 sends per run (backlog drains over days, freshest-lapsed
@@ -32,7 +33,7 @@ export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/db/prisma";
 import { NOT_SCHOOL_SQL } from "@/lib/db/exam-scope";
-import { realEnrollmentExistsSql } from "@/lib/db/enrollment";
+import { realEnrollmentExistsSql, schoolAgeAccountSql } from "@/lib/db/enrollment";
 import { sendWinbackEmail, type MailRollover } from "@/lib/email";
 import { loadExamBundles, nextExamsInTrack, resolveMailExam, trackKey, type ExamMeta, type NextExam } from "@/lib/exam-week-mail";
 
@@ -92,6 +93,12 @@ export async function GET(req: Request) {
         ${realEnrollmentExistsSql("u")}
         OR EXISTS (SELECT 1 FROM "CoachPlan" cp WHERE cp."userId" = u.id AND cp."examDate" > NOW())
       )
+      -- 2 Oct 2026 (personalisation wave W1b, founder decision PD-5): never a
+      -- school-age account (src/lib/school-age.ts) — an olympiad follower, a
+      -- class enrolment, a stored 13-17 band or a school wizard stage, even
+      -- when the account also holds a real exam or a coach plan. In the
+      -- selection, before the LIMIT, so they take no place in the batch.
+      AND NOT ${schoolAgeAccountSql("u")}
       AND (SELECT COUNT(*) FROM "EmailTouch" t WHERE t."userId" = u.id AND t.tag = 'winback') < 2
       AND NOT EXISTS (SELECT 1 FROM "EmailTouch" t WHERE t."userId" = u.id AND t.tag = 'winback'
                       AND t."sentAt" > NOW() - INTERVAL '21 days')

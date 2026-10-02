@@ -41,6 +41,8 @@
 // into its answer when it never got one; skipped when there is none. The
 // Daily-5 mail leaves the line out for anyone this mail reached in the last
 // 20 hours (one quote a morning). A dry run reports only the count.
+// 2 Oct 2026 (wave W1b): a school-age account (src/lib/school-age.ts) gets
+// the mail without that line — the mail itself is unchanged for them.
 //
 // Dedup: EmailTouch tag 'coach-morning', one per user per day.
 // Auth: Bearer ${CRON_SECRET}.
@@ -51,6 +53,7 @@ export const maxDuration = 300;
 
 import { prisma } from "@/lib/db/prisma";
 import { NOT_SCHOOL_SQL, notSchoolSql } from "@/lib/db/exam-scope";
+import { schoolAgeTestFor } from "@/lib/db/enrollment";
 import { sendCoachDayEmail, type MailRollover } from "@/lib/email";
 import { istDay } from "@/lib/exam-week";
 import {
@@ -244,8 +247,16 @@ export async function GET(req: Request) {
 
   // Pick up where you left off (see the header): each student's own last
   // typed tutor question, one read for the batch.
-  const lastQuestions = await loadEmailQuestions(prepared.map((p) => p.row.userId), now);
-  const pickupFor = (userId: string) => pickupEmailLine(lastQuestions.get(userId), now);
+  // 2 Oct 2026 (personalisation wave W1b, founder decision PD-5): a school-age
+  // account (src/lib/school-age.ts — an olympiad follower, a class enrolment,
+  // a stored 13-17 band or a school wizard stage) still gets its coach mail,
+  // but never the quoted chat line: their chats are not read for the mail,
+  // and pickupEmailLine is told who they are. One read for the batch; if it
+  // fails, nobody in this run is quoted.
+  const preparedIds = prepared.map((p) => p.row.userId);
+  const isSchoolAge = await schoolAgeTestFor(preparedIds);
+  const lastQuestions = await loadEmailQuestions(preparedIds.filter((id) => !isSchoolAge(id)), now);
+  const pickupFor = (userId: string) => pickupEmailLine(lastQuestions.get(userId), now, { schoolAge: isSchoolAge(userId) });
 
   if (dry) {
     const modes: Record<string, number> = {};

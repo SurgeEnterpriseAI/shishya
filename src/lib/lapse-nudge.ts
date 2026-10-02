@@ -24,6 +24,9 @@
 //     the same morning);
 //   • no day-3 nudge or win-back in the last 4 days (no two check-ins back
 //     to back).
+// And (2 Oct 2026, personalisation wave W1b) never a school-age account
+// (src/lib/school-age.ts): the cron's selection drops them before these
+// guards run, so they are not candidates at all.
 // Newest-lapsed first, at most LAPSE_NUDGE_MAX_SENDS per run.
 
 export const LAPSE_NUDGE_TAG = "lapse-d4";

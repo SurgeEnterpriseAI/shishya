@@ -29,7 +29,8 @@
 // the member's own last TYPED tutor question from the last 3 IST days (never
 // one of Shishya's prefilled prompts or quick replies), cut to 60 characters,
 // HTML-escaped, with a link back into that conversation — skipped when there
-// is none.
+// is none, and (2 Oct 2026, wave W1b) never for a school-age account
+// (src/lib/school-age.ts): their mails go out without the quote.
 // Never for Classes 1-7: no school session and no school attempt is read, and
 // none of these surfaces is a school page.
 // 1 Oct 2026 (late answers — src/lib/tutor-late-answer.ts): a question an AI
@@ -444,8 +445,20 @@ const istDayNo = (ms: number) => Math.floor((ms + IST_MS) / 86_400_000);
  * left off" with the plain link (review, 30 Sep 2026). The link carries
  * utm_content=pickup; sendEmail adds utm_source / utm_medium / utm_campaign
  * to every shishya.in link itself (src/lib/email.ts withMailUtm).
+ * 2 Oct 2026 (personalisation wave W1b, founder decision PD-5): never for a
+ * school-age account (src/lib/school-age.ts) — a mail can be read on a shared
+ * family inbox or a lock screen, so a school student's own chat words are
+ * not put in one. The mail itself still goes; only this line is left out.
+ * `who` is required, not optional: every mail that wants the line has to say
+ * who the student is (the crons ask schoolAgeTestFor, src/lib/db/enrollment.ts).
  */
-export function pickupEmailLine(q: EmailQuestionRow | null | undefined, now: Date): { text: string; html: string } | null {
+export function pickupEmailLine(
+  q: EmailQuestionRow | null | undefined,
+  now: Date,
+  who: { schoolAge: boolean },
+): { text: string; html: string } | null {
+  // Only an explicit "not school age" gets the line (an unanswered question fails closed).
+  if (who?.schoolAge !== false) return null;
   if (!q) return null;
   const quote = emailQuote(q.content);
   if (!quote) return null;

@@ -59,6 +59,9 @@ import { quizRecallCopy } from "@/lib/quiz-carry";
 
 const NOW = new Date("2026-09-30T06:00:00Z"); // 11:30 IST
 const hoursAgo = (h: number) => new Date(NOW.getTime() - h * 3600_000);
+/** 2 Oct 2026 (wave W1b): the mail line asks who the student is; these tests are about an adult's line.
+ *  The school-age side is tests/unit/mail-school-age.test.ts. */
+const ADULT = { schoolAge: false };
 
 function thread(over: Partial<PickupThread> = {}): PickupThread {
   return {
@@ -334,7 +337,7 @@ describe("the next-day mail line", () => {
   });
 
   it("answered: 'Yesterday you asked the tutor', the saved chat, escaped HTML", () => {
-    const line = pickupEmailLine(q({ content: `<script>alert("x")</script> & 'y'` }), NOW)!;
+    const line = pickupEmailLine(q({ content: `<script>alert("x")</script> & 'y'` }), NOW, ADULT)!;
     expect(line.text).toBe(
       `💬 Yesterday you asked the tutor: “<script>alert("x")</script> & 'y'” — pick up where you left off: https://shishya.in/chat?examCode=SSC_CGL&session=sess_abcdefgh&utm_content=pickup`,
     );
@@ -345,13 +348,13 @@ describe("the next-day mail line", () => {
   });
 
   it("unanswered: says so, and links into its answer (f=answer)", () => {
-    const line = pickupEmailLine(q({ answered: false, examCode: null }), NOW)!;
+    const line = pickupEmailLine(q({ answered: false, examCode: null }), NOW, ADULT)!;
     expect(line.text).toContain("it did not get an answer then. Get the answer now: https://shishya.in/chat?general=1&session=sess_abcdefgh&f=answer&utm_content=pickup");
     expect(line.html).toContain("It did not get an answer then — get the answer now →");
   });
 
   it("unanswered but no longer the chat's last student turn: the neutral line and the plain link (Retry would re-send the later turn)", () => {
-    const line = pickupEmailLine(q({ answered: false, isLastUser: false }), NOW)!;
+    const line = pickupEmailLine(q({ answered: false, isLastUser: false }), NOW, ADULT)!;
     expect(line.text).toBe(
       "💬 Yesterday you asked the tutor: “How do I solve compound interest questions fast?” — pick up where you left off: https://shishya.in/chat?examCode=SSC_CGL&session=sess_abcdefgh&utm_content=pickup",
     );
@@ -360,20 +363,25 @@ describe("the next-day mail line", () => {
     expect(line.html).not.toContain("did not get an answer");
     expect(line.html).toContain("Pick up where you left off →");
     // An answered question is the same whatever came after it.
-    expect(pickupEmailLine(q({ isLastUser: false }), NOW)!.text).toBe(pickupEmailLine(q(), NOW)!.text);
+    expect(pickupEmailLine(q({ isLastUser: false }), NOW, ADULT)!.text).toBe(pickupEmailLine(q(), NOW, ADULT)!.text);
   });
 
   it("today / yesterday / two days ago only; none, empty, older or future → no line", () => {
-    expect(pickupEmailLine(q({ createdAt: hoursAgo(2) }), NOW)!.text.startsWith("💬 Earlier today")).toBe(true);
-    expect(pickupEmailLine(q({ createdAt: hoursAgo(40) }), NOW)!.text.startsWith("💬 Two days ago")).toBe(true);
-    expect(pickupEmailLine(q({ createdAt: hoursAgo(24 * 3 + 12) }), NOW)).toBeNull();
-    expect(pickupEmailLine(q({ createdAt: new Date(NOW.getTime() + 2 * 86_400_000) }), NOW)).toBeNull();
-    expect(pickupEmailLine(q({ content: " \n " }), NOW)).toBeNull();
-    expect(pickupEmailLine(null, NOW)).toBeNull();
+    expect(pickupEmailLine(q({ createdAt: hoursAgo(2) }), NOW, ADULT)!.text.startsWith("💬 Earlier today")).toBe(true);
+    expect(pickupEmailLine(q({ createdAt: hoursAgo(40) }), NOW, ADULT)!.text.startsWith("💬 Two days ago")).toBe(true);
+    expect(pickupEmailLine(q({ createdAt: hoursAgo(24 * 3 + 12) }), NOW, ADULT)).toBeNull();
+    expect(pickupEmailLine(q({ createdAt: new Date(NOW.getTime() + 2 * 86_400_000) }), NOW, ADULT)).toBeNull();
+    expect(pickupEmailLine(q({ content: " \n " }), NOW, ADULT)).toBeNull();
+    expect(pickupEmailLine(null, NOW, ADULT)).toBeNull();
+  });
+
+  it("2 Oct 2026: a school-age account never gets the line — the same question, no quote", () => {
+    expect(pickupEmailLine(q(), NOW, ADULT)).not.toBeNull();
+    expect(pickupEmailLine(q(), NOW, { schoolAge: true })).toBeNull();
   });
 
   it("the founder's wave copy never carries a student's quote", () => {
-    const line = pickupEmailLine(q(), NOW)!;
+    const line = pickupEmailLine(q(), NOW, ADULT)!;
     const html = `<p>Daily 5</p>${line.html}<p>end</p>`;
     const text = `Daily 5\n\n${line.text}\n\nend`;
     expect(withoutPrivateParts(html, [line.html, line.text])).toBe("<p>Daily 5</p><p>end</p>");

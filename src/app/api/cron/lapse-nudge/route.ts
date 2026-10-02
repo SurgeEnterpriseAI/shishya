@@ -14,6 +14,8 @@
 // Never names a finished exam: resolveMailExam, exactly as win-back. A live
 // coach plan with a future date is the student's own word and keeps its exam.
 // No model call. Opt-out is checked here and again inside sendEmail.
+// 2 Oct 2026 (wave W1b): never a school-age account (src/lib/school-age.ts) —
+// the selection drops them.
 // Auth: Bearer ${CRON_SECRET}.
 
 export const runtime = "nodejs";
@@ -22,7 +24,7 @@ export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/db/prisma";
 import { NOT_SCHOOL_SQL } from "@/lib/db/exam-scope";
-import { realEnrollmentExistsSql } from "@/lib/db/enrollment";
+import { realEnrollmentExistsSql, schoolAgeAccountSql } from "@/lib/db/enrollment";
 import { sendLapseNudgeEmail, type MailRollover } from "@/lib/email";
 import { loadExamBundles, nextExamsInTrack, resolveMailExam, trackKey, type ExamMeta, type NextExam } from "@/lib/exam-week-mail";
 import { LAPSE_NUDGE_TAG, pickLapseRecipients, type LapseCandidate } from "@/lib/lapse-nudge";
@@ -82,6 +84,12 @@ export async function GET(req: Request) {
       WHERE u.email <> '' AND u."emailOptOut" = FALSE
         AND act.last_seen < NOW() - INTERVAL '72 hours'
         AND act.last_seen > NOW() - INTERVAL '7 days'
+        -- 2 Oct 2026 (personalisation wave W1b, founder decision PD-5): never
+        -- a school-age account (src/lib/school-age.ts) — an olympiad follower,
+        -- a class enrolment, a stored 13-17 band or a school wizard stage,
+        -- even when it also holds a real exam or a coach plan. Dropped here,
+        -- so a dry run never lists one either.
+        AND NOT ${schoolAgeAccountSql("u")}
       ORDER BY act.last_seen DESC
       LIMIT 500`;
   } catch (e) {

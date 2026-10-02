@@ -36,6 +36,8 @@
 // into its answer when it never got one. Skipped when there is none, and for
 // a student the coach-morning mail already quoted it to today (one quote a
 // morning). No new email type; a dry run reports only how many would carry it.
+// 2 Oct 2026 (wave W1b): a school-age account (src/lib/school-age.ts) gets
+// the mail without that line — the mail itself is unchanged for them.
 // Auth: Bearer ${CRON_SECRET}. Daily per vercel.json.
 
 export const runtime = "nodejs";
@@ -44,6 +46,7 @@ export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/db/prisma";
 import { NOT_SCHOOL_WHERE } from "@/lib/db/exam-scope";
+import { schoolAgeTestFor } from "@/lib/db/enrollment";
 import { sendDailyFiveEmail, type MailRollover } from "@/lib/email";
 import { optedOutUserIds } from "@/lib/email-optout";
 import { computeStreak, istDay } from "@/lib/db/streak";
@@ -154,7 +157,14 @@ export async function GET(req: Request) {
         .catch(() => [] as { userId: string }[])
     ).map((r) => r.userId),
   );
-  const lastQuestions = await loadEmailQuestions(userIds.filter((id) => !coachQuoted.has(id)), now);
+  // 2 Oct 2026 (personalisation wave W1b, founder decision PD-5): a school-age
+  // account (src/lib/school-age.ts — an olympiad follower, a class enrolment,
+  // a stored 13-17 band or a school wizard stage) still gets its Daily 5, but
+  // never the quoted chat line: their chats are not read for the mail, and
+  // pickupEmailLine is told who they are. One read for the batch; if it
+  // fails, nobody in this run is quoted.
+  const isSchoolAge = await schoolAgeTestFor(userIds);
+  const lastQuestions = await loadEmailQuestions(userIds.filter((id) => !coachQuoted.has(id) && !isSchoolAge(id)), now);
 
   // Students who already committed to a coach plan — they get the plain
   // mail; everyone else gets the coach invitation at the end.
@@ -279,7 +289,7 @@ export async function GET(req: Request) {
       mode = `generic:${resolved.done.code}`;
     }
     modes[mode] = (modes[mode] ?? 0) + 1;
-    const pickup = pickupEmailLine(lastQuestions.get(u.id), now);
+    const pickup = pickupEmailLine(lastQuestions.get(u.id), now, { schoolAge: isSchoolAge(u.id) });
     if (pickup) withPickup++;
     if (dry) {
       if (sample.length < 10) sample.push({ name: u.name, short: examShort, mode, examWeek: examWeek?.text ?? null });

@@ -37,6 +37,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "./prisma";
 import { NOT_SCHOOL_SQL, NOT_SCHOOL_WHERE, isSchoolCategory, notSchoolSql } from "./exam-scope";
 import { isStudentModeContainer } from "@/lib/school/student-classes";
+import { OLYMPIAD_CATEGORY, SCHOOL_AGE_WIZARD_STAGES } from "@/lib/school-age";
 
 export interface EnrollmentPatch {
   active?: boolean;
@@ -136,4 +137,66 @@ export async function schoolOnlyUserIds(userIds: readonly string[]): Promise<str
         WHERE en2."userId" = en."userId" AND en2.active = TRUE AND ${notSchoolSql("e2")}
       )`;
   return rows.map((r) => r.userId);
+}
+
+// ── School-age accounts (2 Oct 2026, personalisation wave W1b) ─────────
+// The rule and why: src/lib/school-age.ts (founder decisions PD-5, PD-16).
+// "School-only" above means "holds a class container and NO real exam"; it
+// misses the school student who follows an olympiad (a real exam in the
+// catalogue) or who picked a school stage in the wizard and then enrolled on
+// JEE or NTSE. Those accounts stay in the exam audiences that serve them
+// (Daily 5, coach-morning, the alerts they asked for) and leave the three
+// come-back mails — win-back, lapse nudge, evening nudge — and the quoted
+// chat line. The fragment below is the SQL twin of isSchoolAge(), built from
+// the same constants.
+
+/** A code-owned name inlined as a SQL text literal (never bound, never user input). */
+const SQL_NAME = /^[A-Z][A-Z0-9_]*$/;
+function sqlName(v: string): string {
+  if (!SQL_NAME.test(v)) throw new Error(`enrollment: bad SQL name ${JSON.stringify(v)}`);
+  return `'${v}'`;
+}
+
+/** `(<school-age account>)` as a Prisma.sql fragment for a raw selection over
+ *  "User" <userAlias>: ANY enrolment (active or not) on an exam whose
+ *  catalogue category is OLYMPIAD or a school class container, OR a school
+ *  stage in onbStage. The stored 13-17 band needs no test of its own — it is
+ *  one of those stages plus a class code (schoolBandOfProfile), so the stage
+ *  test already holds for it (pinned in tests/unit/mail-school-age.test.ts).
+ *  COALESCE: onbStage is NULL on most accounts, and `NULL IN (…)` is NULL —
+ *  under `AND NOT` that would drop every such account from the audience.
+ *  Use as `AND NOT ${…}`; the aliases `en` and `e` are the fragment's own. */
+export function schoolAgeAccountSql(userAlias = "u"): Prisma.Sql {
+  if (!SQL_ALIAS.test(userAlias) || userAlias === "en" || userAlias === "e") {
+    throw new Error(`enrollment: bad SQL alias ${JSON.stringify(userAlias)}`);
+  }
+  const userId = Prisma.raw(`${userAlias}.id`);
+  const stage = Prisma.raw(`${userAlias}."onbStage"`);
+  const olympiad = Prisma.raw(sqlName(OLYMPIAD_CATEGORY));
+  const stages = Prisma.raw(SCHOOL_AGE_WIZARD_STAGES.map(sqlName).join(", "));
+  return Prisma.sql`(EXISTS (SELECT 1 FROM "Enrollment" en JOIN "Exam" e ON e.id = en."examId" WHERE en."userId" = ${userId} AND (e."category"::text = ${olympiad} OR NOT ${notSchoolSql("e")})) OR COALESCE(${stage} IN (${stages}), FALSE))`;
+}
+
+/** Of `userIds`, the school-age ones. THROWS when the read fails: the caller
+ *  decides what a failed read means (see schoolAgeTestFor). */
+export async function schoolAgeUserIds(userIds: readonly string[]): Promise<string[]> {
+  const ids = [...new Set(userIds)].filter(Boolean);
+  if (ids.length === 0) return [];
+  const rows = await prisma.$queryRaw<{ id: string }[]>`
+    SELECT u.id FROM "User" u WHERE u.id = ANY(${ids}) AND ${schoolAgeAccountSql("u")}`;
+  return rows.map((r) => r.id);
+}
+
+/** For one mail batch: "is this account school age?" — one read for the whole
+ *  batch. FAILS CLOSED: when the read fails, every account in the batch is
+ *  answered true for this run, so a safeguard is never skipped because the
+ *  database hiccupped (the mail goes out without the quoted line). */
+export async function schoolAgeTestFor(userIds: readonly string[]): Promise<(userId: string) => boolean> {
+  try {
+    const set = new Set(await schoolAgeUserIds(userIds));
+    return (userId) => set.has(userId);
+  } catch (err) {
+    console.error("[school-age] read failed — the whole batch is treated as school age:", err);
+    return () => true;
+  }
 }

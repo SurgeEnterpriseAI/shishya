@@ -13,6 +13,9 @@
 // plan-holder whose streak was built on coach tasks never qualified.
 // The mail's CTA points at /today (build-or-resume in one hop).
 //
+// 2 Oct 2026 (wave W1b): never a school-age account (src/lib/school-age.ts);
+// the first read below drops them.
+//
 // Auth: Bearer ${CRON_SECRET}. Daily 15:00 UTC per vercel.json.
 
 export const runtime = "nodejs";
@@ -21,6 +24,7 @@ export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/db/prisma";
 import { NOT_SCHOOL_WHERE } from "@/lib/db/exam-scope";
+import { schoolAgeAccountSql } from "@/lib/db/enrollment";
 import { sendEveningRescueEmail } from "@/lib/email";
 import { optedOutUserIds } from "@/lib/email-optout";
 import { computeStreak, istDay } from "@/lib/db/streak";
@@ -44,9 +48,17 @@ export async function GET(req: Request) {
   // who can possibly hold a streak that's at risk tonight. The four legs
   // are the four study-day sources (src/lib/study-day.ts); a source
   // missing here can never be rescued, whatever the streak says.
+  // 2 Oct 2026 (personalisation wave W1b, founder decision PD-5): never a
+  // school-age account (src/lib/school-age.ts) — an olympiad follower, a
+  // class enrolment, a stored 13-17 band or a school wizard stage, even when
+  // it also holds a real exam. This mail is a streak-loss warning, and the
+  // decision keeps streak pressure away from school students. Dropped here,
+  // in the first read, so no streak is computed for them and they take no
+  // place in the batch; if this read fails the run stops before any mail (it
+  // has no catch).
   const twoDaysAgo = new Date(now.getTime() - 2 * 86_400_000);
   const activeUserIds = await prisma.$queryRaw<{ userId: string }[]>`
-    SELECT DISTINCT "userId" FROM (
+    SELECT DISTINCT s."userId" FROM (
       SELECT "userId" FROM "Attempt" WHERE "finishedAt" >= ${twoDaysAgo} AND "userId" IS NOT NULL
       UNION
       SELECT "userId" FROM "ChatSession" WHERE "createdAt" >= ${twoDaysAgo} AND "userId" IS NOT NULL
@@ -55,6 +67,8 @@ export async function GET(req: Request) {
       UNION
       SELECT "userId" FROM "TopicStudyState" WHERE "completedAt" >= ${twoDaysAgo} AND "userId" IS NOT NULL
     ) s
+    JOIN "User" u ON u.id = s."userId"
+    WHERE NOT ${schoolAgeAccountSql("u")}
   `;
   const ids = activeUserIds.map((r) => r.userId);
   if (ids.length === 0) return Response.json({ ok: true, sent: 0, reason: "no recent activity" });
