@@ -495,7 +495,7 @@ describe("the student entry per class band and auth state", () => {
     // no exam, no tutor memory) — still through schoolSignInHref only.
     expect(Object.keys(STUDENT_ENTRY_COPY)).not.toContain("saveLink");
     const saveSlot = read("src/components/school/SchoolStudentEntry.tsx");
-    expect(saveSlot).toMatch(/<SignUpButton\s+href=\{signInHref\}\s+surface="school-save"\s+rel="nofollow"\s+explain="tooltip"/);
+    expect(saveSlot).toMatch(/<SignUpButton\s+href=\{signInHref\}\s+surface="school-save"\s+rel="nofollow"\s+explain="own"/);
     expect(STUDENT_ENTRY_COPY.classGuest).toContain("13 and above");
     expect(STUDENT_ENTRY_COPY.classGuest).toMatch(/no sign-in needed/);
     expect(STUDENT_ENTRY_COPY.under13).toMatch(/^Younger than 13\?/);

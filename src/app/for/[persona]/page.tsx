@@ -276,23 +276,24 @@ export default async function PersonaPage({
             and above) when you want your scores and a day-by-day plan saved. Shishya is free: it
             is built and paid for by Surge Software Solutions Pvt Ltd, not by students.
           </p>
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+          <div className="mt-4 flex flex-wrap items-start justify-center gap-3">
             {/* 2 Oct 2026 (founder, standing): the one shared "Sign up with
                 Google" button (Google's white button with the "G") with its
                 explanation — the general words: this page names no single
                 exam. Always /login; door "persona-card". Review, same day:
-                Google's DARK button (it was the filled button beside the
-                outlined "browse" one); the tooltip opens ABOVE it. */}
+                the tooltip opens ABOVE it. One look everywhere: Google's
+                LIGHT button, first, beside a "browse" link that is a 1 px ink
+                outline. The caption under it shows on every device, so the
+                row aligns to the top and the link is as tall as the button. */}
             <SignUpButton
               href={`/login?callbackUrl=${encodeURIComponent(`/for/${persona.slug}`)}&from=persona-card`}
               surface="persona-card"
-              theme="dark"
               side="top"
               center
             />
             <Link
               href="/exams/browse"
-              className="rounded-md border border-ink-300 bg-white px-4 py-2 text-sm font-medium text-ink-700 hover:bg-ink-50"
+              className="inline-flex min-h-[44px] items-center rounded-md border border-ink-300 bg-white px-4 py-2 text-sm font-medium text-ink-700 hover:bg-ink-50"
             >
               Browse all exams instead
             </Link>

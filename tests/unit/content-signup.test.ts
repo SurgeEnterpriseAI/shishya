@@ -391,7 +391,7 @@ describe("SignupInline (source)", () => {
     // 2 Oct 2026 (founder, standing): the one shared "Sign up with Google"
     // button (Google's white button with the "G"; SignInLink underneath) —
     // still full width on phones (block; auto from sm), placement = family.
-    expect(code).toMatch(/<SignUpButton\s+href=\{href\}\s+surface="signup-inline"\s+locale=\{lang\}\s+exam=\{exam\}\s+practice=\{practice\}\s+explain="tooltip"\s+block/);
+    expect(code).toMatch(/<SignUpButton\s+href=\{href\}\s+surface="signup-inline"\s+locale=\{lang\}\s+exam=\{exam\}\s+practice=\{practice\}\s+explain="own"\s+block/);
     expect(code).toContain('className="mt-3 shrink-0 sm:mt-0 sm:w-auto"');
     expect(code).toContain("beaconProps={{ placement: surface }}");
     expect(code).not.toContain("bg-saffron-500");

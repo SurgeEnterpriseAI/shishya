@@ -174,16 +174,17 @@ export default async function LoginPage({
             with Google's "G", reading "Sign up with Google" (en / hi / te;
             any other language keeps its "Continue with Google", as does the
             "Welcome back" card: a returning member is not signing up). Under
-            it on a phone a one-line caption, and on hover or keyboard focus
-            with a mouse the full explanation: it names the exam only when
+            it on every device a one-line caption (en / hi / te), and on hover
+            or keyboard focus with a mouse the full explanation: it names the exam only when
             this sign-in returns to a page of a real, active exam (the account
             is then enrolled in it — signUpExam above), without the "tests
             saved" clause — this page does not know whether the exam has
             practice; a school return gets the school words.
-            Review, same day: Google's DARK button (this page's main action
-            stays the filled one above the outlined "try 5 questions first"),
-            and the tooltip opens ABOVE the button — under it sits that link,
-            which the tooltip used to cover. */}
+            Review, same day: the tooltip opens ABOVE the button — under it
+            sits the "try 5 questions first" link, which the tooltip used to
+            cover. One look everywhere: Google's LIGHT button. It stays this
+            page's main action: it is first, and that link under it is now a
+            quiet 1 px ink outline (it was a saffron-tinted box). */}
         <GoogleSignInButton
           callbackUrl={cb}
           locale={locale}
@@ -193,7 +194,6 @@ export default async function LoginPage({
           examCode={signUpExam ? examCode : null}
           surface="login"
           side="top"
-          theme="dark"
           beacon={{ from: sp.from ?? null, family: loginCallbackFamily(sp.callbackUrl) }}
         />
         {/* The alternative comes AFTER the main action (30 Sep 2026): Google
@@ -201,7 +201,7 @@ export default async function LoginPage({
         {examCode && li.tryFirst && (
           <Link
             href={`/exams/${examCode}/quiz`}
-            className="mt-3 block rounded-lg border border-saffron-300 bg-saffron-50 px-3 py-2 text-center text-sm font-semibold text-saffron-800 hover:bg-saffron-100"
+            className="mt-3 block rounded-lg border border-ink-300 bg-white px-3 py-2 text-center text-sm font-medium text-ink-800 hover:bg-ink-50"
           >
             {fillTemplate(t("login.tryFirst"), { exam: examCode.replace(/_/g, " ") })}
           </Link>

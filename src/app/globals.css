@@ -110,16 +110,14 @@
      before any Google app-verification review. Never give this class a
      coloured fill: the guidelines forbid the colour "G" on anything but
      white, #F2F2F2 or #131314.
-     .su-google-dark (2 Oct 2026 review) is Google's DARK theme — fill
-     #131314, stroke #8E918F 1px inside, text #E3E3E3, the same colour "G",
-     paddings and shape. It is the FILLED sign-up button: used where the
-     button is a block's main action beside or above an outlined alternative
-     (hub box, PYQ year, builder, quiz end, try-one, /login, the mock gate),
-     so the free sign-in is the louder of the two again (founder, 28 Sep
-     2026). Light stays inside our own tinted cards, and — 2 Oct 2026,
-     founder: "sign up should show like this instead of the orange color one
-     at the top" — it is also the header's button and the timed bar's. No
-     saffron sign-up button is left. */
+     ONE LOOK (2 Oct 2026, founder, with a screenshot of the white button:
+     "wherever the sign in or sign up … has to be replaced with Google sign
+     up the way which I have showed"): this light button is the only sign-up
+     button on the site — header, timed bar, every card and every page. The
+     dark theme nine placements wore for a few hours on 2 Oct is gone, and no
+     saffron sign-up button is left. What keeps the sign-up the main action
+     now is the alternative beside it, which is a text link or a 1 px ink
+     outline (src/components/SignUpButton.tsx, top note). */
   .su-google {
     display: inline-flex;
     align-items: center;
@@ -139,11 +137,6 @@
     white-space: nowrap;
     box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);
     transition: box-shadow 0.2s;
-  }
-  .su-google-dark {
-    border-color: #8e918f;
-    background-color: #131314;
-    color: #e3e3e3;
   }
   .su-google:hover {
     box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
@@ -207,17 +200,25 @@
     }
   }
 
-  /* The button with its explanation (.su-tip holds both lengths):
-       • a screen without hover (phones, tablets) shows the SHORT caption
-         (.su-tip-short) under the button — one line at 360 px, always
-         there, nothing to tap, nothing over the button. The full sentence
-         (.su-tip-text) is not displayed there; it is still the button's
+  /* The button with its explanation:
+       • EVERY screen shows the SHORT caption (.su-cap) under the button —
+         one line at 360 px, in the flow, always there, nothing to tap,
+         nothing over the button; it wraps inside the frame (max-width:
+         100%) and is centred where the button is (.su-center). 2 Oct 2026
+         (founder: "everywhere try to say something why sign in will help
+         them"): until then a screen with a mouse showed no caption, only
+         the tooltip. Rendered for explain "both" only: a placement with
+         its own benefit line beside the button ("own"), the header and the
+         timed bar ("tooltip") render none. It is in the server HTML with
+         the button, so nothing moves when the script runs;
+       • a screen without hover (phones, tablets) never displays the full
+         sentence (.su-tip > .su-tip-text); it is still the button's
          description for a screen reader (aria-describedby points at it).
          2 Oct 2026 review: the full sentence as the caption was 3-4 lines
          of small text under every in-page button;
        • a screen with a mouse shows the FULL sentence as a tooltip on hover
-         and on keyboard focus, and no caption. Once the page's script runs
-         (the frame carries data-su-float="on") what is seen is a copy in a
+         and on keyboard focus, as well as the caption. Once the page's script
+         runs (the frame carries data-su-float="on") what is seen is a copy in a
          TOP LAYER — .su-float, below: rendered into <body>, position:
          fixed, above every other layer, placed from the button's box by
          src/lib/signup-tip-place.ts — so no ancestor can cut it off and
@@ -227,13 +228,15 @@
          message pane). The in-page element is then never displayed with a
          mouse; it stays the button's description;
        • before the script runs, and without JavaScript, the in-page element
-         IS the tooltip: CSS only, under (or, data-su-side="top", above) the
-         button, position:absolute and display:none until hover or focus, so
+         IS the tooltip: CSS only, under the frame (the button and its
+         caption) or, data-su-side="top", above the button,
+         position:absolute and display:none until hover or focus, so
          nothing on the page moves and it adds no scroll width; it starts at
-         the button's edge, so it never covers the button. This fallback can
+         the frame's edge, so it never covers the button. This fallback can
          still be cut off by what the button sits in.
-     data-su-explain="tooltip": no caption on touch (the header button, and
-     buttons that already sit beside their own benefit line). */
+     data-su-explain on the frame says which of the three modes it is
+     ("both", "own", "tooltip"); no rule reads it — the caption is simply not
+     in the page for the last two. */
   .su-wrap {
     position: relative;
     display: flex;
@@ -251,7 +254,7 @@
     align-items: center;
     text-align: center;
   }
-  .su-wrap > .su-tip {
+  .su-wrap > .su-cap {
     display: block;
     max-width: 26rem;
     margin-top: 6px;
@@ -260,14 +263,9 @@
     font-weight: 400;
     line-height: 1.45;
     white-space: normal;
+    overflow-wrap: anywhere;
   }
-  .su-wrap > .su-tip > .su-tip-short {
-    display: block;
-  }
-  .su-wrap > .su-tip > .su-tip-text {
-    display: none;
-  }
-  .su-wrap[data-su-explain="tooltip"] > .su-tip {
+  .su-wrap > .su-tip {
     display: none;
   }
   @media (hover: hover) and (pointer: fine) {
@@ -288,7 +286,11 @@
       max-width: min(20rem, calc(100vw - 2rem));
       margin: 0;
       padding-top: 8px;
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 1.45;
       text-align: left;
+      white-space: normal;
     }
     .su-wrap[data-su-side="top"] > .su-tip {
       top: auto;
@@ -308,9 +310,6 @@
        now. After the hover rule and of the same weight, so it wins — the two
        are never on screen together. */
     .su-wrap[data-su-float="on"] > .su-tip {
-      display: none;
-    }
-    .su-wrap > .su-tip > .su-tip-short {
       display: none;
     }
     .su-wrap > .su-tip > .su-tip-text {

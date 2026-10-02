@@ -134,19 +134,22 @@ export default async function JoinBatchPage({
             <div className="mt-6 border-t border-ink-100 pt-5">
               {!userId ? (
                 <>
-                  <p className="text-sm text-ink-600">
-                    Sign in with Google to join this batch — takes a second.
+                  {/* 2 Oct 2026: "takes a second" is gone — the measured median
+                      from /login to an account is 17 s (src/lib/mock-gate-copy.ts). */}
+                  <p data-su-reason className="text-sm text-ink-600">
+                    Use your Google account to join this batch — no forms to fill.
                   </p>
                   {/* 2 Oct 2026 (founder, standing; review, same day): the one
-                      shared sign-up button — Google's dark (filled) button
-                      with the "G" and the one label. The line above says
-                      what it is for; tooltip with a mouse, no caption on
-                      touch. Still /login; door "batch-join". */}
+                      shared sign-up button — Google's white button with the
+                      "G" and the one label (one look everywhere). The line
+                      above says what it is for: that is its reason
+                      (explain="own": no second caption); the full sentence is
+                      the tooltip with a mouse. Still /login; door
+                      "batch-join". */}
                   <SignUpButton
                     href={`/login?callbackUrl=${encodeURIComponent(`/join/${inviteCode}`)}&from=batch-join`}
                     surface="batch-join"
-                    theme="dark"
-                    explain="tooltip"
+                    explain="own"
                     className="mt-3"
                   />
                 </>

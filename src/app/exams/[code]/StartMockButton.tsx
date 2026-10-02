@@ -58,13 +58,17 @@ import { hubAutoStart, loginHrefFor, signinBeacon } from "@/lib/signin-cta";
  *  beacon, same test arms. `practice` is fixed true: the hub renders this box
  *  only where it has checked questions (hasContent). Full width on a phone
  *  (block; its own width from sm): this is the hub's main action — it must
- *  not look smaller than the outlined quiz button under it.
- *  Review, same day: Google's DARK button (theme="dark") — the white one,
- *  with its 1 px grey border, was the quieter of the two beside the quiz
- *  button's 2 px saffron outline, and on 28 Sep the founder put the free
- *  sign-in back as the FILLED button after hub sign-ups fell from about 11 a
- *  day to 4 when it was demoted. The tooltip opens ABOVE the button
- *  (side="top"): the quiz button sits beside or under it. */
+ *  not look smaller than the quiz button under it.
+ *  2 Oct 2026 (founder, with a screenshot of the white button: one look
+ *  everywhere): Google's LIGHT button, like every other sign-up button. It
+ *  stays the main action — on 28 Sep hub sign-ups fell from about 11 a day
+ *  to 4 when the sign-in was the quieter of two buttons — because it comes
+ *  FIRST and the quiz button beside it is now a quiet 1 px ink outline
+ *  (src/app/exams/[code]/page.tsx; it was a 2 px saffron outline, louder
+ *  than a white button). Under the button, on a phone AND a desktop, the
+ *  short caption says why: "No forms. {exam} is set up as your exam." The
+ *  tooltip opens ABOVE the button (side="top"): the quiz button sits beside
+ *  or under it. */
 export function HubSignInLink({
   examCode,
   exam,
@@ -78,7 +82,7 @@ export function HubSignInLink({
   /** The hub page's locale. */
   locale?: string | null;
 }) {
-  return <SignUpButton href={href} surface="hub-box" locale={locale} exam={exam} examCode={examCode} practice theme="dark" side="top" block className="sm:w-auto" beaconProps={{ examCode }} />;
+  return <SignUpButton href={href} surface="hub-box" locale={locale} exam={exam} examCode={examCode} practice side="top" block className="sm:w-auto" beaconProps={{ examCode }} />;
 }
 
 interface Labels {

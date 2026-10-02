@@ -9,28 +9,23 @@
 // What it renders:
 //   • the label "Sign up with Google" (en / hi / te), never a surface's own
 //     wording;
-//   • ALWAYS Google's button with the standard colour "G", 12 / 10 / 12 px
-//     paddings, pill shape — to Google's branding guidelines (read 2 Oct
-//     2026). There is no saffron sign-up button any more (founder, 2 Oct
-//     2026, with a screenshot of the white button: "sign up should show like
-//     this instead of the orange color one at the top … check all the
-//     places"): the header's button and the timed bar's were our saffron
-//     TEXT-ONLY button; both are Google's light button now. Two of Google's
-//     three themes are used: LIGHT (white fill, #747775 stroke, #1F1F1F
-//     text) in the header, the timed bar and inside our own tinted cards
-//     (site card, early line, school line, tutor card, finder), and DARK
-//     (#131314 fill, #8E918F stroke, #E3E3E3 text; theme="dark") where the
-//     button is a block's main action beside or above an outlined
-//     alternative — hub box, PYQ year, builder, quiz end, try-one, /login,
-//     the mock gate, a challenge result, a persona page. Why dark there
-//     (2 Oct 2026 review): on 28 Sep the founder put the free sign-in back
-//     as the FILLED button and the quiz as the outlined one, after sign-ups
-//     from hubs fell from about 11 a day to 4 when sign-in was demoted; the
-//     white button beside a 2 px saffron outline was the quieter of the two
-//     again. Google's "G" may not sit on saffron, so the filled form is
-//     Google's own dark one. The "G" below is the SVG Google's own
-//     HTML-button generator on that page emits, unchanged (see the note on
-//     GoogleG for what is still open);
+//   • ALWAYS Google's LIGHT button — white fill, #747775 stroke, #1F1F1F
+//     text, the standard colour "G", 12 / 10 / 12 px paddings, pill shape —
+//     to Google's branding guidelines (read 2 Oct 2026). ONE LOOK EVERYWHERE
+//     (2 Oct 2026, founder, with a screenshot of the white button: "wherever
+//     the sign in or sign up … has to be replaced with Google sign up the
+//     way which I have showed"). There is no saffron sign-up button and no
+//     dark one: the `theme` prop is gone, a caller cannot ask for another
+//     look. History, so nobody brings the dark one back without reading it:
+//     for a few hours on 2 Oct nine placements wore Google's DARK button
+//     (#131314), because on 28 Sep sign-ups from hubs fell from about 11 a
+//     day to 4 when the sign-in became the quieter of two buttons. The rule
+//     that replaces it lives with the CALLERS: in every block where this
+//     button sits beside or above an alternative, this button comes first
+//     and the alternative is a text link or a 1 px ink outline — never a
+//     filled or saffron-outlined button (tests/unit/signup-everywhere.test.ts).
+//     The "G" below is the SVG Google's own HTML-button generator on that
+//     page emits, unchanged (see the note on GoogleG for what is still open);
 //   • a narrow place (the header on a phone, the timed bar): the label's two
 //     halves sit on two lines beside the "G" ("Sign up" over "with Google",
 //     signUpLabelParts — the full approved words, no other label), and below
@@ -43,21 +38,36 @@
 //     one-line buttons at 14 / 20 px with 12 / 10 / 12 px paddings only —
 //     settle it with the other two (see GoogleG) before any Google
 //     app-verification review. The "G" itself is unchanged, on white;
+//   • A VISIBLE REASON on every device (2 Oct 2026, founder: "everywhere try
+//     to say something why sign in will help them"). `explain` says where
+//     the visible line comes from:
+//       "both" (the default) — the SHORT caption (signUpExplainShort: "No
+//         forms. SSC CGL is set up as your exam.") sits under the button, in
+//         the flow, on a phone AND on a desktop (.su-cap; until this build a
+//         screen with a mouse showed no caption);
+//       "own" — the placement has its own benefit line right beside the
+//         button (the site card's points, the early line's sentence, "to
+//         join this group"): no caption is rendered, so there are never two.
+//         The caller marks that line with data-su-reason (the test finds it);
+//       "tooltip" — no visible line of the button's own: the header (no
+//         room, and nothing may sit over that tap) and the timed bar (its
+//         own line is beside the button). Only those two files may use it.
 //   • the explanation. The full sentence is ONE element in the page
 //     (role="tooltip", the button's aria-describedby) — what a screen reader
-//     hears, on every screen. What a mouse user SEES on hover and on
-//     keyboard focus is a copy of it in a TOP LAYER (SignUpTipFloat below):
-//     rendered into <body>, position: fixed, above every other layer of the
-//     site, never in the way of a click (pointer-events: none), aria-hidden.
-//     So nothing the button sits in can cut it off or paint over it — the
-//     header's tooltip used to go under the home page's sticky live strip,
-//     and the guest tutor's was cut by the scrolling message pane (founder,
-//     2 Oct 2026: "the hover is hiding behind"). It is placed from the
-//     button's box by src/lib/signup-tip-place.ts: under the button, or
-//     ABOVE it (side="top") wherever another action sits under the button —
-//     the "or practise without sign-in" links, the tutor and quiz buttons —
-//     so the pointer's way to that action is never covered; on the other
-//     side when there is no room; hung from the button's left or right edge
+//     hears, on every screen, in every mode. What a mouse user SEES on hover
+//     and on keyboard focus is a copy of it in a TOP LAYER (SignUpTipFloat
+//     below): rendered into <body>, position: fixed, above every other layer
+//     of the site, never in the way of a click (pointer-events: none),
+//     aria-hidden. So nothing the button sits in can cut it off or paint over
+//     it — the header's tooltip used to go under the home page's sticky live
+//     strip, and the guest tutor's was cut by the scrolling message pane
+//     (founder, 2 Oct 2026: "the hover is hiding behind"). It is placed from
+//     the button's box by src/lib/signup-tip-place.ts: under the button
+//     (over the caption, whose words it repeats and adds to), or ABOVE it
+//     (side="top") wherever another action sits under the button — the "or
+//     practise without sign-in" links, the tutor and quiz buttons — so the
+//     pointer's way to that action is never covered; on the other side when
+//     there is no room; hung from the button's left or right edge
 //     (align="end"); at least 8 px inside the window; never over the button;
 //     re-placed while the page scrolls or the window is resized, and when
 //     the button moves or grows for another reason (an animation or
@@ -80,10 +90,14 @@
 //     button). Chosen so the tooltip can never take a click meant for what
 //     is under it. A screen reader is not affected: it reads the in-page
 //     element.
-//     On a touch screen the full sentence is not shown; in its place a SHORT
-//     caption, one line at 360 px, sits under the button (explain "both"),
-//     or nothing (explain "tooltip": the header — nothing may sit over that
-//     tap — and buttons already beside their own benefit line).
+//     On a touch screen the full sentence is never shown; the caption (or
+//     the placement's own line) is what a phone reads.
+//   • a page that speaks all 22 languages (a study-group invite, a
+//     discussion, the paper-rating poll) passes `continueLabel`
+//     (t("login.continue")): en / hi / te read "Sign up with Google", any
+//     other language its own "Continue with Google" — also an approved
+//     Google wording — instead of an English label, and gets no caption (the
+//     caption's words exist in three languages only).
 //
 // What it does NOT change: the click. In-page buttons are still the shared
 // SignInLink (one "signin-click" beacon with the same surface ids, and the
@@ -107,6 +121,8 @@ import {
   SIGNUP_EXPLAIN_CTA,
   SIGNUP_EXPLAIN_HOVER_MS,
   explainBeaconDue,
+  googleButtonLabel,
+  isSignUpLocale,
   signUpContextFor,
   signUpExplain,
   signUpExplainShort,
@@ -118,9 +134,10 @@ import { placeSignUpTip } from "@/lib/signup-tip-place";
 
 /** Google's standard colour "G", exactly as Google's HTML-button generator
  *  (developers.google.com/identity/branding-guidelines) emits it. Do not
- *  redraw, recolour or stretch it, and render it only on Google's white,
- *  neutral (#F2F2F2) or dark (#131314) button fill — the same colour mark on
- *  all three. Decorative here: the button's text names Google.
+ *  redraw, recolour or stretch it, and render it only on Google's white
+ *  button fill (the guidelines also allow their neutral #F2F2F2 and dark
+ *  #131314 fills; this site uses the white one only). Decorative here: the
+ *  button's text names Google.
  *  OPEN (2 Oct 2026 review, accepted deviations until the founder says
  *  otherwise — settle both before any Google app-verification review):
  *   1. the guidelines' text asks for "the standard color gradient super G"
@@ -148,9 +165,13 @@ export function GoogleG() {
   );
 }
 
-/** "both": a tooltip with a mouse, a caption under the button on touch.
- *  "tooltip": a tooltip with a mouse, nothing on touch. */
-export type SignUpExplainMode = "both" | "tooltip";
+/** Where the VISIBLE reason comes from (the tooltip and the screen reader's
+ *  description are there in every mode):
+ *  "both": the short caption under the button, on every device.
+ *  "own": the placement's own benefit line sits right beside the button
+ *  (marked data-su-reason by the caller) — no caption, so never two.
+ *  "tooltip": no visible line — the header and the timed bar only. */
+export type SignUpExplainMode = "both" | "own" | "tooltip";
 
 // The path the "explanation opened" beacon was last sent on (memory only).
 let explainSentPath: string | null = null;
@@ -289,7 +310,7 @@ export function SignUpShell({
   /** The full explanation (signUpExplain): the tooltip, and the button's
    *  description for a screen reader. */
   text: string;
-  /** The short caption a touch screen shows under the button
+  /** The short caption shown under the button on every device
    *  (signUpExplainShort) — rendered for explain "both" only. */
   short?: string;
   /** The sign-in door this button is (the "signup-explain" beacon's surface). */
@@ -297,7 +318,7 @@ export function SignUpShell({
   explain?: SignUpExplainMode;
   /** Full width (the button stretches). */
   block?: boolean;
-  /** Centre the button and the touch caption. */
+  /** Centre the button and the caption. */
   center?: boolean;
   /** Tooltip above the button instead of under it: a bar at the bottom of
    *  the screen, and every button with another action under it. Where there
@@ -436,14 +457,18 @@ export function SignUpShell({
       onBlur={() => setFocused(false)}
     >
       {children(ready ? tipId : undefined)}
-      {/* .su-tip is the frame the CSS places (caption in the flow on touch;
-          with a mouse the tooltip, until the script takes over). Inside it:
-          the short caption (touch only) and the full sentence, which carries
-          the id the button points at, so a screen reader always gets the
-          full one — also while it is not displayed. */}
+      {/* The short caption: in the flow under the button on EVERY device
+          (explain "both" only) — plain text, no role, nothing the button
+          points at. It is in the server HTML with the button, so nothing
+          moves when the script runs. */}
+      {ready && short && explain === "both" && <span className="su-cap">{short}</span>}
+      {/* .su-tip is the frame the CSS places: never displayed on touch; with
+          a mouse the tooltip, until the script takes over. Inside it the
+          full sentence, which carries the id the button points at, so a
+          screen reader always gets the full one — also while it is not
+          displayed. */}
       {ready && (
         <span className="su-tip">
-          {short && explain === "both" && <span className="su-tip-short">{short}</span>}
           <span id={tipId} role="tooltip" className="su-tip-text">
             {text}
           </span>
@@ -458,10 +483,11 @@ export function SignUpShell({
   );
 }
 
-/** The Google-branded button's classes: Google's light theme, or its dark
- *  one (src/app/globals.css .su-google / .su-google-dark). */
-export function googleButtonClass(theme: "light" | "dark" = "light"): string {
-  return theme === "dark" ? "su-google su-google-dark" : "su-google";
+/** The Google-branded button's class: Google's light button
+ *  (src/app/globals.css .su-google). It takes no argument on purpose — there
+ *  is one look, and no caller can ask for another. */
+export function googleButtonClass(): string {
+  return "su-google";
 }
 
 /** The inside of the Google-branded button: the "G", then the label. */
@@ -506,10 +532,10 @@ export interface SignUpButtonProps {
   practice?: boolean | null;
   /** A fixed context instead (the guest tutor's card). */
   context?: SignUpContext;
-  /** Google's light (white) or dark (#131314) button. Dark where this is a
-   *  block's main action beside or above an outlined alternative (see the
-   *  note at the top); light everywhere else. */
-  theme?: "light" | "dark";
+  /** t("login.continue") on a page that speaks all 22 languages: the label
+   *  for a language other than en / hi / te (its own "Continue with Google")
+   *  instead of English. Such a language gets no caption. */
+  continueLabel?: string;
   /** A narrow place (the timed bar): the label on two lines beside the "G",
    *  and the compact size below sm. */
   stack?: boolean;
@@ -537,7 +563,7 @@ export function SignUpButton({
   examCode,
   practice,
   context,
-  theme = "light",
+  continueLabel,
   stack,
   explain = "both",
   block,
@@ -553,12 +579,16 @@ export function SignUpButton({
   const ctx = context ?? signUpContextFor({ callback: callbackOfLoginHref(href), exam, examCode, practice });
   const text = signUpExplain(locale, ctx);
   const short = signUpExplainShort(locale, ctx);
-  const cls = `${googleButtonClass(theme)}${stack ? " su-google-compact" : ""}${block ? " w-full" : ""}${buttonClassName ? ` ${buttonClassName}` : ""}`;
+  const cls = `${googleButtonClass()}${stack ? " su-google-compact" : ""}${block ? " w-full" : ""}${buttonClassName ? ` ${buttonClassName}` : ""}`;
+  const label = continueLabel ? googleButtonLabel(locale, continueLabel) : signUpLabel(locale);
+  // The caption's words exist in en / hi / te: on a 22-language page another
+  // language gets none (English small print under a Tamil button helps no one).
+  const mode: SignUpExplainMode = explain === "both" && continueLabel && !isSignUpLocale(locale ?? "en") ? "own" : explain;
   return (
-    <SignUpShell text={text} short={short} surface={surface} explain={explain} block={block} center={center} side={side} align={align} className={className}>
+    <SignUpShell text={text} short={short} surface={surface} explain={mode} block={block} center={center} side={side} align={align} className={className}>
       {(describedBy) => (
         <SignInLink href={href} surface={surface} className={cls} beaconProps={beaconProps} onSignInClick={onSignInClick} rel={rel} describedBy={describedBy}>
-          {stack ? <SignUpStackedFace locale={locale} /> : <SignUpFace label={signUpLabel(locale)} />}
+          {stack ? <SignUpStackedFace locale={locale} /> : <SignUpFace label={label} />}
         </SignInLink>
       )}
     </SignUpShell>

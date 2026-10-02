@@ -513,11 +513,14 @@ export default async function PYQYearPage({
                 // beacon, same test arms). Its explanation names this exam: the
                 // sign-in returns to this exam's page, so the new account is
                 // enrolled in it; "tests saved" holds — this page IS a paper.
-                // Tooltip with a mouse, a one-line caption on touch.
-                // Review, same day: Google's DARK button — the free sign-in is
-                // the filled main button again, as the 28 Sep note above says —
-                // and the tooltip opens ABOVE it: it used to cover the
-                // no-sign-in link under the button.
+                // Tooltip with a mouse, a one-line caption on every device.
+                // Review, same day: the tooltip opens ABOVE it: it used to
+                // cover the no-sign-in link under the button.
+                // 2 Oct 2026 (one look everywhere): Google's LIGHT button. It
+                // stays the main action: it is first, and the alternative
+                // under it is a small text link. The short caption ("No
+                // forms. {exam} is set up as your exam.") shows under it on
+                // a desktop as well as on a phone.
                 <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
                   <SignUpButton
                     href={`/login?callbackUrl=${encodeURIComponent(`/exams/${code}/pyq/${yearNum}`)}&from=pyq-year`}
@@ -526,7 +529,6 @@ export default async function PYQYearPage({
                     exam={exam.shortName}
                     examCode={code}
                     practice
-                    theme="dark"
                     side="top"
                     block
                     align="end"
@@ -542,20 +544,24 @@ export default async function PYQYearPage({
                 </div>
               ) : (
                 <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
-                  <SignUpButton
-                    href={`/login?callbackUrl=${encodeURIComponent(`/exams/${code}/pyq/${yearNum}`)}&from=pyq-year`}
-                    surface="pyq-year"
-                    locale={lc}
-                    exam={exam.shortName}
-                    examCode={code}
-                    practice
-                    theme="dark"
-                    side="top"
-                    block
-                    align="end"
-                    className="sm:max-w-xs"
-                    beaconProps={{ examCode: code }}
-                  />
+                  {/* 2 Oct 2026 (review): this branch is also reached by a signed-in
+                      member on a year with no timed set (`!userId || !mock` above);
+                      a member is never asked to sign up. */}
+                  {!userId && (
+                    <SignUpButton
+                      href={`/login?callbackUrl=${encodeURIComponent(`/exams/${code}/pyq/${yearNum}`)}&from=pyq-year`}
+                      surface="pyq-year"
+                      locale={lc}
+                      exam={exam.shortName}
+                      examCode={code}
+                      practice
+                      side="top"
+                      block
+                      align="end"
+                      className="sm:max-w-xs"
+                      beaconProps={{ examCode: code }}
+                    />
+                  )}
                   <Link
                     href={`/exams/${code}/quiz`}
                     className="text-center text-xs font-semibold text-saffron-700 underline-offset-2 hover:underline"

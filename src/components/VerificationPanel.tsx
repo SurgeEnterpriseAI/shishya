@@ -11,9 +11,25 @@
 // For unauthenticated visitors we show the badge details + a Sign in
 // CTA. That way crawlers see real verification context even without
 // the interactive controls.
+//
+// 2 Oct 2026 (founder: every sign-in call is the white Google button, with
+// a line saying why): the guest's small saffron "Sign in →" is the one
+// shared "Sign up with Google" button; the sentence above it is its reason.
+// Same destination (/login), its own door id ("verify-fact"; it was counted
+// as "link").
+// NEVER WHERE A CHILD MAY BE READING: this panel also opens from a fact
+// badge on a board's hub (/schooling/{board}), a page that lists every
+// class from 1. There a guest gets the fact, its source and its history —
+// and no sign-in sentence, no button, no tooltip (isChildSchoolPath, the
+// same rule the site card and the header's tooltip follow). Until this
+// build that page showed the "Sign in →" link.
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { SignUpButton } from "@/components/SignUpButton";
+import { isChildSchoolPath } from "@/lib/signup-pitch";
+import { isUnder13SchoolPath } from "@/lib/school/student-classes";
 
 interface FactDisplay {
   id: string;
@@ -68,6 +84,9 @@ export function VerificationPanel({ fact, signedIn, onClose }: Props) {
   const [notes, setNotes] = useState("");
   const [proposedValue, setProposedValue] = useState("");
   const [proposedSourceUrl, setProposedSourceUrl] = useState("");
+  const pathname = usePathname();
+  // A school page a child under 13 may be reading: no call to sign in.
+  const childPage = isChildSchoolPath(pathname) || isUnder13SchoolPath(pathname ?? "");
 
   async function submit(actionType: "VERIFY" | "FLAG" | "SUGGEST_UPDATE") {
     setBusy(true);
@@ -165,18 +184,15 @@ export function VerificationPanel({ fact, signedIn, onClose }: Props) {
 
           {/* Action area */}
           {!signedIn ? (
-            <div className="mt-6 rounded-md border border-saffron-200 bg-saffron-50/50 p-4 text-xs">
-              <p className="text-ink-700">
-                Sign in to help verify this fact, flag inaccuracies, or
-                suggest an update. Verifications earn contribution badges.
-              </p>
-              <Link
-                href="/login"
-                className="mt-3 inline-flex rounded-md bg-saffron-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-saffron-600"
-              >
-                Sign in →
-              </Link>
-            </div>
+            childPage ? null : (
+              <div className="mt-6 rounded-md border border-saffron-200 bg-saffron-50/50 p-4 text-xs">
+                <p data-su-reason className="text-ink-700">
+                  Sign in to help verify this fact, flag inaccuracies, or
+                  suggest an update. Verifications earn contribution badges.
+                </p>
+                <SignUpButton href="/login?from=verify-fact" surface="verify-fact" explain="own" className="mt-3" />
+              </div>
+            )
           ) : success ? (
             <div className="mt-6 rounded-md border border-emerald-200 bg-emerald-50/50 p-4 text-xs text-emerald-800">
               {success}

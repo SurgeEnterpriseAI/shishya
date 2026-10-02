@@ -86,7 +86,7 @@ export function SignupPitch({
       <div className="rounded-2xl border border-saffron-200 bg-gradient-to-br from-saffron-50 to-white p-5 sm:p-6">
         <h2 className="text-lg font-bold text-ink-900">{copy.title}</h2>
         <p className="mt-1 text-sm text-ink-700">{copy.lead}</p>
-        <ul className="mt-3 space-y-1.5 text-sm text-ink-800">
+        <ul data-su-reason className="mt-3 space-y-1.5 text-sm text-ink-800">
           {copy.points.map((p) => (
             <li key={p} className="flex gap-2">
               <span aria-hidden className="text-saffron-600">✓</span>
@@ -94,7 +94,7 @@ export function SignupPitch({
             </li>
           ))}
         </ul>
-        <SignUpButton href={href} surface="signup-pitch" locale={locale} explain="tooltip" className="mt-4" beaconProps={{ placement: surface }} />
+        <SignUpButton href={href} surface="signup-pitch" locale={locale} explain="own" className="mt-4" beaconProps={{ placement: surface }} />
         <p className="mt-2 text-[11px] leading-relaxed text-ink-500">{copy.privacy}</p>
       </div>
     </section>

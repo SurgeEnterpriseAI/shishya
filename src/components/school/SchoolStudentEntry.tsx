@@ -128,20 +128,21 @@ export function SchoolStudentEntry(p: SchoolStudentEntryProps) {
     if (!(signedIn === false && schoolChapterMockCount(p.validatedQuestions ?? 0) !== null)) return null;
     return (
       <div className="mt-6 rounded-xl border border-ink-200 bg-white p-5">
-        <p className="text-sm text-ink-700">{C.saveBody}</p>
+        <p data-su-reason className="text-sm text-ink-700">{C.saveBody}</p>
         {/* 2 Oct 2026 (founder, standing): the one shared button (Google's
             white button with the "G", the one label) in place of the small
             text link. Class 8-12 only (this island renders nothing below
             Class 8), still only AFTER the practice and only for a known
             guest. With a mouse its tooltip carries the school words —
             practice and scores saved; no exam, no tutor memory — and on
-            touch the line above already says it. Always /login (not in the
+            every device the line above already says it (explain="own": no
+            second caption). Always /login (not in the
             skip-/login test); the old "school-save-google" beacon is kept. */}
         <SignUpButton
           href={signInHref}
           surface="school-save"
           rel="nofollow"
-          explain="tooltip"
+          explain="own"
           className="mt-3"
           beaconProps={{ examCode: p.examCode }}
           onSignInClick={() => beacon("school-save-google", { examCode: p.examCode, topic: p.topicCode })}

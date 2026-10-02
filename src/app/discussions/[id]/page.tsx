@@ -8,6 +8,7 @@ import { prisma } from "@/lib/db/prisma";
 import { getT } from "@/lib/i18n-server";
 import { formatRelative } from "@/lib/relative-time";
 import { ReplyForm } from "./ReplyForm";
+import { SignUpButton } from "@/components/SignUpButton";
 import { UserBadge, type UserBadgeLevel } from "@/components/UserBadge";
 import { isSyntheticHandle } from "@/data/synthetic-handles";
 import { discussionLabelsCopy } from "@/lib/discussion-labels-copy";
@@ -241,12 +242,27 @@ export default async function DiscussionPage({
               }}
             />
           ) : (
-            <Link
-              href={`/login?callbackUrl=${encodeURIComponent(`/discussions/${thread.id}`)}`}
-              className="block rounded-lg border-2 border-dashed border-saffron-300 bg-saffron-50/60 p-5 text-center text-sm font-medium text-saffron-800 hover:bg-saffron-50"
-            >
-              {t("disc.thread.signinToReply")} →
-            </Link>
+            // 2 Oct 2026 (founder: every sign-in call is the white Google
+            // button, with a line saying why): the whole dashed box was one
+            // link reading "Sign in to reply →". The box stays; its words
+            // are now a plain line — the reason, in the page's language —
+            // and under it sits the one shared button (en / hi / te: "Sign
+            // up with Google"; any other language: its "Continue with
+            // Google"). Same destination, its own door id
+            // ("discussion-reply"; it was counted as "link").
+            <div className="rounded-lg border-2 border-dashed border-saffron-300 bg-saffron-50/60 p-5 text-center">
+              <p data-su-reason className="text-sm font-medium text-ink-800">{t("disc.thread.signinToReply")}</p>
+              <div className="mt-3 flex justify-center">
+                <SignUpButton
+                  href={`/login?callbackUrl=${encodeURIComponent(`/discussions/${thread.id}`)}&from=discussion-reply`}
+                  surface="discussion-reply"
+                  locale={locale}
+                  continueLabel={t("login.continue")}
+                  explain="own"
+                  center
+                />
+              </div>
+            </div>
           )}
         </div>
       </section>

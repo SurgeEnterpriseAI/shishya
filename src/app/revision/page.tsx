@@ -162,14 +162,17 @@ export default async function RevisionPage() {
           {/* 2 Oct 2026 (founder, standing: every guest sign-up button reads
               "Sign up with Google"; review, same day): the button's own words
               ("Start my free Mistake Notebook →") are now the line above it,
-              and the button is the one shared sign-up button — Google's dark
-              (filled) button with the "G". Tooltip with a mouse; no caption
-              on touch (the line under it says what you get). Still /login;
-              door "revision-start". */}
+              and the button is the one shared sign-up button — Google's
+              white button with the "G" (one look everywhere). The line under
+              it says what you get: that is its reason (explain="own": no
+              second caption); the full sentence is the tooltip with a mouse.
+              Still /login; door "revision-start".
+              Review, same day: the line said "Free forever" — a promise
+              about the future that no code backs. It says "Free" now. */}
           <p className="mt-7 text-sm font-bold text-ink-900">Start your free Mistake Notebook:</p>
-          <SignUpButton href="/login?callbackUrl=%2Frevision&from=revision-start" surface="revision-start" theme="dark" explain="tooltip" className="mt-2" />
-          <p className="mt-2 text-xs text-ink-500">
-            Free forever · every exam on Shishya · your notebook fills itself from your very first mock.
+          <SignUpButton href="/login?callbackUrl=%2Frevision&from=revision-start" surface="revision-start" explain="own" className="mt-2" />
+          <p data-su-reason className="mt-2 text-xs text-ink-500">
+            Free · every exam on Shishya · your notebook fills itself from your very first mock.
           </p>
         </section>
       </main>

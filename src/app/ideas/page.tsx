@@ -13,6 +13,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { SignUpButton } from "@/components/SignUpButton";
 import { prisma } from "@/lib/db/prisma";
 import { auth } from "@/lib/auth";
 import {
@@ -192,9 +193,17 @@ export default async function IdeasPage({
 
             <section className="mt-8" aria-labelledby="ideas-open">
               <h2 id="ideas-open" className="text-base font-semibold text-ink-900">{C.openHeading}</h2>
-              <p className="mt-1 text-xs text-ink-600">
+              <p data-su-reason className="mt-1 text-xs text-ink-600">
                 {userId ? C.upvoteHint : C.upvoteHintSignedOut}
               </p>
+              {/* 2 Oct 2026 (founder: a sign-up button wherever a guest is
+                  told to sign in, with the line saying why): the guest's line
+                  above ("Sign in to upvote the ones you want built next.")
+                  had nothing to press. The one shared button sits under it;
+                  it returns to this board. Door id "ideas-upvote". */}
+              {!userId && (
+                <SignUpButton href="/login?callbackUrl=%2Fideas&from=ideas-upvote" surface="ideas-upvote" locale={locale} explain="own" className="mt-2" />
+              )}
               {open.length === 0 ? (
                 <p className="mt-3 rounded-md border border-dashed border-ink-300 bg-white p-4 text-center text-sm text-ink-500">
                   {C.emptyOpen}

@@ -411,14 +411,15 @@ export function AnonQuizPlayer({
         {/* 2 Oct 2026 (founder, standing): the result screen's sign-up is the
             one shared "Sign up with Google" button (Google's white button with
             the "G") — still the FIRST button under the score — with its
-            explanation: a tooltip with a mouse, a caption under it on a phone.
+            explanation: a caption under it on every device, a tooltip with a mouse.
             The sign-in returns to this exam's hub, so the words name the exam
             (the account is enrolled in it at sign-up); a quiz exists, so "tests
             saved" holds. sm:items-start: the caption under it must not stretch
-            the tutor button beside it. Review, same day: Google's DARK button
-            — the sign-up stays the filled one beside the outlined tutor
-            button — and the tooltip opens ABOVE it (the tutor button and the
-            challenge card sit beside and under it). */}
+            the tutor button beside it. Review, same day: the tooltip opens
+            ABOVE it (the tutor button and the challenge card sit beside and
+            under it). One look everywhere: Google's LIGHT button; it stays
+            the main action by coming first, beside a tutor button that is a
+            1 px ink outline. */}
         <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-start">
           {signInSlot ? (
             <div className="flex flex-1 flex-col">{signInSlot}</div>
@@ -430,7 +431,6 @@ export function AnonQuizPlayer({
               exam={quiz.examShort}
               examCode={quiz.examCode}
               practice
-              theme="dark"
               side="top"
               block
               className="flex-1"

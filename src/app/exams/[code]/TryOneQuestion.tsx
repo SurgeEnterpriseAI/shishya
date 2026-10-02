@@ -21,11 +21,15 @@ import { useState } from "react";
 import Link from "next/link";
 import { SignUpButton } from "@/components/SignUpButton";
 import { loginHrefFor } from "@/lib/signin-cta";
+import { signUpReason } from "@/lib/signup-cta-copy";
 
 interface Props {
   examCode: string;
   examShortName: string;
   topicName: string;
+  /** The page's language (the hub's /hi and /te twins): the sign-up button's
+   *  label and the reason line above it. The rest of the card is English. */
+  locale?: string | null;
   question: {
     body: string;
     options: { key: string; text: string }[];
@@ -34,7 +38,7 @@ interface Props {
   };
 }
 
-export function TryOneQuestion({ examCode, examShortName, topicName, question }: Props) {
+export function TryOneQuestion({ examCode, examShortName, topicName, locale, question }: Props) {
   const [picked, setPicked] = useState<string | null>(null);
   const revealed = picked !== null;
   const correct = picked === question.answerKey;
@@ -120,24 +124,37 @@ export function TryOneQuestion({ examCode, examShortName, topicName, question }:
             <p className="text-sm font-bold text-ink-900">
               That&apos;s 1 question. Want a full {examShortName} mock?
             </p>
-            <p className="mt-1 text-xs text-ink-600">
-              Sign in free → adaptive mocks, PYQs, and Ask Shishya tracks your
-              weak topics. No credit card.
+            {/* 2 Oct 2026: the line no longer reads "Sign in free →" (an arrow
+                with no link behind it) and no longer lists "PYQs" — this card
+                shows on every hub with one checked question, and not every
+                such hub has a previous-year set. What is left is what a
+                member gets on any hub that has questions: mocks, their
+                scores kept, the weak-topic map.
+                Review, same day: the line comes from the copy module
+                (signUpReason "tryOne", en / hi / te) so a /hi or /te hub
+                reads it in its own language, and it is this button's ONE
+                reason (data-su-reason, explain="own") — the caption under
+                the button was a second one. */}
+            <p data-su-reason className="mt-1 text-xs text-ink-600">
+              {signUpReason(locale, "tryOne")}
             </p>
             {/* 2 Oct 2026 (founder, standing): the one shared "Sign up with
-                Google" button, with its explanation — a tooltip with a mouse,
-                a one-line caption on a phone. The sign-in returns to this
-                exam's hub, so the words name the exam. Review, same day:
-                Google's DARK button (the card's main action stays the filled
-                one), and the tooltip opens ABOVE it — it used to cover the
-                "5 more questions" link under the button. */}
+                Google" button — Google's white button, the one look
+                everywhere — in the page's language, with the line above as
+                its reason on every device and the full sentence as a tooltip
+                with a mouse. The sign-in returns to this exam's hub, so the
+                tooltip names the exam. It is the card's main action: first,
+                and the only button — the alternative under it is a small
+                text link. The tooltip opens ABOVE it — it used to cover that
+                link. */}
             <SignUpButton
               href={loginHref}
               surface="hub-try-one"
+              locale={locale}
               exam={examShortName}
               examCode={examCode}
               practice
-              theme="dark"
+              explain="own"
               side="top"
               center
               className="mt-3"

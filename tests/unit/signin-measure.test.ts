@@ -115,6 +115,11 @@ describe("(a) the sign-in beacon: one CTA_CLICKED { cta: signin-click, surface }
     for (const s of ["school-save", "chat-save", "challenge-end", "persona-card"]) expect(isSigninSurface(s), s).toBe(true);
     // 2 Oct 2026 (review): four more — /coach, /revision, a batch invite, the exam finder's save line.
     for (const s of ["coach-start", "revision-start", "batch-join", "finder-save"]) expect(isSigninSurface(s), s).toBe(true);
+    // 2 Oct 2026 (one look everywhere): every remaining guest sign-in call — buttons, bars and text links that
+    // had their own look — is the shared button under its own id (they were counted as "link").
+    for (const s of ["live-test", "group-join", "verify-fact", "home-vacancies", "discussion-reply", "chat-banner", "cutoff-nudge", "verdict-poll", "vouch", "ideas-upvote", "save-path", "guest-paper", "soft-wall", "descriptive-401"]) {
+      expect(isSigninSurface(s), s).toBe(true);
+    }
     expect(isSigninSurface("hub-signin-practice")).toBe(false);
   });
 
@@ -251,7 +256,10 @@ describe("(a) /login measurement: the page view and the Google button", () => {
     const login = read("src/app/login/page.tsx");
     expect(login).toContain("beacon={{ from: sp.from ?? null, family: loginCallbackFamily(sp.callbackUrl) }}");
     const gate = read("src/components/GuestQuizGate.tsx");
-    expect(gate).toContain('onClickCapture={() => signinBeacon(surface, { ...beaconProps, via: "google" })}');
+    // 2 Oct 2026 (review): the wrapper also holds the caption under the button, so the beacon goes out only
+    // for a click on the button itself (same call, same props).
+    expect(gate).toContain('if (button && !(button as HTMLButtonElement).disabled) signinBeacon(surface, { ...beaconProps, via: "google" });');
+    expect(gate).toContain('const button = (e.target as Element | null)?.closest?.("button");');
     // 2 Oct 2026: the gate's button is the shared "Sign up with Google" button (label from the one copy module).
     expect(gate).toMatch(/<GoogleSignInButton\s+callbackUrl=\{callbackUrl\}\s+locale=\{locale\}\s+continueLabel=\{continueLabel\}/);
     expect(gate).not.toMatch(/label=\{/);
@@ -309,9 +317,17 @@ describe("(a) every door is wired to its surface id", () => {
     }
   });
 
-  it("server-rendered links are tagged for the layout listener", () => {
+  it("the header's plain link is tagged for the layout listener; the home page's sign-in is the shared button under the same id", () => {
     expect(read("src/components/HeaderAuthControls.tsx")).toContain('data-signin-surface="header"');
-    expect(read("src/components/home/HomeSignIn.tsx")).toContain('data-signin-surface="home-signin"');
+    // 2 Oct 2026: the home page's "Sign in free" link became the shared SignUpButton. Same door id — the button
+    // (a SignInLink) sends the one "signin-click" itself and marks itself, so the layout listener does not count
+    // it a second time; the home page's own delegated beacon still fires from the wrapper.
+    const home = code("src/components/home/HomeSignIn.tsx");
+    expect(home).toContain('<SignUpButton href="/login?callbackUrl=%2Fdashboard" surface="home-signin"');
+    expect(home).not.toContain("data-signin-surface=");
+    expect(home).toMatch(/<div data-home-cta="signin"[^>]*>\s*<SignUpButton /);
+    // … from a wrapper only as wide as the button (a full-width row counted clicks on the empty space beside it).
+    expect(home).toContain('<div data-home-cta="signin" className="mx-auto w-fit max-w-full">');
   });
 });
 
@@ -582,7 +598,9 @@ describe("(c) the skip-/login 50/50 test", () => {
     for (const s of ["hub-box", "hub-try-one", "pyq-year", "quiz-end", "build-mock-form", "signup-pitch", "signup-inline", "signup-nudge"]) {
       expect(inDirectSigninTest(s), s).toBe(DIRECT_SIGNIN_TEST_ON);
     }
-    for (const s of ["header", "home-signin", "link", "hub-start-401", "subject-test-401", "topic-quiz-401", "custom-mock-401", "mock-gate", "mock-gate-quiz-end", "build-gate-quiz-end", "school-save", "chat-save", "challenge-end", "persona-card", "coach-start", "revision-start", "batch-join", "finder-save"]) {
+    for (const s of ["header", "home-signin", "link", "hub-start-401", "subject-test-401", "topic-quiz-401", "custom-mock-401", "mock-gate", "mock-gate-quiz-end", "build-gate-quiz-end", "school-save", "chat-save", "challenge-end", "persona-card", "coach-start", "revision-start", "batch-join", "finder-save",
+      // 2 Oct 2026: the doors that became the shared button the same night — all /login, as they were.
+      "live-test", "group-join", "verify-fact", "home-vacancies", "discussion-reply", "chat-banner", "cutoff-nudge", "verdict-poll", "vouch", "ideas-upvote", "save-path", "guest-paper", "soft-wall", "descriptive-401", "finder-start"]) {
       expect(inDirectSigninTest(s), s).toBe(false);
     }
     for (const s of DIRECT_SIGNIN_SURFACES) expect(isSigninSurface(s), s).toBe(true);
@@ -634,7 +652,7 @@ describe("(d) the header's guest button", () => {
     expect(controls).toMatch(/<Link rel="nofollow" href=\{loginHref\} className=\{GUEST_BUTTON_CLASS\} data-signin-surface="header">/);
     // The 44 px comes from .su-google; the compact size changes no height but the text's line.
     const css = read("src/app/globals.css");
-    expect(css.slice(css.indexOf("  .su-google {"), css.indexOf("  .su-google-dark {"))).toContain("min-height: 44px;");
+    expect(css.slice(css.indexOf("  .su-google {"), css.indexOf("  .su-google:hover {"))).toContain("min-height: 44px;");
     const compact = css.slice(css.indexOf("    .su-google-compact {"), css.indexOf("    .su-google-compact > .su-google-g {"));
     expect(compact).toContain("line-height: 16px;");
     expect(compact).not.toMatch(/min-height|max-height|(?<!-)height:/);

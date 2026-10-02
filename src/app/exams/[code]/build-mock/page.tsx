@@ -372,6 +372,7 @@ export default async function BuildMockPage({
               signInCallbackUrl={buildGateCallbackPath(exam.code, pyq, sp)}
               beacons={{ start: "build-gate-quiz-start", done: "build-gate-quiz-done" }}
               signinSurface="build-gate-quiz-end"
+              continueLabel={tt.t("login.continue")}
               beaconProps={{ examCode: exam.code }}
             />
           </div>

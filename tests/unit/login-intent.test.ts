@@ -40,6 +40,13 @@ describe("loginIntent — gated actions", () => {
     expect(loginIntent("/me/report").kind).toBe("return");
     expect(loginIntent("/mentor").kind).toBe("return");
     expect(loginIntent("/live-test").kind).toBe("return");
+    // 2 Oct 2026: /live-test's own guest button ("Sign up with Google", from=live-test) is a sign-up —
+    // the general card, never "Welcome back … your mocks, plan and report are all still here".
+    expect(loginIntent("/live-test", "live-test")).toEqual({ kind: null, examCode: null, tryFirst: false });
+    expect(loginIntent("/hi/live-test", "live-test").kind).toBeNull();
+    // The tag only takes "Welcome back" away: a gated action keeps its own card.
+    expect(loginIntent("/mocks/abc12345", "live-test").kind).toBe("mock");
+    expect(read("src/app/live-test/page.tsx")).toContain('href="/login?callbackUrl=%2Flive-test&from=live-test"');
     expect(loginIntent("/mentors").kind).toBeNull();
     expect(loginIntent("/mentors/ssc").kind).toBeNull();
     expect(loginIntent("/coaching-centres").kind).toBeNull();

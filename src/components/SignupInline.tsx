@@ -170,7 +170,7 @@ export function SignupInline({
       data-signup-inline={surface}
       className="mt-5 rounded-xl border-2 border-saffron-300 bg-saffron-50 p-4 print:hidden sm:flex sm:items-center sm:gap-4"
     >
-      <p className="my-0 min-w-0 flex-1 text-sm leading-relaxed text-ink-800">
+      <p data-su-reason className="my-0 min-w-0 flex-1 text-sm leading-relaxed text-ink-800">
         <strong className="font-bold text-ink-900">{copy.lead}</strong> {copy.line}
         <span className="mt-1 block text-[11px] leading-snug text-ink-500">{copy.privacy}</span>
       </p>
@@ -180,7 +180,7 @@ export function SignupInline({
         locale={lang}
         exam={exam}
         practice={practice}
-        explain="tooltip"
+        explain="own"
         block
         align="end"
         className="mt-3 shrink-0 sm:mt-0 sm:w-auto"

@@ -10,6 +10,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
+import { SignUpButton } from "@/components/SignUpButton";
 import { auth } from "@/lib/auth";
 import { getT } from "@/lib/i18n-server";
 import { GROUP_MAX_MEMBERS, USER_MAX_GROUPS } from "@/lib/study-group";
@@ -35,7 +36,7 @@ export default async function StudyGroupInvitePage({ params }: { params: Promise
   const { token } = await params;
   const group = await findGroup(token).catch(() => null);
   if (!group) notFound();
-  const [{ t }, session] = await Promise.all([getT(), auth().catch(() => null)]);
+  const [{ t, locale }, session] = await Promise.all([getT(), auth().catch(() => null)]);
   const userId = session?.user?.id ?? null;
   const member = userId ? await isMember(group.id, userId).catch(() => false) : false;
   const full = group.members >= GROUP_MAX_MEMBERS;
@@ -61,9 +62,25 @@ export default async function StudyGroupInvitePage({ params }: { params: Promise
             ) : full ? (
               <p className="text-sm font-semibold text-ink-800">{fill(t("sg.join.full"), { max: GROUP_MAX_MEMBERS })}</p>
             ) : !userId ? (
-              <Link href={`/login?callbackUrl=${encodeURIComponent(`/g/${group.token}`)}`} className="btn-primary inline-block !px-5 !py-2.5 text-sm">
-                {t("sg.join.signin")}
-              </Link>
+              // 2 Oct 2026 (founder: every sign-in call is the white Google
+              // button, with a line saying why): this was our filled saffron
+              // button reading "Sign in to join". Those words are now the
+              // plain line — the reason, in the page's language — and under
+              // it sits the one shared button (en / hi / te: "Sign up with
+              // Google"; any other language: its "Continue with Google").
+              // Same destination, its own door id ("group-join"; it was
+              // counted as "link").
+              <>
+                <p data-su-reason className="text-sm font-semibold text-ink-900">{t("sg.join.signin")}</p>
+                <SignUpButton
+                  href={`/login?callbackUrl=${encodeURIComponent(`/g/${group.token}`)}&from=group-join`}
+                  surface="group-join"
+                  locale={locale}
+                  continueLabel={t("login.continue")}
+                  explain="own"
+                  className="mt-2"
+                />
+              </>
             ) : (
               <JoinGroupButton
                 token={group.token}

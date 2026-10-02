@@ -17,6 +17,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { NOT_SCHOOL_SQL } from "@/lib/db/exam-scope";
 import { Header } from "@/components/Header";
+import { SignUpButton } from "@/components/SignUpButton";
+import { signUpReason } from "@/lib/signup-cta-copy";
 
 export const dynamic = "force-dynamic";
 
@@ -173,13 +175,25 @@ export default async function LiveTestPage() {
           >
             Your result{mine.pct != null ? ` — ${Math.round(mine.pct)}%` : ""} &amp; rank →
           </Link>
-        ) : state === "open" || state === "rehearsal" ? (
+        ) : (state === "open" || state === "rehearsal") && userId ? (
           <Link
-            href={userId ? `/mocks/${r.mockId}` : `/login?callbackUrl=%2Flive-test`}
+            href={`/mocks/${r.mockId}`}
             className="mt-3 inline-flex items-center rounded-lg bg-saffron-500 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-saffron-600"
           >
-            {userId ? "Write it now →" : "Sign in free to write it →"}
+            Write it now →
           </Link>
+        ) : state === "open" || state === "rehearsal" ? (
+          // 2 Oct 2026 (founder: every sign-in call is the white Google
+          // button, with a line saying why): a guest's button here was our
+          // saffron "Sign in free to write it →". What it was for is now the
+          // plain line (signUpReason "writePaper"), and under it the one
+          // shared button. Same destination — /login, back to /live-test —
+          // with its own door id ("live-test"; it was counted as "link").
+          // A member's "Write it now →" above is unchanged.
+          <div className="mt-3">
+            <p data-su-reason className="text-xs text-ink-700">{signUpReason("en", "writePaper")}</p>
+            <SignUpButton href="/login?callbackUrl=%2Flive-test&from=live-test" surface="live-test" explain="own" className="mt-2" />
+          </div>
         ) : state === "upcoming" ? (
           <Link
             href={`/exams/${r.code}`}

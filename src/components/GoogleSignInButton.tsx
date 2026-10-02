@@ -20,24 +20,29 @@
 // sign-up needs a lot of details; visible, clear, with a description of how
 // signing up is useful): this is the same shared button as every in-page
 // sign-up (src/components/SignUpButton.tsx) —
-//   • Google's button with the standard colour "G", to Google's branding
-//     guidelines (it was our saffron button with no mark). 2 Oct 2026
-//     review: `theme` — /login and the gates pass "dark" (Google's #131314
-//     button): this is the page's main action and must stay the filled one
-//     beside the outlined "try 5 questions first" (founder, 28 Sep 2026);
+//   • Google's LIGHT button with the standard colour "G", to Google's
+//     branding guidelines (it was our saffron button with no mark; for a few
+//     hours on 2 Oct /login and the gates wore Google's dark one). One look
+//     everywhere (founder, 2 Oct 2026, with a screenshot of the white
+//     button): there is no `theme` to pass. It stays the page's main action
+//     because the alternative under it ("try 5 questions first") is a quiet
+//     1 px ink outline — src/app/login/page.tsx, GuestQuizGate.tsx;
 //   • the one label (src/lib/signup-cta-copy.ts): "Sign up with Google" in
 //     en / hi / te. /login and the mock gate speak 22 languages, so any other
 //     language keeps its own translation of "Continue with Google"
 //     (`continueLabel`, login.continue — also an approved Google wording), as
 //     does a returning member's "Welcome back" card (`returning`);
-//   • the explanation: a tooltip on hover and keyboard focus with a mouse, a
-//     short caption under the button on touch. It names the exam only when
-//     the sign-in returns to that exam's page or mock (signUpContextFor), and
-//     a school return gets the school words. 2 Oct 2026 review: `side` —
-//     /login and the gates open the tooltip ABOVE the button (another action
-//     sits under it); and in a language other than en / hi / te there is no
-//     touch caption — the words exist in three languages only, and English
-//     small print under a Tamil button helps no one (the tooltip stays).
+//   • the explanation: a short caption under the button on EVERY device
+//     (2 Oct 2026: a desktop shows it too — a visible reason at every
+//     button), and the full sentence as a tooltip on hover and keyboard
+//     focus with a mouse. It names the exam only when the sign-in returns to
+//     that exam's page or mock (signUpContextFor), and a school return gets
+//     the school words. 2 Oct 2026 review: `side` — /login and the gates
+//     open the tooltip ABOVE the button (another action sits under it); and
+//     in a language other than en / hi / te there is no caption — the words
+//     exist in three languages only, and English small print under a Tamil
+//     button helps no one (the tooltip stays; the page's own heading and
+//     body, in that language, are the reason there).
 // The click, the hand-off and both beacons are unchanged.
 
 import { useEffect, useState } from "react";
@@ -59,7 +64,6 @@ export function GoogleSignInButton({
   surface = "login",
   explain = "both",
   side,
-  theme = "light",
   className = "mt-6",
   beacon,
 }: {
@@ -82,8 +86,6 @@ export function GoogleSignInButton({
   explain?: SignUpExplainMode;
   /** Tooltip above the button (another action sits under it). */
   side?: "top";
-  /** Google's light (white) or dark (#131314) button. */
-  theme?: "light" | "dark";
   /** The frame's layout classes (its top margin). */
   className?: string;
   /** /login only: send the login-google-click beacon, with /login's ?from=
@@ -107,8 +109,9 @@ export function GoogleSignInButton({
   const ctx = signUpContextFor({ callback: callbackUrl, exam, examCode, practice });
   const text = signUpExplain(locale, ctx);
   const short = signUpExplainShort(locale, ctx);
-  // The words exist in en / hi / te: another language gets no touch caption.
-  const mode: SignUpExplainMode = isSignUpLocale(locale ?? "en") ? explain : "tooltip";
+  // The words exist in en / hi / te: another language gets no caption (the
+  // page's own text above the button, in that language, is the reason).
+  const mode: SignUpExplainMode = isSignUpLocale(locale ?? "en") || explain !== "both" ? explain : "own";
 
   return (
     <SignUpShell text={text} short={short} surface={surface} explain={mode} side={side} block className={className}>
@@ -130,7 +133,7 @@ export function GoogleSignInButton({
             }
             void goToGoogle(callbackUrl).catch(() => setLoading(false));
           }}
-          className={`${googleButtonClass(theme)} w-full`}
+          className={`${googleButtonClass()} w-full`}
         >
           <SignUpFace label={loading ? "…" : label} />
         </button>

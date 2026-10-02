@@ -5,8 +5,17 @@
 // Server render = the full content, always (crawlers, signed-in students, the
 // "open" arm). After mount, a signed-out human in the "wall" arm sees the
 // first few lines and the rest blurred behind a free sign-in card.
+//
+// 2 Oct 2026 (founder: every sign-in call is the white Google button, with
+// a line saying why): the card's button was our filled saffron one with the
+// words "Sign up with Google" and no "G". It is the one shared button now;
+// the card's body line is its reason. Its own "softwall-signin-click" beacon
+// still fires on the click; the door id is "soft-wall". The wall is STOPPED
+// (SOFT_WALL_ON is false since 29 Sep, src/lib/soft-wall.ts) — converted so
+// it cannot come back saffron.
 
 import { useEffect, useState, type ReactNode } from "react";
+import { SignUpButton } from "@/components/SignUpButton";
 import { classifyClient } from "@/lib/client-class";
 import { fetchSignedIn } from "@/lib/session-hint";
 import { clientUiLocale } from "@/lib/ui-locale-copy";
@@ -25,7 +34,7 @@ function beacon(cta: string, props: Record<string, unknown>) {
 }
 
 export function SoftWallClient({ children }: { children: ReactNode }) {
-  const [wall, setWall] = useState<null | { title: string; body: string; cta: string; privacy: string; href: string; family: string }>(null);
+  const [wall, setWall] = useState<null | { title: string; body: string; lang: string; privacy: string; href: string; family: string }>(null);
 
   useEffect(() => {
     let alive = true;
@@ -47,7 +56,7 @@ export function SoftWallClient({ children }: { children: ReactNode }) {
         const lang = clientUiLocale();
         const c = softWallCopy(lang);
         const p = signupPitchCopy(lang);
-        setWall({ title: c.title, body: c.body, cta: p.cta, privacy: p.privacy, href: signupHref(path + location.search).replace("from=pitch", "from=wall"), family });
+        setWall({ title: c.title, body: c.body, lang, privacy: p.privacy, href: signupHref(path + location.search).replace("from=pitch", "from=wall"), family });
       })
       .catch(() => {});
     return () => {
@@ -64,14 +73,19 @@ export function SoftWallClient({ children }: { children: ReactNode }) {
           <div className="absolute inset-x-0 bottom-0 flex justify-center px-2 pb-4">
             <div role="region" aria-label={wall.title} className="w-full max-w-md rounded-2xl border border-saffron-300 bg-white p-5 text-center shadow-xl">
               <p className="text-base font-bold text-ink-900">🔓 {wall.title}</p>
-              <p className="mt-1.5 text-sm text-ink-700">{wall.body}</p>
-              <a
-                href={wall.href}
-                onClick={() => beacon("softwall-signin-click", { bucket: "wall", surface: wall.family })}
-                className="mt-3 inline-block rounded-xl bg-saffron-500 px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-saffron-600"
-              >
-                {wall.cta}
-              </a>
+              <p data-su-reason className="mt-1.5 text-sm text-ink-700">{wall.body}</p>
+              <div className="mt-3 flex justify-center">
+                <SignUpButton
+                  href={wall.href}
+                  surface="soft-wall"
+                  locale={wall.lang}
+                  explain="own"
+                  center
+                  side="top"
+                  beaconProps={{ placement: wall.family }}
+                  onSignInClick={() => beacon("softwall-signin-click", { bucket: "wall", surface: wall.family })}
+                />
+              </div>
               <p className="mt-2 text-[11px] text-ink-500">{wall.privacy}</p>
             </div>
           </div>

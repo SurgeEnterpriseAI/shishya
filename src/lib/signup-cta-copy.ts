@@ -53,11 +53,20 @@
 //
 // TWO LENGTHS (2 Oct 2026 review): the full sentence is the tooltip (hover
 // and keyboard focus with a mouse, and what a screen reader hears as the
-// button's description); a touch screen shows a SHORT caption under the
-// button instead — one line at 360 px ("No forms. SSC CGL is set up as your
-// exam.") — because the full sentence was 3-4 lines of small text under
-// every in-page button and pushed the next action down. The short caption
-// makes a subset of the same claims (pinned by the same test).
+// button's description); the SHORT caption sits under the button — one line
+// at 360 px ("No forms. SSC CGL is set up as your exam.") — because the full
+// sentence was 3-4 lines of small text under every in-page button and pushed
+// the next action down. The short caption makes a subset of the same claims
+// (pinned by the same test). 2 Oct 2026 (founder: "everywhere try to say
+// something why sign in will help them"): the caption shows on EVERY device
+// now — a desktop used to get the tooltip only.
+//
+// REASON LINES (signUpReason, at the end of this file): where a sign-in
+// call was a button or link whose own label carried the reason ("Sign in
+// free to write it →", "or sign in free for full mocks with your scores
+// saved →"), the label is the shared one now and the reason is a plain line
+// beside the button. Each line makes only claims from the same list
+// (src/lib/signup-cta-claims.ts SIGNUP_REASON_CLAIMS).
 //
 // Pure: no React, no DOM, no DB — client islands, server pages and tests
 // import it.
@@ -155,9 +164,10 @@ const EXPLAIN: Readonly<Record<SignUpLocale, Readonly<Record<SignUpExplainVarian
   },
 };
 
-// The touch caption: one line under the button at 360 px. Each says "no
-// forms" (the label above it already says "with Google") and the ONE thing
-// that changes on this surface; the tutor's memory is left to the tooltip.
+// The caption under the button (every device since 2 Oct 2026; it was touch
+// only): one line at 360 px. Each says "no forms" (the label above it
+// already says "with Google") and the ONE thing that changes on this
+// surface; the tutor's memory is left to the tooltip.
 const EXPLAIN_SHORT: Readonly<Record<SignUpLocale, Readonly<Record<SignUpExplainVariant, string>>>> = {
   en: {
     exam: "No forms. {exam} is set up as your exam.",
@@ -197,7 +207,7 @@ export function signUpExplain(locale: string | null | undefined, ctx?: SignUpCon
   return ctx && ctx.kind === "exam" ? text.replace("{exam}", ctx.exam.trim()) : text;
 }
 
-/** The short caption a touch screen shows under an in-page button (one line
+/** The short caption shown under an in-page button on every device (one line
  *  at 360 px). The same variant as the full sentence, a subset of its claims. */
 export function signUpExplainShort(locale: string | null | undefined, ctx?: SignUpContext | null): string {
   const v = signUpExplainVariant(ctx);
@@ -293,6 +303,55 @@ export function signUpContextFor(p: {
   if (goal.kind === "mock") return code ? { kind: "exam", exam: name, practice: p.practice === true } : { kind: "general" };
   if (code && code !== goal.code) return { kind: "general" };
   return { kind: "exam", exam: name, practice: p.practice === true };
+}
+
+// ── Reason lines for doors whose old label carried the reason ───────────
+// Plain text beside the button (the caller marks the element with
+// data-su-reason and passes explain="own"). Four today:
+//   • "writePaper" — /live-test: the old button read "Sign in free to write
+//     it →". A paper is written at /mocks/{id}, which a guest cannot open
+//     (src/app/mocks/[id]/page.tsx shows the sign-in gate), and a member's
+//     attempt is an Attempt row;
+//   • "fullMocks" — the cutoff page's nudge: the old link read "or sign in
+//     free for full mocks with your scores saved →". Shown only where the
+//     exam has practice;
+//   • "vacancies" — the home page's vacancies rail (and its /hi and /te
+//     twins): the old green bar asked "Prepping for one of these? Sign in
+//     free →". The question stays, followed by what an account keeps (the
+//     general caption's two claims — the link returns to /dashboard, not to
+//     one exam). One line instead of a line plus a caption: the rail is a
+//     fixed height and every line in its footer takes a row from the list;
+//   • "tryOne" — the exam hub's "try one question" card, after the answer.
+//     The card shows only where the exam has a checked question, so mocks
+//     with saved scores and the weak-topic map hold. "No credit card":
+//     nothing on the site asks for one.
+export type SignUpReason = "writePaper" | "fullMocks" | "vacancies" | "tryOne";
+
+const REASON: Readonly<Record<SignUpLocale, Readonly<Record<SignUpReason, string>>>> = {
+  en: {
+    writePaper: "Sign up to write this paper — your score is saved to your account.",
+    fullMocks: "Sign up for full mocks with your scores saved.",
+    vacancies: "Prepping for one of these? Your tests and tutor chats are saved.",
+    tryOne: "Sign up free: adaptive mocks with your scores saved, and Shishya tracks your weak topics. No credit card.",
+  },
+  hi: {
+    writePaper: "यह पेपर लिखने के लिए साइन अप करें — आपका स्कोर आपके अकाउंट में सेव रहता है।",
+    fullMocks: "पूरे मॉक के लिए साइन अप करें — आपके स्कोर सेव रहते हैं।",
+    vacancies: "इनमें से किसी की तैयारी कर रहे हैं? आपके टेस्ट और ट्यूटर से हुई बातचीत सेव रहती है।",
+    tryOne: "मुफ़्त साइन अप: अडैप्टिव मॉक, आपके स्कोर सेव रहते हैं, और Shishya आपके कमज़ोर टॉपिक पर नज़र रखता है। क्रेडिट कार्ड नहीं चाहिए।",
+  },
+  te: {
+    writePaper: "ఈ పేపర్ రాయడానికి సైన్ అప్ చేయండి — మీ స్కోర్ మీ అకౌంట్‌లో సేవ్ అవుతుంది.",
+    fullMocks: "పూర్తి మాక్‌ల కోసం సైన్ అప్ చేయండి — మీ స్కోర్లు సేవ్ అవుతాయి.",
+    vacancies: "వీటిలో ఒకదానికి సిద్ధమవుతున్నారా? మీ టెస్టులు, ట్యూటర్ చాట్‌లు సేవ్ అవుతాయి.",
+    tryOne: "ఉచితంగా సైన్ అప్ చేయండి: అడాప్టివ్ మాక్‌లు, మీ స్కోర్లు సేవ్ అవుతాయి, Shishya మీ బలహీన టాపిక్‌లను గుర్తిస్తుంది. క్రెడిట్ కార్డ్ అవసరం లేదు.",
+  },
+};
+
+/** A placement's reason line in the reader's language (en / hi / te;
+ *  anything else is English). */
+export function signUpReason(locale: string | null | undefined, key: SignUpReason): string {
+  return REASON[loc(locale)][key];
 }
 
 // ── Measuring ──────────────────────────────────────────────────────────

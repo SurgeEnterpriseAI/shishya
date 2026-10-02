@@ -333,16 +333,16 @@ export default async function CoachPage({
                 "Sign up with Google"; review, same day): the button's own
                 words ("Start free — build my plan →") are now the line above
                 it, and the button is the one shared sign-up button — Google's
-                dark (filled) button with the "G", the page's main action.
-                Tooltip with a mouse (the general words); no caption on touch —
-                the page above says what the account does, the line under it
-                what it costs. Still /login; door "coach-start". */}
-            <p className="mt-6 text-sm font-bold text-ink-900">Start free — your coach builds the plan:</p>
+                white button with the "G" (one look everywhere), the page's
+                only button here. The line above it is its reason
+                (explain="own": no second caption); the full sentence is the
+                tooltip with a mouse. The line under it says what it costs.
+                Still /login; door "coach-start". */}
+            <p data-su-reason className="mt-6 text-sm font-bold text-ink-900">Start free — your coach builds the plan:</p>
             <SignUpButton
               href={`/login?callbackUrl=${encodeURIComponent(selfPath)}&from=coach-start`}
               surface="coach-start"
-              theme="dark"
-              explain="tooltip"
+              explain="own"
               className="mt-2"
             />
             <p className="mt-2 text-[11px] text-ink-400">

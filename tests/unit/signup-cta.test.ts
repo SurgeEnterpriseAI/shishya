@@ -60,6 +60,19 @@
 //   • the header's wordmark gives way only while the Telugu GUEST BUTTON is
 //     on screen (<html data-hdr-guest>), never on <html lang> alone; the
 //     header label follows the language control at once.
+// 2 Oct 2026 (night — founder, with the same screenshot: "wherever the sign
+// in or sign up … has to be replaced with Google sign up the way which I
+// have showed … and everywhere try to say something why sign in will help
+// them") — changed here, and pinned in full in
+// tests/unit/signup-everywhere.test.ts:
+//   • ONE LOOK: Google's light button everywhere. The dark theme (nine
+//     placements, a few hours on 2 Oct) and the `theme` prop are gone;
+//   • the short caption shows on EVERY device (it was touch only); a
+//     placement with its own benefit line passes explain="own" and gets no
+//     caption; explain="tooltip" is the header's and the timed bar's only;
+//   • the alternative beside a sign-up button is quiet (a text link or a
+//     1 px ink outline) — that, not a dark fill, keeps the sign-up the main
+//     action.
 // What no test here can see: pixels, and the tooltip RUNNING. No DOM test
 // library is installed, so section 6 pins the tooltip's source text; only
 // the placement function (section 12) and the static renders run real code.
@@ -329,7 +342,7 @@ describe("2. every primary guest button is the one shared component", () => {
     expect(src).toContain("const ctx = signUpContextFor({ callback: callbackUrl, exam, examCode, practice });");
     expect(src).toContain("const text = signUpExplain(locale, ctx);");
     expect(src).toContain("const short = signUpExplainShort(locale, ctx);");
-    expect(src).toContain("className={`${googleButtonClass(theme)} w-full`}");
+    expect(src).toContain("className={`${googleButtonClass()} w-full`}");
     expect(src).not.toContain("btn-primary");
     // The quiz-end buttons of both gates: the shared label (no label prop left).
     expect(code("src/components/GuestQuizGate.tsx")).not.toMatch(/label=\{|endSignIn/);
@@ -463,7 +476,7 @@ describe("3. the explanation: honest, surface-aware, every claim pinned to its f
     const copy = read("src/lib/signup-cta-copy.ts");
     for (const name of ["SIGNUP_CLAIM_PROOF", "SIGNUP_CLAIM_PHRASE_EN", "SIGNUP_BANNED_WORDS", "SIGNUP_EXPLAIN_CLAIMS"]) expect(copy, name).not.toContain(name);
     // And the claims module pulls nothing in but a type.
-    expect(read("src/lib/signup-cta-claims.ts").match(/^import .*$/gm)).toEqual(['import type { SignUpExplainVariant } from "@/lib/signup-cta-copy";']);
+    expect(read("src/lib/signup-cta-claims.ts").match(/^import .*$/gm)).toEqual(['import type { SignUpExplainVariant, SignUpReason } from "@/lib/signup-cta-copy";']);
   });
 
   it("every claim names code that makes it true today, and that code is there", () => {
@@ -638,19 +651,21 @@ describe("5. the rendered button: label, Google's mark, tooltip and caption", ()
     expect(tips).toHaveLength(1);
     expect(tips[0][1]).toBe(id);
     expect(hub.match(/role="tooltip"/g)).toHaveLength(1);
-    // The frame holds the short caption (touch) and then the full sentence (the tooltip, and what a screen reader hears).
-    const frame = hub.match(/<span class="su-tip"><span class="su-tip-short">([^<]*)<\/span><span id="[^"]+" role="tooltip" class="su-tip-text">([^<]*)<\/span><\/span>/);
+    // After the link: the short caption (in the flow, on every device), then the frame that holds the full sentence
+    // (the tooltip, and what a screen reader hears).
+    const frame = hub.match(/<\/a><span class="su-cap">([^<]*)<\/span><span class="su-tip"><span id="[^"]+" role="tooltip" class="su-tip-text">([^<]*)<\/span><\/span><\/span>$/);
     expect(frame?.[1]).toBe(signUpExplainShort("en", { kind: "exam", exam: "SSC CGL", practice: true }));
     expect(frame?.[2]).toBe(signUpExplain("en", { kind: "exam", exam: "SSC CGL", practice: true }));
     // The short caption is plain text: no role, no id, nothing the button points at.
-    expect(hub).toContain('<span class="su-tip-short">No forms. SSC CGL is set up as your exam.</span>');
+    expect(hub).toContain('<span class="su-cap">No forms. SSC CGL is set up as your exam.</span>');
+    expect(hub).not.toContain("su-tip-short");
     // Title-less: a native title tooltip would double it and cannot be styled or dismissed.
     expect(hub).not.toMatch(/\stitle=/);
     // It follows the button in the DOM (reading order: button, then its description).
     expect(hub.indexOf("</a>")).toBeLessThan(hub.indexOf('role="tooltip"'));
   });
 
-  it("in-page buttons default to tooltip + touch caption; the frame carries the mode the CSS reads", () => {
+  it("in-page buttons default to tooltip + caption; the frame carries the mode", () => {
     expect(hub).toMatch(/^<span class="su-wrap" data-su-explain="both">/);
     const block = render(ui.SignUpButton, { href, surface: "quiz-end", block: true, className: "flex-1" });
     expect(block).toMatch(/^<span class="su-wrap su-block flex-1" data-su-explain="both">/);
@@ -658,20 +673,25 @@ describe("5. the rendered button: label, Google's mark, tooltip and caption", ()
     const top = render(ui.SignUpButton, { href, surface: "signup-nudge", stack: true, explain: "tooltip", side: "top", align: "end" });
     expect(top).toMatch(/^<span class="su-wrap" data-su-explain="tooltip" data-su-side="top" data-su-align="end">/);
     // explain="tooltip": no caption element at all — only the full sentence, for the mouse and the screen reader.
-    expect(top).not.toContain("su-tip-short");
+    expect(top).not.toContain("su-cap");
     expect(top.match(/role="tooltip" class="su-tip-text"/g)).toHaveLength(1);
+    // explain="own" (the placement has its own benefit line beside the button): no caption either, the same tooltip.
+    const own = render(ui.SignUpButton, { href, surface: "signup-pitch", explain: "own" });
+    expect(own).toMatch(/^<span class="su-wrap" data-su-explain="own">/);
+    expect(own).not.toContain("su-cap");
+    expect(own.match(/role="tooltip" class="su-tip-text"/g)).toHaveLength(1);
   });
 
-  it("theme: Google's light button by default, its dark one on request — the same G, label and frame", () => {
-    const dark = render(ui.SignUpButton, { href, surface: "hub-box", exam: "SSC CGL", examCode: "SSC_CGL", practice: true, theme: "dark", side: "top" });
-    const a = dark.slice(dark.indexOf("<a"), dark.indexOf("</a>"));
-    expect(attr(a, "class")).toBe("su-google su-google-dark");
+  it("one look: Google's light button — a `theme` (the dark one, removed 2 Oct 2026) or a `variant` asked for changes nothing", () => {
+    const asked = render(ui.SignUpButton, { href, surface: "hub-box", exam: "SSC CGL", examCode: "SSC_CGL", practice: true, theme: "dark", side: "top" } as never);
+    const a = asked.slice(asked.indexOf("<a"), asked.indexOf("</a>"));
+    expect(attr(a, "class")).toBe("su-google");
     expect(textOf(a)).toBe("Sign up with Google");
-    // Google: the brand-colour G on the dark, light and neutral buttons alike — never a one-colour G.
     for (const c of ["#EA4335", "#4285F4", "#FBBC05", "#34A853"]) expect(a).toContain(`fill="${c}"`);
-    expect(dark).toMatch(/^<span class="su-wrap" data-su-explain="both" data-su-side="top">/);
-    const block = render(ui.SignUpButton, { href, surface: "quiz-end", theme: "dark", block: true });
-    expect(block).toContain('class="su-google su-google-dark w-full"');
+    expect(asked).toMatch(/^<span class="su-wrap" data-su-explain="both" data-su-side="top">/);
+    const block = render(ui.SignUpButton, { href, surface: "quiz-end", theme: "dark", block: true } as never);
+    expect(block).toContain('class="su-google w-full"');
+    expect(asked + block).not.toContain("su-google-dark");
     // There is no other form: an unknown `variant` (the saffron "brand" one, removed 2 Oct 2026) changes nothing.
     const stray = render(ui.SignUpButton, { href, surface: "signup-nudge", variant: "brand", buttonClassName: "x" } as never);
     expect(attr(stray.match(/<a\b[^>]*>/)?.[0] ?? "", "class")).toBe("su-google x");
@@ -717,9 +737,13 @@ describe("5. the rendered button: label, Google's mark, tooltip and caption", ()
     const shared = code("src/components/SignUpButton.tsx");
     // The G is drawn in two places, both inside a Google-branded button: the one-line face and the two-line one.
     expect(shared.match(/<GoogleG \/>/g)).toHaveLength(2);
-    expect(shared).toContain('const cls = `${googleButtonClass(theme)}${stack ? " su-google-compact" : ""}${block ? " w-full" : ""}${buttonClassName ? ` ${buttonClassName}` : ""}`;');
-    expect(shared).toContain('return theme === "dark" ? "su-google su-google-dark" : "su-google";');
-    expect(shared).toContain("{stack ? <SignUpStackedFace locale={locale} /> : <SignUpFace label={signUpLabel(locale)} />}");
+    expect(shared).toContain('const cls = `${googleButtonClass()}${stack ? " su-google-compact" : ""}${block ? " w-full" : ""}${buttonClassName ? ` ${buttonClassName}` : ""}`;');
+    // One class, no argument: no caller can ask for another look.
+    expect(shared).toMatch(/export function googleButtonClass\(\): string \{\s*return "su-google";\s*\}/);
+    expect(shared).not.toMatch(/\btheme\b|su-google-dark/);
+    // The label: the one module's words; a 22-language page's own "Continue with Google" for a language beyond en / hi / te.
+    expect(shared).toContain("const label = continueLabel ? googleButtonLabel(locale, continueLabel) : signUpLabel(locale);");
+    expect(shared).toContain("{stack ? <SignUpStackedFace locale={locale} /> : <SignUpFace label={label} />}");
     expect(shared).not.toContain("btn-primary");
     expect(shared).not.toMatch(/saffron/);
   });
@@ -736,19 +760,22 @@ describe("5. the rendered button: label, Google's mark, tooltip and caption", ()
     expect(textOf(login)).toContain(signUpExplain("en", { kind: "exam", exam: "SSC CGL", practice: false }));
     expect(login).toMatch(/^<span class="su-wrap su-block mt-6" data-su-explain="both">/);
     expect(textOf(login)).toContain(signUpExplainShort("en", { kind: "exam", exam: "SSC CGL", practice: false }));
-    // /login and the gates: Google's dark button, the tooltip above (another action sits under the button).
-    const filled = render(googleBtn.GoogleSignInButton, { callbackUrl: "/exams/SSC_CGL", locale: "en", continueLabel: "Continue with Google", theme: "dark", side: "top" });
-    expect(attr(filled.match(/<button\b[^>]*>/)?.[0] ?? "", "class")).toBe("su-google su-google-dark w-full");
-    expect(filled).toMatch(/^<span class="su-wrap su-block mt-6" data-su-explain="both" data-su-side="top">/);
+    // /login and the gates: the same light button (a `theme` asked for changes nothing), the tooltip above
+    // (another action sits under the button).
+    const above = render(googleBtn.GoogleSignInButton, { callbackUrl: "/exams/SSC_CGL", locale: "en", continueLabel: "Continue with Google", theme: "dark", side: "top" } as never);
+    expect(attr(above.match(/<button\b[^>]*>/)?.[0] ?? "", "class")).toBe("su-google w-full");
+    expect(above).toMatch(/^<span class="su-wrap su-block mt-6" data-su-explain="both" data-su-side="top">/);
+    expect(code("src/components/GoogleSignInButton.tsx")).not.toMatch(/\btheme\b|su-google-dark/);
     // A returning member and a language beyond en / hi / te keep "Continue with Google".
     const back = render(googleBtn.GoogleSignInButton, { callbackUrl: "/me/report", locale: "en", continueLabel: "Continue with Google", returning: true });
     expect(textOf(back.slice(back.indexOf("<button"), back.indexOf("</button>")))).toBe("Continue with Google");
     const ta = render(googleBtn.GoogleSignInButton, { callbackUrl: "/dashboard", locale: "ta", continueLabel: "Google உடன் தொடரவும்" });
     expect(textOf(ta.slice(ta.indexOf("<button"), ta.indexOf("</button>")))).toBe("Google உடன் தொடரவும்");
-    // A language the words do not exist in: NO touch caption (English small print under a Tamil button); the tooltip stays.
-    expect(ta).toMatch(/^<span class="su-wrap su-block mt-6" data-su-explain="tooltip">/);
-    expect(ta).not.toContain("su-tip-short");
-    for (const l of ["hi", "te"]) expect(render(googleBtn.GoogleSignInButton, { callbackUrl: "/dashboard", locale: l, continueLabel: "x" })).toContain("su-tip-short");
+    // A language the words do not exist in: NO caption (English small print under a Tamil button); the tooltip stays,
+    // and the page's own heading and body, in that language, are the reason ("own").
+    expect(ta).toMatch(/^<span class="su-wrap su-block mt-6" data-su-explain="own">/);
+    expect(ta).not.toContain("su-cap");
+    for (const l of ["hi", "te"]) expect(render(googleBtn.GoogleSignInButton, { callbackUrl: "/dashboard", locale: l, continueLabel: "x" })).toContain('<span class="su-cap">');
     // A school return: the school words.
     const school = render(googleBtn.GoogleSignInButton, { callbackUrl: "/schooling/cbse/class-9/science/motion?signedin=1", locale: "en", continueLabel: "Continue with Google" });
     expect(textOf(school)).toContain(signUpExplain("en", { kind: "school" }));
@@ -766,8 +793,10 @@ describe("5. the rendered button: label, Google's mark, tooltip and caption", ()
     expect(shell).toBe('<span class="su-wrap" data-su-explain="tooltip" data-su-align="end"><a href="/login">x</a></span>');
     const controls = code("src/components/HeaderAuthControls.tsx");
     expect(controls).toMatch(/<SignUpShell text=\{signUpTip\} surface="header" explain="tooltip" align="end" deferText>/);
-    // explain="tooltip": on a touch screen there is NO tooltip and no caption — nothing can take the tap.
-    expect(read("src/app/globals.css")).toMatch(/\.su-wrap\[data-su-explain="tooltip"\] > \.su-tip \{\s*display: none;\s*\}/);
+    // On a touch screen there is NO tooltip (the frame that holds the full sentence is never displayed there), and
+    // explain="tooltip" renders no caption — nothing can take the tap.
+    const css = read("src/app/globals.css");
+    expect(css.slice(0, css.indexOf("@media (hover: hover) and (pointer: fine) {"))).toMatch(/\.su-wrap > \.su-tip \{\s*display: none;\s*\}/);
     // Still a plain /login link counted by the layout listener (not in the skip-/login test).
     expect(controls).toContain('data-signin-surface="header"');
     expect(controls).not.toContain("SignInLink");
@@ -798,16 +827,25 @@ describe("6. the tooltip: hover AND keyboard focus, no layout shift, never over 
   const block = hover.slice(0, hover.indexOf("  .su-float {"));
   const shell = code("src/components/SignUpButton.tsx");
 
-  it("touch / no hover (the default): a plain caption under the button, always visible, in the flow", () => {
-    const base = css.slice(css.indexOf("  .su-wrap > .su-tip {"), css.indexOf("@media (hover: hover) and (pointer: fine) {"));
-    expect(base).toMatch(/\.su-wrap > \.su-tip \{\s*display: block;/);
+  it("EVERY device: a plain caption under the button, always visible, in the flow; the full sentence is never displayed without a mouse", () => {
+    const base = css.slice(css.indexOf("  .su-wrap > .su-cap {"), css.indexOf("@media (hover: hover) and (pointer: fine) {"));
+    expect(base).toMatch(/^  \.su-wrap > \.su-cap \{\s*display: block;/);
     expect(base).not.toMatch(/position: absolute|visibility|pointer-events/);
     expect(base).toMatch(/font-size: 12px;/);
     // AA on white and on saffron-50: ink-600 (#475569).
     expect(base).toContain('color: theme("colors.ink.600");');
-    // Touch shows the SHORT caption; the full sentence is not displayed (it is still the button's description).
-    expect(base).toMatch(/\.su-wrap > \.su-tip > \.su-tip-short \{\s*display: block;\s*\}/);
-    expect(base).toMatch(/\.su-wrap > \.su-tip > \.su-tip-text \{\s*display: none;\s*\}/);
+    // It wraps inside its frame (the frame is never wider than what it sits in) — no sideways scroll at 360 px.
+    expect(base).toContain("white-space: normal;");
+    expect(css).toMatch(/\.su-wrap \{\s*position: relative;\s*display: flex;\s*max-width: 100%;/);
+    // Centred where the button is centred.
+    expect(css).toMatch(/\.su-center \{\s*align-items: center;\s*text-align: center;\s*\}/);
+    // Without a mouse the full sentence's frame is not displayed (it is still the button's description).
+    expect(base).toMatch(/\.su-wrap > \.su-tip \{\s*display: none;\s*\}/);
+    // 2 Oct 2026: the caption is NOT a touch-only thing any more — no rule inside the mouse query hides it.
+    expect(hover.slice(0, hover.indexOf("  .su-float {")).replace(/\/\*[\s\S]*?\*\//g, "")).not.toMatch(/su-cap|su-tip-short/);
+    expect(css.replace(/\/\*[\s\S]*?\*\//g, "")).not.toContain("su-tip-short");
+    // The shell renders it for explain "both" only, with the button (no wait for the script: nothing moves).
+    expect(shell).toContain('{ready && short && explain === "both" && <span className="su-cap">{short}</span>}');
     // The top layer is a mouse-only thing: no rule outside the hover query reads data-su-float.
     expect(css.slice(0, css.indexOf("@media (hover: hover) and (pointer: fine) {")).replace(/\/\*[\s\S]*?\*\//g, "")).not.toContain("data-su-float");
   });
@@ -818,12 +856,11 @@ describe("6. the tooltip: hover AND keyboard focus, no layout shift, never over 
     // display:none while closed: it adds no scroll width and cannot intercept a click.
     expect(block).not.toMatch(/visibility: hidden|opacity: 0/);
     expect(css).toMatch(/\.su-wrap \{\s*position: relative;/);
-    // With a mouse: the full sentence, and no caption.
-    expect(block).toMatch(/\.su-wrap > \.su-tip > \.su-tip-short \{\s*display: none;\s*\}/);
+    // With a mouse: the full sentence as the tooltip (the caption stays in the flow above it).
     expect(block).toMatch(/\.su-wrap > \.su-tip > \.su-tip-text \{\s*display: block;/);
   });
 
-  it("the fallback never covers the button: it starts at the button's bottom edge (or its top edge, above)", () => {
+  it("the fallback never covers the button: it starts at the frame's bottom edge — under the button and its caption — (or its top edge, above)", () => {
     expect(block).toMatch(/\.su-wrap > \.su-tip \{[^}]*top: 100%;[^}]*padding-top: 8px;/);
     expect(block).toMatch(/\.su-wrap\[data-su-side="top"\] > \.su-tip \{\s*top: auto;\s*bottom: 100%;/);
     expect(block).toMatch(/\.su-wrap\[data-su-align="end"\] > \.su-tip \{\s*right: 0;\s*left: auto;/);
@@ -970,22 +1007,20 @@ describe("6. the tooltip: hover AND keyboard focus, no layout shift, never over 
 
 // ── 7. Google's branding numbers ─────────────────────────────────────────
 
-describe("7. Google's 'Sign in with Google' branding guidelines (read 2 Oct 2026), the light and dark themes", () => {
+describe("7. Google's 'Sign in with Google' branding guidelines (read 2 Oct 2026): the light theme, the only one", () => {
   const css = read("src/app/globals.css");
-  const rule = css.slice(css.indexOf("  .su-google {"), css.indexOf("  .su-google-dark {"));
-  const darkRule = css.slice(css.indexOf("  .su-google-dark {"), css.indexOf("  .su-google:hover {"));
+  const rule = css.slice(css.indexOf("  .su-google {"), css.indexOf("  .su-google:hover {"));
 
-  it("dark theme: fill #131314, stroke #8E918F (the same 1px), text #E3E3E3 — colours only, the same paddings, shape and G", () => {
-    expect(darkRule).toMatch(/^  \.su-google-dark \{\s*border-color: #8e918f;\s*background-color: #131314;\s*color: #e3e3e3;\s*\}\s*$/);
-    // After the light rule, so it wins at equal weight.
-    expect(css.indexOf("  .su-google-dark {")).toBeGreaterThan(css.indexOf("  .su-google {"));
+  it("no dark theme is left: no rule, no class, no fill but white", () => {
+    expect(css.replace(/\/\*[\s\S]*?\*\//g, "")).not.toMatch(/su-google-dark|#131314|#8e918f|#e3e3e3/i);
+    expect(rule).toMatch(/^  \.su-google \{[^}]*\}\s*$/);
     expect(rule).not.toContain("#131314");
   });
 
-  // Where the button is a block's main action beside or above an outlined
-  // alternative it is the FILLED (dark) one — founder, 28 Sep 2026: the free
-  // sign-in is the filled button and the quiz the outlined one.
-  const DARK: [string, number][] = [
+  // Until the evening of 2 Oct 2026 these wore Google's DARK button (the
+  // "filled" one beside an outlined alternative). One look now: the light
+  // button everywhere; the count of buttons in each file is unchanged.
+  const WAS_DARK: [string, number][] = [
     ["src/app/exams/[code]/StartMockButton.tsx", 1],
     ["src/app/exams/[code]/TryOneQuestion.tsx", 1],
     ["src/app/exams/[code]/pyq/[year]/page.tsx", 2],
@@ -999,25 +1034,28 @@ describe("7. Google's 'Sign in with Google' branding guidelines (read 2 Oct 2026
     ["src/app/login/page.tsx", 1], // GoogleSignInButton
     ["src/components/GuestQuizGate.tsx", 1], // GoogleSignInButton: the mock gate and both gate quiz-ends
   ];
-  // Inside our own tinted cards the light button stays; the timed bar's is the light one too (2 Oct 2026, evening).
+  // These were light all along (inside our own tinted cards, and the timed bar).
   const LIGHT = ["src/components/SignupPitch.tsx", "src/components/SignupInline.tsx", "src/components/school/SchoolStudentEntry.tsx", "src/app/chat/ChatInterface.tsx", "src/app/find-your-exam/SaveMatchesNudge.tsx", "src/components/SignupNudge.tsx"];
 
-  it("the filled doors wear the dark theme; the tinted cards the light one", () => {
+  it("every door wears the light button: no placement passes a theme", () => {
     const tags = (file: string) => code(file).match(/<(?:SignUpButton|GoogleSignInButton)\b[\s\S]*?\/>/g) ?? [];
-    for (const [file, n] of DARK) {
+    for (const [file, n] of WAS_DARK) {
       const t = tags(file);
       expect(t, file).toHaveLength(n);
-      for (const tag of t) expect(tag, file).toContain('theme="dark"');
+      for (const tag of t) expect(tag, file).not.toContain("theme=");
     }
     for (const file of LIGHT) {
       const t = tags(file);
       expect(t.length, file).toBeGreaterThan(0);
       for (const tag of t) expect(tag, file).not.toContain("theme=");
     }
-    // The hub's quiz button beside it is still the outlined one.
+    // The hub's quiz button beside it: still a button, still second — a quiet 1 px ink outline now, so the white
+    // sign-up button stays the main action (28 Sep: hub sign-ups fell from about 11 a day to 4 when it was not).
     const hub = code("src/app/exams/[code]/page.tsx");
     const at = hub.indexOf("<HubSignInLink");
-    expect(hub.slice(at, at + 900)).toContain("border-2 border-saffron-500 bg-white");
+    const beside = hub.slice(at, at + 900);
+    expect(beside).toContain('className="inline-flex min-h-[44px] items-center justify-center rounded-md border border-ink-300 bg-white px-4 py-2 text-sm font-semibold text-ink-800 transition-colors hover:bg-ink-50"');
+    expect(beside).not.toMatch(/border-2|saffron/);
   });
 
   it("fill #FFFFFF, stroke #747775 1px, text #1F1F1F", () => {
@@ -1143,8 +1181,14 @@ describe("8. never on a Class 1-7 page or in an under-13 context", () => {
     // /career-map (Class 1-8 rows) and the school chats get no new button.
     expect(read("src/app/career-map/page.tsx")).not.toMatch(/SignupInline|SignUpButton/);
     const chat = code("src/app/chat/ChatInterface.tsx");
-    const card = chat.slice(chat.lastIndexOf("{guestSignInHref && !school && !under13", chat.indexOf("<SignUpButton")), chat.indexOf("<SignUpButton"));
+    // The save card (door "chat-save") …
+    const saveAt = chat.lastIndexOf("<SignUpButton", chat.indexOf('surface="chat-save"'));
+    const card = chat.slice(chat.lastIndexOf("{guestSignInHref && !school && !under13", saveAt), saveAt);
     expect(card).toContain("{guestSignInHref && !school && !under13 && !busy &&");
+    // … and the line under the page title (door "chat-banner", 2 Oct 2026): the same three conditions.
+    const bannerAt = chat.lastIndexOf("<SignUpButton", chat.indexOf('surface="chat-banner"'));
+    expect(chat.slice(chat.lastIndexOf("{guestBanner &&", bannerAt), bannerAt)).toContain("{guestBanner && guestSignInHref && !school && !under13 && (");
+    expect(chat.match(/<SignUpButton\b/g)).toHaveLength(2);
   });
 
   it("the 'explanation opened' beacon never fires on a Class 1-7 path, and once per page view elsewhere", () => {
@@ -1359,11 +1403,15 @@ describe("10. /login: the exam is named only when the catalogue has it (review b
     expect(textOf(known)).toContain("SSC CGL is set up as your exam the moment you sign up");
   });
 
-  it("/login wears the filled (dark) button and opens its tooltip above — 'Try 5 questions first' sits under it", () => {
+  it("/login wears the light button and opens its tooltip above — 'Try 5 questions first' sits under it, as a quiet outline", () => {
     const tag = login.match(/<GoogleSignInButton\b[\s\S]*?\/>/)?.[0] ?? "";
     expect(tag).toContain('side="top"');
-    expect(tag).toContain('theme="dark"');
+    expect(tag).not.toContain("theme=");
     expect(login.indexOf("<GoogleSignInButton")).toBeLessThan(login.indexOf('t("login.tryFirst")'));
+    // The alternative is a 1 px ink outline on white (it was a saffron-tinted box): the sign-up stays the main action.
+    const alt = login.slice(login.indexOf("{examCode && li.tryFirst && ("), login.indexOf('t("login.tryFirst")'));
+    expect(alt).toContain('className="mt-3 block rounded-lg border border-ink-300 bg-white px-3 py-2 text-center text-sm font-medium text-ink-800 hover:bg-ink-50"');
+    expect(alt).not.toMatch(/saffron/);
   });
 });
 
@@ -1402,8 +1450,12 @@ describe("11. a button with another action under it opens its tooltip ABOVE (rev
         "src/app/exams/[code]/TryOneQuestion.tsx",
         "src/app/exams/[code]/page.tsx",
         "src/app/exams/[code]/pyq/[year]/page.tsx",
+        // 2 Oct 2026 (review): the finder's bottom card — the sign-up, then "Start {exam} prep →".
+        "src/app/find-your-exam/page.tsx",
         "src/app/for/[persona]/page.tsx",
         "src/app/login/page.tsx",
+        // 2 Oct 2026 (review): the cutoff box — the sign-up now comes first, the quiz link under it.
+        "src/components/AnonExamNudge.tsx",
         "src/components/AnonQuizPlayer.tsx",
         "src/components/SignupNudge.tsx",
       ].sort(),
@@ -1424,7 +1476,8 @@ describe("11. a button with another action under it opens its tooltip ABOVE (rev
   });
 
   it("the tutor's save card (the last thing in a scrolling pane) and both gates open above too", () => {
-    expect(code("src/app/chat/ChatInterface.tsx").match(/<SignUpButton\b[\s\S]*?\/>/)?.[0]).toContain('side="top"');
+    const chatTags = code("src/app/chat/ChatInterface.tsx").match(/<SignUpButton\b[\s\S]*?\/>/g) ?? [];
+    expect(chatTags.find((t) => t.includes('surface="chat-save"'))).toContain('side="top"');
     expect(code("src/components/GuestQuizGate.tsx").match(/<GoogleSignInButton\b[\s\S]*?\/>/)?.[0]).toContain('side="top"');
     // GoogleSignInButton hands side to the frame.
     expect(code("src/components/GoogleSignInButton.tsx")).toContain("<SignUpShell text={text} short={short} surface={surface} explain={mode} side={side} block className={className}>");
@@ -1747,10 +1800,10 @@ describe("14. no saffron sign-up button: the header and the timed bar are Google
       const rel = path.relative(ROOT, f).replace(/\\/g, "/");
       const src = fs.readFileSync(f, "utf8");
       if (/SignUpBrandLabel|variant="brand"|variant: "brand"|"google" \| "brand"/.test(src)) hits.push(`${rel}: brand variant`);
-      // Every button of the shared components, wherever it is mounted: no theme but "dark", no class that fills or recolours it.
+      // Every button of the shared components, wherever it is mounted: no theme at all, no class that fills or recolours it.
       for (const m of src.matchAll(/<(?:SignUpButton|GoogleSignInButton)\b[\s\S]*?\/>/g)) {
         if (/variant=/.test(m[0])) hits.push(`${rel}: variant prop`);
-        if (/theme=(?!"dark")/.test(m[0])) hits.push(`${rel}: theme other than dark`);
+        if (/theme=/.test(m[0])) hits.push(`${rel}: theme prop`);
         const cls = m[0].match(/buttonClassName="([^"]*)"/)?.[1] ?? "";
         if (/\bbg-|\btext-|\bborder|\brounded/.test(cls)) hits.push(`${rel}: buttonClassName "${cls}"`);
       }

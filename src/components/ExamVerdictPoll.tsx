@@ -24,6 +24,27 @@
 //     The vote event carries via 'mail' (the ?verdict= auto-vote from the
 //     day-after mail) or 'tap', plus the surface, so the two are separable.
 //
+//   • 2 Oct 2026 (founder: every sign-in call is the white Google button,
+//     with a line saying why): the nudge after a guest's vote was a text
+//     link reading "Sign in (free) to save your rating and compare when the
+//     key is out →". It is the one shared "Sign up with Google" button now,
+//     with the button's own short caption under it ("No forms. {exam} is
+//     set up as your exam." on an exam page — the sign-in returns to the
+//     page the student is on). The old sentence is NOT kept as the reason:
+//     a guest's rating is already stored (the anonymous cookie, below), and
+//     nothing in the code compares a student's rating with an answer key —
+//     it promised what the site does not do. `labels.nudge` still decides
+//     WHETHER the offer shows (the three callers pass it); its words are no
+//     longer printed. Door id "verdict-poll" (it was counted as "link").
+//     Review, same day: the poll's own labels come from the server in the
+//     page's language (22 of them), so the button follows it too — `locale`
+//     and `labels.continue` (t("login.continue")): en / hi / te read "Sign up
+//     with Google" with the caption; any other language reads its own
+//     "Continue with Google" and gets no caption (the caption's words exist
+//     in three languages; "✓ thanks" above it is the only line there). The
+//     tooltip opens ABOVE the button — the tally and the share row sit
+//     under it.
+//
 // Identity is the server's business (session or shishya_anon cookie,
 // issued on demand) — this never asks for a login. Labels come from the
 // server so /hi and /te render in the page's language. Deliberately NOT
@@ -31,7 +52,9 @@
 // poll whenever any other pulse row mounted first.
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { SignUpButton } from "@/components/SignUpButton";
 import type { VerdictTally } from "@/lib/exam-verdict";
+import { clientUiLocale } from "@/lib/ui-locale-copy";
 
 const VERDICTS = ["EASY", "MODERATE", "TOUGH"] as const;
 type Verdict = (typeof VERDICTS)[number];
@@ -48,8 +71,13 @@ export interface ExamVerdictLabels {
   few: string;
   /** Optional failure line; without it a failed tap just re-enables the chips. */
   err?: string;
-  /** ew.signup.nudge — shown once after an anonymous vote (needs signedIn=false). */
+  /** ew.signup.nudge — when set, the sign-up button shows once after an
+   *  anonymous vote (needs signedIn=false). Its words are not printed (2 Oct
+   *  2026: see the note at the top). */
   nudge?: string;
+  /** login.continue — the sign-up button's words in a language other than
+   *  en / hi / te ("Continue with Google" in that language). */
+  continue?: string;
   /** ew.share.tally — template with {n} {exam} {easy} {moderate} {tough}. */
   shareTally?: string;
   /** ew.share.cta — the WhatsApp link text. */
@@ -108,6 +136,7 @@ export function ExamVerdictPoll({
   shareUrl,
   examDayLabel,
   surface = "hub",
+  locale,
 }: {
   examCode: string;
   /** IST exam day in focus, "YYYY-MM-DD". */
@@ -128,6 +157,9 @@ export function ExamVerdictPoll({
   examDayLabel?: string;
   /** Where the poll is mounted ("hub" / "tracker" / "cutoff") — on the vote event. */
   surface?: string;
+  /** The page's language (the one the labels are in): the sign-up button's
+   *  label and caption follow it. Without it, the reader's en / hi / te. */
+  locale?: string | null;
 }) {
   const [verdict, setVerdict] = useState<Verdict | null>(null);
   const [section, setSection] = useState<string | null>(null);
@@ -304,11 +336,18 @@ export function ExamVerdictPoll({
         </div>
       )}
       {done && verdict && !signedIn && labels.nudge && (
-        <p className="mt-2 text-xs text-ink-700">
-          <a rel="nofollow" href={loginHref} className="font-semibold text-saffron-700 underline-offset-2 hover:underline">
-            {labels.nudge} →
-          </a>
-        </p>
+        <SignUpButton
+          href={`${loginHref}&from=verdict-poll`}
+          surface="verdict-poll"
+          locale={locale ?? clientUiLocale()}
+          continueLabel={labels.continue}
+          exam={examShort}
+          examCode={examCode}
+          side="top"
+          rel="nofollow"
+          className="mt-2"
+          beaconProps={{ examCode }}
+        />
       )}
       {err && labels.err && <p className="mt-2 text-xs text-rose-700">{labels.err}</p>}
       <p className="mt-2 text-xs text-ink-600">{tallyLine}</p>

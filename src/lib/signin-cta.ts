@@ -86,6 +86,45 @@ export const SIGNIN_SURFACES = [
   "batch-join",
   // /find-your-exam, "save these matches" under a guest's results.
   "finder-save",
+  // 2 Oct 2026 (founder: "wherever the sign in or sign up … has to be
+  // replaced with Google sign up") — every remaining guest call that had its
+  // own look (a saffron or green button, a bar, a text link inside a
+  // sentence) is the shared button now, each under its own id. They were
+  // counted as "link" (or, for the home page, "home-signin"). All go to
+  // /login as they did; none is in the skip-/login test.
+  // /live-test, an open paper's card ("Sign in free to write it →").
+  "live-test",
+  // /g/{token}, a study group's invite ("Sign in to join").
+  "group-join",
+  // The fact-verification side panel on a college page ("Sign in →").
+  "verify-fact",
+  // Home page, the vacancies rail's footer ("Prepping for one of these?").
+  "home-vacancies",
+  // /discussions/{id}, where a member sees the reply box.
+  "discussion-reply",
+  // The guest tutor's line under the page title (/chat), before any reply.
+  "chat-banner",
+  // /exams/{CODE}/cutoff, the green nudge box (first there; the quiz link follows it).
+  "cutoff-nudge",
+  // The "rate the paper" poll, after a guest's vote.
+  "verdict-poll",
+  // /community-vouching/{domain}, the guest notice.
+  "vouch",
+  // /ideas, under "sign in to upvote".
+  "ideas-upvote",
+  // "Save my path" on /after-10th, /after-12th and the stream pages
+  // (src/components/paths/SavePathButton.tsx; its link already carries
+  // from=save-path).
+  "save-path",
+  // The whole paper's result screen for a guest (switched off since 28 Sep).
+  "guest-paper",
+  // The blur wall's card (stopped on 29 Sep).
+  "soft-wall",
+  // /descriptive: a guest pressed "evaluate" and the API said 401 → /login.
+  "descriptive-401",
+  // /find-your-exam, the bottom card under a guest's results ("Pick your #1
+  // and start today"): it told a guest to sign in and had no sign-in button.
+  "finder-start",
   // Any other link to /login (the click listener's fallback).
   "link",
 ] as const;

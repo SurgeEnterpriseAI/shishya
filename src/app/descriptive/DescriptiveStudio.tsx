@@ -8,6 +8,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AI_UNAVAILABLE_COPY, isAiUnavailableCode } from "@/lib/ai-unavailable-copy";
+import { loginHrefFor, signinBeacon } from "@/lib/signin-cta";
 
 type TaskType = "essay" | "letter" | "precis" | "upsc-answer";
 
@@ -125,7 +126,12 @@ export function DescriptiveStudio() {
         } catch {
           /* ignore */
         }
-        router.push(`/login?callbackUrl=${encodeURIComponent("/descriptive")}`);
+        // 2 Oct 2026: this trip to /login was the one sign-in door nothing
+        // counted (router.push is not a link click, so the root layout's
+        // listener never saw it). One "signin-click" beacon now, and the
+        // door's name on /login — like the hub's 401 buttons.
+        signinBeacon("descriptive-401", { via: "login" });
+        router.push(loginHrefFor("/descriptive", "descriptive-401"));
         return;
       }
       // 2 Oct 2026: the status is checked before the body is trusted. A

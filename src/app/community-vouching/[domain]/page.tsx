@@ -8,6 +8,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
+import { SignUpButton } from "@/components/SignUpButton";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import {
@@ -66,7 +67,13 @@ export default async function CommunityVouchingPage({
 
         {!session?.user ? (
           <div className="mt-6 rounded-md border border-saffron-200 bg-saffron-50/60 px-4 py-3 text-xs text-ink-700">
-            <Link href="/login" className="text-saffron-700 underline">Sign in</Link> to vouch (only available to verified Domain Experts in this domain).
+            {/* 2 Oct 2026 (founder: every sign-in call is the white Google
+                button, with a line saying why): "Sign in" was an underlined
+                link inside this sentence. The sentence is plain text now —
+                the reason — and the one shared button sits under it. Same
+                destination (/login), its own door id ("vouch"). */}
+            <p data-su-reason>Sign in to vouch (only available to verified Domain Experts in this domain).</p>
+            <SignUpButton href="/login?from=vouch" surface="vouch" explain="own" className="mt-2" />
           </div>
         ) : !canVouch ? (
           <div className="mt-6 rounded-md border border-ink-200 bg-ink-50/40 px-4 py-3 text-xs text-ink-700">

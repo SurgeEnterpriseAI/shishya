@@ -19,6 +19,32 @@
 // beacon: {surface}-signin-click). It returns to the exam page, where the
 // mocks are.
 //
+// 2 Oct 2026 (founder: every sign-in call is the white Google button, with
+// a line saying why): that quiet second link ("or sign in free for full
+// mocks with your scores saved →") is the one shared "Sign up with Google"
+// button now, in the page's language, and what the link's words promised is
+// the plain line above it (signUpReason "fullMocks" — the page mounts this
+// box only where the exam has practice). Same destination (the exam's hub
+// through /login), its own door id ("cutoff-nudge"; it was counted as
+// "link"), and the older "{surface}-signin-click" beacon still fires on the
+// same click.
+// 2 Oct 2026 (review, same day — the lead's rule D, which has no exception:
+// "in every block where the sign-up sits beside or above an alternative the
+// Google button stays FIRST, and the alternative must not be visually
+// heavier than it"): the ORDER changed here too. The reason line and the
+// sign-up button come first; the quiz link follows as a quiet 1 px ink
+// outline (it was first and filled emerald, bold white text). Nothing was
+// removed: the quiz link has the same words, the same destination and the
+// same "{surface}-click" beacon, and the box's headline and body — which
+// describe the quiz — are unchanged.
+// TO WATCH after this ships (the 11 Sep numbers above are why the quiz was
+// the main offer: the sign-in offer was shown 699 times and clicked 31):
+// read "cutoff-nudge-click" (quiz) against "signin-click" surface
+// "cutoff-nudge" for a few days. If quiz starts from this box fall and
+// sign-ups do not rise, swap the two elements back — it is the order of two
+// JSX elements below and one row in tests/unit/signup-everywhere.test.ts
+// (section D) — but keep the quiz link unfilled.
+//
 // Session is checked CLIENT-side so the host page keeps its ISR caching —
 // no server cookie read. Since 13 Sep 2026 that is the shared, hint-gated
 // probe (src/lib/session-hint.ts): a guest without the `shishya_in` hint
@@ -27,7 +53,9 @@
 // with no flash). Instrumented with shown/click beacons per surface.
 
 import { useEffect, useRef, useState } from "react";
+import { SignUpButton } from "@/components/SignUpButton";
 import { fetchSignedIn } from "@/lib/session-hint";
+import { signUpReason } from "@/lib/signup-cta-copy";
 
 function beacon(cta: string, extra?: Record<string, unknown>) {
   try {
@@ -56,14 +84,14 @@ function beacon(cta: string, extra?: Record<string, unknown>) {
 // component was English-only, which it no longer is.
 const QUIZ_BODY = "Answer 10 questions in this exam's pattern and see your score next to these category cutoffs — no account needed.";
 const QUIZ_CTA = "Try 10 questions — see where you stand, no sign-in →";
-const SIGN_IN_LABEL = "or sign in free for full mocks with your scores saved →";
 
 export function AnonExamNudge({
   examCode,
   headline,
   body,
   cta,
-  signInLabel,
+  locale,
+  examShort,
   surface,
 }: {
   examCode: string;
@@ -74,8 +102,11 @@ export function AnonExamNudge({
   body?: string;
   /** Localised button label (i18n cutoff.nudge.cta). */
   cta?: string;
-  /** Localised secondary sign-in link (i18n cutoff.nudge.signin). */
-  signInLabel?: string;
+  /** The page's language: the sign-up button's label and the line above it. */
+  locale?: string | null;
+  /** The exam's short name — the button's tooltip names it (the sign-in
+   *  returns to this exam's hub, so the new account is enrolled in it). */
+  examShort?: string | null;
   /** Analytics surface tag, e.g. "cutoff-nudge". */
   surface: string;
 }) {
@@ -112,20 +143,29 @@ export function AnonExamNudge({
         <span className="font-semibold text-ink-900">{headline}</span> {body || QUIZ_BODY}
       </p>
       <div className="flex shrink-0 flex-col items-start gap-1.5 sm:items-end">
+        <p data-su-reason className="text-xs text-ink-700">{signUpReason(locale, "fullMocks")}</p>
+        {/* side="top": the quiz link sits under the button, and the tooltip
+            must not cover the pointer's way to it. */}
+        <SignUpButton
+          href={`/login?callbackUrl=${encodeURIComponent(`/exams/${examCode}`)}&from=cutoff-nudge`}
+          surface="cutoff-nudge"
+          locale={locale}
+          exam={examShort}
+          examCode={examCode}
+          practice
+          explain="own"
+          side="top"
+          align="end"
+          rel="nofollow"
+          beaconProps={{ examCode }}
+          onSignInClick={() => beacon(`${surface}-signin-click`, { surface, examCode, target: "login" })}
+        />
         <a
           href={href}
           onClick={() => beacon(`${surface}-click`, { surface, examCode, target: "anon-quiz" })}
-          className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-emerald-700"
+          className="mt-1 inline-flex min-h-[44px] items-center justify-center rounded-lg border border-ink-300 bg-white px-4 py-2.5 text-sm font-semibold text-ink-800 transition-colors hover:bg-ink-50"
         >
           {cta || QUIZ_CTA}
-        </a>
-        <a
-          href={`/login?callbackUrl=${encodeURIComponent(`/exams/${examCode}`)}`}
-          rel="nofollow"
-          onClick={() => beacon(`${surface}-signin-click`, { surface, examCode, target: "login" })}
-          className="text-xs font-medium text-emerald-800 underline underline-offset-2 hover:text-emerald-900"
-        >
-          {signInLabel || SIGN_IN_LABEL}
         </a>
       </div>
     </div>

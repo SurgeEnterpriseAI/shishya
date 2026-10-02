@@ -258,13 +258,16 @@ export default async function ChatPage({
               {anonExamShort ? `Ask Shishya — ${anonExamShort}` : t("chat.general.title")}
             </h1>
             {!anonExamShort && <p className="mt-0.5 text-xs text-ink-500">{t("chat.general.subtitle")}</p>}
-            <p className="mt-2 rounded-md bg-saffron-50 px-3 py-2 text-xs text-ink-600 ring-1 ring-saffron-200">
-              {anonExamShort ? fillTemplate(t("chat.guest.leadExam"), { exam: anonExamShort }) : t("chat.guest.lead")}{" "}
-              <Link href={loginHref} className="font-medium text-saffron-700 hover:underline">
-                {t("chat.guest.signin")}
-              </Link>{" "}
-              {anonExamShort ? t("chat.guest.tailExam") : t("chat.guest.tail")}
-            </p>
+            {/* 2 Oct 2026 (founder: every sign-in call is the white Google
+                button, with a line saying why): the tinted line that stood
+                here — "You're chatting as a guest. [Sign in free] to keep
+                your chats …", with the middle words a link — is rendered by
+                ChatInterface now (guestBanner below): the same sentence as
+                plain text, and under it the one shared button. It moved into
+                the island for two reasons the server page could not meet:
+                the whole line must go once a guest says they are under 13
+                (it used to stay on screen), and the button steps aside once
+                the save card is up (one invitation on a screen). */}
           </div>
 
           <ChatOpenedBeacon
@@ -276,6 +279,11 @@ export default async function ChatPage({
             topicFocus={null}
             initialSeed={sp.seed ?? null}
             guestSignInHref={loginHref}
+            guestBanner={{
+              text: `${anonExamShort ? fillTemplate(t("chat.guest.leadExam"), { exam: anonExamShort }) : t("chat.guest.lead")} ${t("chat.guest.signin")} ${anonExamShort ? t("chat.guest.tailExam") : t("chat.guest.tail")}`,
+              locale,
+              continueLabel: t("login.continue"),
+            }}
             labels={{
               placeholder: t("chat.placeholder"),
               send: t("chat.send"),

@@ -495,10 +495,12 @@ export function BuilderForm({
             ) : (
               // 2 Oct 2026 (founder, standing): the one shared "Sign up with
               // Google" button, full width as before, with its explanation
-              // (tooltip with a mouse, a one-line caption on a phone). The
-              // sign-in returns to this exam's builder, so the words name the
-              // exam. Review, same day: Google's DARK button — it stands
-              // where the filled "Build my mock" button does for a member.
+              // (a one-line caption under it on every device, the full
+              // sentence as a tooltip with a mouse). The sign-in returns to
+              // this exam's builder, so the words name the exam. Google's
+              // LIGHT button (one look everywhere); it stands where the
+              // "Build my mock" button does for a member and is the only
+              // button in this panel.
               <SignUpButton
                 href={`/login?callbackUrl=${encodeURIComponent(`${pathname ?? `/exams/${examCode}/build-mock`}${pyqOnly ? "?pyq=1" : ""}`)}&from=build-mock-form`}
                 surface="build-mock-form"
@@ -506,7 +508,6 @@ export function BuilderForm({
                 exam={examShort}
                 examCode={examCode}
                 practice
-                theme="dark"
                 block
                 className="mt-4"
                 beaconProps={{ examCode }}

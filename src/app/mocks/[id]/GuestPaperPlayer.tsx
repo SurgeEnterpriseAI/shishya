@@ -10,10 +10,19 @@
 // here — score, topics weakest first, every question with its answer — and
 // only then offers sign-in, to keep FUTURE results (this one is not saved,
 // and the page says so).
+//
+// 2 Oct 2026 (founder: every sign-in call is the white Google button, with
+// a line saying why): the result screen's saffron button "Sign in free to
+// keep your results" is the one shared "Sign up with Google" button; those
+// words are the plain line above it (the reason, in en / hi / te). Its own
+// "guest-paper-signin-click" beacon still fires on the click; the door id
+// is "guest-paper". This player is NOT mounted today (GUEST_WHOLE_PAPER_OPEN
+// is false since 28 Sep) — converted so it cannot come back saffron.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { MockTimer } from "@/components/mock-player/MockTimer";
+import { SignUpButton } from "@/components/SignUpButton";
 import { QuestionLangSwitcher } from "@/components/QuestionLangSwitcher";
 import type { Locale } from "@/lib/i18n";
 import {
@@ -310,13 +319,16 @@ export function GuestPaperPlayer({
             {result.negativeMark > 0 && <p className="mt-1 text-xs text-ink-500">{fill(copy.negativeNote, { neg: result.negativeMark })}</p>}
             <div className="mt-4 rounded-lg border border-saffron-200 bg-saffron-50/70 p-3">
               <p className="text-xs text-ink-600">{copy.notSaved}</p>
-              <Link
-                href={signInHref}
-                onClick={() => beacon("guest-paper-signin-click", { examCode: mock.examCode })}
-                className="mt-2 inline-block rounded-md bg-saffron-500 px-3 py-1.5 text-sm font-semibold text-white hover:bg-saffron-600"
-              >
-                {copy.signIn}
-              </Link>
+              <p data-su-reason className="mt-2 text-sm font-semibold text-ink-900">{copy.signIn}</p>
+              <SignUpButton
+                href={/[?&]from=/.test(signInHref) ? signInHref : `${signInHref}&from=guest-paper`}
+                surface="guest-paper"
+                locale={initialLocale}
+                explain="own"
+                className="mt-2"
+                beaconProps={{ examCode: mock.examCode }}
+                onSignInClick={() => beacon("guest-paper-signin-click", { examCode: mock.examCode })}
+              />
               <p className="mt-1.5 text-[11px] text-ink-500">{copy.signInNote}</p>
             </div>
           </div>

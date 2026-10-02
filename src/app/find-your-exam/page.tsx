@@ -15,6 +15,8 @@ import { REAL_EXAM_SQL } from "@/lib/db/exam-scope";
 import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 import { FindExamQuiz } from "./FindExamQuiz";
 import { SaveMatchesNudge } from "./SaveMatchesNudge";
+import { SignUpButton } from "@/components/SignUpButton";
+import { signUpContextFor, signUpExplain } from "@/lib/signup-cta-copy";
 import { computeExamTags } from "@/lib/exam-tags";
 import { CoachEntry } from "@/components/CoachEntry";
 import {
@@ -118,6 +120,28 @@ export default async function FindYourExamPage({
   }
 
   const eligibleVac = eligible.reduce((a, r) => a + (r.exam.vacanciesApprox ?? 0), 0);
+
+  // 2 Oct 2026 (review of the "Sign up with Google everywhere" build): the
+  // bottom card under a guest's results said "Sign in free to lock your exam,
+  // get a daily plan, mock tests and an AI tutor in your language" — and the
+  // only thing to press was a filled saffron "Start {exam} prep →" that goes
+  // to the exam's hub, not to sign-in. A guest now gets the one shared "Sign
+  // up with Google" button FIRST (door id "finder-start"); its link returns
+  // to the top match's hub, so the new account is enrolled in that exam.
+  // The sentence above it is the button's reason (explain="own"), and it is
+  // the copy module's own allowed sentence for that case — no words typed
+  // here: "lock your exam" and "get a daily plan" are in no list of what
+  // signing in does (a plan needs the coach's three questions), and "mock
+  // tests" is promised only where the exam is known to have practice, which
+  // this page does not read. signUpContextFor fails closed: a code the
+  // sign-up would not enrol gets the general sentence. "Start {exam} prep →"
+  // stays, goes where it went, and is a quiet 1 px ink outline beside the
+  // sign-up. A signed-in visitor's card is unchanged.
+  const top = eligible[0]?.exam ?? null;
+  const topHub = top ? `/exams/${top.code}` : null;
+  const topReason = top && topHub
+    ? signUpExplain("en", signUpContextFor({ callback: topHub, exam: top.shortName, examCode: top.code, practice: false }))
+    : null;
 
   // 26 Sep 2026 (G4): every exam (government and entrance) by the lowest
   // qualification it lists — the /exams/after/{level} membership rule. Only
@@ -320,14 +344,41 @@ export default async function FindYourExamPage({
 
                 <div className="mt-8 rounded-xl border-2 border-saffron-300 bg-gradient-to-r from-saffron-50 to-amber-50 p-5">
                   <p className="text-base font-bold text-ink-900">Pick your #1 and start today</p>
-                  <p className="mt-1 text-sm text-ink-600">
-                    Sign in free to lock your exam, get a daily plan, mock tests and an AI tutor in your
-                    language. Everything free — no coaching fees.
-                  </p>
-                  {eligible[0] && (
-                    <Link href={`/exams/${eligible[0].exam.code}`} className="btn-primary mt-3 inline-block !py-2 !px-4 text-sm">
-                      Start {eligible[0].exam.shortName} prep →
-                    </Link>
+                  {!signedIn && top && topHub && topReason ? (
+                    <>
+                      <p data-su-reason className="mt-1 text-sm text-ink-600">
+                        {topReason} Everything free — no coaching fees.
+                      </p>
+                      <div className="mt-3 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:gap-3">
+                        <SignUpButton
+                          href={`/login?callbackUrl=${encodeURIComponent(topHub)}&from=finder-start`}
+                          surface="finder-start"
+                          exam={top.shortName}
+                          examCode={top.code}
+                          explain="own"
+                          side="top"
+                          beaconProps={{ examCode: top.code }}
+                        />
+                        <Link
+                          href={topHub}
+                          className="inline-flex min-h-[44px] items-center rounded-lg border border-ink-300 bg-white px-4 py-2 text-sm font-semibold text-ink-800 hover:bg-ink-50"
+                        >
+                          Start {top.shortName} prep →
+                        </Link>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <p className="mt-1 text-sm text-ink-600">
+                        Sign in free to lock your exam, get a daily plan, mock tests and an AI tutor in your
+                        language. Everything free — no coaching fees.
+                      </p>
+                      {eligible[0] && (
+                        <Link href={`/exams/${eligible[0].exam.code}`} className="btn-primary mt-3 inline-block !py-2 !px-4 text-sm">
+                          Start {eligible[0].exam.shortName} prep →
+                        </Link>
+                      )}
+                    </>
                   )}
                 </div>
               </>

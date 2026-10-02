@@ -7,11 +7,11 @@
 // weight is the first suspect for a sign-up dip).
 //
 // What they pin: every sentence of the explanation — the full one (tooltip)
-// and the short one (the caption on a touch screen) — says exactly the claims
+// and the short one (the caption under the button) — says exactly the claims
 // listed for its variant, and every claim names code that makes it true
 // today. Change the product or the words and the test fails.
 
-import type { SignUpExplainVariant } from "@/lib/signup-cta-copy";
+import type { SignUpExplainVariant, SignUpReason } from "@/lib/signup-cta-copy";
 
 /** What a sentence promises. Each one is pinned to code (SIGNUP_CLAIM_PROOF). */
 export type SignUpClaim = "google-only-no-forms" | "exam-set-up" | "tests-saved" | "tutor-memory" | "chats-saved" | "school-practice-saved" | "guest-chat-kept";
@@ -78,6 +78,21 @@ export const SIGNUP_CLAIM_SHORT_PHRASE_EN: Readonly<Record<SignUpClaim, string |
   "chats-saved": "tutor chats are saved",
   "school-practice-saved": "practice scores are saved",
   "guest-chat-kept": "This chat is saved to your account",
+};
+
+/** The reason lines beside buttons whose old label carried the reason
+ *  (signUpReason, 2 Oct 2026): the claims each makes — the same list, no new
+ *  kind of promise — and the English words it says them with. */
+export const SIGNUP_REASON_CLAIMS: Readonly<Record<SignUpReason, { claims: readonly SignUpClaim[]; says: string; needs: { file: string; has: string } }>> = {
+  // "to write this paper": a guest cannot open a mock — the page shows the sign-in gate.
+  writePaper: { claims: ["tests-saved"], says: "your score is saved to your account", needs: { file: "src/app/mocks/[id]/page.tsx", has: "<MockGate" } },
+  // Shown by the cutoff page only where the exam has practice.
+  fullMocks: { claims: ["tests-saved"], says: "full mocks with your scores saved", needs: { file: "src/app/exams/[code]/cutoff/page.tsx", has: "<AnonExamNudge" } },
+  // The home page's vacancies rail: the general caption's two claims after the rail's own question
+  // (the link returns to /dashboard — no exam is named).
+  vacancies: { claims: ["tests-saved", "chats-saved"], says: "Your tests and tutor chats are saved", needs: { file: "src/components/VacancyExplorer.tsx", has: 'signUpReason(locale, "vacancies")' } },
+  // The hub's "try one question" card: mocks are Attempt rows (ADAPTIVE is a mock kind), weak topics the WeaknessMap.
+  tryOne: { claims: ["tests-saved"], says: "adaptive mocks with your scores saved", needs: { file: "prisma/schema.prisma", has: "ADAPTIVE // AI-generated based on weakness map" } },
 };
 
 /** Words the explanation may never use (founder brief said "super

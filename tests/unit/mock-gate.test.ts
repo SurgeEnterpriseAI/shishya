@@ -378,7 +378,7 @@ describe("sign-in is the main action on practice surfaces; no question after it"
     expect(src).not.toContain("window.location.href = `/exams/${examCode}/quiz`");
   });
 
-  it("the exam hub: no tour overlay; the free sign-in is the filled button, the quiz the outlined one beside it", () => {
+  it("the exam hub: no tour overlay; the free sign-up is the first button, the quiz a quiet outlined one beside it", () => {
     const hub = read("src/app/exams/[code]/page.tsx");
     expect(hub).not.toContain("<PageTour");
     const box = hub.slice(hub.indexOf("{!userId && hasContent && ("));
@@ -390,13 +390,17 @@ describe("sign-in is the main action on practice surfaces; no question after it"
     // one shared button — Google's white button with the "G" (their guidelines
     // do not allow the "G" on our saffron) — still FIRST, the quiz still the
     // outlined button beside it. Its old label left the hub copy.
-    // Review, same day: Google's DARK button (the filled one — founder, 28 Sep:
-    // sign-in filled, quiz outlined) and the tooltip above it (side="top").
+    // Review, same day: the tooltip above it (side="top").
+    // 2 Oct 2026 (night — one look everywhere): Google's LIGHT button, not the
+    // dark one; the quiz beside it is a quiet 1 px ink outline (it was a 2 px
+    // saffron outline, louder than a white button), so the sign-up stays the
+    // main action — founder, 28 Sep.
     expect(box.slice(signIn, quiz)).toMatch(/<HubSignInLink\s+examCode=\{exam\.code\}\s+exam=\{exam\.shortName\}\s+locale=\{locale\}/);
     expect(read("src/app/exams/[code]/StartMockButton.tsx")).toContain(
-      'return <SignUpButton href={href} surface="hub-box" locale={locale} exam={exam} examCode={examCode} practice theme="dark" side="top" block className="sm:w-auto" beaconProps={{ examCode }} />;',
+      'return <SignUpButton href={href} surface="hub-box" locale={locale} exam={exam} examCode={examCode} practice side="top" block className="sm:w-auto" beaconProps={{ examCode }} />;',
     );
-    expect(box.slice(quiz, quiz + 400)).toContain("border-2 border-saffron-500");
+    expect(box.slice(quiz, quiz + 400)).toContain("border border-ink-300 bg-white");
+    expect(box.slice(quiz, quiz + 400)).not.toMatch(/border-2|saffron/);
     expect(Object.keys(examHubCopy("en"))).not.toContain("coachButton");
   });
 

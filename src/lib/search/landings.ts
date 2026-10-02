@@ -160,7 +160,11 @@ export const SEARCH_LANDINGS: readonly SearchLanding[] = [
   },
   { path: "/soft-skills", section: "careers", title: "Soft skills", sub: "Communication and interview skills", terms: ["soft skills", "communication skills", "interview skills", "english speaking", "personality development"] },
   { path: "/career-map", section: "careers", title: "Career map", sub: "How careers connect, from school onwards", terms: ["career map", "career paths", "career tree", "career roadmap"] },
-  { path: "/login", section: "more", title: "Sign in", sub: "Sign in or create a free account", terms: ["sign in", "sign up", "login", "log in", "register", "create account", "signup", "साइन अप"] },
+  // 2 Oct 2026 (founder: every call to sign in reads "Sign up with Google"): the row's words, not its
+  // look — it stays a search result. It was "Sign in" / "Sign in or create a free account". Google is
+  // the only way in (src/lib/auth.ts), for a new student and for a member alike. Same terms: "sign in"
+  // and "login" still find it.
+  { path: "/login", section: "more", title: "Sign up with Google", sub: "Free, with your Google account — no forms. Members sign in here too.", terms: ["sign in", "sign up", "login", "log in", "register", "create account", "signup", "साइन अप"] },
   { path: "/discussions", section: "more", title: "Discussions", sub: "Student discussion threads", terms: ["discussions", "discussion", "discussion forum", "forum", "doubts forum"] },
   { path: "/editorial-policy", section: "more", title: "Editorial policy", sub: "How Shishya sources and checks its data", terms: ["editorial policy", "how shishya verifies", "data sources", "sources"] },
   // 27 Sep 2026: the public transparency pages.

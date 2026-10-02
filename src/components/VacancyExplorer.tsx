@@ -9,9 +9,31 @@
 //
 // All data is server-loaded and passed in; the drill-down is pure client
 // state (no fetch), so the whole thing is crawlable and instant.
+//
+// 2 Oct 2026 (founder: every sign-in call is the white Google button, with
+// a line saying why): the footer's green bar "Prepping for one of these?
+// Sign in free →" is now ONE plain line — that question and what an account
+// keeps ("Prepping for one of these? Your tests and tutor chats are saved.",
+// signUpReason "vacancies": the general words, because the link returns to
+// /dashboard, not to one exam) — and the one shared "Sign up with Google"
+// button under it. The line is the button's reason (explain="own"): no
+// separate caption, because this panel sits in a fixed-height rail on the
+// home page (src/components/home/HomeRails.tsx) and every line of the
+// footer is taken from the scrolling list above it (review, same day: with
+// a line, a button, a caption and an outlined link the footer was about
+// 156 px and one exam row was left in view). The sign-up is FIRST in the
+// footer; "Find my exams" follows it as a small text link (it was a filled
+// saffron bar above the sign-in). Nothing was removed and both links go
+// where they went. `locale`: the page's language — the home page's /hi and
+// /te twins get the line and the button in Hindi and Telugu, like the other
+// sign-up button on that page. Counting: the button's own "signin-click"
+// under door id "home-vacancies" (it was "link"), and the older
+// "explorer-nudge-click" still fires on the same click.
 
 import { useState } from "react";
 import Link from "next/link";
+import { SignUpButton } from "@/components/SignUpButton";
+import { signUpReason } from "@/lib/signup-cta-copy";
 import type { VacancyExplorer as VData, VacExam } from "@/lib/vacancy-explorer";
 
 const fmt = (n: number) => n.toLocaleString("en-IN");
@@ -54,7 +76,7 @@ function nudgeClick() {
   }
 }
 
-export function VacancyExplorerPanel({ data, signedIn }: { data: VData; signedIn?: boolean }) {
+export function VacancyExplorerPanel({ data, signedIn, locale }: { data: VData; signedIn?: boolean; locale?: string | null }) {
   const [tab, setTab] = useState<Tab>("national");
   const [openState, setOpenState] = useState<string | null>(null);
 
@@ -189,25 +211,39 @@ export function VacancyExplorerPanel({ data, signedIn }: { data: VData; signedIn
 
       {/* Footer → the personalized finder (+ anon signup nudge) */}
       <div className="border-t border-ink-200 bg-white px-4 py-3">
-        <Link href="/find-your-exam" className="block rounded-lg bg-saffron-500 px-3 py-2 text-center text-xs font-bold text-white hover:bg-saffron-600">
+        {signedIn === false && (
+          <div className="mb-1">
+            <p data-su-reason className="text-center text-xs text-ink-700">{signUpReason(locale, "vacancies")}</p>
+            <SignUpButton
+              href={`/login?callbackUrl=${encodeURIComponent("/dashboard")}&from=home-vacancies`}
+              surface="home-vacancies"
+              locale={locale}
+              explain="own"
+              side="top"
+              block
+              center
+              className="mt-1.5"
+              onSignInClick={nudgeClick}
+            />
+          </div>
+        )}
+        <Link
+          href="/find-your-exam"
+          className={
+            signedIn === false
+              ? "block py-1 text-center text-xs font-semibold text-saffron-700 underline-offset-2 hover:underline"
+              : "block rounded-lg bg-saffron-500 px-3 py-2 text-center text-xs font-bold text-white hover:bg-saffron-600"
+          }
+        >
           Which fit YOU? Find my exams →
         </Link>
-        {signedIn === false && (
-          <a
-            href={`/login?callbackUrl=${encodeURIComponent("/dashboard")}`}
-            onClick={nudgeClick}
-            className="mt-2 block rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-center text-xs font-bold text-emerald-800 hover:bg-emerald-100"
-          >
-            Prepping for one of these? Sign in free →
-          </a>
-        )}
       </div>
     </div>
   );
 }
 
 /** Desktop fixed left rail. */
-export function VacancyExplorerSidebar({ data, signedIn }: { data: VData; signedIn?: boolean }) {
+export function VacancyExplorerSidebar({ data, signedIn, locale }: { data: VData; signedIn?: boolean; locale?: string | null }) {
   // Same empty-fallback guard as the panel — hide the whole rail
   // (header included) rather than a "Government vacancies" box of zeros.
   if (data.examCount === 0) return null;
@@ -225,7 +261,7 @@ export function VacancyExplorerSidebar({ data, signedIn }: { data: VData; signed
           Find mine
         </Link>
       </div>
-      <VacancyExplorerPanel data={data} signedIn={signedIn} />
+      <VacancyExplorerPanel data={data} signedIn={signedIn} locale={locale} />
     </aside>
   );
 }

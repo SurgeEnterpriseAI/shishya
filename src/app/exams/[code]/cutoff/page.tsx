@@ -251,6 +251,7 @@ async function loadExamWeekView(
               few: t("ew.verdict.few"),
               err: t("tracker.alert.err"),
               nudge: t("ew.signup.nudge"),
+              continue: t("login.continue"),
               shareTally: t("ew.share.tally"),
               shareCta: t("ew.share.cta"),
             },
@@ -540,6 +541,7 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
                   signedIn={view.signedIn}
                   examShort={short}
                   shareUrl={url}
+                  locale={locale}
                 />
               </div>
             )}
@@ -760,7 +762,8 @@ export default async function CutoffPage({ params }: { params: Promise<{ code: s
             headline={fill(t("cutoff.nudge.title"), { exam: short })}
             body={t("cutoff.nudge.body")}
             cta={t("cutoff.nudge.cta")}
-            signInLabel={t("cutoff.nudge.signin")}
+            locale={locale}
+            examShort={short}
             surface="cutoff-nudge"
           />
         )}

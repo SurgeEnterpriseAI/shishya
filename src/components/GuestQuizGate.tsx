@@ -78,11 +78,22 @@ export function GateSignInButton({
       {inAppHint && <InAppBrowserHint />}
       {/* 2 Oct 2026: the one shared "Sign up with Google" button and its
           explanation. practice: a gate only exists where the exam has a mock
-          or a builder. Review, same day: Google's DARK button — the gate's
-          sign-in is its main action and stays the filled one above the
-          outlined "try 5 questions" — and the tooltip opens ABOVE it (the
-          quiz card, or the result screen's tutor button, sits under it). */}
-      <div onClickCapture={() => signinBeacon(surface, { ...beaconProps, via: "google" })}>
+          or a builder. Review, same day: the tooltip opens ABOVE it (the
+          quiz card, or the result screen's tutor button, sits under it).
+          One look everywhere: Google's LIGHT button. The gate's sign-in
+          stays its main action — it is first, and the "try 5 questions"
+          button in the card below is a quiet 1 px ink outline.
+          Counting (review, same day): the beacon goes out only for a click
+          ON THE BUTTON. The wrapper also holds the caption under the button
+          (on every device now) and the frame's top margin; a tap or a text
+          selection there used to be counted as a sign-in click. A disabled
+          button (the hand-off is under way) is not counted again. */}
+      <div
+        onClickCapture={(e) => {
+          const button = (e.target as Element | null)?.closest?.("button");
+          if (button && !(button as HTMLButtonElement).disabled) signinBeacon(surface, { ...beaconProps, via: "google" });
+        }}
+      >
         <GoogleSignInButton
           callbackUrl={callbackUrl}
           locale={locale}
@@ -92,7 +103,6 @@ export function GateSignInButton({
           practice
           surface={surface}
           side="top"
-          theme="dark"
           className={className}
         />
       </div>
@@ -119,6 +129,7 @@ export function GuestQuizGate({
   signInCallbackUrl,
   beacons,
   signinSurface,
+  continueLabel,
   beaconProps,
   inAppHint = true,
 }: {
@@ -133,6 +144,11 @@ export function GuestQuizGate({
   beacons: { start: string; done: string };
   /** The result screen's sign-in door, e.g. "mock-gate-quiz-end". */
   signinSurface: SigninSurface;
+  /** t("login.continue") — the result screen's button in a language other
+   *  than en / hi / te reads that language's "Continue with Google", like
+   *  the gate's top button, instead of an English "Sign up with Google".
+   *  (Such a language gets no caption: its words exist in three languages.) */
+  continueLabel?: string;
   beaconProps: BeaconProps;
   /** Passed to the result screen's GateSignInButton (default on). */
   inAppHint?: boolean;
@@ -158,7 +174,7 @@ export function GuestQuizGate({
             setOpen(true);
             ctaBeacon(beacons.start, { ...beaconProps, n });
           }}
-          className="mt-3 w-full rounded-lg border border-saffron-300 bg-saffron-50 px-4 py-2.5 text-sm font-semibold text-saffron-800 transition-colors hover:bg-saffron-100 sm:w-auto"
+          className="mt-3 w-full rounded-lg border border-ink-300 bg-white px-4 py-2.5 text-sm font-semibold text-ink-800 transition-colors hover:bg-ink-50 sm:w-auto"
         >
           {fillTemplate(copy.start, vars)}
         </button>
@@ -179,6 +195,7 @@ export function GuestQuizGate({
               <GateSignInButton
                 callbackUrl={signInCallbackUrl}
                 locale={locale}
+                continueLabel={continueLabel}
                 exam={quiz.examShort}
                 surface={signinSurface}
                 beaconProps={beaconProps}

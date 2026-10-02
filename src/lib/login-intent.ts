@@ -23,7 +23,13 @@
 //     topics, ?start=diagnostic, or the exam hub itself (where its mock
 //     buttons live) — never /syllabus, /cutoff or another sub-page;
 //   • coach and "Welcome back" are anchored path prefixes (/mentor is the
-//     desk, /mentors is not).
+//     desk, /mentors is not);
+//   • from=live-test (2 Oct 2026): /live-test's guest button reads "Sign up
+//     with Google" under "Sign up to write this paper". Its callback is
+//     /live-test, which the "Welcome back" rule matches — and that card told a
+//     NEW student "your mocks, plan and report are all still here" over a
+//     "Continue with Google" button. That door is a sign-up: it gets the
+//     general card. A /live-test callback from anywhere else is unchanged.
 
 import { isSchoolSignInCallback } from "@/lib/school/student-classes";
 
@@ -60,6 +66,8 @@ export function loginIntent(callbackUrl: string, from?: string | null): LoginInt
   // 27 Sep 2026: the site-wide sign-up offer (from=pitch) and the sign-up wall
   // experiment (from=wall) are general sign-ins too — no "your mock is one tap away".
   const fromHeader = from === "header" || from === "pitch" || from === "wall";
+  // A guest's "Sign up with Google" on /live-test: a sign-up, never "Welcome back".
+  const signUpDoor = from === "live-test";
   const m = cb.match(EXAM_CODE_RE);
   const examCode = m ? m[1] : null;
   if (isSchoolSignInCallback(callbackUrl)) return { kind: "school", examCode, tryFirst: false };
@@ -72,6 +80,6 @@ export function loginIntent(callbackUrl: string, from?: string | null): LoginInt
   if (!fromHeader && gated) return { kind: "mock", examCode, tryFirst: !!examCode };
   if (CHAT_RE.test(cb)) return { kind: "chat", examCode: null, tryFirst: false };
   if (!fromHeader && COACH_RE.test(cb)) return { kind: "coach", examCode, tryFirst: false };
-  if (!fromHeader && RETURN_RE.test(cb)) return { kind: "return", examCode, tryFirst: false };
+  if (!fromHeader && !signUpDoor && RETURN_RE.test(cb)) return { kind: "return", examCode, tryFirst: false };
   return { kind: null, examCode, tryFirst: false };
 }

@@ -190,13 +190,13 @@ export function ChallengeLanding({
         <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-start">
           {/* 2 Oct 2026 (founder, standing): the one shared "Sign up with
               Google" button (Google's white button with the "G") and its
-              explanation — a tooltip with a mouse, a caption on a phone. The
+              explanation — a caption on every device, a tooltip with a mouse. The
               sign-in returns to this exam's hub, so the words name the exam;
               a challenge is a quiz, so "tests saved" holds. Always /login
               (not in the skip-/login test); door "challenge-end" (it was
-              counted as a plain "link"). Review, same day: Google's DARK
-              button — it was the filled button beside the outlined "fresh
-              quiz" one — and the tooltip opens ABOVE it. */}
+              counted as a plain "link"). Review, same day: the tooltip
+              opens ABOVE it. One look everywhere: Google's LIGHT button,
+              first, beside a "fresh quiz" link that is a 1 px ink outline. */}
           <SignUpButton
             href={`/login?callbackUrl=${encodeURIComponent(`/exams/${data.examCode}`)}&from=challenge-end`}
             surface="challenge-end"
@@ -204,7 +204,6 @@ export function ChallengeLanding({
             exam={data.examShort}
             examCode={data.examCode}
             practice
-            theme="dark"
             side="top"
             block
             className="flex-1"

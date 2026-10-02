@@ -79,7 +79,8 @@ export function MockGate({
             <p className="mt-3 text-sm text-ink-600">{copy.body}</p>
             {/* 2 Oct 2026 (founder, standing): the one shared "Sign up with
                 Google" button — Google's white button with the "G" — with its
-                explanation (tooltip with a mouse, caption on touch). The
+                explanation (a caption under it on every device, the full
+                sentence as a tooltip with a mouse). The
                 sign-in returns to this mock, so the account is enrolled in
                 the mock's exam and the words name it. A language other than
                 en / hi / te keeps its "Continue with Google" translation. */}
@@ -112,6 +113,7 @@ export function MockGate({
               signInCallbackUrl={callbackUrl}
               beacons={{ start: "mock-gate-quiz-start", done: "mock-gate-quiz-done" }}
               signinSurface="mock-gate-quiz-end"
+              continueLabel={signInLabel}
               beaconProps={beaconProps}
               inAppHint={false}
             />

@@ -1182,9 +1182,9 @@ export default async function ExamPage({
               {ctaCopy?.coachBodyA ?? H.coachBodyA}<strong>Shishya</strong>{" "}
               {H.coachBodyB}
             </p>
-            <div className="mt-3 flex flex-wrap items-center gap-3">
+            <div className="mt-3 flex flex-wrap items-start gap-3">
               {/* 28 Sep 2026 (founder: the sign-up must be there as it was):
-                  the free sign-in is the filled button again and the quiz the
+                  the free sign-in is the main button again and the quiz the
                   outlined one beside it. 27 Sep had made sign-in a small text
                   link under a filled quiz button — sign-ups that began on a
                   hub went from about 11 a day (21–26 Sep) to 4 (27–28 Sep). */}
@@ -1205,8 +1205,8 @@ export default async function ExamPage({
                   the button is the one shared sign-up button — Google's white
                   button with the "G" (their guidelines do not allow the "G" on
                   our saffron), still first and beside the outlined quiz button.
-                  Its explanation (a tooltip with a mouse, a caption under it on
-                  a phone) names this exam: the sign-in returns to this exam's
+                  Its explanation (a caption under it on every device, a tooltip
+                  with a mouse) names this exam: the sign-in returns to this exam's
                   page, so the account is enrolled in it at sign-up, and the box
                   only shows where the hub has checked questions (hasContent),
                   so "tests saved" holds. Same link, beacon and test arms. */}
@@ -1218,11 +1218,18 @@ export default async function ExamPage({
               />
               {/* Lever #2 — anonymous 5-question diagnostic. Lets a signed-out
                   visitor experience the mock loop before the sign-in. A
-                  proper button with equal visual weight (as a text link it
-                  got ~zero clicks). */}
+                  proper button (as a text link it got ~zero clicks).
+                  2 Oct 2026 (one look for every sign-up button — Google's
+                  white one): this stays a button and stays second, but as a
+                  QUIET 1 px ink outline. Its 2 px saffron outline and bold
+                  saffron text were louder than a white button, and the
+                  sign-up must stay the main action here (28 Sep: hub
+                  sign-ups fell from about 11 a day to 4 when it was not).
+                  44 px tall like the button beside it; the row aligns to the
+                  top because a caption sits under the sign-up button. */}
               <Link
                 href={`/exams/${exam.code}/quiz`}
-                className="inline-flex items-center justify-center rounded-md border-2 border-saffron-500 bg-white px-4 py-2 text-sm font-bold text-saffron-700 transition-colors hover:bg-saffron-50"
+                className="inline-flex min-h-[44px] items-center justify-center rounded-md border border-ink-300 bg-white px-4 py-2 text-sm font-semibold text-ink-800 transition-colors hover:bg-ink-50"
               >
                 Try a free 5-question quiz — no signup →
               </Link>
@@ -1371,6 +1378,7 @@ export default async function ExamPage({
             examCode={exam.code}
             examShortName={exam.shortName}
             topicName={sampleQuestion.topicName}
+            locale={locale}
             question={{
               body: sampleQuestion.body,
               options: sampleQuestion.options,

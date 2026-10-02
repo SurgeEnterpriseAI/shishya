@@ -322,6 +322,7 @@ export function ChatInterface({
   seedScope,
   labels,
   guestSignInHref,
+  guestBanner,
   school,
   resume,
   recentChats,
@@ -348,6 +349,12 @@ export function ChatInterface({
    *  after the second completed reply (11 Sep 2026 signup-leak audit) —
    *  the ask comes after value, and costs no model call. */
   guestSignInHref?: string | null;
+  /** Guest chats only (2 Oct 2026): the line under the page title — "You're
+   *  chatting as a guest. Sign in free to keep your chats …" in the page's
+   *  language — with the shared sign-up button under it. Rendered here, not
+   *  by the server page, so it disappears once a guest says they are under
+   *  13 and so the button steps aside once the save card is up. */
+  guestBanner?: { text: string; locale: string; continueLabel: string } | null;
   /** Set for a school chat — see SchoolChat. */
   school?: SchoolChat | null;
   /** Signed-in: a saved conversation reopened from /chat?session= (30 Sep 2026). */
@@ -876,7 +883,44 @@ export function ChatInterface({
   const showReviewChips =
     langReady && reviewChipsVisible({ reviewMode, school: !!school, busy, closed: capped || under13, messages });
 
+  // The guest has a FINISHED reply — which is when the save card below first
+  // comes up. The reply that is streaming right now (the last message while
+  // busy) does not count: the banner's button used to vanish the moment the
+  // first reply began, and the chat box jumped up under the student's eyes
+  // while they started reading; it now leaves at the same moment the card
+  // appears. Once one reply has finished it stays away (no blink while a
+  // later reply streams).
+  const guestHasReply = messages.some((m, i) => m.role === "assistant" && m.content && !m.failed && !(busy && i === messages.length - 1));
+
   return (
+    <>
+    {/* The guest line under the page title (2 Oct 2026 — it was a sentence
+        with a "Sign in free" link in its middle, rendered by the server
+        page). The sentence is plain text now: it is the reason. Under it,
+        the one shared "Sign up with Google" button (en / hi / te; any other
+        language: its "Continue with Google"), door id "chat-banner" (the
+        link was counted as "link"). Its click keeps the chat on screen for
+        the new account like every /login link on this page (the capture
+        listener above). Never in a school chat; gone — sentence and button —
+        once a guest says they are under 13; and the button steps aside once
+        the save card below offers the same thing (one invitation a screen). */}
+    {guestBanner && guestSignInHref && !school && !under13 && (
+      <div className="mt-2 rounded-md bg-saffron-50 px-3 py-2 ring-1 ring-saffron-200">
+        <p data-su-reason className="text-xs text-ink-600">{guestBanner.text}</p>
+        {!guestHasReply && (
+          <SignUpButton
+            href={`${guestSignInHref}&from=chat-banner`}
+            surface="chat-banner"
+            locale={guestBanner.locale}
+            continueLabel={guestBanner.continueLabel}
+            exam={examShortName}
+            examCode={examCode}
+            explain="own"
+            className="mt-2"
+          />
+        )}
+      </div>
+    )}
     <div className="mt-4 flex flex-1 flex-col rounded-md border border-ink-200 bg-white">
       {/* A reopened saved chat (30 Sep 2026): when it was last active, and a way to start fresh. */}
       {resume && (
@@ -1080,14 +1124,15 @@ export function ChatInterface({
                 carried), and its button is the one shared sign-up button —
                 Google's white button with the "G", full width. With a mouse,
                 hover or keyboard focus opens the explanation (this chat is
-                kept, the tutor remembers); on touch the line above says it.
+                kept, the tutor remembers); on every device the line above
+                says it (explain="own": no second caption).
                 Still /login (not in the skip-/login test), the same carry-over
                 and the same "chat-guest-save" beacon; its sign-in door is now
                 named "chat-save" (it was counted as a plain "link"). Review,
                 same day: the tooltip opens ABOVE the button — this card is
                 the last thing in the scrolling message pane, and a tooltip
                 under it was cut off by the pane's edge. */}
-            <p className="text-center text-sm font-semibold text-ink-900">
+            <p data-su-reason className="text-center text-sm font-semibold text-ink-900">
               {examCode == null ? SAVE_COPY[navLang].buttonGeneral : SAVE_COPY[navLang].button}
             </p>
             <SignUpButton
@@ -1095,7 +1140,7 @@ export function ChatInterface({
               surface="chat-save"
               locale={navLang}
               context={{ kind: "tutor" }}
-              explain="tooltip"
+              explain="own"
               side="top"
               block
               className="mt-2"
@@ -1232,5 +1277,6 @@ export function ChatInterface({
       </>
       )}
     </div>
+    </>
   );
 }

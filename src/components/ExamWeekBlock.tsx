@@ -181,6 +181,7 @@ export async function ExamWeekBlock({
     few: t("ew.verdict.few"),
     err: t("tracker.alert.err"),
     nudge: t("ew.signup.nudge"),
+    continue: t("login.continue"),
     shareTally: t("ew.share.tally"),
     shareCta: t("ew.share.cta"),
     sharePre: t("ew.share.pre"),
@@ -446,6 +447,7 @@ export async function ExamWeekBlock({
       shareUrl={localizedUrl(`/exams/${exam.code}`, urlLocale)}
       examDayLabel={dateWithTier(focus, tierWord(tier), locale)}
       surface={surface}
+      locale={locale}
     />
   );
   const estimatorLink = statable ? (
