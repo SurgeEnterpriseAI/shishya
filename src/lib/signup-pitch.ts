@@ -30,6 +30,10 @@
 // Signing up is the button, Google's account chooser and, on a first sign-in,
 // Google's share screen — not one tap — so it now reads "Sign up with your
 // Google account", the words the button's explanation uses.
+// 2 Oct 2026, later (the sentences pass): `lead` and `short` invited a guest
+// to "Sign in once" / "Sign in free" beside a button that says "Sign up with
+// Google"; they say "Sign up with Google once" / "Sign up with Google, free,"
+// now (hi and te the same). Only the verb changed — no point was added.
 //
 // Pure: copy + path rules, imported by client islands and tests.
 
@@ -50,7 +54,7 @@ export interface SignupPitchCopy {
 
 const EN: SignupPitchCopy = {
   title: "Make Shishya yours — free",
-  lead: "Sign in once and Shishya remembers you. Every visit picks up from what you did last:",
+  lead: "Sign up with Google once and Shishya remembers you. Every visit picks up from what you did last:",
   points: [
     "Your home page and dashboard open where you left off — your exams, your last mock, your class.",
     "The AI tutor knows your weak topics and helps you on exactly those.",
@@ -60,12 +64,12 @@ const EN: SignupPitchCopy = {
   privacy: "Free. Sign up with your Google account — we get only your name, email and profile picture. No password, no phone number, no payment. For students 13 and above.",
   cta: signUpLabel("en"),
   later: "Maybe later",
-  short: "Sign in free and Shishya remembers you — your exams, weak topics, saved results and a personal plan.",
+  short: "Sign up with Google, free, and Shishya remembers you — your exams, weak topics, saved results and a personal plan.",
 };
 
 const HI: SignupPitchCopy = {
   title: "Shishya को अपना बनाइए — मुफ़्त",
-  lead: "एक बार साइन इन कीजिए, Shishya आपको याद रखेगा। हर बार वहीं से शुरू जहाँ आपने छोड़ा था:",
+  lead: "एक बार Google से साइन अप करें, Shishya आपको याद रखेगा। हर बार वहीं से शुरू जहाँ आपने छोड़ा था:",
   points: [
     "आपका होम पेज और डैशबोर्ड वहीं खुलते हैं जहाँ आपने छोड़ा — आपकी परीक्षाएँ, आपका पिछला मॉक, आपकी कक्षा।",
     "AI ट्यूटर आपके कमज़ोर टॉपिक जानता है और ठीक उन्हीं पर मदद करता है।",
@@ -75,12 +79,12 @@ const HI: SignupPitchCopy = {
   privacy: "मुफ़्त। अपने Google अकाउंट से साइन अप — हमें केवल आपका नाम, ईमेल और प्रोफ़ाइल फ़ोटो मिलती है। न पासवर्ड, न फ़ोन नंबर, न भुगतान। 13 साल और उससे बड़े विद्यार्थियों के लिए।",
   cta: signUpLabel("hi"),
   later: "बाद में",
-  short: "मुफ़्त साइन इन कीजिए, Shishya आपको याद रखेगा — आपकी परीक्षाएँ, कमज़ोर टॉपिक, सेव परिणाम और आपका अपना प्लान।",
+  short: "Google से मुफ़्त साइन अप करें, Shishya आपको याद रखेगा — आपकी परीक्षाएँ, कमज़ोर टॉपिक, सेव परिणाम और आपका अपना प्लान।",
 };
 
 const TE: SignupPitchCopy = {
   title: "Shishya ను మీదిగా చేసుకోండి — ఉచితం",
-  lead: "ఒక్కసారి సైన్ ఇన్ చేస్తే Shishya మిమ్మల్ని గుర్తుంచుకుంటుంది. ప్రతిసారీ మీరు ఆపిన చోటు నుంచే:",
+  lead: "ఒక్కసారి Google తో సైన్ అప్ చేస్తే Shishya మిమ్మల్ని గుర్తుంచుకుంటుంది. ప్రతిసారీ మీరు ఆపిన చోటు నుంచే:",
   points: [
     "మీ హోమ్ పేజీ, డ్యాష్‌బోర్డ్ మీరు ఆపిన చోటే తెరుచుకుంటాయి — మీ పరీక్షలు, మీ చివరి మాక్, మీ తరగతి.",
     "AI ట్యూటర్‌కు మీ బలహీన టాపిక్‌లు తెలుసు, సరిగ్గా వాటిపైనే సహాయం చేస్తుంది.",
@@ -90,7 +94,7 @@ const TE: SignupPitchCopy = {
   privacy: "ఉచితం. మీ Google అకౌంట్‌తో సైన్ అప్ — మాకు మీ పేరు, ఈమెయిల్, ప్రొఫైల్ ఫోటో మాత్రమే వస్తాయి. పాస్‌వర్డ్ లేదు, ఫోన్ నంబర్ లేదు, చెల్లింపు లేదు. 13 ఏళ్లు, ఆపై వయసు విద్యార్థుల కోసం.",
   cta: signUpLabel("te"),
   later: "తర్వాత",
-  short: "ఉచితంగా సైన్ ఇన్ చేస్తే Shishya మిమ్మల్ని గుర్తుంచుకుంటుంది — మీ పరీక్షలు, బలహీన టాపిక్‌లు, సేవ్ అయిన ఫలితాలు, మీ సొంత ప్లాన్.",
+  short: "Google తో ఉచితంగా సైన్ అప్ చేస్తే Shishya మిమ్మల్ని గుర్తుంచుకుంటుంది — మీ పరీక్షలు, బలహీన టాపిక్‌లు, సేవ్ అయిన ఫలితాలు, మీ సొంత ప్లాన్.",
 };
 
 export function signupPitchCopy(locale: string | null | undefined): SignupPitchCopy {

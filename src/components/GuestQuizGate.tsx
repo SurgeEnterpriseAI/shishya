@@ -41,6 +41,7 @@ import type { ChallengeLabels, QuizLabels } from "@/lib/challenge-copy";
 import { fillTemplate } from "@/lib/i18n";
 import { ctaBeacon } from "@/lib/cta-beacon";
 import { signinBeacon, type SigninSurface } from "@/lib/signin-cta";
+import { isSignUpLocale } from "@/lib/signup-cta-copy";
 
 type BeaconProps = { examCode: string; mockId?: string };
 
@@ -75,7 +76,10 @@ export function GateSignInButton({
 }) {
   return (
     <>
-      {inAppHint && <InAppBrowserHint />}
+      {/* signIn (2 Oct 2026 review): in a language other than en / hi / te the
+          button below reads that language's "Continue with Google", so the
+          escape line ends "then sign in with Google", not "sign up". */}
+      {inAppHint && <InAppBrowserHint signIn={!!continueLabel && !isSignUpLocale(locale)} />}
       {/* 2 Oct 2026: the one shared "Sign up with Google" button and its
           explanation. practice: a gate only exists where the exam has a mock
           or a builder. Review, same day: the tooltip opens ABOVE it (the

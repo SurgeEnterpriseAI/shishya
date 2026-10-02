@@ -92,7 +92,7 @@ export function ExamNightFacts({
     tally: t("ew.verdict.tally"),
     few: t("ew.verdict.few"),
     err: t("tracker.alert.err"),
-    nudge: t("ew.signup.nudge"),
+    nudge: true,
     continue: t("login.continue"),
     shareTally: t("ew.share.tally"),
     shareCta: t("ew.share.cta"),

@@ -350,9 +350,10 @@ describe("B. every clickable call to a guest to sign in is the shared button", (
   it("the calls that are NOT links are written down: one search result row, and sentences with nothing to press", () => {
     // The site search answers "sign in" / "login" with a result row that opens /login — a result, not a pill.
     expect((read("src/lib/search/landings.ts").match(/path: "\/login"/g) ?? []).length).toBe(1);
-    // The guest tutor's "not available in this browser — sign in to use the tutor" is a sentence in an error box;
+    // The guest tutor's "not available in this browser — sign up with Google to use the tutor" is a sentence in an error box;
     // the header's button is on screen.
-    expect(read("src/app/chat/ChatInterface.tsx")).toContain("Sign in (free) to use the tutor.");
+    // (2 Oct 2026, the sentences pass: it says "Sign up with Google (free)" — the label comes from the copy module.)
+    expect(read("src/app/chat/ChatInterface.tsx")).toContain('${signUpLabel("en")} (free) to use the tutor.`,');
   });
 });
 
@@ -852,8 +853,8 @@ describe("G. honesty: the new reason lines say only what the code backs; lines t
         expect(d[k], `${l}/${k}`).not.toMatch(/one tap|एक टैप|ఒక్క ట్యాప్/i);
       }
     }
-    expect(i18nDict.en["login.intent.mock.h1"]).toBe("Your mock is one sign-in away");
-    expect(i18nDict.en["login.intent.mock.h1Exam"]).toBe("Your {exam} mock is one sign-in away");
+    expect(i18nDict.en["login.intent.mock.h1"]).toBe("Your mock is one sign-up away");
+    expect(i18nDict.en["login.intent.mock.h1Exam"]).toBe("Your {exam} mock is one sign-up away");
     // The plan needs the coach's three questions after sign-in: the heading says "to start it", not "one tap away".
     expect(i18nDict.en["login.intent.coach.h1"]).toBe("Your free day-by-day plan — sign up to start it");
     // The heading is what stands above /login's button for a mock, a PYQ set or a hub's practice.

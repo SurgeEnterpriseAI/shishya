@@ -211,7 +211,7 @@ describe("English is unchanged — /ideas (i18n.6)", () => {
     );
     expect(C.openHeading).toBe("Still open");
     expect(C.upvoteHint).toBe("Upvote the ones you want built next.");
-    expect(C.upvoteHintSignedOut).toBe("Sign in to upvote the ones you want built next.");
+    expect(C.upvoteHintSignedOut).toBe("Sign up with Google to upvote the ones you want built next.");
     expect(C.emptyOpen).toBe("No open ideas in this area. Suggest one from the pill at the bottom-right of any page.");
     expect(C.footer.replace("{built}", "3").replace("{open}", "12")).toBe("3 built · 12 open shown.");
   });
@@ -222,7 +222,7 @@ describe("English is unchanged — /ideas (i18n.6)", () => {
     expect(card.votesClosedMany.replace("{n}", "4")).toBe("4 upvotes, voting closed");
     expect(card.removeUpvote).toBe("Remove your upvote");
     expect(card.upvoteThis).toBe("Upvote this idea");
-    expect(card.signInToUpvote).toBe("Sign in to upvote");
+    expect(card.signInToUpvote).toBe("Sign up with Google to upvote");
     expect(card.showMore).toBe("Show more");
     expect(card.showLess).toBe("Show less");
     expect(card.whatWeBuilt).toBe("What we built:");

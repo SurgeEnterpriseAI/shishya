@@ -184,6 +184,7 @@ export default async function MockPlayerPage({
         callbackUrl={gateCallbackPath(guestMock.id, sp)}
         signInLabel={t("login.continue")}
         freeLine={t("login.freeLine")}
+        memberLine={t("login.member")}
         copy={mockGateCopy(locale)}
         guestQuiz={guestQuiz}
         locale={locale}

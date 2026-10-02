@@ -23,6 +23,7 @@ import { prisma } from "@/lib/db/prisma";
 import { REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
 import { unstable_cache } from "next/cache";
 import { SignUpButton } from "@/components/SignUpButton";
+import { signUpLabel } from "@/lib/signup-cta-copy";
 
 export const revalidate = 86_400; // 24h
 
@@ -272,7 +273,7 @@ export default async function PersonaPage({
             Start with any exam here — free
           </h3>
           <p className="mt-2 text-sm text-ink-700">
-            Exam pages with practice questions have a free 5-question quiz with no sign-in. Sign in (free, for ages 13
+            Exam pages with practice questions have a free 5-question quiz with no sign-in. {signUpLabel("en")} (free, for ages 13
             and above) when you want your scores and a day-by-day plan saved. Shishya is free: it
             is built and paid for by Surge Software Solutions Pvt Ltd, not by students.
           </p>

@@ -47,8 +47,12 @@
 // early line's as Google's white button with the "G". The bar's was our
 // saffron button with text only until that evening; it is Google's white
 // button with the "G" too now (founder: not "the orange color one"), with
-// the label on two lines so the bar's line keeps its room. The lines beside
-// them are unchanged.
+// the label on two lines so the bar's line keeps its room.
+// 2 Oct 2026, later (the sentences pass): the early line's own sentence
+// invited a guest to "Sign in free — …" above a button that says "Sign up
+// with Google". It now says "Sign up with Google, free — …" (hi and te the
+// same, built on the label's words). Only the verb changed: what Shishya
+// keeps is word for word what it was. The bar's line never named a verb.
 //
 // Pure: copy + path rules + the trigger, imported by client islands, pages
 // and tests. No React, no DOM.
@@ -77,28 +81,28 @@ export interface SignupLineCopy {
 const LINE = {
   en: {
     leadExam: "Preparing for {exam}?",
-    lineExam: "Sign in free — Shishya keeps your {exam} mocks, scores and weak topics, and picks up where you left off next time.",
-    lineExamNoPractice: "Sign in free — Shishya keeps {exam} as your exam and picks up where you left off next time.",
+    lineExam: "Sign up with Google, free — Shishya keeps your {exam} mocks, scores and weak topics, and picks up where you left off next time.",
+    lineExamNoPractice: "Sign up with Google, free — Shishya keeps {exam} as your exam and picks up where you left off next time.",
     lead: "Make Shishya yours — free.",
-    line: "Sign in and Shishya keeps your exam, your mocks, scores and weak topics, and picks up where you left off next time.",
+    line: "Sign up with Google and Shishya keeps your exam, your mocks, scores and weak topics, and picks up where you left off next time.",
     cta: signUpLabel("en"),
     privacy: "Free · Google shares only your name, email and profile picture · For students 13 and above",
   },
   hi: {
     leadExam: "{exam} की तैयारी कर रहे हैं?",
-    lineExam: "मुफ़्त साइन इन कीजिए — Shishya आपके {exam} मॉक, स्कोर और कमज़ोर टॉपिक सँभालकर रखता है, और अगली बार वहीं से शुरू करता है जहाँ आपने छोड़ा था।",
-    lineExamNoPractice: "मुफ़्त साइन इन कीजिए — Shishya {exam} को आपकी परीक्षा के रूप में सँभालकर रखता है, और अगली बार वहीं से शुरू करता है जहाँ आपने छोड़ा था।",
+    lineExam: "Google से मुफ़्त साइन अप करें — Shishya आपके {exam} मॉक, स्कोर और कमज़ोर टॉपिक सँभालकर रखता है, और अगली बार वहीं से शुरू करता है जहाँ आपने छोड़ा था।",
+    lineExamNoPractice: "Google से मुफ़्त साइन अप करें — Shishya {exam} को आपकी परीक्षा के रूप में सँभालकर रखता है, और अगली बार वहीं से शुरू करता है जहाँ आपने छोड़ा था।",
     lead: "Shishya को अपना बनाइए — मुफ़्त।",
-    line: "साइन इन कीजिए — Shishya आपकी परीक्षा, आपके मॉक, स्कोर और कमज़ोर टॉपिक सँभालकर रखता है, और अगली बार वहीं से शुरू करता है जहाँ आपने छोड़ा था।",
+    line: "Google से साइन अप करें — Shishya आपकी परीक्षा, आपके मॉक, स्कोर और कमज़ोर टॉपिक सँभालकर रखता है, और अगली बार वहीं से शुरू करता है जहाँ आपने छोड़ा था।",
     cta: signUpLabel("hi"),
     privacy: "मुफ़्त · Google से केवल आपका नाम, ईमेल और प्रोफ़ाइल फ़ोटो · 13 साल और उससे बड़े विद्यार्थियों के लिए",
   },
   te: {
     leadExam: "{exam} కి సిద్ధమవుతున్నారా?",
-    lineExam: "ఉచితంగా సైన్ ఇన్ చేయండి — Shishya మీ {exam} మాక్‌లు, స్కోర్లు, బలహీన టాపిక్‌లను దాచి ఉంచుతుంది, తర్వాతిసారి మీరు ఆపిన చోటు నుంచే మొదలుపెడుతుంది.",
-    lineExamNoPractice: "ఉచితంగా సైన్ ఇన్ చేయండి — Shishya {exam} ను మీ పరీక్షగా దాచి ఉంచుతుంది, తర్వాతిసారి మీరు ఆపిన చోటు నుంచే మొదలుపెడుతుంది.",
+    lineExam: "Google తో ఉచితంగా సైన్ అప్ చేయండి — Shishya మీ {exam} మాక్‌లు, స్కోర్లు, బలహీన టాపిక్‌లను దాచి ఉంచుతుంది, తర్వాతిసారి మీరు ఆపిన చోటు నుంచే మొదలుపెడుతుంది.",
+    lineExamNoPractice: "Google తో ఉచితంగా సైన్ అప్ చేయండి — Shishya {exam} ను మీ పరీక్షగా దాచి ఉంచుతుంది, తర్వాతిసారి మీరు ఆపిన చోటు నుంచే మొదలుపెడుతుంది.",
     lead: "Shishya ను మీదిగా చేసుకోండి — ఉచితం.",
-    line: "సైన్ ఇన్ చేయండి — Shishya మీ పరీక్షను, మీ మాక్‌లు, స్కోర్లు, బలహీన టాపిక్‌లను దాచి ఉంచుతుంది, తర్వాతిసారి మీరు ఆపిన చోటు నుంచే మొదలుపెడుతుంది.",
+    line: "Google తో సైన్ అప్ చేయండి — Shishya మీ పరీక్షను, మీ మాక్‌లు, స్కోర్లు, బలహీన టాపిక్‌లను దాచి ఉంచుతుంది, తర్వాతిసారి మీరు ఆపిన చోటు నుంచే మొదలుపెడుతుంది.",
     cta: signUpLabel("te"),
     privacy: "ఉచితం · Google నుంచి మీ పేరు, ఈమెయిల్, ప్రొఫైల్ ఫోటో మాత్రమే · 13 ఏళ్లు, ఆపై వయసు విద్యార్థుల కోసం",
   },

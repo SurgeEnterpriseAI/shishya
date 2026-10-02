@@ -39,6 +39,7 @@ export function MockGate({
   callbackUrl,
   signInLabel,
   freeLine,
+  memberLine,
   copy,
   guestQuiz,
   locale,
@@ -55,6 +56,9 @@ export function MockGate({
   signInLabel: string;
   /** t("login.freeLine") — "{n}" is the language count */
   freeLine: string;
+  /** t("login.member") — "Already have an account? The same button signs
+   *  you in." English in a language that has no such key, like `copy`. */
+  memberLine: string;
   copy: MockGateCopy;
   guestQuiz: GuestQuizEmbed | null;
   /** The page's language (2 Oct 2026: the shared sign-up label follows it). */
@@ -93,6 +97,14 @@ export function MockGate({
               beaconProps={beaconProps}
               className="mt-4"
             />
+            {/* 2 Oct 2026 (review of the sentences pass): `body` above and the
+                button say "sign up" now, and this page is also where a member
+                lands whose session ran out, or who opens an emailed mock link
+                on a new device. /login's own line tells them the same button
+                signs them in. In every language: where `body` has no words it
+                is the English "Sign up with Google once …", and this line is
+                English there too. */}
+            <p className="mt-1.5 text-xs text-ink-600">{memberLine}</p>
             <p className="mt-2 text-center text-xs text-ink-500">
               {fillTemplate(freeLine, { n: INDIAN_LANGUAGE_COUNT })}
             </p>

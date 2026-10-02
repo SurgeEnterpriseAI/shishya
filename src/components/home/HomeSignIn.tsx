@@ -25,11 +25,17 @@
 import Link from "next/link";
 import { SignUpButton } from "@/components/SignUpButton";
 import { homeCopyLocaleOf } from "@/lib/home-ask-link";
+import { signUpLabel } from "@/lib/signup-cta-copy";
 import type { HomeDoorsCopy } from "@/lib/home-doors-copy";
 
 export function HomeSignIn({ copy, signedIn }: { copy: HomeDoorsCopy; signedIn: boolean }) {
+  // 2 Oct 2026 (the sentences pass): the section's name for a screen reader
+  // was copy.signin.cta — "Sign in free", the old button's words. A guest's
+  // section is named by the button it holds now ("Sign up with Google", in
+  // the page's language); a member's section holds one "Welcome back" link
+  // and is not named after a sign-up.
   return (
-    <section className="mt-11 text-center" aria-label={copy.signin.cta}>
+    <section className="mt-11 text-center" aria-label={signedIn ? undefined : signUpLabel(homeCopyLocaleOf(copy))}>
       {signedIn ? (
         <Link href="/today" data-home-cta="welcome-today" className="btn-secondary">
           {copy.signin.back}

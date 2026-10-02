@@ -125,6 +125,7 @@ import {
   type StorageLike,
 } from "@/lib/tutor-unavailable";
 import { SignUpButton } from "@/components/SignUpButton";
+import { signUpLabel } from "@/lib/signup-cta-copy";
 
 // AI unavailable (1 Oct 2026, src/lib/tutor-unavailable.ts): an error event
 // with a "tutor-unavailable…" code shows this chat's own line in the UI
@@ -248,6 +249,13 @@ const SAVE_COPY = {
   },
 } as const;
 
+// 2 Oct 2026 (the sentences pass): `unavailable` told a guest to "Sign in
+// (free)"; it says "Sign up with Google (free)" now, with the label taken
+// from the one module that spells it (signUpLabel) in all three languages.
+// Review, same day: `unavailablePlain` is the same line WITHOUT the
+// invitation — for a school chat (Class 8-12, where no sign-up offer is
+// shown: the banner and the save card are off there) and for a chat the
+// under-13 line has closed.
 // A turn with no reply, a seed held back, and the guest tutor declining a
 // browser it takes for a crawler (24 Sep 2026). The last is signed-out only:
 // signed-in students are never judged by their user-agent. A reply cut off
@@ -258,7 +266,8 @@ const TURN_COPY = {
     incomplete: "Reply incomplete",
     retry: "Retry",
     seedHeld: "You asked this here a little while ago, so it was not sent again. Send it when you want to.",
-    unavailable: "The guest tutor isn't available in this browser. Sign in (free) to use the tutor.",
+    unavailable: `The guest tutor isn't available in this browser. ${signUpLabel("en")} (free) to use the tutor.`,
+    unavailablePlain: "The guest tutor isn't available in this browser.",
     stuck: "Still stuck after chatting with Shishya?",
   },
   hi: {
@@ -266,7 +275,8 @@ const TURN_COPY = {
     incomplete: "जवाब अधूरा रह गया",
     retry: "फिर से भेजें",
     seedHeld: "आपने यह यहाँ कुछ देर पहले पूछा था, इसलिए इसे दोबारा नहीं भेजा गया। जब चाहें, भेज दें।",
-    unavailable: "इस ब्राउज़र में गेस्ट ट्यूटर उपलब्ध नहीं है। ट्यूटर के लिए साइन इन करें (मुफ़्त)।",
+    unavailable: `इस ब्राउज़र में गेस्ट ट्यूटर उपलब्ध नहीं है। ट्यूटर के लिए ${signUpLabel("hi")} (मुफ़्त)।`,
+    unavailablePlain: "इस ब्राउज़र में गेस्ट ट्यूटर उपलब्ध नहीं है।",
     stuck: "Shishya से बात करके भी अटके हैं?",
   },
   te: {
@@ -274,7 +284,8 @@ const TURN_COPY = {
     incomplete: "సమాధానం పూర్తి కాలేదు",
     retry: "మళ్లీ పంపండి",
     seedHeld: "మీరు ఇది ఇక్కడ కొద్దిసేపటి క్రితం అడిగారు, కాబట్టి మళ్లీ పంపలేదు. కావాలనుకున్నప్పుడు పంపండి.",
-    unavailable: "ఈ బ్రౌజర్‌లో గెస్ట్ ట్యూటర్ అందుబాటులో లేదు. ట్యూటర్ కోసం సైన్ ఇన్ చేయండి (ఉచితం).",
+    unavailable: `ఈ బ్రౌజర్‌లో గెస్ట్ ట్యూటర్ అందుబాటులో లేదు. ట్యూటర్ కోసం ${signUpLabel("te")} (ఉచితం).`,
+    unavailablePlain: "ఈ బ్రౌజర్‌లో గెస్ట్ ట్యూటర్ అందుబాటులో లేదు.",
     stuck: "Shishya తో మాట్లాడినా ఇంకా అర్థం కాలేదా?",
   },
 } as const;
@@ -725,7 +736,9 @@ export function ChatInterface({
           detail = j?.error ? ` — ${j.error}` : "";
         } catch {}
         // The guest tutor declined this browser as a crawler (24 Sep 2026).
-        if (res.status === 403 && code === "unavailable") throw new Error(TURN_COPY[uiLang()].unavailable);
+        // 2 Oct 2026 (review): no sign-up invitation in a school chat or once
+        // the under-13 line has closed the chat — the plain line there.
+        if (res.status === 403 && code === "unavailable") throw new Error(TURN_COPY[uiLang()][school || under13Ref.current ? "unavailablePlain" : "unavailable"]);
         throw new Error(`Chat failed (${res.status})${detail}`);
       }
       const reader = res.body.getReader();

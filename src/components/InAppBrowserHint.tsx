@@ -14,13 +14,24 @@
 // quiz under a sign-in); never on a Class 1-7 page.
 // Its taps send CTA_CLICKED "inapp-escape" with the family label and the
 // action — no raw user agent.
+// 2 Oct 2026 (review of the sentences pass): `signIn` — the line's last
+// words follow the button under it (src/lib/in-app-browser.ts).
 
 import { useEffect, useState } from "react";
 import { ctaBeacon } from "@/lib/cta-beacon";
 import { chromeIntentUrl, inAppBody, inAppBrowser, IN_APP_COPY, type InAppFamily } from "@/lib/in-app-browser";
 import { clientUiLocale, pickCopy } from "@/lib/ui-locale-copy";
 
-export function InAppBrowserHint({ className = "" }: { className?: string }) {
+export function InAppBrowserHint({
+  className = "",
+  signIn = false,
+}: {
+  className?: string;
+  /** The Google button under this line reads "Continue with Google", not
+   *  "Sign up with Google" — /login's "Welcome back" card, or a language
+   *  other than en / hi / te. The line then ends "then sign in with Google". */
+  signIn?: boolean;
+}) {
   const [hint, setHint] = useState<null | { family: InAppFamily; intent: string | null; url: string }>(null);
   const [copied, setCopied] = useState(false);
 
@@ -53,7 +64,7 @@ export function InAppBrowserHint({ className = "" }: { className?: string }) {
   return (
     <div role="note" className={`mt-4 rounded-md border border-amber-300 bg-amber-50 px-3 py-2.5 text-sm text-amber-900 ${className}`}>
       <p className="font-semibold">{c.title}</p>
-      <p className="mt-0.5 text-xs leading-relaxed">{inAppBody(c, hint.family)}</p>
+      <p className="mt-0.5 text-xs leading-relaxed">{inAppBody(c, hint.family, signIn)}</p>
       <div className="mt-2 flex flex-wrap items-center gap-2">
         {hint.intent && (
           <a

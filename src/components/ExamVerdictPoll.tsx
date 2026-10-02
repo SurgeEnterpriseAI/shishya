@@ -33,9 +33,11 @@
 //     page the student is on). The old sentence is NOT kept as the reason:
 //     a guest's rating is already stored (the anonymous cookie, below), and
 //     nothing in the code compares a student's rating with an answer key —
-//     it promised what the site does not do. `labels.nudge` still decides
-//     WHETHER the offer shows (the three callers pass it); its words are no
-//     longer printed. Door id "verdict-poll" (it was counted as "link").
+//     it promised what the site does not do. `labels.nudge` is a plain
+//     switch now (true from the three callers). Review, same day: the
+//     dictionary sentence it used to carry (ew.signup.nudge) is deleted,
+//     so nothing can print it. Door id "verdict-poll" (it was counted as
+//     "link").
 //     Review, same day: the poll's own labels come from the server in the
 //     page's language (22 of them), so the button follows it too — `locale`
 //     and `labels.continue` (t("login.continue")): en / hi / te read "Sign up
@@ -71,10 +73,10 @@ export interface ExamVerdictLabels {
   few: string;
   /** Optional failure line; without it a failed tap just re-enables the chips. */
   err?: string;
-  /** ew.signup.nudge — when set, the sign-up button shows once after an
-   *  anonymous vote (needs signedIn=false). Its words are not printed (2 Oct
-   *  2026: see the note at the top). */
-  nudge?: string;
+  /** When true, the sign-up button shows once after an anonymous vote
+   *  (needs signedIn=false). A switch, not words (2 Oct 2026: see the note
+   *  at the top). */
+  nudge?: boolean;
   /** login.continue — the sign-up button's words in a language other than
    *  en / hi / te ("Continue with Google" in that language). */
   continue?: string;

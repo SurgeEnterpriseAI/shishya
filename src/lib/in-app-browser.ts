@@ -17,6 +17,13 @@
 // agents carry none of the markers below. The Android marker is the exact
 // "; wv)" token src/lib/install-offer.ts already relies on.
 //
+// 2 Oct 2026 (the sentences pass, and its review): the line ends "then sign
+// up with Google" (`body`) above a button that reads "Sign up with Google",
+// and keeps its older ending "then sign in with Google" (`bodySignIn`) above
+// one that reads "Continue with Google": /login's "Welcome back" card — a
+// returning member is not signing up — and a language other than en / hi /
+// te. The caller says which (InAppBrowserHint's `signIn`).
+//
 // Pure: detection, the Chrome intent link and the copy (en / hi / te).
 
 import type { CopyLocale } from "@/lib/ui-locale-copy";
@@ -50,8 +57,13 @@ export function chromeIntentUrl(href: string): string | null {
 
 export interface InAppCopy {
   title: string;
-  /** "{app}" — the app's name, or this locale's "this app". */
+  /** "{app}" — the app's name, or this locale's "this app". Ends "then sign
+   *  up with Google": above a button that reads "Sign up with Google". */
   body: string;
+  /** The same line ending "then sign in with Google": above a button that
+   *  reads "Continue with Google" (a returning member's card, or a language
+   *  other than en / hi / te). */
+  bodySignIn: string;
   chrome: string;
   copy: string;
   copied: string;
@@ -69,7 +81,8 @@ const APP_NAME: Readonly<Record<Exclude<InAppFamily, "webview">, string>> = {
 export const IN_APP_COPY: Readonly<Record<CopyLocale, InAppCopy>> = {
   en: {
     title: "Sign-in may not work inside this app",
-    body: "You are reading Shishya inside {app}. Google often blocks sign-in in built-in browsers — open this page in Chrome or Safari, then sign in with Google.",
+    body: "You are reading Shishya inside {app}. Google often blocks sign-in in built-in browsers — open this page in Chrome or Safari, then sign up with Google.",
+    bodySignIn: "You are reading Shishya inside {app}. Google often blocks sign-in in built-in browsers — open this page in Chrome or Safari, then sign in with Google.",
     chrome: "Open in Chrome →",
     copy: "Copy link",
     copied: "Link copied — paste it into Chrome or Safari.",
@@ -77,15 +90,17 @@ export const IN_APP_COPY: Readonly<Record<CopyLocale, InAppCopy>> = {
   },
   hi: {
     title: "इस ऐप के अंदर साइन इन शायद न हो पाए",
-    body: "आप Shishya को {app} के अंदर पढ़ रहे हैं। Google अक्सर ऐप के अंदर वाले ब्राउज़र में साइन इन रोक देता है — यह पेज Chrome या Safari में खोलें, फिर Google से साइन इन करें।",
+    body: "आप Shishya को {app} के अंदर पढ़ रहे हैं। Google अक्सर ऐप के अंदर वाले ब्राउज़र में साइन इन रोक देता है — यह पेज Chrome या Safari में खोलें, फिर Google से साइन अप करें।",
+    bodySignIn: "आप Shishya को {app} के अंदर पढ़ रहे हैं। Google अक्सर ऐप के अंदर वाले ब्राउज़र में साइन इन रोक देता है — यह पेज Chrome या Safari में खोलें, फिर Google से साइन इन करें।",
     chrome: "Chrome में खोलें →",
     copy: "लिंक कॉपी करें",
     copied: "लिंक कॉपी हो गया — इसे Chrome या Safari में पेस्ट करें।",
     thisApp: "इस ऐप",
   },
   te: {
-    title: "ఈ యాప్ లోపల sign in పని చేయకపోవచ్చు",
-    body: "మీరు Shishya ను {app} లోపల చదువుతున్నారు. యాప్‌ల లోపలి బ్రౌజర్‌లో Google తరచూ sign in ను అడ్డుకుంటుంది — ఈ పేజీని Chrome లేదా Safari లో తెరిచి, తర్వాత Google తో sign in చేయండి.",
+    title: "ఈ యాప్ లోపల సైన్ ఇన్ పని చేయకపోవచ్చు",
+    body: "మీరు Shishya ను {app} లోపల చదువుతున్నారు. యాప్‌ల లోపలి బ్రౌజర్‌లో Google తరచూ సైన్ ఇన్‌ను అడ్డుకుంటుంది — ఈ పేజీని Chrome లేదా Safari లో తెరిచి, తర్వాత Google తో సైన్ అప్ చేయండి.",
+    bodySignIn: "మీరు Shishya ను {app} లోపల చదువుతున్నారు. యాప్‌ల లోపలి బ్రౌజర్‌లో Google తరచూ సైన్ ఇన్‌ను అడ్డుకుంటుంది — ఈ పేజీని Chrome లేదా Safari లో తెరిచి, తర్వాత Google తో సైన్ ఇన్ చేయండి.",
     chrome: "Chrome లో తెరవండి →",
     copy: "లింక్ కాపీ చేయండి",
     copied: "లింక్ కాపీ అయింది — దాన్ని Chrome లేదా Safari లో పేస్ట్ చేయండి.",
@@ -93,8 +108,9 @@ export const IN_APP_COPY: Readonly<Record<CopyLocale, InAppCopy>> = {
   },
 };
 
-/** The body with the app named (or "this app" for a bare WebView). */
-export function inAppBody(copy: InAppCopy, family: InAppFamily): string {
+/** The body with the app named (or "this app" for a bare WebView).
+ *  `signIn`: the button under the line reads "Continue with Google". */
+export function inAppBody(copy: InAppCopy, family: InAppFamily, signIn = false): string {
   const app = family === "webview" ? copy.thisApp : APP_NAME[family];
-  return copy.body.replace("{app}", app);
+  return (signIn ? copy.bodySignIn : copy.body).replace("{app}", app);
 }

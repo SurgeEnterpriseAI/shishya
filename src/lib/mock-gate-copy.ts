@@ -35,6 +35,11 @@
 //     the choice are titled as part of a paper — 16 "2025 PYQ-pattern set
 //     (120 of 200 questions)" and AP AMVI's two "Paper-I/II practice set" —
 //     and the hub already says such a set is "not a full paper".
+//   • 2 Oct 2026 (the sentences pass): the button under `body` reads "Sign
+//     up with Google", so `body` and `quizHeading` say "sign up" too (they
+//     said "One Google sign-in …" and "Not ready to sign in?"). Only the
+//     verb changed. "No sign-in" in quizLine and "You're signed in" in the
+//     member's choiceLine describe a state and stay.
 //
 // Product names stay in Latin script: Shishya, Google.
 
@@ -74,8 +79,8 @@ const COPY: Readonly<Record<CopyLocale, MockGateCopy>> = {
   en: {
     kicker: "{exam} mock test",
     size: "{n} questions · {min} min",
-    body: "One Google sign-in (no password) brings you straight back to this mock. Your score and weak topics are saved.",
-    quizHeading: "Not ready to sign in?",
+    body: "Sign up with Google once (no password) and you come straight back to this mock. Your score and weak topics are saved.",
+    quizHeading: "Not ready to sign up?",
     quizLine: "Try {n} {exam} questions now — no sign-in. Each answer shows its solution.",
     quizStart: "Try {n} questions now →",
     choiceHeading: "How do you want to start?",
@@ -90,8 +95,8 @@ const COPY: Readonly<Record<CopyLocale, MockGateCopy>> = {
   hi: {
     kicker: "{exam} मॉक टेस्ट",
     size: "{n} प्रश्न · {min} मिनट",
-    body: "एक बार Google से साइन इन करें (कोई पासवर्ड नहीं) — आप सीधे इसी मॉक पर लौट आएँगे। आपका स्कोर और कमज़ोर टॉपिक सेव रहेंगे।",
-    quizHeading: "अभी साइन इन नहीं करना?",
+    body: "एक बार Google से साइन अप करें (कोई पासवर्ड नहीं) — आप सीधे इसी मॉक पर लौट आएँगे। आपका स्कोर और कमज़ोर टॉपिक सेव रहेंगे।",
+    quizHeading: "अभी साइन अप नहीं करना?",
     quizLine: "अभी {exam} के {n} प्रश्न आज़माएँ — बिना साइन इन। हर उत्तर के साथ उसका हल दिखता है।",
     quizStart: "अभी {n} प्रश्न आज़माएँ →",
     choiceHeading: "आप कैसे शुरू करना चाहेंगे?",
@@ -106,9 +111,9 @@ const COPY: Readonly<Record<CopyLocale, MockGateCopy>> = {
   te: {
     kicker: "{exam} మాక్ టెస్ట్",
     size: "{n} ప్రశ్నలు · {min} నిమిషాలు",
-    body: "ఒకసారి Googleతో sign in చేయండి (పాస్‌వర్డ్ లేదు) — నేరుగా ఇదే మాక్‌కు తిరిగి వస్తారు. మీ స్కోర్, బలహీన టాపిక్‌లు సేవ్ అవుతాయి.",
-    quizHeading: "ఇప్పుడే sign in చేయాలని లేదా?",
-    quizLine: "ఇప్పుడే {n} {exam} ప్రశ్నలు ప్రయత్నించండి — sign in అవసరం లేదు. ప్రతి జవాబుతో దాని పరిష్కారం కనిపిస్తుంది.",
+    body: "ఒకసారి Google తో సైన్ అప్ చేయండి (పాస్‌వర్డ్ లేదు) — నేరుగా ఇదే మాక్‌కు తిరిగి వస్తారు. మీ స్కోర్, బలహీన టాపిక్‌లు సేవ్ అవుతాయి.",
+    quizHeading: "ఇప్పుడే సైన్ అప్ చేయాలని లేదా?",
+    quizLine: "ఇప్పుడే {n} {exam} ప్రశ్నలు ప్రయత్నించండి — సైన్ ఇన్ అవసరం లేదు. ప్రతి జవాబుతో దాని పరిష్కారం కనిపిస్తుంది.",
     quizStart: "ఇప్పుడే {n} ప్రశ్నలు ప్రయత్నించండి →",
     choiceHeading: "ఎలా మొదలుపెట్టాలనుకుంటున్నారు?",
     choiceLine: "మీరు sign in అయ్యారు. మీరు ఒకటి ఎంచుకున్నప్పుడే టైమర్ మొదలవుతుంది.",

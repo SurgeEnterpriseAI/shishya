@@ -28,6 +28,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SignUpButton } from "@/components/SignUpButton";
+import { signUpLabel } from "@/lib/signup-cta-copy";
 import { isChildSchoolPath } from "@/lib/signup-pitch";
 import { isUnder13SchoolPath } from "@/lib/school/student-classes";
 
@@ -187,7 +188,7 @@ export function VerificationPanel({ fact, signedIn, onClose }: Props) {
             childPage ? null : (
               <div className="mt-6 rounded-md border border-saffron-200 bg-saffron-50/50 p-4 text-xs">
                 <p data-su-reason className="text-ink-700">
-                  Sign in to help verify this fact, flag inaccuracies, or
+                  {signUpLabel("en")} to help verify this fact, flag inaccuracies, or
                   suggest an update. Verifications earn contribution badges.
                 </p>
                 <SignUpButton href="/login?from=verify-fact" surface="verify-fact" explain="own" className="mt-3" />

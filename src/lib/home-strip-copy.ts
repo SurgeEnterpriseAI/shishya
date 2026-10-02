@@ -114,7 +114,7 @@ export const HOME_STRIP_COPY: Readonly<Record<HomeCopyLocale, HomeStripCopy>> = 
     shishyaAi: "Shishya AI",
     aiReply: "AI reply · not a student",
     anonymous: "Anonymous",
-    signupCta: "Free sign-up — start prepping",
+    signupCta: "Sign up with Google, free — start prepping",
     signupLine: "Free day-by-day plan to exam day · scores and rank saved · one email on result day · in your language",
     statsKicker: "Everything you need to crack it — in one free place",
     statExams: "Govt & entrance exams",
@@ -163,7 +163,7 @@ export const HOME_STRIP_COPY: Readonly<Record<HomeCopyLocale, HomeStripCopy>> = 
     shishyaAi: "Shishya AI",
     aiReply: "AI का जवाब · किसी छात्र का नहीं",
     anonymous: "गुमनाम",
-    signupCta: "मुफ़्त साइन-अप — तैयारी शुरू करें",
+    signupCta: "Google से मुफ़्त साइन अप करें — तैयारी शुरू करें",
     signupLine:
       "परीक्षा के दिन तक मुफ़्त रोज़-ब-रोज़ प्लान · स्कोर और रैंक सेव · रिज़ल्ट वाले दिन एक ईमेल · आपकी भाषा में",
     statsKicker: "क्रैक करने के लिए जो चाहिए, सब एक मुफ़्त जगह पर",
@@ -230,7 +230,7 @@ export const HOME_STRIP_COPY: Readonly<Record<HomeCopyLocale, HomeStripCopy>> = 
     shishyaAi: "Shishya AI",
     aiReply: "AI సమాధానం · విద్యార్థిది కాదు",
     anonymous: "అజ్ఞాత",
-    signupCta: "ఉచిత సైన్-అప్ — సన్నద్ధత మొదలుపెట్టండి",
+    signupCta: "Google తో ఉచితంగా సైన్ అప్ చేయండి — సన్నద్ధత మొదలుపెట్టండి",
     signupLine:
       "పరీక్ష రోజు వరకు ఉచిత రోజువారీ ప్లాన్ · స్కోర్లు, ర్యాంకు సేవ్ · ఫలితం రోజున ఒక ఈమెయిల్ · మీ భాషలో",
     statsKicker: "సాధించడానికి కావలసినవన్నీ — ఒకే ఉచిత చోట",

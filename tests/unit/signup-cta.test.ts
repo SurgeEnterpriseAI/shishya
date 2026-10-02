@@ -1453,7 +1453,9 @@ describe("11. a button with another action under it opens its tooltip ABOVE (rev
         // 2 Oct 2026 (review): the finder's bottom card — the sign-up, then "Start {exam} prep →".
         "src/app/find-your-exam/page.tsx",
         "src/app/for/[persona]/page.tsx",
-        "src/app/login/page.tsx",
+        // 2 Oct 2026 (the sentences pass): /login is no longer found here — one plain line ("Already have an
+        // account? The same button signs you in.") now sits between its button and the "try 5 questions first"
+        // link. Its tooltip still opens above: pinned by "/login wears the light button …" in section 10.
         // 2 Oct 2026 (review): the cutoff box — the sign-up now comes first, the quiz link under it.
         "src/components/AnonExamNudge.tsx",
         "src/components/AnonQuizPlayer.tsx",

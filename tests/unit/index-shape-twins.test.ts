@@ -371,7 +371,6 @@ const INTERACTION_ONLY = [
   "tracker.alert.email",
   "ew.alert.done",
   "ew.verdict.thanks",
-  "ew.signup.nudge",
   "ew.share.copied",
   "ew.score.result",
   "ew.score.pct",

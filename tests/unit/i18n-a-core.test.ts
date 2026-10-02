@@ -181,7 +181,7 @@ describe("/login and /onboarding", () => {
     expect(dict.en["login.bullets.3"]).toBe("PYQ-pattern papers — questions modelled on each year's paper, by topic");
     expect(dict.en["login.intent.return.h1"]).toBe("Welcome back");
     expect(fillTemplate(dict.en["login.tryFirst"], { exam: "SSC CGL" })).toBe(
-      "Not ready to sign in? Try 5 SSC CGL questions first — no login →",
+      "Not ready to sign up? Try 5 SSC CGL questions first — no login →",
     );
     expect(dict.en["onb.step"]).toBe("Step {n} of 4");
     const [before, after] = dict.en["onb.intro"].split("{settings}");

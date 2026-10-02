@@ -64,15 +64,15 @@ export interface SoftWallCopy {
 const COPY: Record<"en" | "hi" | "te", SoftWallCopy> = {
   en: {
     title: "Read the rest of this page — free",
-    body: "Sign in free with Google to read the full page. Shishya then remembers you: your exams, weak topics, saved results and a personal plan.",
+    body: "Sign up with Google, free, to read the full page. Shishya then remembers you: your exams, weak topics, saved results and a personal plan.",
   },
   hi: {
     title: "इस पेज का बाकी हिस्सा पढ़ें — मुफ़्त",
-    body: "पूरा पेज पढ़ने के लिए Google से मुफ़्त साइन इन करें। Shishya आपको याद रखेगा: आपकी परीक्षाएँ, कमज़ोर टॉपिक, सेव परिणाम और आपका प्लान।",
+    body: "पूरा पेज पढ़ने के लिए Google से मुफ़्त साइन अप करें। Shishya आपको याद रखेगा: आपकी परीक्षाएँ, कमज़ोर टॉपिक, सेव परिणाम और आपका प्लान।",
   },
   te: {
     title: "ఈ పేజీలో మిగతా భాగం చదవండి — ఉచితం",
-    body: "పూర్తి పేజీ చదవడానికి Google తో ఉచితంగా సైన్ ఇన్ చేయండి. Shishya మిమ్మల్ని గుర్తుంచుకుంటుంది: మీ పరీక్షలు, బలహీన టాపిక్‌లు, సేవ్ అయిన ఫలితాలు, మీ ప్లాన్.",
+    body: "పూర్తి పేజీ చదవడానికి Google తో ఉచితంగా సైన్ అప్ చేయండి. Shishya మిమ్మల్ని గుర్తుంచుకుంటుంది: మీ పరీక్షలు, బలహీన టాపిక్‌లు, సేవ్ అయిన ఫలితాలు, మీ ప్లాన్.",
   },
 };
 

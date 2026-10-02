@@ -47,7 +47,7 @@ describe("the early line's words", () => {
   it("names the page's exam in English, Hindi and Telugu", () => {
     const en = signupLineCopy("en", "SSC CGL", true);
     expect(en.lead).toBe("Preparing for SSC CGL?");
-    expect(en.line).toBe("Sign in free — Shishya keeps your SSC CGL mocks, scores and weak topics, and picks up where you left off next time.");
+    expect(en.line).toBe("Sign up with Google, free — Shishya keeps your SSC CGL mocks, scores and weak topics, and picks up where you left off next time.");
     // 2 Oct 2026: the one shared label (src/lib/signup-cta-copy.ts).
     expect(en.cta).toBe("Sign up with Google");
     for (const l of ["hi", "te"]) {
@@ -72,7 +72,7 @@ describe("the early line's words", () => {
       expect(signupLineCopy(l, "AILET", false)).toEqual(signupLineCopy(l, "AILET"));
       expect(signupLineCopy(l, "AILET", false).line, l).not.toBe(signupLineCopy(l, "AILET", true).line);
     }
-    expect(signupLineCopy("en", "AILET", false).line).toBe("Sign in free — Shishya keeps AILET as your exam and picks up where you left off next time.");
+    expect(signupLineCopy("en", "AILET", false).line).toBe("Sign up with Google, free — Shishya keeps AILET as your exam and picks up where you left off next time.");
   });
 
   it("without an exam it is the general 'make Shishya yours' line; unknown locales read English", () => {

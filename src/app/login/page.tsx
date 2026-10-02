@@ -43,6 +43,7 @@ import { INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
 import { isSameOriginPath } from "@/lib/login-return";
 import { loginIntent } from "@/lib/login-intent";
 import { loginCallbackFamily } from "@/lib/signin-cta";
+import { isSignUpLocale } from "@/lib/signup-cta-copy";
 
 // Belt-and-braces alongside the robots.txt disallow: a Disallow-ed URL
 // can still be indexed (link-only, no description) and would then be a
@@ -167,8 +168,12 @@ export default async function LoginPage({
             {t("login.error")}
           </p>
         )}
-        {/* 30 Sep 2026: only in an in-app browser (Google blocks sign-in there). */}
-        <InAppBrowserHint />
+        {/* 30 Sep 2026: only in an in-app browser (Google blocks sign-in there).
+            2 Oct 2026 (review): its last words follow the button under it —
+            "then sign in with Google" where that button reads "Continue with
+            Google" (the "Welcome back" card, and a language other than en /
+            hi / te), "then sign up with Google" everywhere else. */}
+        <InAppBrowserHint signIn={li.kind === "return" || !isSignUpLocale(locale)} />
         {/* 2 Oct 2026 (founder, standing: "Sign up with Google" — students
             may think sign-up needs a lot of details): the one shared button
             with Google's "G", reading "Sign up with Google" (en / hi / te;
@@ -196,6 +201,21 @@ export default async function LoginPage({
           side="top"
           beacon={{ from: sp.from ?? null, family: loginCallbackFamily(sp.callbackUrl) }}
         />
+        {/* 2 Oct 2026 (the sentences pass): the headings and bodies on this
+            page invite a guest to "sign up with Google" now, and this page is
+            a returning member's way in too. One plain line under the button
+            says so — wherever the card's words invite sign-up: every en / hi /
+            te card and (review, same day) the mock, coach, chat and school
+            cards in every other language too. Those cards' words exist in en /
+            hi / te only, so a Bengali or Tamil reader gets the English "Sign
+            up with Google once …" over their own "Continue with Google"
+            button, and this line in English with it. Never on the "Welcome
+            back" card (its button reads "Continue with Google" and its body
+            already says "Sign in"), and not on another language's default
+            card, whose own heading still says sign in. */}
+        {li.kind !== "return" && (isSignUpLocale(locale) || intent !== null) && (
+          <p className="mt-1.5 text-xs text-ink-600">{t("login.member")}</p>
+        )}
         {/* The alternative comes AFTER the main action (30 Sep 2026): Google
             first, then "not ready? try 5 questions first". */}
         {examCode && li.tryFirst && (

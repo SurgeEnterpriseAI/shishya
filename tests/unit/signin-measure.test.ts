@@ -385,7 +385,8 @@ describe("(b) /login: order, words, in-app escape", () => {
   const login = read("src/app/login/page.tsx");
 
   it("the Google button comes before the 'try 5 questions first' alternative; the in-app line sits above the button", () => {
-    const hint = login.indexOf("<InAppBrowserHint />");
+    // 2 Oct 2026 (review of the sentences pass): the line takes `signIn` — its last words follow the button.
+    const hint = login.indexOf("<InAppBrowserHint signIn={li.kind === \"return\" || !isSignUpLocale(locale)} />");
     const button = login.indexOf("<GoogleSignInButton");
     const tryFirst = login.indexOf("{examCode && li.tryFirst && (");
     expect(hint).toBeGreaterThan(-1);
@@ -426,9 +427,9 @@ describe("(b) /login: order, words, in-app escape", () => {
 
   it("the default card carries the founder's idea: an account makes Shishya yours and picks up next time", () => {
     expect(val("en", "login.body.noCount")).toBe(
-      "Free. An account makes Shishya yours: it keeps your exam, your weak topics, your mocks and the questions you ask, and picks up from them next time. Google sign-in only. No passwords. No spam.",
+      "Free. An account makes Shishya yours: it keeps your exam, your weak topics, your mocks and the questions you ask, and picks up from them next time. Google account only. No passwords. No spam.",
     );
-    expect(val("en", "login.h1")).toBe("Sign in and make Shishya yours");
+    expect(val("en", "login.h1")).toBe("Sign up with Google and make Shishya yours");
     expect(val("hi", "login.body")).toMatch(/Shishya आपका अपना/);
     expect(val("te", "login.body")).toMatch(/Shishya మీ సొంతమవుతుంది/);
     // The mock card promises only what every callback does: back to this page.
@@ -478,7 +479,7 @@ describe("(b) in-app browsers", () => {
     expect(hint).toContain("const family = inAppBrowser(navigator.userAgent);");
     expect(hint).toContain("if (!family) return;");
     expect(hint).toContain("if (!hint) return null;");
-    expect(read("src/components/GuestQuizGate.tsx")).toContain("{inAppHint && <InAppBrowserHint />}");
+    expect(read("src/components/GuestQuizGate.tsx")).toContain("{inAppHint && <InAppBrowserHint signIn={!!continueLabel && !isSignUpLocale(locale)} />}");
   });
 
   it("one escape line per page: the mock gate's quiz-end button leaves it to the top button", () => {

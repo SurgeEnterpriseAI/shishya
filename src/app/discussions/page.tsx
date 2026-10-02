@@ -8,6 +8,7 @@ import { formatRelative } from "@/lib/relative-time";
 import { UserBadge, type UserBadgeLevel } from "@/components/UserBadge";
 import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 import { discussionLabelsCopy } from "@/lib/discussion-labels-copy";
+import { isSignUpLocale } from "@/lib/signup-cta-copy";
 
 export const revalidate = 30;
 
@@ -85,7 +86,11 @@ export default async function DiscussionsList() {
 
       <section className="container-prose py-8 sm:py-12">
         <h1 className="text-2xl font-bold text-ink-900 sm:text-3xl">{t("disc.title")}</h1>
-        <p className="mt-1 text-sm text-ink-600">{t("disc.subtitle")}</p>
+        {/* 2 Oct 2026 (review of the sentences pass): a guest reads "sign up
+            with Google to reply" — the words of the button on a thread. A
+            member keeps "sign in to reply", and so does a language other
+            than en / hi / te (the guest line exists in those three). */}
+        <p className="mt-1 text-sm text-ink-600">{t(!session?.user && isSignUpLocale(locale) ? "disc.subtitle.guest" : "disc.subtitle")}</p>
 
         <ul className="mt-6 divide-y divide-ink-200 overflow-hidden rounded-lg border border-ink-200 bg-white">
           {threads.length === 0 ? (
