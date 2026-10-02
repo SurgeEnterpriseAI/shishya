@@ -30,6 +30,13 @@
 // A Retry never overwrites a row the late run holds or has answered (it
 // waits for that reply). The turn's context is loaded by
 // src/lib/tutor-turn.ts, which the late answer shares.
+// 2 Oct 2026: a failed row also records sentAt — when the student sent this
+// turn. The late-answer run counts its 72 hours from it (a re-send reuses the
+// stored row and keeps the first date: a question first asked 26 Sep 12:03
+// IST and re-sent 1 Oct 11:19 was promised an answer it was already too old
+// to get). Only markTurnFailed below writes sentAt; a failed row 4 days old
+// or more is not reused (src/lib/chat-turn-dedupe.ts), so those 72 hours
+// always end before the run's 7-day hard stop.
 
 // Tool-use loops + long Anthropic streams need more than the default 10s. We
 // keep this on Node runtime (not edge) because Prisma engines need it.
@@ -134,6 +141,12 @@ const SSE_HEADERS = {
 interface TurnRow {
   id: string | null;
   meta: UserTurnMeta;
+  /**
+   * When this request arrived (2 Oct 2026). Kept out of `meta` on purpose:
+   * `meta` is written when a row is stored or reused, and sentAt must reach
+   * the row only through markTurnFailed.
+   */
+  sentAt: number;
 }
 
 /** What a failed turn's row records beside failedAt (1 Oct 2026, src/lib/tutor-late-answer.ts). */
@@ -164,11 +177,16 @@ interface FailedTurnExtra {
  * says whether it landed — the late answer only picks a row that carries
  * failedAt, so the chat promises one only when this returns true (1 Oct 2026
  * review: the promise was made even when this write had failed).
+ * 2 Oct 2026: it also writes sentAt, the time this send arrived — the start
+ * of the late answer's 72 hours (src/lib/tutor-late-answer.ts
+ * lateWindowStartMs). This is the ONLY place sentAt is written: the late
+ * run's claim and release rewrite failedAt on every pass, so a window
+ * counted from failedAt would never close.
  */
 async function markTurnFailed(turn: TurnRow, extra: FailedTurnExtra): Promise<boolean> {
   if (!turn.id) return false;
   try {
-    const patch = { ...turn.meta, failedAt: Date.now(), ...extra };
+    const patch = { ...turn.meta, failedAt: Date.now(), sentAt: turn.sentAt, ...extra };
     const n = await prisma.$executeRaw`
       UPDATE "ChatMessage"
       SET metadata = COALESCE(metadata, '{}'::jsonb) || ${JSON.stringify(patch)}::jsonb
@@ -184,7 +202,7 @@ export async function POST(req: Request) {
   // A turn that throws after its USER row is stored (a DB timeout while the
   // context loads, before the stream starts) is marked failed too, so its
   // Retry is not left waiting on a run that no longer exists.
-  const turn: TurnRow = { id: null, meta: {} };
+  const turn: TurnRow = { id: null, meta: {}, sentAt: Date.now() };
   try {
     return await handleChat(req, turn);
   } catch (err) {

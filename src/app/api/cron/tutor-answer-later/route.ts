@@ -6,9 +6,13 @@
 // zero — 12 member tutor questions from 7 people (4 signed up that day)
 // failed and none was ever answered. The chat now tells the student their
 // question is saved and will be answered here (src/lib/tutor-unavailable.ts);
-// this run keeps that promise: failed member questions of the last 72 hours,
-// oldest first, one cheap probe first, stop at the first AI-unavailable
-// error, at most 20 answers and $4.00 a run, the chat's own pipeline, an
+// this run keeps that promise: failed member questions sent in the last 72
+// hours (2 Oct 2026: counted from the student's last send, metadata.sentAt,
+// and never more than 7 days after the question was first stored; before,
+// 72 hours from when it was stored, so a re-sent question could be promised
+// an answer and never picked), oldest first, one cheap probe first, stop at
+// the first AI-unavailable error, at most 20 answers and $4.00 a run, the
+// chat's own pipeline, an
 // atomic claim per question, then the pick-up card and one mail per student
 // (at most one a day). Every rule: src/lib/tutor-late-answer.ts; the steps:
 // src/lib/db/tutor-late-answer.ts.

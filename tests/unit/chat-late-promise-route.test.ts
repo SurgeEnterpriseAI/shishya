@@ -11,7 +11,11 @@
 //   • a Retry of a failed turn reuses its row with ONE conditional write
 //     (never while a late answer is stored or a live late claim holds it);
 //     when that write does not land, the turn waits for the late run's reply
-//     and replays it — note flag included — instead of calling the model.
+//     and replays it — note flag included — instead of calling the model;
+//   • 2 Oct 2026: the failed mark — and nothing else — writes sentAt, the
+//     time this send arrived (the late answer's 72 hours start there); a
+//     Retry that fails again writes a fresh one; a failed row 4 days old or
+//     more is not reused: the re-send is stored as a new row.
 // No network, no model call. Run: npx vitest run tests/unit/chat-late-promise-route.test.ts
 
 import Anthropic from "@anthropic-ai/sdk";
@@ -115,6 +119,7 @@ beforeEach(() => {
 
 describe("the promise is made only when the failed mark landed", () => {
   it("an outage, mark landed, mailable: the email promise; the mark merges and records the promise", async () => {
+    const before = Date.now();
     const f = errorFrame(await (await post({ general: true, message: "What is GDP?", turnId: "t1" })).text());
     expect(f.code).toBe(TUTOR_UNAVAILABLE_CODE.memberEmail);
     expect(String(f.error)).toContain("Your question is saved — we'll answer it here as soon as it's back, and email you.");
@@ -123,6 +128,13 @@ describe("the promise is made only when the failed mark landed", () => {
     const patch = JSON.parse(state.raw[0].values[0] as string);
     expect(patch).toMatchObject({ turnId: "t1", failedReason: "credit", latePromised: true, emailPromised: true, replyLang: "EN" });
     expect(typeof patch.failedAt).toBe("number");
+    // 2 Oct 2026: when this send arrived — the start of the late answer's 72 hours.
+    expect(typeof patch.sentAt).toBe("number");
+    expect(patch.sentAt).toBeGreaterThanOrEqual(before);
+    expect(patch.sentAt).toBeLessThanOrEqual(patch.failedAt);
+    // The new row itself is stored without it: only the failed mark writes sentAt.
+    const stored = state.created.find((c) => c.model === "chatMessage" && c.data.role === "USER")!;
+    expect(stored.data.metadata).toEqual({ turnId: "t1" });
   });
 
   it("an outage whose mark did NOT land: the plain line, no code, nothing promised", async () => {
@@ -206,4 +218,63 @@ describe("a Retry meets the late-answer run", () => {
     // Only the one conditional write was tried; nothing marked failed.
     expect(state.raw).toHaveLength(1);
   }, 15_000);
+});
+
+// 2 Oct 2026. A re-send reuses the failed row and keeps its first date, so the
+// late answer's 72 hours are counted from sentAt — written by the failed mark
+// only — and a row 4 days old or more is not reused at all.
+describe("the late answer's window starts at the student's last send", () => {
+  const HOUR = 3600_000;
+  const failedAgo = (ageMs: number, extra: Record<string, unknown> = {}) => ({
+    id: "q1",
+    sessionId: "s1",
+    role: "USER",
+    content: "What is GDP?",
+    createdAt: new Date(Date.now() - ageMs),
+    metadata: { turnId: "t1", failedAt: Date.now() - ageMs, failedReason: "credit", latePromised: true, ...extra },
+  });
+
+  it("a Retry that fails again: the reuse write carries no sentAt; the failed mark writes this send's time on the same row", async () => {
+    const firstSend = Date.now() - 3 * HOUR;
+    state.rows = [failedAgo(3 * HOUR, { sentAt: firstSend })];
+    const before = Date.now();
+    const f = errorFrame(await (await post({ general: true, sessionId: "s1", message: "What is GDP?", retry: true, turnId: "t1" })).text());
+    expect(f.code).toBe(TUTOR_UNAVAILABLE_CODE.memberEmail);
+    expect(state.raw).toHaveLength(2);
+    const [reuse, mark] = state.raw;
+    expect(reuse.sql).toContain(`- 'failedAt' - 'lateClaimAt') || ?::jsonb WHERE id = ?`);
+    expect(reuse.sql).not.toContain("sentAt");
+    expect(Object.keys(JSON.parse(reuse.values[0] as string)).sort()).toEqual(["answeringAt", "turnId"]);
+    expect(mark.values[1]).toBe("q1");
+    const patch = JSON.parse(mark.values[0] as string);
+    expect(patch.sentAt).toBeGreaterThanOrEqual(before);
+    expect(patch.sentAt).toBeGreaterThan(firstSend);
+    expect(patch).toMatchObject({ turnId: "t1", failedReason: "credit", latePromised: true });
+    // No second USER row.
+    expect(state.created.filter((c) => c.model === "chatMessage" && c.data.role === "USER")).toEqual([]);
+  });
+
+  it("a failed row 5 days old is not reused: the re-send is a new row, and the promise is recorded on that row", async () => {
+    state.rows = [failedAgo(5 * 24 * HOUR)];
+    const f = errorFrame(await (await post({ general: true, sessionId: "s1", message: "What is GDP?", retry: true, turnId: "t1" })).text());
+    expect(f.code).toBe(TUTOR_UNAVAILABLE_CODE.memberEmail);
+    const stored = state.created.filter((c) => c.model === "chatMessage" && c.data.role === "USER");
+    expect(stored).toHaveLength(1);
+    expect(stored[0].data).toMatchObject({ sessionId: "s1", content: "What is GDP?", metadata: { turnId: "t1" } });
+    // One write only — the failed mark, on the NEW row; the old row is left as it was.
+    expect(state.raw).toHaveLength(1);
+    expect(state.raw[0].sql).toContain(`UPDATE "ChatMessage" SET metadata = COALESCE(metadata, '{}'::jsonb) || ?::jsonb WHERE id = ?`);
+    expect(state.raw[0].values[1]).not.toBe("q1");
+    expect(typeof JSON.parse(state.raw[0].values[0] as string).sentAt).toBe("number");
+  });
+
+  it("a failed row 3 days old is still reused", async () => {
+    state.tutorError = null;
+    state.rows = [failedAgo(3 * 24 * HOUR)];
+    const text = await (await post({ general: true, sessionId: "s1", message: "What is GDP?", retry: true, turnId: "t1" })).text();
+    expect(text).toContain("event: done");
+    expect(state.raw).toHaveLength(1);
+    expect(state.raw[0].values[1]).toBe("q1");
+    expect(state.created.filter((c) => c.model === "chatMessage" && c.data.role === "USER")).toEqual([]);
+  });
 });

@@ -23,7 +23,7 @@ import {
   type PickupMock,
   type PickupThread,
 } from "@/lib/pickup";
-import { LATE_WINDOW_MS } from "@/lib/tutor-late-answer";
+import { LATE_HARD_STOP_MS } from "@/lib/tutor-late-answer";
 
 const DAY_MS = 86_400_000;
 /** The student's own rows read back from the newest conversation, to find their last typed one. */
@@ -142,12 +142,19 @@ export async function loadPickupMock(userId: string, scope: PickupScope = {}): P
  * src/lib/pickup.ts pickLateAnswer), with the question it answers, or null.
  * Same scope as the thread read: general chats and active real exams (or the
  * hub's one exam), never a school chat. The reply row is dated right after
- * its question, so the read looks back PICKUP_ANSWERED_DAYS plus the 72-hour
- * late-answer window and judges by metadata.lateAnsweredAt.
+ * its question, so the read looks back PICKUP_ANSWERED_DAYS plus the longest
+ * a question can wait for its late answer, and judges by
+ * metadata.lateAnsweredAt.
+ * 2 Oct 2026 (review of build 7b): that wait was the 72-hour window
+ * (LATE_WINDOW_MS). Since 7b the 72 hours run from the student's last send,
+ * so an answer can come up to 7 days after the question was first stored
+ * (LATE_HARD_STOP_MS). With the old floor an answer given 3 to 7 days after
+ * the question left the card early, and one given after day 6 never showed
+ * on it (the chat note and the mail still told the student).
  */
 export async function loadPickupLateAnswer(userId: string, scope: PickupScope = {}): Promise<PickupLateAnswer | null> {
   const now = scope.now ?? new Date();
-  const since = new Date(now.getTime() - PICKUP_ANSWERED_DAYS * DAY_MS - LATE_WINDOW_MS);
+  const since = new Date(now.getTime() - PICKUP_ANSWERED_DAYS * DAY_MS - LATE_HARD_STOP_MS);
   const rows = await prisma.chatMessage.findMany({
     where: {
       role: "ASSISTANT",

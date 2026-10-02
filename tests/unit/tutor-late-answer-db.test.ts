@@ -11,7 +11,12 @@
 //   • a declared 13-17 account's general chat is never answered (the route
 //     gives such an account the school tutor only);
 //   • release() gives a try back only when told to (an outage, never asked),
-//     spends all tries when final, and only ever touches its own claim.
+//     spends all tries when final, and only ever touches its own claim — and
+//     never writes sentAt;
+//   • loadRows() (2 Oct 2026): the SQL window — 72 hours from sentAt or
+//     createdAt, floored at 7 days on createdAt — keeps exactly the rows the
+//     pure rule (lateWindowOpen) keeps; pendingMail()'s scan floor is the
+//     same 7 days.
 // No DB, no model. Run: npx vitest run tests/unit/tutor-late-answer-db.test.ts
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -19,6 +24,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const state = vi.hoisted(() => ({
   log: [] as Array<{ model: string; op: string; args: any }>,
   raw: [] as Array<{ sql: string; values: unknown[] }>,
+  queries: [] as Array<{ sql: string; values: unknown[] }>,
   session: { id: "s1", userId: "u1", exam: null } as any,
   user: { preferredLang: "EN", onbStage: null, onbPrepCodes: [] } as any,
   messages: [] as any[],
@@ -54,6 +60,11 @@ vi.mock("@/lib/db/prisma", () => ({
       state.raw.push({ sql: strings.join("?"), values });
       return 1;
     },
+    // The reads (loadRows, pendingMail): the statement and its bound values are kept; no row comes back.
+    $queryRaw: async (strings: TemplateStringsArray, ...values: unknown[]) => {
+      state.queries.push({ sql: strings.join("?"), values });
+      return [];
+    },
   },
 }));
 vi.mock("@/lib/ai", () => ({
@@ -85,8 +96,16 @@ vi.mock("@/lib/db/tutor-answer-email", () => ({
 }));
 vi.mock("@/lib/school/tutor-context", () => ({ getSchoolTutorContext: async () => null }));
 
-import { CONTEXT_TURNS, historyAtQuestion, lateAnswerDeps, release } from "@/lib/db/tutor-late-answer";
-import { LATE_MAX_TRIES, LATE_USAGE_FEATURE, type LateCandidateRow } from "@/lib/tutor-late-answer";
+import { CONTEXT_TURNS, historyAtQuestion, lateAnswerDeps, pendingMail, release } from "@/lib/db/tutor-late-answer";
+import {
+  LATE_HARD_STOP_MS,
+  LATE_MAIL_PENDING_MS,
+  LATE_MAX_TRIES,
+  LATE_USAGE_FEATURE,
+  LATE_WINDOW_MS,
+  lateWindowOpen,
+  type LateCandidateRow,
+} from "@/lib/tutor-late-answer";
 import { langToReplyLanguage } from "@/lib/preferred-lang";
 
 const T0 = new Date("2026-10-01T06:00:00Z").getTime();
@@ -112,6 +131,7 @@ function row(over: Partial<LateCandidateRow> = {}): LateCandidateRow {
 beforeEach(() => {
   state.log = [];
   state.raw = [];
+  state.queries = [];
   state.session = { id: "s1", userId: "u1", exam: null };
   state.user = { preferredLang: "EN", onbStage: null, onbPrepCodes: [] };
   state.messages = [];
@@ -214,5 +234,91 @@ describe("release() — back to failed; the try given back only when told", () =
     await release(row(), 1234, { reason: "other", final: true, refundTry: true }, 5678);
     expect(flat(state.raw[1].sql)).not.toContain("GREATEST(");
     expect(JSON.parse(state.raw[1].values[0] as string)).toEqual({ failedAt: 5678, lateFailedReason: "other", lateTries: LATE_MAX_TRIES });
+  });
+
+  it("never writes sentAt, whatever the row carries (2 Oct 2026: the window must not slide with the run's own bookkeeping)", async () => {
+    const sent = { metadata: { turnId: "t1", failedReason: "credit", latePromised: true, sentAt: 1111 } };
+    await release(row(sent), 1234, { reason: "credit", final: false, refundTry: true }, 5678);
+    await release(row(sent), 1234, { reason: "other", final: true, refundTry: false }, 5678);
+    for (const w of state.raw) {
+      expect(w.sql).not.toContain("sentAt");
+      expect(String(w.values[0])).not.toContain("sentAt");
+    }
+  });
+});
+
+// 2 Oct 2026. The window was 72 hours from createdAt, and a re-send keeps the
+// row's first date: a question first asked 26 Sep and re-sent 1 Oct was
+// promised an answer and never picked. Now: 72 hours from metadata.sentAt
+// (createdAt when there is none), and never past 7 days after createdAt.
+describe("loadRows() — the window in SQL is the pure rule's window", () => {
+  const flat = (s: string) => s.replace(/\s+/g, " ");
+  const HOUR = 3600_000;
+  const DAY = 24 * HOUR;
+
+  it("the statement: floored at 7 days on createdAt; 72 hours counted from sentAt (a JSON number only) or createdAt", async () => {
+    const sinceMs = T0 - LATE_WINDOW_MS;
+    expect(await lateAnswerDeps().loadRows(sinceMs, T0)).toEqual([]);
+    expect(state.queries).toHaveLength(1);
+    const { sql, values } = state.queries[0];
+    expect(flat(sql)).toContain(
+      `WHERE m.role = 'USER' AND m."createdAt" >= ? AND m."createdAt" <= ? AND ( m."createdAt" >= ? OR CASE WHEN jsonb_typeof(m.metadata->'sentAt') = 'number' THEN (m.metadata->>'sentAt')::numeric >= ?::numeric ELSE FALSE END ) AND (m.metadata->>'failedAt' IS NOT NULL OR m.metadata->>'lateClaimAt' IS NOT NULL)`,
+    );
+    expect(values.slice(0, 4)).toEqual([new Date(T0 - LATE_HARD_STOP_MS), new Date(T0), new Date(sinceMs), String(sinceMs)]);
+    // The statement reads sentAt and writes nothing.
+    expect(sql).not.toMatch(/\bUPDATE\b|\bINSERT\b|\bDELETE\b/);
+  });
+
+  it("the SQL floor and the pure rule agree, row by row, at every edge", async () => {
+    const sinceMs = T0 - LATE_WINDOW_MS;
+    await lateAnswerDeps().loadRows(sinceMs, T0);
+    const [hardFloor, upTo, since, sinceText] = state.queries[0].values as [Date, Date, Date, string];
+    // The statement's window, with the values it was bound with. jsonb_typeof = 'number' is "a JSON number".
+    const sqlKeeps = (createdAt: Date, metadata: Record<string, unknown>) => {
+      const stored = createdAt.getTime();
+      const sent = metadata.sentAt;
+      const sentInWindow = typeof sent === "number" ? sent >= Number(sinceText) : false;
+      return stored >= hardFloor.getTime() && stored <= upTo.getTime() && (stored >= since.getTime() || sentInWindow);
+    };
+    const storedAgo = [0, HOUR, LATE_WINDOW_MS - 1, LATE_WINDOW_MS, LATE_WINDOW_MS + 1, 4 * DAY, 5 * DAY, LATE_HARD_STOP_MS - 1, LATE_HARD_STOP_MS, LATE_HARD_STOP_MS + 1, 8 * DAY, -60_000];
+    const sentAts: unknown[] = [
+      undefined,
+      "1790000000000",
+      null,
+      T0 - HOUR,
+      T0 - LATE_WINDOW_MS,
+      T0 - LATE_WINDOW_MS - 1,
+      T0 - LATE_WINDOW_MS + 0.5,
+      T0 - 30 * DAY,
+      T0 + HOUR,
+    ];
+    let open = 0;
+    let shut = 0;
+    for (const ago of storedAgo) {
+      for (const sentAt of sentAts) {
+        const createdAt = new Date(T0 - ago);
+        const metadata = { failedAt: 1, ...(sentAt === undefined ? {} : { sentAt }) };
+        const pure = lateWindowOpen({ createdAt, metadata }, T0);
+        expect(sqlKeeps(createdAt, metadata), `stored ${ago} ms ago, sentAt ${String(sentAt)}`).toBe(pure);
+        if (pure) open++;
+        else shut++;
+      }
+    }
+    // Both outcomes were exercised, not one side only.
+    expect(open).toBeGreaterThan(20);
+    expect(shut).toBeGreaterThan(20);
+    // The cases the change is about.
+    expect(lateWindowOpen({ createdAt: new Date(T0 - 5 * DAY), metadata: { sentAt: T0 - HOUR } }, T0)).toBe(true);
+    expect(lateWindowOpen({ createdAt: new Date(T0 - 5 * DAY), metadata: {} }, T0)).toBe(false);
+    expect(lateWindowOpen({ createdAt: new Date(T0 - 8 * DAY), metadata: { sentAt: T0 - HOUR } }, T0)).toBe(false);
+  });
+
+  it("pendingMail(): the scan floor is the 7-day hard stop, so a question answered 6 days after it was first stored is still told", async () => {
+    const sinceMs = T0 - LATE_MAIL_PENDING_MS;
+    expect(await pendingMail(sinceMs, null)).toEqual([]);
+    const { sql, values } = state.queries[0];
+    expect(flat(sql)).toContain(`WHERE m.role = 'USER' AND m."createdAt" >= ? AND m.metadata->>'lateAnsweredAt' IS NOT NULL`);
+    expect(values[0]).toEqual(new Date(sinceMs - LATE_HARD_STOP_MS));
+    expect(values[1]).toBe(String(sinceMs));
   });
 });

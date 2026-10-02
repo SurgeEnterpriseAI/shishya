@@ -4,16 +4,20 @@
 // turn unless the client re-sends the very turn that failed (Retry, same
 // turnId). Review, same day: no fresh-chat replay after an attempt since; a
 // row another run may still be answering is waited on, not re-sent.
+// 2 Oct 2026: a failed row 4 days old or more is not reused — its re-send is
+// a new turn, so a late-answer promise made on it has its full 72 hours.
 // Pure — no DB. Run: npx vitest run tests/unit/chat-turn-dedupe.test.ts
 
 import { describe, it, expect } from "vitest";
 import {
   ANSWERING_MS,
+  FAILED_REUSE_MAX_AGE_MS,
   decideTurn,
   mayStillBeAnswering,
   replayFrames,
   sameTurnText,
   settleWait,
+  tooOldToReuse,
   userTurnMeta,
   type StoredTurn,
 } from "@/lib/chat-turn-dedupe";
@@ -185,6 +189,60 @@ describe("settleWait — a waiting turn, looked at again", () => {
     expect(settleWait(null, null, NOW)).toEqual({ kind: "new" });
     expect(settleWait(row, user("C", { id: "u2" }), NOW)).toEqual({ kind: "new" });
     expect(settleWait(row, reply(""), NOW)).toEqual({ kind: "new" });
+  });
+});
+
+// 2 Oct 2026. A re-send used to reuse a failed row of any age and keep its
+// first date: a question first asked 26 Sep 12:03 IST and re-sent 1 Oct 11:19
+// was promised a late answer it was already too old to get.
+describe("a failed row 4 days old or more is not reused (2 Oct 2026)", () => {
+  const DAY = 24 * 3600_000;
+  const inConv = { ...base, continuing: true };
+  const failedRow = (ageMs: number, meta: Record<string, unknown> = {}) =>
+    user(SEED, { createdAt: new Date(NOW - ageMs), metadata: { turnId: "t1", failedAt: NOW - ageMs + 5_000, ...meta } });
+
+  it("a re-send of a 5-day-old failed row is a new turn — typed again or pressed Retry", () => {
+    const old = failedRow(5 * DAY);
+    expect(decideTurn({ ...inConv, message: SEED, latestUser: old, next: null })).toEqual({ kind: "new" });
+    expect(decideTurn({ ...inConv, retry: true, turnId: "t1", message: SEED, latestUser: old, next: null })).toEqual({ kind: "new" });
+    // The 26 Sep 12:03 IST row at its 1 Oct 11:19 IST re-send: 4 days 23 hours 16 minutes old.
+    const sep26 = user(SEED, { createdAt: new Date("2026-09-26T06:33:00Z"), metadata: { turnId: "t1", failedAt: Date.parse("2026-09-26T06:33:20Z") } });
+    expect(decideTurn({ ...inConv, retry: true, turnId: "t1", message: SEED, now: Date.parse("2026-10-01T05:49:00Z"), latestUser: sep26, next: null })).toEqual({ kind: "new" });
+  });
+
+  it("the edge: under 4 days is reused, exactly 4 days is not", () => {
+    expect(FAILED_REUSE_MAX_AGE_MS).toBe(4 * DAY);
+    const want = { kind: "reuse", sessionId: "s1", userRowId: "u1" };
+    expect(decideTurn({ ...inConv, message: SEED, latestUser: failedRow(FAILED_REUSE_MAX_AGE_MS - 1), next: null })).toEqual(want);
+    expect(decideTurn({ ...inConv, message: SEED, latestUser: failedRow(3 * DAY), next: null })).toEqual(want);
+    expect(decideTurn({ ...inConv, message: SEED, latestUser: failedRow(FAILED_REUSE_MAX_AGE_MS), next: null })).toEqual({ kind: "new" });
+    expect(tooOldToReuse(failedRow(FAILED_REUSE_MAX_AGE_MS - 1), NOW)).toBe(false);
+    expect(tooOldToReuse(failedRow(FAILED_REUSE_MAX_AGE_MS), NOW)).toBe(true);
+    // No time to judge by: reused, as before.
+    expect(tooOldToReuse(user(SEED, { createdAt: undefined }), NOW)).toBe(false);
+    expect(decideTurn({ ...inConv, message: SEED, latestUser: user(SEED, { createdAt: undefined, metadata: { failedAt: 1 } }), next: null })).toEqual(want);
+  });
+
+  it("an old row the late-answer run is answering right now is still waited on, not answered twice", () => {
+    // The run's claim: failedAt gone, answeringAt stamped.
+    const claimed = user(SEED, { createdAt: new Date(NOW - 5 * DAY), metadata: { turnId: "t1", answeringAt: NOW - 20_000, lateClaimAt: NOW - 20_000 } });
+    expect(decideTurn({ ...inConv, retry: true, turnId: "t1", message: SEED, latestUser: claimed, next: null })).toEqual({
+      kind: "wait",
+      sessionId: "s1",
+      userRowId: "u1",
+    });
+    // Its reply lands: replayed, whatever the row's age.
+    const r = reply("Here is your review…");
+    expect(settleWait(claimed, r, NOW)).toEqual({ kind: "replay", sessionId: "s1", reply: r });
+    // The run gave it back as failed instead: a new turn for an old row, a reuse for a young one.
+    expect(settleWait(failedRow(5 * DAY), null, NOW)).toEqual({ kind: "new" });
+    expect(settleWait(failedRow(3 * DAY), null, NOW)).toEqual({ kind: "reuse", sessionId: "s1", userRowId: "u1" });
+  });
+
+  it("an old row that WAS answered is untouched by the rule: a Retry of that very turn still replays its reply", () => {
+    const r = reply("Here is your review…");
+    const old = user(SEED, { createdAt: new Date(NOW - 5 * DAY), metadata: { turnId: "t1" } });
+    expect(decideTurn({ ...inConv, retry: true, turnId: "t1", message: SEED, latestUser: old, next: r })).toEqual({ kind: "replay", sessionId: "s1", reply: r });
   });
 });
 

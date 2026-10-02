@@ -2,7 +2,9 @@
 // order and the caps are src/lib/tutor-late-answer.ts; this file only does
 // what they call for. Cron: GET /api/cron/tutor-answer-later.
 //
-//   loadRows  — member USER rows asked in the window that carry failedAt or a
+//   loadRows  — member USER rows in the window (2 Oct 2026: last sent in the
+//               72 hours — metadata.sentAt, else createdAt — and first
+//               stored in the last 7 days) that carry failedAt or a
 //               late claim, not late-answered, that the chat promised a late
 //               answer, with no later ASSISTANT row, not asked again and
 //               answered in another conversation since, tries left, and the
@@ -42,6 +44,9 @@
 //               markMailed / unmarkMailed stamp lateMailAt on the questions;
 //               src/lib/db/tutor-answer-email.ts (audience + 24-hour guard)
 //               and src/lib/email.ts sendTutorAnsweredEmail.
+// 2 Oct 2026: sentAt (the student's last failed send) is written by the chat
+// route's markTurnFailed and by nothing in this file — claim, save and
+// release leave it as it is, so the window cannot slide.
 // Nothing here runs outside the cron route; no script calls it.
 
 import { Prisma } from "@prisma/client";
@@ -63,11 +68,11 @@ import { sendTutorAnsweredEmail } from "@/lib/email";
 import { answeredEmailTargets, reserveAnsweredEmail, unreserveAnsweredEmail } from "./tutor-answer-email";
 import {
   LATE_CLAIM_STALE_MS,
+  LATE_HARD_STOP_MS,
   LATE_MAX_TRIES,
   LATE_PROBE_FEATURE,
   LATE_SELECT_LIMIT,
   LATE_USAGE_FEATURE,
-  LATE_WINDOW_MS,
   answeredEmailLines,
   lateAnswerWorstUsd,
   lateAskedNote,
@@ -101,6 +106,11 @@ async function loadRows(sinceMs: number, nowMs: number): Promise<LateCandidateRo
   // LIMIT, so questions that can never be picked never crowd out the ones
   // that can (tries spent, too). The promise test mirrors
   // src/lib/tutor-late-answer.ts lateAnswerPromised.
+  // 2 Oct 2026 — the window, as lateWindowOpen has it: `sinceMs` (72 hours
+  // back) is compared with the student's last send — metadata.sentAt, written
+  // only by the chat route — or with createdAt; and the scan is floored on
+  // createdAt at the 7-day hard stop. A sentAt that is not a JSON number is
+  // ignored (the CASE keeps its cast from running on anything else).
   const rows = await prisma.$queryRaw<RawRow[]>`
     SELECT c.* FROM (
       SELECT m.id, m."sessionId", m.content, m."createdAt", m.metadata, u.id AS "userId",
@@ -125,7 +135,13 @@ async function loadRows(sinceMs: number, nowMs: number): Promise<LateCandidateRo
       JOIN "ChatSession" s ON s.id = m."sessionId"
       LEFT JOIN "User" u ON u.id = s."userId"
       WHERE m.role = 'USER'
-        AND m."createdAt" >= ${new Date(sinceMs)} AND m."createdAt" <= ${new Date(nowMs)}
+        AND m."createdAt" >= ${new Date(nowMs - LATE_HARD_STOP_MS)} AND m."createdAt" <= ${new Date(nowMs)}
+        AND (
+          m."createdAt" >= ${new Date(sinceMs)}
+          OR CASE WHEN jsonb_typeof(m.metadata->'sentAt') = 'number'
+            THEN (m.metadata->>'sentAt')::numeric >= ${String(sinceMs)}::numeric
+            ELSE FALSE END
+        )
         AND (m.metadata->>'failedAt' IS NOT NULL OR m.metadata->>'lateClaimAt' IS NOT NULL)
         AND m.metadata->>'lateAnsweredAt' IS NULL
         AND (m.metadata->>'failedReason' IS NULL OR m.metadata->>'latePromised' = 'true')
@@ -416,6 +432,9 @@ type RawPending = {
  * (never a school chat; never an exam /chat can no longer reopen, whose link
  * would not work), whose reply the student has not opened (lateSeenAt on the
  * reply, stored 1 ms after its question — they know already).
+ * 2 Oct 2026: the scan floor on createdAt is the 7-day hard stop, not the
+ * 72 hours — a re-sent question can now be answered up to 7 days after it
+ * was first stored, and its mail must still find it.
  */
 export async function pendingMail(sinceMs: number, userIds: string[] | null): Promise<LatePendingRow[]> {
   if (userIds && userIds.length === 0) return [];
@@ -426,7 +445,7 @@ export async function pendingMail(sinceMs: number, userIds: string[] | null): Pr
     JOIN "ChatSession" s ON s.id = m."sessionId"
     LEFT JOIN "Exam" e ON e.id = s."examId"
     WHERE m.role = 'USER'
-      AND m."createdAt" >= ${new Date(sinceMs - LATE_WINDOW_MS)}
+      AND m."createdAt" >= ${new Date(sinceMs - LATE_HARD_STOP_MS)}
       AND m.metadata->>'lateAnsweredAt' IS NOT NULL
       AND (m.metadata->>'lateAnsweredAt')::bigint >= ${String(sinceMs)}::bigint
       AND m.metadata->>'lateMailAt' IS NULL

@@ -37,6 +37,16 @@
 //    Re-sending it then would pay the model twice and store two replies.
 //    Such a row is waited on (the route polls, then replays — settleWait),
 //    unless it is marked failed or is older than the longest a turn can run.
+//
+// 2 Oct 2026 (the late-answer window, src/lib/tutor-late-answer.ts):
+//  • A failed row is reused only while it is under FAILED_REUSE_MAX_AGE_MS
+//    (4 days) old. A re-send that fails while the AI is unavailable is told
+//    "saved, we'll answer it here", and the late-answer run keeps that for 72
+//    hours from the send, with a hard stop 7 days after the row was first
+//    stored. A question first asked 26 Sep 12:03 IST and re-sent 1 Oct 11:19
+//    reused its 26 Sep row and was promised an answer it could no longer get.
+//    An older failed row is left as it is and the re-send is stored as a new
+//    row, so every promise has its full 72 hours inside the 7 days.
 
 /** How far back a fresh chat looks for the same message. */
 export const REPLAY_WINDOW_MS = 10 * 60_000;
@@ -50,6 +60,14 @@ export const ANSWERING_MS = 330_000;
 export const WAIT_FOR_ANSWER_MS = 45_000;
 /** How often that wait looks for the reply. */
 export const WAIT_POLL_MS = 1_500;
+/**
+ * A failed row this old or older is not sent again on the same row (2 Oct
+ * 2026): the re-send becomes a new row. 4 days + the 72-hour late-answer
+ * window = the run's 7-day hard stop (LATE_WINDOW_MS, LATE_HARD_STOP_MS in
+ * src/lib/tutor-late-answer.ts; tests/unit/tutor-late-answer.test.ts pins
+ * the sum).
+ */
+export const FAILED_REUSE_MAX_AGE_MS = 4 * 24 * 3600_000;
 
 /** A stored ChatMessage row, as much of it as the decision needs. */
 export interface StoredTurn {
@@ -116,6 +134,16 @@ export function mayStillBeAnswering(row: StoredTurn, now: number): boolean {
   return since != null && now - since < ANSWERING_MS;
 }
 
+/**
+ * True when an unanswered row was first stored FAILED_REUSE_MAX_AGE_MS or
+ * more ago (2 Oct 2026): a re-send of it is a new turn, not a reuse. A row
+ * with no time to judge by is reused, as before.
+ */
+export function tooOldToReuse(row: StoredTurn, now: number): boolean {
+  const stored = timeOf(row.createdAt);
+  return stored != null && now - stored >= FAILED_REUSE_MAX_AGE_MS;
+}
+
 export function decideTurn(input: {
   /** The incoming message text. */
   message: string;
@@ -158,6 +186,9 @@ export function decideTurn(input: {
     if (mayStillBeAnswering(latestUser, now)) {
       return stale ? { kind: "new" } : { kind: "wait", sessionId: latestUser.sessionId, userRowId: latestUser.id };
     }
+    // 2 Oct 2026: first stored 4 days ago or more — a new row, so a promise
+    // made on this send has its full 72 hours (see the header).
+    if (tooOldToReuse(latestUser, now)) return { kind: "new" };
     // That turn never got a reply — send it again on the same row.
     return { kind: "reuse", sessionId: latestUser.sessionId, userRowId: latestUser.id };
   }
@@ -182,9 +213,9 @@ export function decideTurn(input: {
 export function settleWait(row: StoredTurn | null, next: StoredTurn | null, now: number): TurnDecision {
   if (!row || row.role !== "USER") return { kind: "new" };
   if (!next) {
-    return mayStillBeAnswering(row, now)
-      ? { kind: "wait", sessionId: row.sessionId, userRowId: row.id }
-      : { kind: "reuse", sessionId: row.sessionId, userRowId: row.id };
+    if (mayStillBeAnswering(row, now)) return { kind: "wait", sessionId: row.sessionId, userRowId: row.id };
+    // 2 Oct 2026: the same 4-day rule as decideTurn — an older failed row is not sent again.
+    return tooOldToReuse(row, now) ? { kind: "new" } : { kind: "reuse", sessionId: row.sessionId, userRowId: row.id };
   }
   const answered = next.role === "ASSISTANT" && next.content.trim().length > 0;
   return answered ? { kind: "replay", sessionId: row.sessionId, reply: next } : { kind: "new" };

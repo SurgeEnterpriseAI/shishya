@@ -16,7 +16,9 @@
 // a run clears about one student's questions before its time guard, and an
 // idle run is one DB read, no AI call):
 //   • picks member USER rows with failedAt (or a claim a crashed run left
-//     behind, older than LATE_CLAIM_STALE_MS), asked in the last 72 hours,
+//     behind, older than LATE_CLAIM_STALE_MS), last SENT in the last 72 hours
+//     and first stored in the last 7 days (2 Oct 2026 — see "The window"
+//     below; until then: stored in the last 72 hours),
 //     that the chat PROMISED a late answer (latePromised; rows from before
 //     the promise existed — the 28-30 Sep outages — carry no failedReason and
 //     count as promised), with NO later ASSISTANT row in the conversation and
@@ -90,6 +92,25 @@
 //     school chat. Guests get none of this (no account to answer into;
 //     src/lib/tutor-unavailable.ts).
 //
+// The window (2 Oct 2026). A re-send of a failed question reuses its stored
+// row and keeps the row's first date (src/lib/chat-turn-dedupe.ts). The
+// window was counted from that date, so a question first asked 26 Sep 12:03
+// IST and re-sent 1 Oct 11:19 was told "saved, we'll answer it here" when it
+// was already too old to be picked: 1 of the 11 promised rows, never answered.
+//   • The 72 hours now run from the student's last send: metadata.sentAt,
+//     written ONLY by the chat route's markTurnFailed on each failed send.
+//     A row with no sentAt (every row stored before this change) is counted
+//     from createdAt, exactly as before.
+//   • Not from failedAt: this run rewrites failedAt itself — the claim
+//     removes it and every release sets it to the current time — so a window
+//     counted from it would slide for ever (and a stale claim has none).
+//     The claim and the release never touch sentAt.
+//   • A hard stop LATE_HARD_STOP_MS (7 days) after createdAt, whatever sentAt
+//     says. It bounds the row scan too (loadRows floors on createdAt).
+//   • The route reuses a failed row only while it is under 4 days old
+//     (FAILED_REUSE_MAX_AGE_MS); an older one is stored as a new row. 4 days
+//     + 72 hours = 7 days, so every promise has its full 72 hours.
+//
 // Pure — no DB, no SDK. DB + model steps: src/lib/db/tutor-late-answer.ts.
 // Tests: tests/unit/tutor-late-answer.test.ts
 
@@ -100,8 +121,18 @@ import { emailQuote } from "@/lib/pickup";
 import { looksNativelyIn } from "@/lib/preferred-lang";
 import type { Locale } from "@/lib/i18n";
 
-/** Questions older than this are left alone. */
+/**
+ * A question is left alone once this long has passed since the student last
+ * sent it (metadata.sentAt; createdAt for a row with none) — 2 Oct 2026, see
+ * "The window" in the header.
+ */
 export const LATE_WINDOW_MS = 72 * 3600_000;
+/**
+ * Hard stop (2 Oct 2026): a row first stored longer ago than this is never
+ * picked, whatever its sentAt. = FAILED_REUSE_MAX_AGE_MS (4 days,
+ * src/lib/chat-turn-dedupe.ts) + LATE_WINDOW_MS.
+ */
+export const LATE_HARD_STOP_MS = 7 * 24 * 3600_000;
 /** Answers per run (hard cap). */
 export const LATE_MAX_ANSWERS = 20;
 /** USD per run (hard cap), by the AiUsage cost of the run's own calls. */
@@ -160,6 +191,12 @@ export interface LateTurnMeta {
   turnId?: string;
   answeringAt?: number;
   failedAt?: number;
+  /**
+   * When the student last sent this question and it failed (ms; 2 Oct 2026).
+   * Written only by the chat route (markTurnFailed); the run reads it and
+   * never writes it. Absent on rows stored before then.
+   */
+  sentAt?: number;
   /** Why the turn failed (1 Oct 2026, src/lib/ai/tutor-failure.ts). */
   failedReason?: TutorFailReason;
   /** The chat told the student this question would be answered here later (sticky). */
@@ -191,7 +228,7 @@ export function lateTurnMeta(metadata: unknown): LateTurnMeta {
   const m = metadata as Record<string, unknown>;
   const out: LateTurnMeta = {};
   if (typeof m.turnId === "string" && m.turnId) out.turnId = m.turnId;
-  for (const k of ["answeringAt", "failedAt", "lateClaimAt", "lateTries", "lateAnsweredAt", "lateMailAt"] as const) {
+  for (const k of ["answeringAt", "failedAt", "sentAt", "lateClaimAt", "lateTries", "lateAnsweredAt", "lateMailAt"] as const) {
     const v = num(m[k]);
     if (v !== undefined) out[k] = v;
   }
@@ -266,10 +303,34 @@ export type LateSkip =
   | "in-flight"
   | "not-failed";
 
+/**
+ * When a row's 72 hours start (2 Oct 2026): the student's last failed send
+ * (metadata.sentAt), else — and for a sentAt earlier than the row itself —
+ * when the row was stored.
+ */
+export function lateWindowStartMs(row: { createdAt: Date; metadata: unknown }): number {
+  const asked = row.createdAt.getTime();
+  const sent = lateTurnMeta(row.metadata).sentAt;
+  return sent != null && sent > asked ? sent : asked;
+}
+
+/**
+ * The window (2 Oct 2026, see the header): at most LATE_WINDOW_MS since the
+ * last send, and at most LATE_HARD_STOP_MS since the row was first stored.
+ * A row dated after `nowMs` is outside. The SQL pre-filter in
+ * src/lib/db/tutor-late-answer.ts loadRows applies the same two bounds
+ * (tests/unit/tutor-late-answer-db.test.ts holds them together).
+ */
+export function lateWindowOpen(row: { createdAt: Date; metadata: unknown }, nowMs: number): boolean {
+  const asked = row.createdAt.getTime();
+  if (!Number.isFinite(asked) || asked > nowMs) return false;
+  if (nowMs - asked > LATE_HARD_STOP_MS) return false;
+  return nowMs - lateWindowStartMs(row) <= LATE_WINDOW_MS;
+}
+
 /** Why a row is not answered now, or null when it is a candidate. */
 export function lateCandidateVerdict(row: LateCandidateRow, nowMs: number): LateSkip | null {
-  const asked = row.createdAt.getTime();
-  if (!Number.isFinite(asked) || asked > nowMs || nowMs - asked > LATE_WINDOW_MS) return "outside-window";
+  if (!lateWindowOpen(row, nowMs)) return "outside-window";
   if (!row.userId) return "no-user";
   const meta = lateTurnMeta(row.metadata);
   if (meta.lateAnsweredAt != null) return "late-answered";
@@ -469,7 +530,11 @@ export interface LatePendingRow {
 }
 
 export interface LateAnswerDeps {
-  /** USER rows asked since `sinceMs` that may be candidates (the SQL pre-filter). */
+  /**
+   * USER rows that may be candidates (the SQL pre-filter): last sent — or,
+   * with no sentAt, stored — since `sinceMs`, and stored no longer than
+   * LATE_HARD_STOP_MS before `nowMs` (2 Oct 2026).
+   */
   loadRows(sinceMs: number, nowMs: number): Promise<LateCandidateRow[]>;
   /** One tiny call: can the tutor be served right now? */
   probe(): Promise<LateProbe>;
