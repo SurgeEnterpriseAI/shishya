@@ -157,7 +157,7 @@ export const HOME_DOORS_COPY: Readonly<Record<HomeCopyLocale, HomeDoorsCopy>> = 
       s3t: "Ask when stuck",
       s3b: "Shishya's tutor explains in your language. No sign-in needed.",
       s4t: "Practise and keep score",
-      s4b: "Exam pages carry mocks and past-year sets, each answer checked. Sign in free to save scores, see weak topics and get a day-by-day plan. School practice: on the chapters marked as having it.",
+      s4b: "Exam pages carry mocks and past-year sets, each answer checked. Sign up with Google to save scores, see weak topics and get a day-by-day plan. School practice: on the chapters marked as having it.",
       ask: "Stuck at any step? Ask Shishya's tutor — {n} Indian languages, no sign-in →",
     },
     signin: {
@@ -243,7 +243,7 @@ export const HOME_DOORS_COPY: Readonly<Record<HomeCopyLocale, HomeDoorsCopy>> = 
       s3t: "अटकें तो पूछिए",
       s3b: "Shishya का ट्यूटर आपकी भाषा में समझाता है। साइन-इन की ज़रूरत नहीं।",
       s4t: "अभ्यास कीजिए, स्कोर रखिए",
-      s4b: "परीक्षा पेज पर मॉक और पिछले सालों के सेट, हर जवाब जाँचा हुआ। मुफ़्त साइन-इन से स्कोर सेव, कमज़ोर टॉपिक और रोज़-ब-रोज़ प्लान। स्कूल का अभ्यास: जिन अध्यायों पर चिह्न है, उन पर।",
+      s4b: "परीक्षा पेज पर मॉक और पिछले सालों के सेट, हर जवाब जाँचा हुआ। Google से साइन अप करने पर स्कोर सेव, कमज़ोर टॉपिक और रोज़-ब-रोज़ प्लान। स्कूल का अभ्यास: जिन अध्यायों पर चिह्न है, उन पर।",
       ask: "कहीं भी अटकें? Shishya के ट्यूटर से पूछिए — {n} भारतीय भाषाओं में, बिना साइन-इन →",
     },
     signin: {
@@ -329,7 +329,7 @@ export const HOME_DOORS_COPY: Readonly<Record<HomeCopyLocale, HomeDoorsCopy>> = 
       s3t: "ఆగిపోతే అడగండి",
       s3b: "Shishya ట్యూటర్ మీ భాషలో వివరిస్తుంది. సైన్-ఇన్ అక్కర్లేదు.",
       s4t: "సాధన చేయండి, స్కోరు ఉంచుకోండి",
-      s4b: "పరీక్ష పేజీల్లో మాక్‌లు, గత సంవత్సరాల సెట్లు, ప్రతి జవాబు సరిచూసినదే. ఉచిత సైన్-ఇన్‌తో స్కోర్లు సేవ్, బలహీన టాపిక్‌లు, రోజువారీ ప్లాన్. స్కూల్ సాధన: గుర్తు ఉన్న అధ్యాయాల్లో.",
+      s4b: "పరీక్ష పేజీల్లో మాక్‌లు, గత సంవత్సరాల సెట్లు, ప్రతి జవాబు సరిచూసినదే. Google తో సైన్ అప్ చేస్తే స్కోర్లు సేవ్, బలహీన టాపిక్‌లు, రోజువారీ ప్లాన్. స్కూల్ సాధన: గుర్తు ఉన్న అధ్యాయాల్లో.",
       ask: "ఎక్కడైనా ఆగిపోయారా? Shishya ట్యూటర్‌ను అడగండి — {n} భారతీయ భాషల్లో, సైన్-ఇన్ అక్కర్లేదు →",
     },
     signin: {
