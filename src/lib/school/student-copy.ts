@@ -41,7 +41,8 @@ export const STUDENT_ENTRY_COPY = {
   under13Practice: "Younger than 13? Read this page and try its practice with a parent.",
   // Guest, after the practice on the page (the "save" slot): sign-in only to keep practice in an account.
   saveBody: `Want your practice kept? Sign in with Google to practise this chapter with your score saved to your account. ${AGE_LINE}`,
-  saveLink: "Sign in to save your practice →",
+  // 2 Oct 2026: the link under it is the one shared "Sign up with Google"
+  // button (src/components/SignUpButton.tsx); "saveLink" is gone.
   // Class page (CBSE / NCERT classes with a chapter map only — CISCE has no
   // chapter pages to open). "Practise" only when at least one chapter of the
   // class has checked practice; NCERT Class 11-12 have none yet.

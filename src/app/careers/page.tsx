@@ -8,6 +8,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { SignupInline } from "@/components/SignupInline";
 import { SectionCrossLinks } from "@/components/SectionCrossLinks";
 import { CAREERS, CAREER_CATEGORIES, careersByCategory } from "@/data/careers";
 
@@ -91,6 +92,8 @@ export default function CareersLanding() {
         {CAREER_CATEGORIES.map((cat) => {
           const careers = careersByCategory(cat.slug);
           if (careers.length === 0) return null;
+          // The first category that has careers: the early sign-up line goes under it.
+          const firstShown = cat.slug === CAREER_CATEGORIES.find((x) => careersByCategory(x.slug).length > 0)?.slug;
           return (
             <div key={cat.slug} className="mt-10">
               <h2 className="text-base font-semibold text-ink-900">{cat.label}</h2>
@@ -111,6 +114,14 @@ export default function CareersLanding() {
                   </li>
                 ))}
               </ul>
+              {/* 2 Oct 2026 (founder, standing: a sign-up invitation on every page
+                  family): the guest sign-up line. Client-only (no server HTML), guests
+                  only, never on a Class 1-7 page. Review, same day: it sits EARLY —
+                  under the first category — not after the whole list,
+                  where it stood one short block above the root layout's sign-up card
+                  (two invitations on one phone screen). revealOffscreen: it appears
+                  only where nothing on screen moves. */}
+              {firstShown && <SignupInline surface="careers-index" revealOffscreen />}
             </div>
           );
         })}

@@ -2,9 +2,11 @@
 // digest inline plus links to recent days. Primary target: "current
 // affairs today", "daily current affairs for competitive exams".
 
+import { Fragment } from "react";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { SignupInline } from "@/components/SignupInline";
 import { prisma } from "@/lib/db/prisma";
 import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 
@@ -112,19 +114,35 @@ export default async function CurrentAffairsHub() {
                 Full day →
               </Link>
             </div>
-            <ul className="mt-3 space-y-3">
-              {latestItems.slice(0, 10).map((r) => (
-                <li key={r.id} className="rounded-lg border border-ink-200 bg-white p-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm font-bold text-ink-900">{r.title}</p>
-                    <span className="shrink-0 rounded-full bg-saffron-50 px-2 py-0.5 text-[10px] font-semibold text-saffron-700">
-                      {r.category}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-sm text-ink-700">{r.summary}</p>
-                </li>
-              ))}
-            </ul>
+            {/* 2 Oct 2026 (founder, standing: a sign-up invitation on every page
+                family): the guest sign-up line. Client-only (no server HTML), guests
+                only, never on a Class 1-7 page. Review, same day: it sits EARLY —
+                after the first four items (the list is rendered in two parts,
+                one <ul> each; the items are unchanged) — not after the whole list,
+                where it stood one short block above the root layout's sign-up card
+                (two invitations on one phone screen). revealOffscreen: it appears
+                only where nothing on screen moves. */}
+            {[latestItems.slice(0, 4), latestItems.slice(4, 10)].map(
+              (part, pi) =>
+                part.length > 0 && (
+                  <Fragment key={pi}>
+                    <ul className="mt-3 space-y-3">
+                      {part.map((r) => (
+                        <li key={r.id} className="rounded-lg border border-ink-200 bg-white p-4">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="text-sm font-bold text-ink-900">{r.title}</p>
+                            <span className="shrink-0 rounded-full bg-saffron-50 px-2 py-0.5 text-[10px] font-semibold text-saffron-700">
+                              {r.category}
+                            </span>
+                          </div>
+                          <p className="mt-1 text-sm text-ink-700">{r.summary}</p>
+                        </li>
+                      ))}
+                    </ul>
+                    {pi === 0 && <SignupInline surface="ca-index" revealOffscreen />}
+                  </Fragment>
+                ),
+            )}
 
             {dates.length > 1 && (
               <div className="mt-8">

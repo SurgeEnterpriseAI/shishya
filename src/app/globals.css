@@ -94,6 +94,176 @@
     min-height: 44px;
   }
 
+  /* ── "Sign up with Google" (2 Oct 2026, src/components/SignUpButton.tsx) ──
+     The Google-branded button, to Google's "Sign in with Google" branding
+     guidelines (developers.google.com/identity/branding-guidelines, read
+     2 Oct 2026): LIGHT theme — fill #FFFFFF, stroke #747775 1px inside, text
+     #1F1F1F, Medium 14px / 20px; 12px left of the "G", 10px between the "G"
+     and the text, 12px right of the text; pill shape; the standard colour
+     "G" at 20px (the size Google's own HTML button uses) on the white fill.
+     Height: the page states none, so the button keeps our 44px touch target.
+     Font: "Google Sans" where the device has it, then Roboto (what Google's
+     own HTML button asks for; every Android phone has it), then the page's
+     font — no web font is downloaded for the button (page weight on every
+     page). ACCEPTED DEVIATION (2 Oct 2026 review): the guidelines ask for
+     Google Sans Medium; settle it (self-host a subset, or keep the fallback)
+     before any Google app-verification review. Never give this class a
+     coloured fill: the guidelines forbid the colour "G" on anything but
+     white, #F2F2F2 or #131314.
+     .su-google-dark (2 Oct 2026 review) is Google's DARK theme — fill
+     #131314, stroke #8E918F 1px inside, text #E3E3E3, the same colour "G",
+     paddings and shape. It is the FILLED sign-up button: used where the
+     button is a block's main action beside or above an outlined alternative
+     (hub box, PYQ year, builder, quiz end, try-one, /login, the mock gate),
+     so the free sign-in is the louder of the two again (founder, 28 Sep
+     2026). Light stays inside our own tinted cards. */
+  .su-google {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 44px;
+    padding: 0 12px;
+    border: 1px solid #747775;
+    border-radius: 9999px;
+    background-color: #ffffff;
+    color: #1f1f1f;
+    font-family: "Google Sans", Roboto, var(--font-inter), var(--font-noto-devanagari), "Noto Sans Devanagari", "Noto Sans Telugu", "Noto Sans", system-ui, sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+    text-decoration: none;
+    white-space: nowrap;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);
+    transition: box-shadow 0.2s;
+  }
+  .su-google-dark {
+    border-color: #8e918f;
+    background-color: #131314;
+    color: #e3e3e3;
+  }
+  .su-google:hover {
+    box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+  }
+  .su-google:focus-visible {
+    outline: 2px solid theme("colors.saffron.600");
+    outline-offset: 2px;
+  }
+  .su-google:disabled {
+    cursor: default;
+    opacity: 0.6;
+  }
+  .su-google-g {
+    display: block;
+    width: 20px;
+    height: 20px;
+    flex: none;
+  }
+
+  /* The button with its explanation (.su-tip holds both lengths):
+       • a screen without hover (phones, tablets) shows the SHORT caption
+         (.su-tip-short) under the button — one line at 360 px, always
+         there, nothing to tap, nothing over the button. The full sentence
+         (.su-tip-text) is not displayed there; it is still the button's
+         description for a screen reader (aria-describedby points at it).
+         2 Oct 2026 review: the full sentence as the caption was 3-4 lines
+         of small text under every in-page button;
+       • a screen with a mouse shows the FULL sentence as a tooltip under
+         (or, data-su-side="top", above) the button on hover and on keyboard
+         focus, and no caption. It is position:absolute and display:none
+         until then, so nothing on the page moves and it adds no scroll
+         width; it starts at the button's edge, so it never covers the
+         button. This part is CSS only (it works before and without
+         JavaScript); the script adds Escape and the screen-edge flips.
+     data-su-explain="tooltip": no caption on touch (the header button, and
+     buttons that already sit beside their own benefit line). */
+  .su-wrap {
+    position: relative;
+    display: flex;
+    max-width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  /* One class each (not .su-wrap.su-block): a caller's utility such as
+     sm:w-auto must be able to override the width. */
+  .su-block {
+    width: 100%;
+    align-items: stretch;
+  }
+  .su-center {
+    align-items: center;
+    text-align: center;
+  }
+  .su-wrap > .su-tip {
+    display: block;
+    max-width: 26rem;
+    margin-top: 6px;
+    color: theme("colors.ink.600");
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.45;
+    white-space: normal;
+  }
+  .su-wrap > .su-tip > .su-tip-short {
+    display: block;
+  }
+  .su-wrap > .su-tip > .su-tip-text {
+    display: none;
+  }
+  .su-wrap[data-su-explain="tooltip"] > .su-tip {
+    display: none;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .su-wrap {
+      display: inline-flex;
+      vertical-align: middle;
+    }
+    .su-block {
+      display: flex;
+    }
+    .su-wrap > .su-tip {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      z-index: 50;
+      display: none;
+      width: max-content;
+      max-width: min(20rem, calc(100vw - 2rem));
+      margin: 0;
+      padding-top: 8px;
+      text-align: left;
+    }
+    .su-wrap[data-su-side="top"] > .su-tip {
+      top: auto;
+      bottom: 100%;
+      padding-top: 0;
+      padding-bottom: 8px;
+    }
+    .su-wrap[data-su-align="end"] > .su-tip {
+      right: 0;
+      left: auto;
+    }
+    .su-wrap:hover > .su-tip,
+    .su-wrap:focus-within > .su-tip {
+      display: block;
+    }
+    /* Escape closed it: stays closed until the pointer or the focus leaves. */
+    .su-wrap[data-su-closed="true"] > .su-tip {
+      display: none;
+    }
+    .su-wrap > .su-tip > .su-tip-short {
+      display: none;
+    }
+    .su-wrap > .su-tip > .su-tip-text {
+      display: block;
+      border-radius: 8px;
+      background-color: theme("colors.ink.900");
+      padding: 8px 10px;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
+    }
+  }
+
   .container-prose {
     @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
   }

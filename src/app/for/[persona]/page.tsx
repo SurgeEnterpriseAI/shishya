@@ -22,6 +22,7 @@ import { findArticle } from "@/data/insights-articles";
 import { prisma } from "@/lib/db/prisma";
 import { REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
 import { unstable_cache } from "next/cache";
+import { SignUpButton } from "@/components/SignUpButton";
 
 export const revalidate = 86_400; // 24h
 
@@ -276,12 +277,19 @@ export default async function PersonaPage({
             is built and paid for by Surge Software Solutions Pvt Ltd, not by students.
           </p>
           <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
-            <Link
-              href={`/login?callbackUrl=${encodeURIComponent(`/for/${persona.slug}`)}`}
-              className="btn-primary inline-block !py-2 !px-5 text-sm"
-            >
-              Sign in free →
-            </Link>
+            {/* 2 Oct 2026 (founder, standing): the one shared "Sign up with
+                Google" button (Google's white button with the "G") with its
+                explanation — the general words: this page names no single
+                exam. Always /login; door "persona-card". Review, same day:
+                Google's DARK button (it was the filled button beside the
+                outlined "browse" one); the tooltip opens ABOVE it. */}
+            <SignUpButton
+              href={`/login?callbackUrl=${encodeURIComponent(`/for/${persona.slug}`)}&from=persona-card`}
+              surface="persona-card"
+              theme="dark"
+              side="top"
+              center
+            />
             <Link
               href="/exams/browse"
               className="rounded-md border border-ink-300 bg-white px-4 py-2 text-sm font-medium text-ink-700 hover:bg-ink-50"

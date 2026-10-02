@@ -44,6 +44,7 @@ import { useRouter } from "next/navigation";
 import { fetchSignedIn } from "@/lib/session-hint";
 import { schoolChapterMockCount, schoolSignInHref, schoolTutorHref, studentEntryView } from "@/lib/school/student-classes";
 import { STUDENT_ENTRY_COPY as C } from "@/lib/school/student-copy";
+import { SignUpButton } from "@/components/SignUpButton";
 
 function beacon(cta: string, extra?: Record<string, unknown>) {
   try {
@@ -128,15 +129,23 @@ export function SchoolStudentEntry(p: SchoolStudentEntryProps) {
     return (
       <div className="mt-6 rounded-xl border border-ink-200 bg-white p-5">
         <p className="text-sm text-ink-700">{C.saveBody}</p>
-        <Link
+        {/* 2 Oct 2026 (founder, standing): the one shared button (Google's
+            white button with the "G", the one label) in place of the small
+            text link. Class 8-12 only (this island renders nothing below
+            Class 8), still only AFTER the practice and only for a known
+            guest. With a mouse its tooltip carries the school words —
+            practice and scores saved; no exam, no tutor memory — and on
+            touch the line above already says it. Always /login (not in the
+            skip-/login test); the old "school-save-google" beacon is kept. */}
+        <SignUpButton
           href={signInHref}
-          prefetch={false}
+          surface="school-save"
           rel="nofollow"
-          onClick={() => beacon("school-save-google", { examCode: p.examCode, topic: p.topicCode })}
-          className="mt-2 inline-block text-sm font-semibold text-saffron-700 hover:underline"
-        >
-          {C.saveLink}
-        </Link>
+          explain="tooltip"
+          className="mt-3"
+          beaconProps={{ examCode: p.examCode }}
+          onSignInClick={() => beacon("school-save-google", { examCode: p.examCode, topic: p.topicCode })}
+        />
       </div>
     );
   }

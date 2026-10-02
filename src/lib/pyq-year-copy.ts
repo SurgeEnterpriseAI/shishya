@@ -58,7 +58,6 @@ export interface PyqYearCopy {
   ctaPartial: string;
   ctaFull: string;
   ctaBody: string;
-  ctaSignIn: string;
   ctaQuiz: string;
   /** 27 Sep 2026 (founder, content first): a guest practises up to 10 of
    *  this set's own questions on the no-sign-in quiz player (quiz?set=…),
@@ -107,7 +106,6 @@ export const PYQ_YEAR_COPY: Readonly<Record<PyqCopyLocale, PyqYearCopy>> = {
     ctaPartial: "Solve these {n} {year}-pattern questions as a timed mock — free",
     ctaFull: "Solve this {year}-pattern paper as a full-length timed mock — free",
     ctaBody: "{modelled} · instant scoring · topic-wise analysis. Sign in free to attempt and track your progress.",
-    ctaSignIn: "Sign in free & start →",
     ctaQuiz: "or try a 5-question quiz first — no signup",
     ctaPractise: "Practise {n} questions from this set now — no sign-in →",
     ctaSave: "Sign in to take the whole set and save your score →",
@@ -138,7 +136,6 @@ export const PYQ_YEAR_COPY: Readonly<Record<PyqCopyLocale, PyqYearCopy>> = {
     ctaFull: "{year} के पैटर्न का यह पेपर पूरी लंबाई के टाइम्ड मॉक की तरह हल करें — मुफ़्त",
     ctaBody:
       "{modelled} · तुरंत स्कोरिंग · टॉपिक-वाइज़ विश्लेषण। हल करने और अपनी प्रगति देखने के लिए मुफ़्त साइन इन करें।",
-    ctaSignIn: "मुफ़्त साइन इन करें और शुरू करें →",
     ctaQuiz: "या पहले 5 सवालों की क्विज़ आज़माएँ — बिना साइन-अप",
     ctaPractise: "इस सेट के {n} सवाल अभी हल करें — बिना साइन-इन →",
     ctaSave: "पूरा सेट देने और स्कोर सेव करने के लिए साइन इन करें →",
@@ -169,7 +166,6 @@ export const PYQ_YEAR_COPY: Readonly<Record<PyqCopyLocale, PyqYearCopy>> = {
     ctaFull: "{year} ప్యాటర్న్ పేపర్‌ను పూర్తి నిడివి టైమ్డ్ మాక్‌గా సాల్వ్ చేయండి — ఉచితం",
     ctaBody:
       "{modelled} · వెంటనే స్కోరింగ్ · టాపిక్ వారీ విశ్లేషణ. రాయడానికి, మీ పురోగతిని చూడటానికి ఉచితంగా సైన్ ఇన్ చేయండి.",
-    ctaSignIn: "ఉచితంగా సైన్ ఇన్ చేసి మొదలుపెట్టండి →",
     ctaQuiz: "లేదా ముందు 5 ప్రశ్నల క్విజ్ ప్రయత్నించండి — సైన్-అప్ అవసరం లేదు",
     ctaPractise: "ఈ సెట్‌లోని {n} ప్రశ్నలు ఇప్పుడే సాధన చేయండి — సైన్-ఇన్ అవసరం లేదు →",
     ctaSave: "పూర్తి సెట్ రాసి మీ స్కోర్ సేవ్ చేసుకోవడానికి సైన్ ఇన్ చేయండి →",

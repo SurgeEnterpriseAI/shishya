@@ -46,6 +46,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
+import { SignupInline } from "@/components/SignupInline";
 import { STATES, stateCodeFromSlug, stateSlug, languageList, languageName } from "@/lib/state-info";
 import {
   EXAM_TYPE_ORDER,
@@ -302,6 +303,10 @@ export default async function StateExamsPage({ params }: { params: Promise<{ slu
           ))
         )}
 
+        {/* 2 Oct 2026 (founder, standing: a sign-up invitation on every page
+            family): the guest sign-up line after the page's answer. Client-only
+            (no server HTML), guests only, never on a Class 1-7 page. */}
+        <SignupInline surface="exams-state" revealOffscreen />
         <div className="mt-10 rounded-lg border border-ink-200 bg-white p-5">
           <h2 className="text-lg font-semibold text-ink-900">{C.upcomingHeading}</h2>
           {upcoming.length > 0 ? (

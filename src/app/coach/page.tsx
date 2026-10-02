@@ -19,6 +19,7 @@ import { prisma } from "@/lib/db/prisma";
 import { NOT_SCHOOL_SQL, REAL_EXAM_SQL, realExamKey } from "@/lib/db/exam-scope";
 import { getT } from "@/lib/i18n-server";
 import { Header } from "@/components/Header";
+import { SignUpButton } from "@/components/SignUpButton";
 import { SHISHYA_ORG_REF } from "@/components/JsonLd";
 import { computeCoachPlan } from "@/lib/coach-plan";
 import { practiceExamCodes } from "@/lib/db/exam-practice";
@@ -328,12 +329,22 @@ export default async function CoachPage({
               <li>✂️ Honest triage when days run short — best score with what&apos;s left</li>
               <li>🇮🇳 Sunday All-India Live Test as your weekly benchmark</li>
             </ul>
-            <Link
-              href={`/login?callbackUrl=${encodeURIComponent(selfPath)}`}
-              className="mt-6 inline-block rounded-lg bg-saffron-500 px-8 py-3 text-sm font-bold text-white shadow-sm hover:bg-saffron-600"
-            >
-              Start free — build my plan →
-            </Link>
+            {/* 2 Oct 2026 (founder, standing: every guest sign-up button reads
+                "Sign up with Google"; review, same day): the button's own
+                words ("Start free — build my plan →") are now the line above
+                it, and the button is the one shared sign-up button — Google's
+                dark (filled) button with the "G", the page's main action.
+                Tooltip with a mouse (the general words); no caption on touch —
+                the page above says what the account does, the line under it
+                what it costs. Still /login; door "coach-start". */}
+            <p className="mt-6 text-sm font-bold text-ink-900">Start free — your coach builds the plan:</p>
+            <SignUpButton
+              href={`/login?callbackUrl=${encodeURIComponent(selfPath)}&from=coach-start`}
+              surface="coach-start"
+              theme="dark"
+              explain="tooltip"
+              className="mt-2"
+            />
             <p className="mt-2 text-[11px] text-ink-400">
               No payment, no trial, no card. Free is the product.
             </p>

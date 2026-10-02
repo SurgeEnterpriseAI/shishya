@@ -31,6 +31,10 @@
 // on those paths by itself (isUnder13SchoolPath), so no child is offered a
 // tutor or an account from the header.
 //
+// 2 Oct 2026 (review): childSafe is also set by /ask for a Class 1-7
+// question — the path there is just /ask, so HeaderAuthControls cannot tell
+// by itself — and is now passed down: no guest sign-up button, no tooltip.
+//
 // 30 Sep 2026 (sign-up build 2): under the orange row, the WelcomeStrip
 // island — the one-time "Your Shishya is ready" strip after a sign-up and
 // the guest-chat carry-over (src/components/WelcomeStrip.tsx). It renders
@@ -50,13 +54,15 @@ import { getDailyQuote } from "@/data/motivational-quotes";
 // reasonable tradeoff for the edge-cache win until we set up a
 // client-side i18n provider.
 // 30 Sep 2026 (founder: sign-up invitations clear and visible): the guest
-// button reads "Sign in free" (it is free — no new claim); HeaderAuthControls
-// swaps in the Hindi / Telugu words after mount (HEADER_SIGNIN_LABEL in
-// src/lib/signin-cta.ts). Still hidden on Class 1-7 pages.
+// button read "Sign in free".
+// 2 Oct 2026 (founder, standing): it reads "Sign up with Google" — the words
+// live in src/lib/signup-cta-copy.ts (one place for every sign-up button) and
+// HeaderAuthControls renders them: English in the cached HTML, Hindi / Telugu
+// after mount, text only on our saffron button (Google's guidelines allow the
+// "G" on a white button only). Still hidden on Class 1-7 pages.
 const RAIL_LABELS = {
   dashboard: "Dashboard",
   signout: "Sign out",
-  signinShort: "Sign in free",
 } as const;
 
 // Default locale chip shown in the LangSwitcher trigger. The switcher
@@ -88,8 +94,13 @@ export function Header({ admin = false, childSafe = false }: { admin?: boolean; 
   // 13 px lines; the longest quotes (119 with the author) need 12 px type.
   const longQuote = quote ? (quote.text + (quote.author ? ` — ${quote.author}` : "")).length > 95 : false;
 
+  // 2 Oct 2026: relative z-30 — the guest button's hover tooltip ("Sign up
+  // with Google", HeaderAuthControls) hangs about 50 px below the header on a
+  // mouse screen; without a z-index the page's own positioned blocks (a hero,
+  // a sticky strip) would paint over its lower half. Bars and sheets that
+  // must sit above everything (z-40 / z-50) still do.
   return (
-    <header className="border-b border-ink-200/50 bg-white/80 backdrop-blur">
+    <header className="relative z-30 border-b border-ink-200/50 bg-white/80 backdrop-blur">
       <div className="container-prose flex h-16 items-center gap-2 sm:gap-3">
         {/* Left: brand + back-link.
             26 Sep 2026 (phone fit): measured live on shishya.in/exams/SSC_CGL
@@ -190,7 +201,7 @@ export function Header({ admin = false, childSafe = false }: { admin?: boolean; 
                 candidates). */}
         <nav className="ml-auto flex shrink-0 items-center gap-2 text-sm text-ink-700 sm:gap-3">
           {!admin && (
-            <HeaderAuthControls locale={DEFAULT_LOCALE} labels={RAIL_LABELS} />
+            <HeaderAuthControls locale={DEFAULT_LOCALE} labels={RAIL_LABELS} childSafe={childSafe} />
           )}
         </nav>
       </div>

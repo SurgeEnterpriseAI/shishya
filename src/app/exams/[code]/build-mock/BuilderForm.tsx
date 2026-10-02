@@ -41,7 +41,7 @@
 
 import { Fragment, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { SignInLink } from "@/components/SignInLink";
+import { SignUpButton } from "@/components/SignUpButton";
 import { useRouter, usePathname } from "next/navigation";
 import { OTHER_INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
 import { fillTemplate } from "@/lib/i18n";
@@ -116,7 +116,6 @@ export interface BuilderLabels {
   failed: string;
   building: string;
   start: string;
-  signin: string;
   /** {n} = other Indian languages */
   footer: string;
 }
@@ -179,6 +178,8 @@ const OPEN_CHOICES: SizeChoice[] = BUILDER_SIZES.map((s) => ({ pick: s, size: s,
 
 export function BuilderForm({
   examCode,
+  examShort,
+  locale,
   pyqOnly = false,
   subjects,
   preselected,
@@ -188,6 +189,10 @@ export function BuilderForm({
   labels,
 }: {
   examCode: string;
+  /** The exam's short name and the page's locale — for the guest's "Sign up
+   *  with Google" button and its explanation (2 Oct 2026). */
+  examShort?: string;
+  locale?: string;
   /** Counts and the built set are PYQ-pattern questions only (?pyq=1). */
   pyqOnly?: boolean;
   subjects: { name: string; topics: TopicRow[] }[];
@@ -488,14 +493,24 @@ export function BuilderForm({
                 {busy ? labels.building : labels.start}
               </button>
             ) : (
-              <SignInLink
+              // 2 Oct 2026 (founder, standing): the one shared "Sign up with
+              // Google" button, full width as before, with its explanation
+              // (tooltip with a mouse, a one-line caption on a phone). The
+              // sign-in returns to this exam's builder, so the words name the
+              // exam. Review, same day: Google's DARK button — it stands
+              // where the filled "Build my mock" button does for a member.
+              <SignUpButton
                 href={`/login?callbackUrl=${encodeURIComponent(`${pathname ?? `/exams/${examCode}/build-mock`}${pyqOnly ? "?pyq=1" : ""}`)}&from=build-mock-form`}
                 surface="build-mock-form"
+                locale={locale}
+                exam={examShort}
+                examCode={examCode}
+                practice
+                theme="dark"
+                block
+                className="mt-4"
                 beaconProps={{ examCode }}
-                className="btn-primary mt-4 block w-full text-center !py-2.5 text-sm"
-              >
-                {labels.signin}
-              </SignInLink>
+              />
             )}
             {err && <p className="mt-2 text-xs text-red-600">{err}</p>}
             <p className="mt-3 text-xs text-ink-500">

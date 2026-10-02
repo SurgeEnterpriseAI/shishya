@@ -41,10 +41,18 @@
 // practice check, as do the tracker (/api/exams/[code]/enroll) and the tutor
 // (/chat?examCode), and HomeForYou lists it under "Your exams".
 //
+// 2 Oct 2026 (founder, standing: "Sign up with Google"): both buttons read
+// the one shared label (src/lib/signup-cta-copy.ts; they were "Sign in free
+// with Google →" and "Sign in free"), through the shared SignUpButton — the
+// early line's as Google's white button with the "G", the bar's as our
+// saffron button with text only (no "G" on a coloured fill). The lines beside
+// them are unchanged.
+//
 // Pure: copy + path rules + the trigger, imported by client islands, pages
 // and tests. No React, no DOM.
 
 import { isChildSchoolPath, pitchAllowedPath } from "@/lib/signup-pitch";
+import { signUpLabel } from "@/lib/signup-cta-copy";
 import { isUnder13SchoolPath } from "@/lib/school/student-classes";
 
 export type ContentLocale = "en" | "hi" | "te";
@@ -71,7 +79,7 @@ const LINE = {
     lineExamNoPractice: "Sign in free — Shishya keeps {exam} as your exam and picks up where you left off next time.",
     lead: "Make Shishya yours — free.",
     line: "Sign in and Shishya keeps your exam, your mocks, scores and weak topics, and picks up where you left off next time.",
-    cta: "Sign in free with Google →",
+    cta: signUpLabel("en"),
     privacy: "Free · Google shares only your name, email and profile picture · For students 13 and above",
   },
   hi: {
@@ -80,7 +88,7 @@ const LINE = {
     lineExamNoPractice: "मुफ़्त साइन इन कीजिए — Shishya {exam} को आपकी परीक्षा के रूप में सँभालकर रखता है, और अगली बार वहीं से शुरू करता है जहाँ आपने छोड़ा था।",
     lead: "Shishya को अपना बनाइए — मुफ़्त।",
     line: "साइन इन कीजिए — Shishya आपकी परीक्षा, आपके मॉक, स्कोर और कमज़ोर टॉपिक सँभालकर रखता है, और अगली बार वहीं से शुरू करता है जहाँ आपने छोड़ा था।",
-    cta: "Google से मुफ़्त साइन इन →",
+    cta: signUpLabel("hi"),
     privacy: "मुफ़्त · Google से केवल आपका नाम, ईमेल और प्रोफ़ाइल फ़ोटो · 13 साल और उससे बड़े विद्यार्थियों के लिए",
   },
   te: {
@@ -89,10 +97,10 @@ const LINE = {
     lineExamNoPractice: "ఉచితంగా సైన్ ఇన్ చేయండి — Shishya {exam} ను మీ పరీక్షగా దాచి ఉంచుతుంది, తర్వాతిసారి మీరు ఆపిన చోటు నుంచే మొదలుపెడుతుంది.",
     lead: "Shishya ను మీదిగా చేసుకోండి — ఉచితం.",
     line: "సైన్ ఇన్ చేయండి — Shishya మీ పరీక్షను, మీ మాక్‌లు, స్కోర్లు, బలహీన టాపిక్‌లను దాచి ఉంచుతుంది, తర్వాతిసారి మీరు ఆపిన చోటు నుంచే మొదలుపెడుతుంది.",
-    cta: "Google తో ఉచితంగా సైన్ ఇన్ →",
+    cta: signUpLabel("te"),
     privacy: "ఉచితం · Google నుంచి మీ పేరు, ఈమెయిల్, ప్రొఫైల్ ఫోటో మాత్రమే · 13 ఏళ్లు, ఆపై వయసు విద్యార్థుల కోసం",
   },
-} as const;
+};
 
 /** The early line's words — exam-specific when the page names one exam.
  *  `practice` is that exam's practice state (ExamPracticeState.hasPractice,
@@ -135,30 +143,30 @@ export interface NudgeBarCopy {
 const BAR: Record<ContentLocale, NudgeBarCopy> = {
   en: {
     line: "Shishya can remember your exam and weak topics.",
-    cta: "Sign in free",
+    cta: signUpLabel("en"),
     privacy: "Free · For students 13 and above",
     privacyMore: " · Google shares only your name, email and profile picture",
     later: "Maybe later",
-    label: "Sign in free",
+    label: signUpLabel("en"),
   },
   hi: {
     line: "Shishya आपकी परीक्षा और कमज़ोर टॉपिक याद रख सकता है।",
-    cta: "मुफ़्त साइन इन",
+    cta: signUpLabel("hi"),
     privacy: "मुफ़्त · 13+ साल के विद्यार्थियों के लिए",
     privacyMore: " · Google से केवल आपका नाम, ईमेल और प्रोफ़ाइल फ़ोटो",
     later: "बाद में",
-    label: "मुफ़्त साइन इन",
+    label: signUpLabel("hi"),
   },
   // 30 Sep 2026 (review): shorter Telugu — beside the wide Telugu button the
   // text column is ~156 px on a 375 px phone; the old line lost its verb to
   // the two-line clamp ("…టాపిక్‌లను...") and the age line wrapped.
   te: {
     line: "Shishya మీ పరీక్ష, బలహీన టాపిక్‌లు గుర్తుంచుకోగలదు.",
-    cta: "ఉచితంగా సైన్ ఇన్",
+    cta: signUpLabel("te"),
     privacy: "ఉచితం · 13+ విద్యార్థులకు",
     privacyMore: " · Google నుంచి మీ పేరు, ఈమెయిల్, ప్రొఫైల్ ఫోటో మాత్రమే",
     later: "తర్వాత",
-    label: "ఉచితంగా సైన్ ఇన్",
+    label: signUpLabel("te"),
   },
 };
 

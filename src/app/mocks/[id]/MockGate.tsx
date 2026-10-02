@@ -41,6 +41,7 @@ export function MockGate({
   freeLine,
   copy,
   guestQuiz,
+  locale,
 }: {
   mockId: string;
   title: string;
@@ -56,6 +57,8 @@ export function MockGate({
   freeLine: string;
   copy: MockGateCopy;
   guestQuiz: GuestQuizEmbed | null;
+  /** The page's language (2 Oct 2026: the shared sign-up label follows it). */
+  locale?: string | null;
 }) {
   const beaconProps = { examCode, mockId };
   return (
@@ -74,12 +77,20 @@ export function MockGate({
               {fillTemplate(copy.size, { n: questionCount, min: durationMin })}
             </p>
             <p className="mt-3 text-sm text-ink-600">{copy.body}</p>
+            {/* 2 Oct 2026 (founder, standing): the one shared "Sign up with
+                Google" button — Google's white button with the "G" — with its
+                explanation (tooltip with a mouse, caption on touch). The
+                sign-in returns to this mock, so the account is enrolled in
+                the mock's exam and the words name it. A language other than
+                en / hi / te keeps its "Continue with Google" translation. */}
             <GateSignInButton
               callbackUrl={callbackUrl}
-              label={signInLabel}
+              locale={locale}
+              continueLabel={signInLabel}
+              exam={examShort}
               surface="mock-gate"
               beaconProps={beaconProps}
-              className="[&>button]:mt-4"
+              className="mt-4"
             />
             <p className="mt-2 text-center text-xs text-ink-500">
               {fillTemplate(freeLine, { n: INDIAN_LANGUAGE_COUNT })}
@@ -97,7 +108,6 @@ export function MockGate({
                 heading: copy.quizHeading,
                 line: copy.quizLine,
                 start: copy.quizStart,
-                endSignIn: copy.quizEndSignIn,
               }}
               signInCallbackUrl={callbackUrl}
               beacons={{ start: "mock-gate-quiz-start", done: "mock-gate-quiz-done" }}

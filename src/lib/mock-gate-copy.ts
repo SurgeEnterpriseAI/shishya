@@ -53,10 +53,9 @@ export interface MockGateCopy {
   quizLine: string;
   /** "Try {n} questions now →" */
   quizStart: string;
-  /** The quiz result screen's Google button on the mock gate. */
-  quizEndSignIn: string;
-  /** The same button on the build-mock gate. */
-  buildQuizEndSignIn: string;
+  // 2 Oct 2026: the quiz result screen's sign-in labels (quizEndSignIn,
+  // buildQuizEndSignIn) are gone — every sign-up button reads the one shared
+  // label, "Sign up with Google" (src/lib/signup-cta-copy.ts).
   /** Signed-in choice. */
   choiceHeading: string;
   choiceLine: string;
@@ -79,8 +78,6 @@ const COPY: Readonly<Record<CopyLocale, MockGateCopy>> = {
     quizHeading: "Not ready to sign in?",
     quizLine: "Try {n} {exam} questions now — no sign-in. Each answer shows its solution.",
     quizStart: "Try {n} questions now →",
-    quizEndSignIn: "Sign in with Google — back to this mock →",
-    buildQuizEndSignIn: "Sign in with Google — build your mock →",
     choiceHeading: "How do you want to start?",
     choiceLine: "You're signed in. The clock starts only when you pick one.",
     choiceFull: "Start this mock — {n} questions · {min} min",
@@ -97,8 +94,6 @@ const COPY: Readonly<Record<CopyLocale, MockGateCopy>> = {
     quizHeading: "अभी साइन इन नहीं करना?",
     quizLine: "अभी {exam} के {n} प्रश्न आज़माएँ — बिना साइन इन। हर उत्तर के साथ उसका हल दिखता है।",
     quizStart: "अभी {n} प्रश्न आज़माएँ →",
-    quizEndSignIn: "Google से साइन इन करें — वापस इसी मॉक पर →",
-    buildQuizEndSignIn: "Google से साइन इन करें — अपना मॉक बनाएँ →",
     choiceHeading: "आप कैसे शुरू करना चाहेंगे?",
     choiceLine: "आप साइन इन हो गए हैं। घड़ी तभी चलेगी जब आप इनमें से एक चुनेंगे।",
     choiceFull: "यह मॉक शुरू करें — {n} प्रश्न · {min} मिनट",
@@ -115,8 +110,6 @@ const COPY: Readonly<Record<CopyLocale, MockGateCopy>> = {
     quizHeading: "ఇప్పుడే sign in చేయాలని లేదా?",
     quizLine: "ఇప్పుడే {n} {exam} ప్రశ్నలు ప్రయత్నించండి — sign in అవసరం లేదు. ప్రతి జవాబుతో దాని పరిష్కారం కనిపిస్తుంది.",
     quizStart: "ఇప్పుడే {n} ప్రశ్నలు ప్రయత్నించండి →",
-    quizEndSignIn: "Googleతో sign in చేయండి — తిరిగి ఇదే మాక్‌కు →",
-    buildQuizEndSignIn: "Googleతో sign in చేయండి — మీ మాక్ తయారు చేసుకోండి →",
     choiceHeading: "ఎలా మొదలుపెట్టాలనుకుంటున్నారు?",
     choiceLine: "మీరు sign in అయ్యారు. మీరు ఒకటి ఎంచుకున్నప్పుడే టైమర్ మొదలవుతుంది.",
     choiceFull: "ఈ మాక్ మొదలుపెట్టండి — {n} ప్రశ్నలు · {min} నిమిషాలు",

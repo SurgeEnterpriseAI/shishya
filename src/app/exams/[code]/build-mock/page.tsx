@@ -106,7 +106,6 @@ function builderLabels(t: (key: StringKey) => string, F: BuilderFillCopy): Build
     failed: t("build.failed"),
     building: t("build.building"),
     start: t("build.start"),
-    signin: t("build.signin"),
     footer: t("build.footer"),
   };
 }
@@ -344,6 +343,8 @@ export default async function BuildMockPage({
         ) : (
           <BuilderForm
             examCode={exam.code}
+            examShort={exam.shortName}
+            locale={tt.locale}
             pyqOnly={pyq}
             subjects={[...subjects.values()]}
             preselected={preIds}
@@ -367,7 +368,6 @@ export default async function BuildMockPage({
                 heading: GC.quizHeading,
                 line: GC.quizLine,
                 start: GC.quizStart,
-                endSignIn: GC.buildQuizEndSignIn,
               }}
               signInCallbackUrl={buildGateCallbackPath(exam.code, pyq, sp)}
               beacons={{ start: "build-gate-quiz-start", done: "build-gate-quiz-done" }}

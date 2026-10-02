@@ -8,6 +8,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { SignupInline } from "@/components/SignupInline";
 import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 import { SectionCrossLinks } from "@/components/SectionCrossLinks";
 // 26 Sep 2026 (repair): the schemes, never the one outside aggregator
@@ -102,6 +103,15 @@ export default function ScholarshipsPage() {
             — the soonest: {soon[0].name}, {formatIsoDay(soon[0].cycle!.closesOn!)} ({soon[0].cycle!.tier}).
           </p>
         )}
+
+        {/* 2 Oct 2026 (founder, standing: a sign-up invitation on every page
+            family): the guest sign-up line. Client-only (no server HTML), guests
+            only, never on a Class 1-7 page. Review, same day: it sits EARLY —
+            after the intro and the match wizard, before the list — not after the whole list,
+            where it stood one short block above the root layout's sign-up card
+            (two invitations on one phone screen). revealOffscreen: it appears
+            only where nothing on screen moves. */}
+        <SignupInline surface="scholarships-index" revealOffscreen />
 
         <ScholarshipBrowser scholarships={SCHOLARSHIP_SCHEMES} lists={lists} />
 

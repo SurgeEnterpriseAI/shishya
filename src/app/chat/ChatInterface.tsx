@@ -124,6 +124,7 @@ import {
   tutorUnavailableText,
   type StorageLike,
 } from "@/lib/tutor-unavailable";
+import { SignUpButton } from "@/components/SignUpButton";
 
 // AI unavailable (1 Oct 2026, src/lib/tutor-unavailable.ts): an error event
 // with a "tutor-unavailable…" code shows this chat's own line in the UI
@@ -223,23 +224,25 @@ function prettyTool(name?: string): string {
 const SAVE_COPY = {
   en: {
     saved: "Your guest conversation is saved to your account.",
-    button: "Save this chat to your account — sign in free",
+    // 2 Oct 2026: these two are the card's line above the shared "Sign up
+    // with Google" button (they were the button's own words).
+    button: "Save this chat to your account — free",
     // A general chat (27 Sep 2026): no mocks in view there.
-    buttonGeneral: "Keep this chat in a free Shishya account — sign in",
+    buttonGeneral: "Keep this chat in a free Shishya account",
     sub: "Signed in, the tutor also sees your mock mistakes and weak topics.",
     subGeneral: "Free, with Google. Accounts are for ages 13 and above.",
   },
   hi: {
     saved: "आपकी गेस्ट बातचीत आपके अकाउंट में सेव हो गई है।",
-    button: "यह बातचीत अपने अकाउंट में सेव करें — मुफ़्त साइन इन",
-    buttonGeneral: "यह बातचीत मुफ़्त Shishya अकाउंट में रखें — साइन इन",
+    button: "यह बातचीत अपने अकाउंट में सेव करें — मुफ़्त",
+    buttonGeneral: "यह बातचीत मुफ़्त Shishya अकाउंट में रखें",
     sub: "साइन इन के बाद ट्यूटर आपकी मॉक की गलतियाँ और कमज़ोर टॉपिक भी देखता है।",
     subGeneral: "मुफ़्त, Google से। अकाउंट 13 साल और उससे ऊपर के लिए हैं।",
   },
   te: {
     saved: "మీ గెస్ట్ సంభాషణ మీ అకౌంట్‌లో సేవ్ అయింది.",
-    button: "ఈ చాట్‌ను మీ అకౌంట్‌లో సేవ్ చేయండి — ఉచితంగా సైన్ ఇన్",
-    buttonGeneral: "ఈ చాట్‌ను ఉచిత Shishya అకౌంట్‌లో ఉంచుకోండి — సైన్ ఇన్",
+    button: "ఈ చాట్‌ను మీ అకౌంట్‌లో సేవ్ చేయండి — ఉచితంగా",
+    buttonGeneral: "ఈ చాట్‌ను ఉచిత Shishya అకౌంట్‌లో ఉంచుకోండి",
     sub: "సైన్ ఇన్ అయ్యాక ట్యూటర్ మీ మాక్ తప్పులు, బలహీన టాపిక్‌లు కూడా చూస్తుంది.",
     subGeneral: "ఉచితం, Google తో. అకౌంట్‌లు 13 ఏళ్లు, ఆపై వయసు వారికి.",
   },
@@ -1072,16 +1075,35 @@ export function ChatInterface({
             1 tap in two weeks. No timer, no counter, never over the chat. */}
         {guestSignInHref && !school && !under13 && !busy && messages.some((m) => m.role === "assistant" && m.content && !m.failed) && (
           <div className="rounded-md border border-saffron-200 bg-saffron-50/60 p-3">
-            <a
+            {/* 2 Oct 2026 (founder, standing: "Sign up with Google"): the card
+                says what it is for in a line (the words the old button
+                carried), and its button is the one shared sign-up button —
+                Google's white button with the "G", full width. With a mouse,
+                hover or keyboard focus opens the explanation (this chat is
+                kept, the tutor remembers); on touch the line above says it.
+                Still /login (not in the skip-/login test), the same carry-over
+                and the same "chat-guest-save" beacon; its sign-in door is now
+                named "chat-save" (it was counted as a plain "link"). Review,
+                same day: the tooltip opens ABOVE the button — this card is
+                the last thing in the scrolling message pane, and a tooltip
+                under it was cut off by the pane's edge. */}
+            <p className="text-center text-sm font-semibold text-ink-900">
+              {examCode == null ? SAVE_COPY[navLang].buttonGeneral : SAVE_COPY[navLang].button}
+            </p>
+            <SignUpButton
               href={examCode == null ? `/login?callbackUrl=${encodeURIComponent("/chat?general=1")}` : guestSignInHref}
-              onClick={() => {
+              surface="chat-save"
+              locale={navLang}
+              context={{ kind: "tutor" }}
+              explain="tooltip"
+              side="top"
+              block
+              className="mt-2"
+              onSignInClick={() => {
                 keepGuestChatForSignIn();
                 beacon({ cta: "chat-guest-save", surface: "chat", examCode });
               }}
-              className="btn-primary flex w-full items-center justify-center !py-2.5 text-center text-sm"
-            >
-              {examCode == null ? SAVE_COPY[navLang].buttonGeneral : SAVE_COPY[navLang].button}
-            </a>
+            />
             <p className="mt-1.5 text-center text-[11px] text-ink-600">
               {examCode == null ? SAVE_COPY[navLang].subGeneral : SAVE_COPY[navLang].sub}
             </p>

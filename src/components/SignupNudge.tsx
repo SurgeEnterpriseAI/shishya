@@ -74,6 +74,17 @@
 //   • the desktop card sits above FeedbackWidget's "Suggest a feature" pill
 //     (fixed bottom-4 right-4, same z-40) instead of on top of it — it now
 //     shows after 45 s, not 5 minutes, so it covered the pill far more often.
+//
+// 2 Oct 2026 (founder, standing: "Sign up with Google"): the bar's button
+// reads "Sign up with Google" — the one shared sign-up button
+// (src/components/SignUpButton.tsx), here in its TEXT-ONLY saffron form: a
+// slim bar needs a compact brand-coloured button, and Google's guidelines
+// allow the colour "G" on a white button only, so there is no mark. On a
+// phone the label's two halves stack ("Sign up" over "with Google"), so the
+// line beside it keeps the room it had. With a mouse (the desktop corner
+// card) hover or keyboard focus opens the explanation as a tooltip ABOVE the
+// button; on touch there is none — the bar's own line says it. Same link,
+// same "signin-click" beacon (surface "signup-nudge"), same test arms.
 
 import { useEffect, useRef, useState } from "react";
 import { pitchAllowedPath } from "@/lib/signup-pitch";
@@ -81,7 +92,7 @@ import { clientUiLocale } from "@/lib/ui-locale-copy";
 import { usePathname } from "next/navigation";
 import { fetchSignedIn } from "@/lib/session-hint";
 import { isUnder13SchoolPath } from "@/lib/school/student-classes";
-import { SignInLink } from "@/components/SignInLink";
+import { SignUpButton } from "@/components/SignUpButton";
 import { contentFamily, fixedPageLocale, nudgeBarCopy, nudgeTrigger, scrollDepthReached } from "@/lib/content-signup";
 
 const MAX_DISMISSALS = 3;
@@ -254,7 +265,8 @@ export function SignupNudge() {
   if (!show) return null;
   // The page's own language (the Hindi notes), else the reader's (URL
   // prefix, else the shishya-lang cookie).
-  const copy = nudgeBarCopy(fixedPageLocale(pathname) ?? clientUiLocale());
+  const barLocale = fixedPageLocale(pathname) ?? clientUiLocale();
+  const copy = nudgeBarCopy(barLocale);
   const dismiss = () => {
     try {
       localStorage.setItem(
@@ -288,17 +300,22 @@ export function SignupNudge() {
               <span className="hidden sm:inline">{copy.privacyMore}</span>
             </p>
           </div>
-          <SignInLink
+          <SignUpButton
             href={`/login?callbackUrl=${encodeURIComponent(location.pathname + location.search)}&from=header`}
             surface="signup-nudge"
+            locale={barLocale}
+            variant="brand"
+            stack
+            explain="tooltip"
+            side="top"
+            align="end"
+            className="shrink-0"
+            buttonClassName="rounded-lg bg-saffron-500 px-3 py-2 text-center text-sm font-bold text-white shadow-sm transition-colors hover:bg-saffron-600"
             beaconProps={{ placement: show }}
             onSignInClick={() => {
               try { localStorage.setItem(LS_DONE, "1"); } catch { /* ok */ }
             }}
-            className="shrink-0 whitespace-nowrap rounded-lg bg-saffron-500 px-3 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-saffron-600"
-          >
-            {copy.cta}
-          </SignInLink>
+          />
           <button
             type="button"
             aria-label={copy.later}

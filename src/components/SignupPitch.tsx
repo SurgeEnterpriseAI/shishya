@@ -20,13 +20,25 @@
 // surface "signup-pitch" and this card's placement (it was cta
 // "signup-pitch-click" with surface = placement), and the skip-/login test's
 // direct arm. Its /login link keeps from=pitch (a general sign-in card).
+//
+// 2 Oct 2026 (founder, standing: "Sign up with Google", visible and clear,
+// with a description of how signing up is useful): the card's button is the
+// one shared sign-up button (src/components/SignUpButton.tsx) — Google's
+// white button with the "G" (their guidelines do not allow the "G" on our
+// saffron) and the one label. As a tooltip on hover or keyboard focus with a
+// mouse, the explanation from src/lib/signup-cta-copy.ts: the general words,
+// or the school words on a Class 8-12 page (no exam, no "tutor remembers").
+// No caption under it on a phone (2 Oct 2026 review): the card's four points
+// are above the button and its privacy line is right under it — a caption
+// made two small paragraphs in a row. Same link, same "signin-click" beacon
+// (surface "signup-pitch" + placement), same test arms.
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { fetchSignedIn } from "@/lib/session-hint";
 import { clientUiLocale } from "@/lib/ui-locale-copy";
 import { pitchAllowedPath, signupHref, signupPitchCopy, type SignupPitchCopy } from "@/lib/signup-pitch";
-import { SignInLink } from "@/components/SignInLink";
+import { SignUpButton } from "@/components/SignUpButton";
 
 /** Home page paths (the /hi and /te twins included), where the card also sits beside the events at lg. */
 const HOME_PATHS = new Set(["/", "/hi", "/te"]);
@@ -41,6 +53,7 @@ export function SignupPitch({
 }) {
   const pathname = usePathname();
   const [copy, setCopy] = useState<SignupPitchCopy | null>(null);
+  const [locale, setLocale] = useState<string>("en");
   const [href, setHref] = useState("/login");
 
   useEffect(() => {
@@ -51,7 +64,9 @@ export function SignupPitch({
       .then((signedIn) => {
         if (!alive || signedIn !== false) return;
         setHref(signupHref(location.pathname + location.search));
-        setCopy(signupPitchCopy(clientUiLocale()));
+        const lc = clientUiLocale();
+        setLocale(lc);
+        setCopy(signupPitchCopy(lc));
       })
       .catch(() => {});
     return () => {
@@ -79,14 +94,7 @@ export function SignupPitch({
             </li>
           ))}
         </ul>
-        <SignInLink
-          href={href}
-          surface="signup-pitch"
-          beaconProps={{ placement: surface }}
-          className="mt-4 inline-block rounded-xl bg-saffron-500 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-saffron-600"
-        >
-          {copy.cta}
-        </SignInLink>
+        <SignUpButton href={href} surface="signup-pitch" locale={locale} explain="tooltip" className="mt-4" beaconProps={{ placement: surface }} />
         <p className="mt-2 text-[11px] leading-relaxed text-ink-500">{copy.privacy}</p>
       </div>
     </section>

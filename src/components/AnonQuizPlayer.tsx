@@ -21,7 +21,7 @@
 
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
-import { SignInLink } from "@/components/SignInLink";
+import { SignUpButton } from "@/components/SignUpButton";
 import { loginHrefFor } from "@/lib/signin-cta";
 import type { AnonQuiz } from "@/lib/anon-quiz";
 import { fillTemplate, type Locale } from "@/lib/i18n";
@@ -408,18 +408,34 @@ export function AnonQuizPlayer({
           </div>
         )}
 
-        <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+        {/* 2 Oct 2026 (founder, standing): the result screen's sign-up is the
+            one shared "Sign up with Google" button (Google's white button with
+            the "G") — still the FIRST button under the score — with its
+            explanation: a tooltip with a mouse, a caption under it on a phone.
+            The sign-in returns to this exam's hub, so the words name the exam
+            (the account is enrolled in it at sign-up); a quiz exists, so "tests
+            saved" holds. sm:items-start: the caption under it must not stretch
+            the tutor button beside it. Review, same day: Google's DARK button
+            — the sign-up stays the filled one beside the outlined tutor
+            button — and the tooltip opens ABOVE it (the tutor button and the
+            challenge card sit beside and under it). */}
+        <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-start">
           {signInSlot ? (
             <div className="flex flex-1 flex-col">{signInSlot}</div>
           ) : (
-            <SignInLink
+            <SignUpButton
               href={loginHref}
               surface="quiz-end"
+              locale={locale}
+              exam={quiz.examShort}
+              examCode={quiz.examCode}
+              practice
+              theme="dark"
+              side="top"
+              block
+              className="flex-1"
               beaconProps={{ examCode: quiz.examCode, score, total: qs.length }}
-              className="inline-flex flex-1 items-center justify-center rounded-lg bg-saffron-500 px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-saffron-600 focus:outline-none focus:ring-2 focus:ring-saffron-300"
-            >
-              {QL["quiz.signIn"]}
-            </SignInLink>
+            />
           )}
           <Link
             href={tutorHref}

@@ -41,37 +41,44 @@
 //   • HubSignInLink is the shared in-page sign-in button (SignInLink:
 //     beacon + the skip-/login test).
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { fetchSignedIn } from "@/lib/session-hint";
 import { clientUiLocale, type CopyLocale } from "@/lib/ui-locale-copy";
 import { mockStartCopy } from "@/lib/quiz-entry-copy";
-import { SignInLink } from "@/components/SignInLink";
+import { SignUpButton } from "@/components/SignUpButton";
 import { hubAutoStart, loginHrefFor, signinBeacon } from "@/lib/signin-cta";
 
-/** The signed-out hub box's "Sign in free — start practising" button (16
- *  Sep 2026: it was the one hub CTA with no CTA_CLICKED). Renders the same
- *  link the server page did — href, class and text passed through — as the
- *  shared in-page sign-in button (30 Sep 2026, src/components/SignInLink.tsx):
- *  one "signin-click" beacon (surface "hub-box"; it was cta
- *  "hub-signin-practice"), and in the skip-/login test's direct arm the tap
- *  goes straight to Google with the same callback. */
+/** The signed-out hub box's sign-up button (16 Sep 2026: it was the one hub
+ *  CTA with no CTA_CLICKED; 30 Sep 2026: the shared in-page sign-in —
+ *  one "signin-click" beacon, surface "hub-box", and the skip-/login test).
+ *  2 Oct 2026 (founder, standing): it reads "Sign up with Google" and carries
+ *  the explanation — the one shared SignUpButton (src/components/
+ *  SignUpButton.tsx), which wraps the same SignInLink: same href, same
+ *  beacon, same test arms. `practice` is fixed true: the hub renders this box
+ *  only where it has checked questions (hasContent). Full width on a phone
+ *  (block; its own width from sm): this is the hub's main action — it must
+ *  not look smaller than the outlined quiz button under it.
+ *  Review, same day: Google's DARK button (theme="dark") — the white one,
+ *  with its 1 px grey border, was the quieter of the two beside the quiz
+ *  button's 2 px saffron outline, and on 28 Sep the founder put the free
+ *  sign-in back as the FILLED button after hub sign-ups fell from about 11 a
+ *  day to 4 when it was demoted. The tooltip opens ABOVE the button
+ *  (side="top"): the quiz button sits beside or under it. */
 export function HubSignInLink({
   examCode,
+  exam,
   href,
-  className,
-  children,
+  locale,
 }: {
   examCode: string;
+  /** The exam's short name (the explanation names it). */
+  exam: string;
   href: string;
-  className: string;
-  children: ReactNode;
+  /** The hub page's locale. */
+  locale?: string | null;
 }) {
-  return (
-    <SignInLink href={href} surface="hub-box" className={className} beaconProps={{ examCode }}>
-      {children}
-    </SignInLink>
-  );
+  return <SignUpButton href={href} surface="hub-box" locale={locale} exam={exam} examCode={examCode} practice theme="dark" side="top" block className="sm:w-auto" beaconProps={{ examCode }} />;
 }
 
 interface Labels {

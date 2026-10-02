@@ -9,6 +9,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
+import { SignupInline } from "@/components/SignupInline";
 import {
   COLLEGES,
   formatNirfRanks,
@@ -180,6 +181,10 @@ export default async function CollegesByStatePage({
           ))}
         </ol>
 
+        {/* 2 Oct 2026 (founder, standing: a sign-up invitation on every page
+            family): the guest sign-up line after the page's answer. Client-only
+            (no server HTML), guests only, never on a Class 1-7 page. */}
+        <SignupInline surface="colleges-state" revealOffscreen />
         {/* By-stream breakdown — useful for "engineering colleges in Tamil Nadu" type queries */}
         {streamSections.length > 1 && (
           <div className="mt-12">

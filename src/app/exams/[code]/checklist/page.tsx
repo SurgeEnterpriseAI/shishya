@@ -44,6 +44,7 @@ import { notFound } from "next/navigation";
 import { unstable_cache } from "next/cache";
 import type { ArticleReaction } from "@prisma/client";
 import { Header } from "@/components/Header";
+import { SignupInline } from "@/components/SignupInline";
 import { ExamAlertBox } from "@/components/ExamAlertBox";
 import { ShareExamButton } from "@/components/ShareExamButton";
 import { ReactionButtons } from "@/components/exam-phase/ReactionButtons";
@@ -397,6 +398,11 @@ export default async function ChecklistPage({
             </ul>
           )}
         </section>
+
+        {/* 2 Oct 2026 (founder, standing: a sign-up invitation on every page
+            family): the guest sign-up line after the page's answer. Client-only
+            (no server HTML), guests only, never on a Class 1-7 page. */}
+        <SignupInline surface="exam-checklist" revealOffscreen />
 
         {/* 2 — What to carry */}
         <section className={cardCls}>

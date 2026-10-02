@@ -37,9 +37,9 @@ export const LOGIN_GOOGLE_CTA = "login-google-click";
 
 /** Stable ids for every sign-in door. Never rename one: the 7-day reads key on them. */
 export const SIGNIN_SURFACES = [
-  // Header "Sign in free" (every page but Class 1-7) — always /login.
+  // Header "Sign up with Google" (every page but Class 1-7) — always /login.
   "header",
-  // Exam hub guest box "Sign in free — start practising".
+  // Exam hub guest box (it read "Sign in free — start practising" until 2 Oct 2026).
   "hub-box",
   // Exam hub "Try one question" card, after the answer.
   "hub-try-one",
@@ -64,6 +64,28 @@ export const SIGNIN_SURFACES = [
   "build-gate-quiz-end",
   // Home page's secondary "Sign in" line.
   "home-signin",
+  // 2 Oct 2026 — doors that were plain links (counted as "link") and are now
+  // the shared "Sign up with Google" button, each under its own id. None is
+  // in the skip-/login test: all go to /login, as they did.
+  // Class 8-12 chapter page, the save line after the practice.
+  "school-save",
+  // The guest tutor's save card (/chat, after the first reply).
+  "chat-save",
+  // A challenge link's result screen (/c/{token}).
+  "challenge-end",
+  // /for/{persona}, the bottom card.
+  "persona-card",
+  // 2 Oct 2026 (review) — four more filled guest buttons that carried their
+  // own words ("Start free — build my plan" …) and are now the shared button
+  // under a line that says what it is for. All /login, none in the test.
+  // /coach, the guest pitch.
+  "coach-start",
+  // /revision (the Mistake Notebook), the guest pitch.
+  "revision-start",
+  // /join/{inviteCode}, a batch invite opened by a guest.
+  "batch-join",
+  // /find-your-exam, "save these matches" under a guest's results.
+  "finder-save",
   // Any other link to /login (the click listener's fallback).
   "link",
 ] as const;
@@ -231,11 +253,8 @@ export function signupEventProps(p: {
   return props;
 }
 
-// ── Header button label (30 Sep 2026, founder: "sign-up invitations clear
-// and visible") ── The header renders English on the server (it stays
-// statically cacheable) and switches to the reader's language after mount.
-export const HEADER_SIGNIN_LABEL: Readonly<Record<"en" | "hi" | "te", string>> = {
-  en: "Sign in free",
-  hi: "मुफ़्त साइन इन",
-  te: "ఉచితంగా Sign in",
-};
+// ── Header button label ──
+// 30 Sep 2026: "Sign in free" (HEADER_SIGNIN_LABEL, here).
+// 2 Oct 2026 (founder, standing: "Sign up with Google"): the label moved to
+// src/lib/signup-cta-copy.ts — the ONE place for every sign-up button's
+// words — and this constant is gone.

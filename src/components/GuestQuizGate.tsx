@@ -46,7 +46,9 @@ type BeaconProps = { examCode: string; mockId?: string };
 
 export function GateSignInButton({
   callbackUrl,
-  label,
+  locale,
+  continueLabel,
+  exam,
   surface,
   beaconProps,
   className,
@@ -54,12 +56,18 @@ export function GateSignInButton({
 }: {
   /** Same-origin relative path (src/lib/mock-gate.ts builds it). */
   callbackUrl: string;
-  label: string;
+  /** The page's language (the shared label and explanation follow it). */
+  locale?: string | null;
+  /** t("login.continue"), where the page speaks all 22 languages: the words
+   *  for a language other than en / hi / te. */
+  continueLabel?: string;
+  /** The exam's short name: the explanation names it (the sign-in returns
+   *  to this exam's mock or builder, so the account is enrolled in it). */
+  exam?: string | null;
   /** Sign-in door id, e.g. "mock-gate" (src/lib/signin-cta.ts). */
   surface: SigninSurface;
   beaconProps: BeaconProps;
-  /** Wrapper classes — e.g. "[&>button]:mt-0" where the button's own mt-6
-   *  would misalign it. */
+  /** The button frame's layout classes — its top margin ("mt-4", "mt-0"). */
   className?: string;
   /** The in-app escape line above the button (default on); off where the
    *  page already shows it above another button. */
@@ -68,8 +76,25 @@ export function GateSignInButton({
   return (
     <>
       {inAppHint && <InAppBrowserHint />}
-      <div className={className} onClickCapture={() => signinBeacon(surface, { ...beaconProps, via: "google" })}>
-        <GoogleSignInButton callbackUrl={callbackUrl} label={label} />
+      {/* 2 Oct 2026: the one shared "Sign up with Google" button and its
+          explanation. practice: a gate only exists where the exam has a mock
+          or a builder. Review, same day: Google's DARK button — the gate's
+          sign-in is its main action and stays the filled one above the
+          outlined "try 5 questions" — and the tooltip opens ABOVE it (the
+          quiz card, or the result screen's tutor button, sits under it). */}
+      <div onClickCapture={() => signinBeacon(surface, { ...beaconProps, via: "google" })}>
+        <GoogleSignInButton
+          callbackUrl={callbackUrl}
+          locale={locale}
+          continueLabel={continueLabel}
+          exam={exam}
+          examCode={beaconProps.examCode}
+          practice
+          surface={surface}
+          side="top"
+          theme="dark"
+          className={className}
+        />
       </div>
     </>
   );
@@ -82,7 +107,6 @@ export interface GuestQuizGateCopy {
   /** "{n}" */
   start: string;
   /** The result screen's Google button. */
-  endSignIn: string;
 }
 
 export function GuestQuizGate({
@@ -154,10 +178,11 @@ export function GuestQuizGate({
             signInSlot={
               <GateSignInButton
                 callbackUrl={signInCallbackUrl}
-                label={copy.endSignIn}
+                locale={locale}
+                exam={quiz.examShort}
                 surface={signinSurface}
                 beaconProps={beaconProps}
-                className="[&>button]:mt-0"
+                className="mt-0"
                 inAppHint={inAppHint}
               />
             }

@@ -14,6 +14,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { SignupInline } from "@/components/SignupInline";
 import { prisma } from "@/lib/db/prisma";
 import { Prisma } from "@prisma/client";
 import { REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
@@ -448,7 +449,7 @@ export default async function ExamsCatalogPage({
             </p>
           </div>
         ) : (
-          sections.map(([cat, list]) => (
+          sections.map(([cat, list], si) => (
             <section key={cat} className="mt-10">
               <h2 className="text-base font-semibold text-ink-800">
                 {CATEGORY_LABELS[cat] ?? cat}{" "}
@@ -499,6 +500,14 @@ export default async function ExamsCatalogPage({
                   );
                 })}
               </ul>
+              {/* 2 Oct 2026 (founder, standing: a sign-up invitation on every page
+                  family): the guest sign-up line. Client-only (no server HTML), guests
+                  only, never on a Class 1-7 page. Review, same day: it sits EARLY —
+                  under the first category of results — not after the whole list,
+                  where it stood one short block above the root layout's sign-up card
+                  (two invitations on one phone screen). revealOffscreen: it appears
+                  only where nothing on screen moves. */}
+              {si === 0 && <SignupInline surface="exams-browse" revealOffscreen />}
             </section>
           ))
         )}

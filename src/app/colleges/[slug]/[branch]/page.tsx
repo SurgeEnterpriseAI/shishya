@@ -15,6 +15,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { SignupInline } from "@/components/SignupInline";
 import { ExamChip } from "@/components/ExamChip";
 import { COLLEGES } from "@/lib/colleges-data";
 import {
@@ -237,6 +238,10 @@ export default async function BranchPage({
           </>
         )}
 
+        {/* 2 Oct 2026 (founder, standing: a sign-up invitation on every page
+            family): the guest sign-up line after the page's answer. Client-only
+            (no server HTML), guests only, never on a Class 1-7 page. */}
+        <SignupInline surface="college-branch" revealOffscreen />
         {/* Career outcomes */}
         <h2 className="mt-10 text-base font-semibold text-ink-900">Career outcomes</h2>
         <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-ink-700">

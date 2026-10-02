@@ -193,7 +193,11 @@ export default async function AskPage({ searchParams }: { searchParams: SP }) {
     const best = r.hits[0] ? { url: r.hits[0].url, label: r.hits[0].label, section: r.hits[0].section, status: r.hits[0].status } : null;
     return (
       <main className="min-h-screen bg-paper-50">
-        <Header />
+        {/* 2 Oct 2026 (review, under 13): a Class 1-7 question gets the
+            child-safe header — no sign-up button (and so no tooltip and no
+            beacon), no Ask Shishya chip. The path is just /ask, so the
+            header cannot tell by itself. */}
+        <Header childSafe={r.schoolScope === "class1to7"} />
         <section className="container-prose py-6 sm:py-8">
           <SearchStrip variant="page" copy={copy} askBase={askBase} initialQuery={q} />
           <p className="mt-6 text-xs font-semibold uppercase tracking-wide text-saffron-700">{copy.resultsFor}</p>
@@ -205,6 +209,12 @@ export default async function AskPage({ searchParams }: { searchParams: SP }) {
           {r.schoolScope !== "class1to7" && (
             <AskAnswer key={`${q}|${forceAi ? 1 : 0}`} q={q} outcome={r.outcome} forceAi={forceAi} copy={copy} locale={locale} best={best} />
           )}
+          {/* 2 Oct 2026 (review): NO early sign-up line here. One was added
+              under the answer the same day and removed: nothing sits between
+              it and the root layout's sign-up card, so a guest saw two "Sign
+              up with Google" blocks on one phone screen (the rule is one
+              in-content invitation plus the header per screen). The card is
+              this page's invitation. */}
         </section>
       </main>
     );

@@ -117,7 +117,6 @@ const BUILD = [
   "build.failed",
   "build.building",
   "build.start",
-  "build.signin",
   "build.footer",
   "build.mode.all",
   "build.mode.pyq",

@@ -66,6 +66,7 @@ export function SignInLink({
   beaconProps,
   onSignInClick,
   rel,
+  describedBy,
 }: {
   /** The /login?callbackUrl=… link (the no-JavaScript and "login" arm route). */
   href: string;
@@ -77,6 +78,9 @@ export function SignInLink({
   /** The caller's own bookkeeping on a sign-in tap (e.g. the timed sheet's "done"). */
   onSignInClick?: () => void;
   rel?: string;
+  /** 2 Oct 2026: the id of the button's explanation (the tooltip / caption
+   *  src/components/SignUpButton.tsx renders beside it) → aria-describedby. */
+  describedBy?: string;
 }) {
   const [pending, setPending] = useState(false);
 
@@ -133,6 +137,7 @@ export function SignInLink({
       data-signin-beacon="self"
       data-signin-surface={surface}
       aria-busy={pending || undefined}
+      aria-describedby={describedBy}
       className={pending ? `${className ?? ""} pointer-events-none opacity-60` : className}
       onClick={onClick}
       onPointerEnter={warm}

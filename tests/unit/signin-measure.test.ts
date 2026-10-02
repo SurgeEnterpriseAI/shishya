@@ -12,8 +12,10 @@
 //       words), the one-request hand-off (src/lib/google-handoff.ts);
 //   (c) the skip-/login 50/50 test (src/lib/direct-signin-ab.ts): a stable
 //       localStorage bucket, a kill switch, only in-page buttons;
-//   (d) the header's "Sign in free" (en / hi / te) with a 44 px tap target,
-//       still hidden on Class 1-7 pages;
+//   (d) the header's guest button with a 44 px tap target, still hidden on
+//       Class 1-7 pages (30 Sep 2026: "Sign in free"; 2 Oct 2026: "Sign up
+//       with Google" from src/lib/signup-cta-copy.ts — the words, the button
+//       and its explanation are pinned in tests/unit/signup-cta.test.ts);
 //   (e) HUB START — the hub box's sign-in returns to ?start=practice and the
 //       guarded auto-start keeps the promise without surprising a returning
 //       member.
@@ -26,7 +28,6 @@ import {
   callbackOfLoginHref,
   cleanFrom,
   cookieHasLanding,
-  HEADER_SIGNIN_LABEL,
   hubAutoStart,
   isSigninSurface,
   LANDING_COOKIE,
@@ -41,6 +42,7 @@ import {
   signupEventProps,
   sitePathOnly,
 } from "@/lib/signin-cta";
+import { SIGNUP_LABEL_EN, signUpLabel } from "@/lib/signup-cta-copy";
 import { chromeIntentUrl, IN_APP_COPY, inAppBody, inAppBrowser } from "@/lib/in-app-browser";
 import {
   DIRECT_SIGNIN_AB_KEY,
@@ -108,6 +110,11 @@ describe("(a) the sign-in beacon: one CTA_CLICKED { cta: signin-click, surface }
     for (const s of ["header", "hub-box", "hub-try-one", "hub-start-401", "subject-test-401", "topic-quiz-401", "custom-mock-401", "pyq-year", "quiz-end", "build-mock-form", "signup-pitch", "signup-inline", "signup-nudge", "mock-gate", "mock-gate-quiz-end", "build-gate-quiz-end", "home-signin", "link"]) {
       expect(isSigninSurface(s), s).toBe(true);
     }
+    // 2 Oct 2026: four doors that were plain links (counted as "link") became
+    // the shared "Sign up with Google" button, each under its own id.
+    for (const s of ["school-save", "chat-save", "challenge-end", "persona-card"]) expect(isSigninSurface(s), s).toBe(true);
+    // 2 Oct 2026 (review): four more — /coach, /revision, a batch invite, the exam finder's save line.
+    for (const s of ["coach-start", "revision-start", "batch-join", "finder-save"]) expect(isSigninSurface(s), s).toBe(true);
     expect(isSigninSurface("hub-signin-practice")).toBe(false);
   });
 
@@ -245,7 +252,9 @@ describe("(a) /login measurement: the page view and the Google button", () => {
     expect(login).toContain("beacon={{ from: sp.from ?? null, family: loginCallbackFamily(sp.callbackUrl) }}");
     const gate = read("src/components/GuestQuizGate.tsx");
     expect(gate).toContain('onClickCapture={() => signinBeacon(surface, { ...beaconProps, via: "google" })}');
-    expect(gate).toMatch(/<GoogleSignInButton callbackUrl=\{callbackUrl\} label=\{label\} \/>/);
+    // 2 Oct 2026: the gate's button is the shared "Sign up with Google" button (label from the one copy module).
+    expect(gate).toMatch(/<GoogleSignInButton\s+callbackUrl=\{callbackUrl\}\s+locale=\{locale\}\s+continueLabel=\{continueLabel\}/);
+    expect(gate).not.toMatch(/label=\{/);
     expect(code("src/components/GuestQuizGate.tsx")).not.toMatch(/mock-gate-signin-click|build-gate-signin-click/);
     expect(read("src/app/mocks/[id]/MockGate.tsx")).toContain('surface="mock-gate"');
     expect(read("src/app/mocks/[id]/MockGate.tsx")).toContain('signinSurface="mock-gate-quiz-end"');
@@ -254,13 +263,23 @@ describe("(a) /login measurement: the page view and the Google button", () => {
 });
 
 describe("(a) every door is wired to its surface id", () => {
+  // 2 Oct 2026: every in-page button is the shared SignUpButton ("Sign up
+  // with Google" + its explanation), which renders the shared SignInLink —
+  // the same beacon, the same surface ids, the same skip-/login test.
   const signInLink = (file: string, surface: string) => {
     const src = read(file);
-    expect(src, file).toContain('import { SignInLink } from "@/components/SignInLink";');
+    expect(src, file).toContain('import { SignUpButton } from "@/components/SignUpButton";');
     expect(src, file).toContain(`surface="${surface}"`);
+    expect(code(file), file).not.toContain("<SignInLink");
   };
 
-  it("in-page buttons use the shared SignInLink", () => {
+  it("the shared SignUpButton is the shared SignInLink underneath (href, surface, beacon props passed through)", () => {
+    const btn = read("src/components/SignUpButton.tsx");
+    expect(btn).toContain('import { SignInLink } from "@/components/SignInLink";');
+    expect(btn).toMatch(/<SignInLink href=\{href\} surface=\{surface\} className=\{cls\} beaconProps=\{beaconProps\} onSignInClick=\{onSignInClick\} rel=\{rel\} describedBy=\{describedBy\}>/);
+  });
+
+  it("in-page buttons use the shared SignUpButton", () => {
     signInLink("src/app/exams/[code]/StartMockButton.tsx", "hub-box");
     signInLink("src/app/exams/[code]/TryOneQuestion.tsx", "hub-try-one");
     signInLink("src/app/exams/[code]/pyq/[year]/page.tsx", "pyq-year");
@@ -450,7 +469,7 @@ describe("(b) in-app browsers", () => {
     const gate = read("src/components/GuestQuizGate.tsx");
     // Default on for GateSignInButton and GuestQuizGate; passed through to the quiz-end button.
     expect(gate.match(/inAppHint = true,/g)).toHaveLength(2);
-    expect(gate).toMatch(/className="\[&>button\]:mt-0"\s*inAppHint=\{inAppHint\}/);
+    expect(gate).toMatch(/className="mt-0"\s*inAppHint=\{inAppHint\}/);
     const mockGate = read("src/app/mocks/[id]/MockGate.tsx");
     const top = mockGate.slice(mockGate.indexOf("<GateSignInButton"), mockGate.indexOf("<GuestQuizGate"));
     expect(top).not.toContain("inAppHint");
@@ -563,7 +582,7 @@ describe("(c) the skip-/login 50/50 test", () => {
     for (const s of ["hub-box", "hub-try-one", "pyq-year", "quiz-end", "build-mock-form", "signup-pitch", "signup-inline", "signup-nudge"]) {
       expect(inDirectSigninTest(s), s).toBe(DIRECT_SIGNIN_TEST_ON);
     }
-    for (const s of ["header", "home-signin", "link", "hub-start-401", "subject-test-401", "topic-quiz-401", "custom-mock-401", "mock-gate", "mock-gate-quiz-end", "build-gate-quiz-end"]) {
+    for (const s of ["header", "home-signin", "link", "hub-start-401", "subject-test-401", "topic-quiz-401", "custom-mock-401", "mock-gate", "mock-gate-quiz-end", "build-gate-quiz-end", "school-save", "chat-save", "challenge-end", "persona-card", "coach-start", "revision-start", "batch-join", "finder-save"]) {
       expect(inDirectSigninTest(s), s).toBe(false);
     }
     for (const s of DIRECT_SIGNIN_SURFACES) expect(isSigninSurface(s), s).toBe(true);
@@ -589,19 +608,30 @@ describe("(c) the skip-/login 50/50 test", () => {
 describe("(d) the header's guest button", () => {
   const controls = read("src/components/HeaderAuthControls.tsx");
 
-  it("reads 'Sign in free' — English in the cached HTML, hi / te after mount", () => {
-    expect(read("src/components/Header.tsx")).toContain('signinShort: "Sign in free",');
-    expect(HEADER_SIGNIN_LABEL).toEqual({ en: "Sign in free", hi: "मुफ़्त साइन इन", te: "ఉచితంగా Sign in" });
+  // 2 Oct 2026 (founder, standing): "Sign up with Google". The words live in
+  // src/lib/signup-cta-copy.ts; the button and its tooltip are pinned in
+  // tests/unit/signup-cta.test.ts.
+  it("reads 'Sign up with Google' — English in the cached HTML, hi / te after mount", () => {
+    expect(SIGNUP_LABEL_EN).toBe("Sign up with Google");
+    expect(signUpLabel("en")).toBe(SIGNUP_LABEL_EN);
+    expect(signUpLabel("hi")).toBe("Google से साइन अप करें");
+    expect(signUpLabel("te")).toBe("Google తో సైన్ అప్ చేయండి");
+    expect(read("src/components/Header.tsx")).not.toContain("signinShort");
     expect(controls).toContain('const [lang, setLang] = useState<CopyLocale>("en");');
     expect(controls).toContain("setLang(clientUiLocale());");
-    expect(controls).toContain('const signinLabel = lang === "en" ? labels.signinShort : HEADER_SIGNIN_LABEL[lang];');
-    expect(controls).toContain("{signinLabel}");
+    expect(controls).toContain("<SignUpBrandLabel locale={lang} stack />");
   });
 
-  it("has a ≥ 40 px phone tap target (44 px) and never wraps; still the filled button; still hidden on Class 1-7 pages", () => {
-    expect(controls).toMatch(/<Link rel="nofollow" href=\{loginHref\} className="btn-primary min-h-\[44px\] whitespace-nowrap !py-2 !px-4 text-xs sm:text-sm"/);
+  it("has a ≥ 40 px phone tap target (44 px); still the filled button; still hidden on Class 1-7 pages", () => {
+    // 2 Oct 2026 (review): the classes are one constant, shared by the button
+    // with the tooltip and the plain one on /schooling and board hubs.
+    expect(controls).toContain('const GUEST_BUTTON_CLASS = "btn-primary min-h-[44px] !px-3 !py-1 text-center text-xs sm:!px-4 sm:text-sm";');
+    expect(controls).toMatch(/<Link rel="nofollow" href=\{loginHref\} aria-describedby=\{describedBy\} className=\{GUEST_BUTTON_CLASS\} data-signin-surface="header">/);
+    expect(controls).toMatch(/<Link rel="nofollow" href=\{loginHref\} className=\{GUEST_BUTTON_CLASS\} data-signin-surface="header">/);
     expect(read("src/app/globals.css")).toMatch(/\.btn-primary \{[\s\S]{0,400}min-height: 44px;/);
-    expect(controls).toMatch(/\) : isUnder13SchoolPath\(pathname\) \? null : \(\s*<Link rel="nofollow" href=\{loginHref\}/);
+    // Hidden on Class 1-7 pages and wherever the page says a child may be reading (childSafe).
+    expect(controls).toMatch(/\) : childSafe \|\| isUnder13SchoolPath\(pathname\) \? null : /);
+    expect(controls).toMatch(/\) : \(\s*<SignUpShell text=\{signUpTip\} surface="header" explain="tooltip" align="end" deferText>/);
   });
 });
 
@@ -609,7 +639,7 @@ describe("(e) HUB START: the hub box's sign-in lands the new member in the pract
   it("the hub box returns to /exams/CODE?start=practice and names its door", () => {
     const hub = read("src/app/exams/[code]/page.tsx");
     const box = hub.slice(hub.indexOf("{!userId && hasContent && ("));
-    expect(box.slice(0, box.indexOf("</HubSignInLink>"))).toContain(
+    expect(box.slice(0, box.indexOf("/>", box.indexOf("<HubSignInLink")))).toContain(
       "href={`/login?callbackUrl=${encodeURIComponent(`/exams/${exam.code}?start=practice`)}&from=hub-box`}",
     );
   });

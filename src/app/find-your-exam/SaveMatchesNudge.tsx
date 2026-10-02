@@ -12,8 +12,18 @@
 //
 // Instrumented: fires a one-time "shown" impression + a click beacon so
 // nudge CTR and its effect on signups are measurable.
+//
+// 2 Oct 2026 (founder, standing: every guest sign-up button reads "Sign up
+// with Google"; review, same day): the button is the one shared sign-up
+// button (Google's white button with the "G" — this card has its own tint
+// and the line beside it already says what signing in is for; the button's
+// old words were "Save my matches — sign in free →"). Tooltip with a mouse,
+// no caption on touch. Still /login (not in the skip-/login test); the
+// "finder-nudge-click" beacon is kept, and the door is now named
+// "finder-save" (it was counted as a plain "link").
 
 import { useEffect, useRef } from "react";
+import { SignUpButton } from "@/components/SignUpButton";
 
 function beacon(cta: string, extra?: Record<string, unknown>) {
   try {
@@ -53,13 +63,14 @@ export function SaveMatchesNudge({
         <span className="font-semibold text-ink-900">Don&apos;t lose these {matchCount} matches</span>{" "}
         — sign in free and we&apos;ll save them + set up your daily prep plan.
       </p>
-      <a
-        href={loginHref}
-        onClick={() => beacon("finder-nudge-click", { matchCount })}
-        className="inline-flex shrink-0 items-center justify-center rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-emerald-700"
-      >
-        Save my matches — sign in free →
-      </a>
+      <SignUpButton
+        href={`${loginHref}&from=finder-save`}
+        surface="finder-save"
+        explain="tooltip"
+        align="end"
+        className="shrink-0"
+        onSignInClick={() => beacon("finder-nudge-click", { matchCount })}
+      />
     </div>
   );
 }

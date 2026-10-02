@@ -279,7 +279,10 @@ describe("mock gate copy — en, hi, te", () => {
   it("the guest-quiz lines never claim the quiz saves anything", () => {
     for (const loc of ["en", "hi", "te"] as const) {
       const c = MOCK_GATE_COPY[loc];
-      for (const k of ["quizHeading", "quizLine", "quizStart", "quizEndSignIn", "buildQuizEndSignIn"] as const) {
+      // 2 Oct 2026: the quiz-end sign-in labels left this copy — the button is the shared "Sign up with Google".
+      expect(Object.keys(c)).not.toContain("quizEndSignIn");
+      expect(Object.keys(c)).not.toContain("buildQuizEndSignIn");
+      for (const k of ["quizHeading", "quizLine", "quizStart"] as const) {
         expect(c[k]).not.toMatch(/sav|सेव|సేవ్|progress|प्रगति|ప్రగతి/i);
       }
     }
@@ -383,9 +386,18 @@ describe("sign-in is the main action on practice surfaces; no question after it"
     const signIn = box.indexOf("<HubSignInLink");
     expect(signIn).toBeGreaterThan(-1);
     expect(quiz).toBeGreaterThan(signIn);
-    expect(box.slice(signIn, quiz)).toContain('className="btn-primary inline-block !py-2 !px-4 text-sm"');
+    // 2 Oct 2026 (founder, standing: "Sign up with Google"): the sign-up is the
+    // one shared button — Google's white button with the "G" (their guidelines
+    // do not allow the "G" on our saffron) — still FIRST, the quiz still the
+    // outlined button beside it. Its old label left the hub copy.
+    // Review, same day: Google's DARK button (the filled one — founder, 28 Sep:
+    // sign-in filled, quiz outlined) and the tooltip above it (side="top").
+    expect(box.slice(signIn, quiz)).toMatch(/<HubSignInLink\s+examCode=\{exam\.code\}\s+exam=\{exam\.shortName\}\s+locale=\{locale\}/);
+    expect(read("src/app/exams/[code]/StartMockButton.tsx")).toContain(
+      'return <SignUpButton href={href} surface="hub-box" locale={locale} exam={exam} examCode={examCode} practice theme="dark" side="top" block className="sm:w-auto" beaconProps={{ examCode }} />;',
+    );
     expect(box.slice(quiz, quiz + 400)).toContain("border-2 border-saffron-500");
-    expect(examHubCopy("en").coachButton).toBe("Sign in free — start practising →");
+    expect(Object.keys(examHubCopy("en"))).not.toContain("coachButton");
   });
 
   it("the PYQ year page: the free sign-in is the guest's main button; this set's own questions with no sign-in is the link under it", () => {
@@ -398,16 +410,18 @@ describe("sign-in is the main action on practice surfaces; no question after it"
     // branch a guest gets, the sign-in button comes first and is the filled one.
     expect(pyq).toContain("{!userId && guestPaperId ? (");
     const branch = pyq.slice(pyq.indexOf(") : !userId && guestSet.length >= 5 ? ("));
-    const signIn = branch.indexOf("{P.ctaSignIn}");
+    // 2 Oct 2026 (founder, standing): the main button is the one shared "Sign up
+    // with Google" button (SignUpButton, surface "pyq-year": the same SignInLink
+    // underneath), its /login link still naming the door.
+    const signIn = branch.indexOf("<SignUpButton");
     const practise = branch.indexOf("{fillPyq(P.ctaPractise, { n: guestSet.length })}");
     expect(signIn).toBeGreaterThan(-1);
     expect(practise).toBeGreaterThan(signIn);
-    expect(branch.slice(0, signIn)).toContain('className="btn-primary text-center"');
-    // 30 Sep 2026 (sign-up build 1): the same filled button as the shared in-page
-    // sign-in (SignInLink, surface "pyq-year"), its /login link naming the door.
-    expect(branch.slice(0, signIn)).toContain("<SignInLink");
-    expect(branch.slice(0, signIn)).toContain('surface="pyq-year"');
-    expect(branch.slice(0, signIn)).toContain("href={`/login?callbackUrl=${encodeURIComponent(`/exams/${code}/pyq/${yearNum}`)}&from=pyq-year`}");
+    const button = branch.slice(signIn, practise);
+    expect(button).toContain('surface="pyq-year"');
+    expect(button).toContain("href={`/login?callbackUrl=${encodeURIComponent(`/exams/${code}/pyq/${yearNum}`)}&from=pyq-year`}");
+    expect(button).toContain("exam={exam.shortName}");
+    expect(pyq).not.toContain("P.ctaSignIn");
     expect(branch).toContain("href={`/exams/${code}/quiz?set=${guestSet.join(\",\")}&n=${guestSet.length}`}");
   });
 
@@ -421,6 +435,7 @@ describe("sign-in is the main action on practice surfaces; no question after it"
   it("/for/{persona}: sign-in returns to the persona page, never into /onboarding", () => {
     const persona = read("src/app/for/[persona]/page.tsx");
     expect(persona).not.toContain("/onboarding");
-    expect(persona).toContain("href={`/login?callbackUrl=${encodeURIComponent(`/for/${persona.slug}`)}`}");
+    // 2 Oct 2026: + from=persona-card (the shared "Sign up with Google" button names its door).
+    expect(persona).toContain("href={`/login?callbackUrl=${encodeURIComponent(`/for/${persona.slug}`)}&from=persona-card`}");
   });
 });

@@ -26,6 +26,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { SignupInline } from "@/components/SignupInline";
 import { SectionCrossLinks } from "@/components/SectionCrossLinks";
 // 26 Sep 2026 (repair): the schemes, never the one outside aggregator
 // (Buddy4Study) the raw catalogue holds — src/lib/scholarship-schemes.ts.
@@ -144,6 +145,15 @@ export default function CollegesLanding() {
             </Link>
           </li>
         </ul>
+
+        {/* 2 Oct 2026 (founder, standing: a sign-up invitation on every page
+            family): the guest sign-up line. Client-only (no server HTML), guests
+            only, never on a Class 1-7 page. Review, same day: it sits EARLY —
+            after the intro and the three guides, before the finder — not after the whole list,
+            where it stood one short block above the root layout's sign-up card
+            (two invitations on one phone screen). revealOffscreen: it appears
+            only where nothing on screen moves. */}
+        <SignupInline surface="colleges-index" revealOffscreen />
 
         {/* Filters + list: the unfiltered list server-side, the URL's
             filters applied in the browser (see CollegeFinder.tsx). */}

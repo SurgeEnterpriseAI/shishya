@@ -489,7 +489,12 @@ describe("the student entry per class band and auth state", () => {
     expect(STUDENT_ENTRY_COPY.guestBody).toContain("13 and above");
     expect(STUDENT_ENTRY_COPY.saveBody).toMatch(/^Want your practice kept\? Sign in with Google/);
     expect(STUDENT_ENTRY_COPY.saveBody).toContain("13 and above");
-    expect(STUDENT_ENTRY_COPY.saveLink).toMatch(/^Sign in to save your practice/);
+    // 2 Oct 2026: the text link under it became the one shared "Sign up with
+    // Google" button (school words in its tooltip: practice and scores saved,
+    // no exam, no tutor memory) — still through schoolSignInHref only.
+    expect(Object.keys(STUDENT_ENTRY_COPY)).not.toContain("saveLink");
+    const saveSlot = read("src/components/school/SchoolStudentEntry.tsx");
+    expect(saveSlot).toMatch(/<SignUpButton\s+href=\{signInHref\}\s+surface="school-save"\s+rel="nofollow"\s+explain="tooltip"/);
     expect(STUDENT_ENTRY_COPY.classGuest).toContain("13 and above");
     expect(STUDENT_ENTRY_COPY.classGuest).toMatch(/no sign-in needed/);
     expect(STUDENT_ENTRY_COPY.under13).toMatch(/^Younger than 13\?/);

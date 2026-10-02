@@ -250,7 +250,8 @@ describe("Header — the top row", () => {
     expect(hrefs).toEqual(["/"]);
     expect(top).toMatch(/<BackLink \/>/);
     expect(top).toMatch(/getDailyQuote\(\)/);
-    expect(top).toMatch(/<HeaderAuthControls locale=\{DEFAULT_LOCALE\} labels=\{RAIL_LABELS\} \/>/);
+    // 2 Oct 2026 (review): + childSafe (no guest sign-up button where the page says a child may be reading).
+    expect(top).toMatch(/<HeaderAuthControls locale=\{DEFAULT_LOCALE\} labels=\{RAIL_LABELS\} childSafe=\{childSafe\} \/>/);
     for (const gone of ["/results", "/aptitude", "/jobs-map", "Aptitude Test", "Govt Jobs Map", "🎉"]) {
       expect(top, gone).not.toContain(gone);
     }
@@ -277,12 +278,19 @@ describe("Header — the top row", () => {
   // Class 1-7 school page.
   it("Sign in stays the filled primary button (HeaderAuthControls, read-only check), returns to this page, and is absent on Class 1-7 pages", () => {
     const controls = code(read("src/components/HeaderAuthControls.tsx"));
-    expect(controls).toMatch(/<Link rel="nofollow" href=\{loginHref\} className="btn-primary/);
+    // 2 Oct 2026: + aria-describedby (the "Sign up with Google" tooltip, SignUpShell).
+    // Review, same day: the classes moved into GUEST_BUTTON_CLASS (two branches share them).
+    expect(controls).toMatch(/<Link rel="nofollow" href=\{loginHref\} aria-describedby=\{describedBy\} className=\{GUEST_BUTTON_CLASS\}/);
+    expect(controls).toMatch(/const GUEST_BUTTON_CLASS = "btn-primary min-h-\[44px\]/);
     expect(controls).toMatch(/const \[loginHref, setLoginHref\] = useState\("\/login"\);/);
     // 27 Sep 2026 (review): + from=header, so /login never reads a header click as a gated action.
     expect(controls).toContain("setLoginHref(`/login?callbackUrl=${encodeURIComponent(p + location.search)}&from=header`)");
     expect(controls).toMatch(/if \(p !== "\/login" && p !== "\/logout" && !p\.startsWith\("\/api\/"\)\)/);
-    expect(controls).toMatch(/\) : isUnder13SchoolPath\(pathname\) \? null : \(\s*<Link rel="nofollow" href=\{loginHref\}/);
+    // Review, same day: also absent when the page says a child may be reading
+    // (childSafe — /ask with a Class 1-7 question); on /schooling and a board
+    // hub the button is the plain link, with no tooltip.
+    expect(controls).toMatch(/\) : childSafe \|\| isUnder13SchoolPath\(pathname\) \? null : isChildSchoolPath\(pathname\) \? \(\s*<Link rel="nofollow" href=\{loginHref\} className=\{GUEST_BUTTON_CLASS\}/);
+    expect(controls).toMatch(/\) : \(\s*<SignUpShell [^>]*>\s*\{\(describedBy\) => \(\s*<Link rel="nofollow" href=\{loginHref\}/);
     expect(controls).toMatch(/import \{ isUnder13SchoolPath \} from "@\/lib\/school\/student-classes";/);
   });
 

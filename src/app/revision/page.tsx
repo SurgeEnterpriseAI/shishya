@@ -5,10 +5,10 @@
 // engine. Anonymous visitors get a short explainer + sign-in.
 
 import type { Metadata } from "next";
-import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { Header } from "@/components/Header";
+import { SignUpButton } from "@/components/SignUpButton";
 import { RevisionNotebook, type NotebookQuestion } from "./RevisionNotebook";
 
 export const dynamic = "force-dynamic";
@@ -159,12 +159,15 @@ export default async function RevisionPage() {
             </ol>
           </div>
 
-          <Link
-            href="/login?callbackUrl=%2Frevision"
-            className="mt-7 inline-flex items-center rounded-lg bg-saffron-500 px-6 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-saffron-600"
-          >
-            Start my free Mistake Notebook →
-          </Link>
+          {/* 2 Oct 2026 (founder, standing: every guest sign-up button reads
+              "Sign up with Google"; review, same day): the button's own words
+              ("Start my free Mistake Notebook →") are now the line above it,
+              and the button is the one shared sign-up button — Google's dark
+              (filled) button with the "G". Tooltip with a mouse; no caption
+              on touch (the line under it says what you get). Still /login;
+              door "revision-start". */}
+          <p className="mt-7 text-sm font-bold text-ink-900">Start your free Mistake Notebook:</p>
+          <SignUpButton href="/login?callbackUrl=%2Frevision&from=revision-start" surface="revision-start" theme="dark" explain="tooltip" className="mt-2" />
           <p className="mt-2 text-xs text-ink-500">
             Free forever · every exam on Shishya · your notebook fills itself from your very first mock.
           </p>

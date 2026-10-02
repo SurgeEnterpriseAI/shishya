@@ -1200,13 +1200,22 @@ export default async function ExamPage({
                   beacon, the skip-/login test). 19 of 75 hub sign-ups (25%) had
                   started nothing within an hour; the 401 path that carried the
                   intent: 9 of 9 started. */}
+              {/* 2 Oct 2026 (founder, standing: "Sign up with Google", visible
+                  and clear, with a description of how signing up is useful):
+                  the button is the one shared sign-up button — Google's white
+                  button with the "G" (their guidelines do not allow the "G" on
+                  our saffron), still first and beside the outlined quiz button.
+                  Its explanation (a tooltip with a mouse, a caption under it on
+                  a phone) names this exam: the sign-in returns to this exam's
+                  page, so the account is enrolled in it at sign-up, and the box
+                  only shows where the hub has checked questions (hasContent),
+                  so "tests saved" holds. Same link, beacon and test arms. */}
               <HubSignInLink
                 examCode={exam.code}
+                exam={exam.shortName}
+                locale={locale}
                 href={`/login?callbackUrl=${encodeURIComponent(`/exams/${exam.code}?start=practice`)}&from=hub-box`}
-                className="btn-primary inline-block !py-2 !px-4 text-sm"
-              >
-                {H.coachButton}
-              </HubSignInLink>
+              />
               {/* Lever #2 — anonymous 5-question diagnostic. Lets a signed-out
                   visitor experience the mock loop before the sign-in. A
                   proper button with equal visual weight (as a text link it

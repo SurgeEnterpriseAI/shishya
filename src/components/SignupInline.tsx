@@ -40,6 +40,21 @@
 //     (syllabus, updates, cutoff, career, scholarship) do not — theirs is
 //     the early, visible line, where the 27 Sep block already appeared
 //     after hydration.
+//
+// 2 Oct 2026 (founder, standing: "Sign up with Google", visible and clear,
+// with a description on hover): the button is the one shared sign-up button
+// (src/components/SignUpButton.tsx) — Google's white button with the "G",
+// still full width on phones. With a mouse, hover or keyboard focus opens the
+// explanation as a tooltip (it names the exam only when this page's sign-in
+// returns to that exam — src/lib/signup-cta-copy.ts signUpContextFor). No
+// extra caption on touch: the line beside the button already says what the
+// account does. Same link, beacon (surface "signup-inline" + placement) and
+// test arms. The same day the line was mounted on more page families
+// (life-stage hubs, stream pages, list pages …) — the list is pinned in
+// tests/unit/signup-cta.test.ts. Review, same day: on list pages it sits
+// after the intro or the first group, never as the last block above the
+// root layout's sign-up card (one in-content invitation per screen); the
+// /ask, exam archive, /exams/state and closing-soon mounts were removed.
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { fetchSignedIn } from "@/lib/session-hint";
@@ -47,7 +62,7 @@ import { clientUiLocale } from "@/lib/ui-locale-copy";
 import { pitchAllowedPath, signupHref } from "@/lib/signup-pitch";
 import { revealWithoutShift, signupLineCopy, type ContentLocale, type SignupLineCopy } from "@/lib/content-signup";
 import { ctaBeacon } from "@/lib/cta-beacon";
-import { SignInLink } from "@/components/SignInLink";
+import { SignUpButton } from "@/components/SignUpButton";
 
 function scrollAnchoring(): boolean {
   try {
@@ -81,6 +96,8 @@ export function SignupInline({
   // False while only the zero-height marker is in the page (revealOffscreen).
   const [shown, setShown] = useState(false);
   const [href, setHref] = useState("/login");
+  // The language the line is in (the button's label and tooltip follow it).
+  const [lang, setLang] = useState<ContentLocale>("en");
   const box = useRef<HTMLDivElement | null>(null);
   const marker = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
@@ -90,7 +107,9 @@ export function SignupInline({
       .then((signedIn) => {
         if (!alive || signedIn !== false) return;
         setHref(signupHref(location.pathname + location.search));
-        setCopy(signupLineCopy(locale ?? clientUiLocale(), exam, practice));
+        const lc = locale ?? clientUiLocale();
+        setLang(lc);
+        setCopy(signupLineCopy(lc, exam, practice));
         if (!revealOffscreen) setShown(true);
       })
       .catch(() => {});
@@ -155,14 +174,19 @@ export function SignupInline({
         <strong className="font-bold text-ink-900">{copy.lead}</strong> {copy.line}
         <span className="mt-1 block text-[11px] leading-snug text-ink-500">{copy.privacy}</span>
       </p>
-      <SignInLink
+      <SignUpButton
         href={href}
         surface="signup-inline"
+        locale={lang}
+        exam={exam}
+        practice={practice}
+        explain="tooltip"
+        block
+        align="end"
+        className="mt-3 shrink-0 sm:mt-0 sm:w-auto"
+        buttonClassName="no-underline"
         beaconProps={{ placement: surface }}
-        className="mt-3 block w-full shrink-0 rounded-xl bg-saffron-500 px-5 py-3 text-center text-base font-bold text-white no-underline shadow-sm transition-colors hover:bg-saffron-600 sm:mt-0 sm:w-auto sm:py-2.5 sm:text-sm"
-      >
-        {copy.cta}
-      </SignInLink>
+      />
     </div>
   );
 }

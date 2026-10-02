@@ -63,15 +63,16 @@ export default async function LoginPage({
   // Signed in already: back to the page that sent them here (a same-origin
   // path only, and never /login itself, which would loop).
   if (session?.user) redirect(cb && isSameOriginPath(cb) && !/^\/login(?:[/?#]|$)/.test(cb) ? cb : "/dashboard");
-  const { t } = await getT();
+  const { t, locale } = await getT();
 
   // Exam count for the default copy — the cached catalogue (same list
   // /exams renders, same "govt & entrance" definition as the homepage
   // band: active, school boards excluded). Never a typed number; if the
   // cache is unreachable the sentence simply drops the count.
-  const examCount = await getExamCatalog()
-    .then((list) => list.filter((e) => e.category !== "SCHOOL_BOARD").length)
-    .catch(() => 0);
+  // 2 Oct 2026 (review): the list itself is kept — the sign-up button names
+  // an exam only when the callback's code is IN this catalogue (see below).
+  const catalog: Awaited<ReturnType<typeof getExamCatalog>> = await getExamCatalog().catch(() => []);
+  const examCount = catalog.filter((e) => e.category !== "SCHOOL_BOARD").length;
 
   // Context-aware wall (23 Aug 2026): /login is the most-viewed page on
   // the site (~140 anon views/day) — people arrive here from a gated
@@ -103,6 +104,17 @@ export default async function LoginPage({
   // called getT(), yet a Hindi or Telugu student sent here from a gated
   // mock read an English wall. English is unchanged, word for word.
   const examLabel = examCode ? examCode.replace(/_/g, " ") : null;
+  // 2 Oct 2026 (review, blocker): the button's explanation says "{exam} is set
+  // up as your exam the moment you sign up". That is true only for a real,
+  // ACTIVE exam (src/lib/signup-profile.ts enrols nothing else) — and the code
+  // here comes from the URL alone: /login?callbackUrl=/exams/FOO (a typed
+  // link, or the header button on the 404 page of a retired or not-yet-public
+  // exam) used to promise "FOO is set up as your exam". So the name and the
+  // code go to the button only when the cached catalogue (active, non-school
+  // exams — the same rows sign-up enrols) has that code, with the exam's own
+  // short name; an unknown code gets the general sentence. examLabel above
+  // stays for the card's heading only (it promises nothing about the account).
+  const signUpExam = examCode ? catalog.find((e) => e.code === examCode) ?? null : null;
   // 27 Sep 2026: a Class 8-12 school page or school chat, and Ask Shishya
   // (/chat), get their own card — sign-in there only keeps practice or
   // chats; reading, the chapter practice and the tutor need no account.
@@ -157,9 +169,31 @@ export default async function LoginPage({
         )}
         {/* 30 Sep 2026: only in an in-app browser (Google blocks sign-in there). */}
         <InAppBrowserHint />
+        {/* 2 Oct 2026 (founder, standing: "Sign up with Google" — students
+            may think sign-up needs a lot of details): the one shared button
+            with Google's "G", reading "Sign up with Google" (en / hi / te;
+            any other language keeps its "Continue with Google", as does the
+            "Welcome back" card: a returning member is not signing up). Under
+            it on a phone a one-line caption, and on hover or keyboard focus
+            with a mouse the full explanation: it names the exam only when
+            this sign-in returns to a page of a real, active exam (the account
+            is then enrolled in it — signUpExam above), without the "tests
+            saved" clause — this page does not know whether the exam has
+            practice; a school return gets the school words.
+            Review, same day: Google's DARK button (this page's main action
+            stays the filled one above the outlined "try 5 questions first"),
+            and the tooltip opens ABOVE the button — under it sits that link,
+            which the tooltip used to cover. */}
         <GoogleSignInButton
           callbackUrl={cb}
-          label={t("login.continue")}
+          locale={locale}
+          continueLabel={t("login.continue")}
+          returning={li.kind === "return"}
+          exam={signUpExam?.shortName ?? null}
+          examCode={signUpExam ? examCode : null}
+          surface="login"
+          side="top"
+          theme="dark"
           beacon={{ from: sp.from ?? null, family: loginCallbackFamily(sp.callbackUrl) }}
         />
         {/* The alternative comes AFTER the main action (30 Sep 2026): Google

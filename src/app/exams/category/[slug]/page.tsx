@@ -18,6 +18,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { SignupInline } from "@/components/SignupInline";
 import { ExamCompareTable } from "@/components/ExamCompareTable";
 import { clipDescription } from "@/lib/section-seo";
 import { EXAM_CATEGORIES, categoryFaq, categoryLead, examsInCategory, findExamCategory, isCategoryLive } from "@/lib/exam-categories";
@@ -126,6 +127,10 @@ export default async function ExamCategoryPage({ params }: { params: Promise<Pag
 
         <ExamCompareTable rows={list} />
 
+        {/* 2 Oct 2026 (founder, standing: a sign-up invitation on every page
+            family): the guest sign-up line after the page's answer. Client-only
+            (no server HTML), guests only, never on a Class 1-7 page. */}
+        <SignupInline surface="exams-category" revealOffscreen />
         <section className="mt-10 rounded-lg border border-ink-200 bg-white p-5" aria-labelledby="cat-faq">
           <h2 id="cat-faq" className="text-base font-semibold text-ink-900">Question</h2>
           <dl className="mt-3 text-sm">

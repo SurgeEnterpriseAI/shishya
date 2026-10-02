@@ -19,7 +19,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { SignInLink } from "@/components/SignInLink";
+import { SignUpButton } from "@/components/SignUpButton";
 import { loginHrefFor } from "@/lib/signin-cta";
 
 interface Props {
@@ -124,14 +124,25 @@ export function TryOneQuestion({ examCode, examShortName, topicName, question }:
               Sign in free → adaptive mocks, PYQs, and Ask Shishya tracks your
               weak topics. No credit card.
             </p>
-            <SignInLink
+            {/* 2 Oct 2026 (founder, standing): the one shared "Sign up with
+                Google" button, with its explanation — a tooltip with a mouse,
+                a one-line caption on a phone. The sign-in returns to this
+                exam's hub, so the words name the exam. Review, same day:
+                Google's DARK button (the card's main action stays the filled
+                one), and the tooltip opens ABOVE it — it used to cover the
+                "5 more questions" link under the button. */}
+            <SignUpButton
               href={loginHref}
               surface="hub-try-one"
+              exam={examShortName}
+              examCode={examCode}
+              practice
+              theme="dark"
+              side="top"
+              center
+              className="mt-3"
               beaconProps={{ examCode }}
-              className="mt-3 inline-flex items-center justify-center rounded-lg bg-saffron-500 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-saffron-600"
-            >
-              Sign in & keep practising →
-            </SignInLink>
+            />
             {/* Lower-friction path — they just answered ONE question; 5 more
                 with no signup is the natural next step for the hesitant. */}
             <Link

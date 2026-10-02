@@ -34,7 +34,7 @@ import { OfficialYearPapers, WholePaperLinks } from "./WholePaperLinks";
 import { PYQ_TEXT_QUESTIONS, pyqFaqItems, pyqModelledEn, pyqOptions, pyqTextShownLine } from "@/lib/pyq-faq";
 import { faqPageJsonLd } from "@/lib/hub-faq";
 import { GUEST_WHOLE_PAPER_OPEN } from "@/lib/guest-paper";
-import { SignInLink } from "@/components/SignInLink";
+import { SignUpButton } from "@/components/SignUpButton";
 
 // Public SEO landing page — previous-year question sets rarely change.
 export const revalidate = 600;
@@ -508,15 +508,31 @@ export default async function PYQYearPage({
                 // shared in-page sign-in (src/components/SignInLink.tsx): one
                 // "signin-click" beacon (surface "pyq-year"; it had none),
                 // from=pyq-year on /login, and the skip-/login test's direct arm.
+                // 2 Oct 2026 (founder, standing): the button reads "Sign up with
+                // Google" — the one shared SignUpButton with Google's "G" (same
+                // beacon, same test arms). Its explanation names this exam: the
+                // sign-in returns to this exam's page, so the new account is
+                // enrolled in it; "tests saved" holds — this page IS a paper.
+                // Tooltip with a mouse, a one-line caption on touch.
+                // Review, same day: Google's DARK button — the free sign-in is
+                // the filled main button again, as the 28 Sep note above says —
+                // and the tooltip opens ABOVE it: it used to cover the
+                // no-sign-in link under the button.
                 <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
-                  <SignInLink
+                  <SignUpButton
                     href={`/login?callbackUrl=${encodeURIComponent(`/exams/${code}/pyq/${yearNum}`)}&from=pyq-year`}
                     surface="pyq-year"
+                    locale={lc}
+                    exam={exam.shortName}
+                    examCode={code}
+                    practice
+                    theme="dark"
+                    side="top"
+                    block
+                    align="end"
+                    className="sm:max-w-xs"
                     beaconProps={{ examCode: code }}
-                    className="btn-primary text-center"
-                  >
-                    {P.ctaSignIn}
-                  </SignInLink>
+                  />
                   <Link
                     href={`/exams/${code}/quiz?set=${guestSet.join(",")}&n=${guestSet.length}`}
                     className="text-center text-xs font-semibold text-saffron-700 underline-offset-2 hover:underline"
@@ -526,14 +542,20 @@ export default async function PYQYearPage({
                 </div>
               ) : (
                 <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
-                  <SignInLink
+                  <SignUpButton
                     href={`/login?callbackUrl=${encodeURIComponent(`/exams/${code}/pyq/${yearNum}`)}&from=pyq-year`}
                     surface="pyq-year"
+                    locale={lc}
+                    exam={exam.shortName}
+                    examCode={code}
+                    practice
+                    theme="dark"
+                    side="top"
+                    block
+                    align="end"
+                    className="sm:max-w-xs"
                     beaconProps={{ examCode: code }}
-                    className="btn-primary text-center"
-                  >
-                    {P.ctaSignIn}
-                  </SignInLink>
+                  />
                   <Link
                     href={`/exams/${code}/quiz`}
                     className="text-center text-xs font-semibold text-saffron-700 underline-offset-2 hover:underline"

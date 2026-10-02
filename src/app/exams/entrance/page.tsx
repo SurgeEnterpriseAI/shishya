@@ -22,6 +22,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { SignupInline } from "@/components/SignupInline";
 import { getExamCatalog } from "@/lib/db/exam-cache";
 import { ENTRANCE_GROUPS, entranceGroupOf, type EntranceGroupKey } from "@/lib/exam-kind";
 // 26 Sep 2026 (G4): links to the live entrance category hubs and the
@@ -168,7 +169,7 @@ export default async function EntranceExamsPage() {
           only on the conducting body&apos;s official website.
         </p>
 
-        {groups.map((g) => (
+        {groups.map((g, gi) => (
           <section key={g.key} className="mt-8" aria-labelledby={`entrance-${g.key}`}>
             <h2 id={`entrance-${g.key}`} className="text-lg font-semibold text-ink-900">
               {g.label} <span className="text-xs font-normal text-ink-500">({g.list.length})</span>
@@ -186,6 +187,14 @@ export default async function EntranceExamsPage() {
                 </li>
               ))}
             </ul>
+            {/* 2 Oct 2026 (founder, standing: a sign-up invitation on every page
+                family): the guest sign-up line. Client-only (no server HTML), guests
+                only, never on a Class 1-7 page. Review, same day: it sits EARLY —
+                under the first group of exams — not after the whole list,
+                where it stood one short block above the root layout's sign-up card
+                (two invitations on one phone screen). revealOffscreen: it appears
+                only where nothing on screen moves. */}
+            {gi === 0 && <SignupInline surface="exams-entrance" revealOffscreen />}
           </section>
         ))}
 

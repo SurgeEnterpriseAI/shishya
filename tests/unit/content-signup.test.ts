@@ -48,7 +48,8 @@ describe("the early line's words", () => {
     const en = signupLineCopy("en", "SSC CGL", true);
     expect(en.lead).toBe("Preparing for SSC CGL?");
     expect(en.line).toBe("Sign in free — Shishya keeps your SSC CGL mocks, scores and weak topics, and picks up where you left off next time.");
-    expect(en.cta).toBe("Sign in free with Google →");
+    // 2 Oct 2026: the one shared label (src/lib/signup-cta-copy.ts).
+    expect(en.cta).toBe("Sign up with Google");
     for (const l of ["hi", "te"]) {
       const c = signupLineCopy(l, "SSC CGL", true);
       expect(c.lead, l).toContain("SSC CGL");
@@ -102,7 +103,8 @@ describe("the early line's words", () => {
   it("the timed bar says one honest line in each language", () => {
     const en = nudgeBarCopy("en");
     expect(en.line).toBe("Shishya can remember your exam and weak topics.");
-    expect(en.cta).toBe("Sign in free");
+    // 2 Oct 2026: the one shared label (src/lib/signup-cta-copy.ts).
+    expect(en.cta).toBe("Sign up with Google");
     for (const l of ["hi", "te"]) {
       const c = nudgeBarCopy(l);
       expect(Object.keys(c).sort()).toEqual(Object.keys(en).sort());
@@ -366,7 +368,8 @@ describe("SignupInline (source)", () => {
     expect(code).toContain("if (!pitchAllowedPath(location.pathname)) return;");
     expect(code).toContain("if (!alive || signedIn !== false) return;");
     expect(code).toContain("if (!copy) return null;");
-    expect(code).toContain("setCopy(signupLineCopy(locale ?? clientUiLocale(), exam, practice));");
+    expect(code).toContain("const lc = locale ?? clientUiLocale();");
+    expect(code).toContain("setCopy(signupLineCopy(lc, exam, practice));");
   });
   // 30 Sep 2026 (review): no layout shift from the in-article and lower mounts.
   it("revealOffscreen: an empty zero-height marker first, shown only where nothing on screen moves", () => {
@@ -385,10 +388,13 @@ describe("SignupInline (source)", () => {
     expect(code).toContain('if (!shown || !el || typeof IntersectionObserver === "undefined") return;');
   });
   it("a real button (full width on phones) through build 1's sign-in, placement = page family", () => {
-    expect(code).toMatch(/<SignInLink\s+href=\{href\}\s+surface="signup-inline"\s+beaconProps=\{\{ placement: surface \}\}/);
-    const cls = /className="(mt-3 block w-full[^"]*)"/.exec(code)?.[1] ?? "";
-    expect(cls).toContain("rounded-xl bg-saffron-500");
-    expect(cls).toContain("text-center text-base font-bold text-white no-underline");
+    // 2 Oct 2026 (founder, standing): the one shared "Sign up with Google"
+    // button (Google's white button with the "G"; SignInLink underneath) —
+    // still full width on phones (block; auto from sm), placement = family.
+    expect(code).toMatch(/<SignUpButton\s+href=\{href\}\s+surface="signup-inline"\s+locale=\{lang\}\s+exam=\{exam\}\s+practice=\{practice\}\s+explain="tooltip"\s+block/);
+    expect(code).toContain('className="mt-3 shrink-0 sm:mt-0 sm:w-auto"');
+    expect(code).toContain("beaconProps={{ placement: surface }}");
+    expect(code).not.toContain("bg-saffron-500");
     expect(code).toContain("data-signup-inline={surface}");
     expect(code).toContain("print:hidden");
   });
@@ -569,6 +575,9 @@ describe("one early line per content page, right after its first answer block", 
       "src/app/exams/[code]/cutoff/page.tsx",
       "src/app/careers/[slug]/page.tsx",
       "src/app/scholarships/[id]/page.tsx",
+      // 2 Oct 2026: /ask?q= had a line under the AI answer for a few hours;
+      // removed the same day (review) — nothing sat between it and the site
+      // card. Pinned in tests/unit/signup-cta.test.ts.
     ]);
     const pages = pagesWithLine();
     for (const f of lead) expect(pages.map(([p]) => p), f).toContain(f);
@@ -609,7 +618,7 @@ describe("SignupNudge (source)", () => {
   it("beacons carry the page family: shown (+ trigger), dismissed, and build 1's click", () => {
     expect(code).toContain('beacon("shown", { placement: here, trigger });');
     expect(code).toContain('beacon("dismissed", { placement: show });');
-    expect(code).toMatch(/surface="signup-nudge"\s+beaconProps=\{\{ placement: show \}\}/);
+    expect(code).toMatch(/surface="signup-nudge"[\s\S]{0,600}beaconProps=\{\{ placement: show \}\}/);
     expect(code).toContain('props: { cta: "signup-nudge", surface: "signup-nudge", action, ...extra }');
   });
   it("a slim bar: bottom on phones, a small corner on desktop, the ✕ kept, still a (non-modal) dialog", () => {
@@ -631,6 +640,9 @@ describe("SignupNudge (source)", () => {
     expect(para).not.toMatch(/hidden|line-clamp|truncate/);
   });
   it("the native Hindi notes get the Hindi bar; everywhere else the reader's language", () => {
-    expect(code).toContain("const copy = nudgeBarCopy(fixedPageLocale(pathname) ?? clientUiLocale());");
+    expect(code).toContain("const barLocale = fixedPageLocale(pathname) ?? clientUiLocale();");
+    expect(code).toContain("const copy = nudgeBarCopy(barLocale);");
+    // 2 Oct 2026: the button follows the same language.
+    expect(code).toContain("locale={barLocale}");
   });
 });

@@ -186,6 +186,7 @@ export default async function MockPlayerPage({
         freeLine={t("login.freeLine")}
         copy={mockGateCopy(locale)}
         guestQuiz={guestQuiz}
+        locale={locale}
       />
     );
   }

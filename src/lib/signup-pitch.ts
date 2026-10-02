@@ -23,7 +23,17 @@
 //     and the study streak (src/lib/db/streak.ts). (Date alerts are NOT
 //     listed: any visitor can subscribe on a tracker without an account.)
 //
+// 2 Oct 2026 (founder, standing: "Sign up with Google"): `cta` is the one
+// shared label (src/lib/signup-cta-copy.ts) — it was "Sign in free with
+// Google →" here. The card's button itself is the shared SignUpButton.
+// 2 Oct 2026 (review, honesty): the privacy line said "One tap with Google".
+// Signing up is the button, Google's account chooser and, on a first sign-in,
+// Google's share screen — not one tap — so it now reads "Sign up with your
+// Google account", the words the button's explanation uses.
+//
 // Pure: copy + path rules, imported by client islands and tests.
+
+import { signUpLabel } from "@/lib/signup-cta-copy";
 
 export type PitchLocale = "en" | "hi" | "te";
 
@@ -47,8 +57,8 @@ const EN: SignupPitchCopy = {
     "Your mocks, scores and chats are saved, with a free day-by-day plan for your exam.",
     "A daily set of 5 questions picked for you, and your study streak.",
   ],
-  privacy: "Free. One tap with Google — we get only your name, email and profile picture. No password, no phone number, no payment. For students 13 and above.",
-  cta: "Sign in free with Google →",
+  privacy: "Free. Sign up with your Google account — we get only your name, email and profile picture. No password, no phone number, no payment. For students 13 and above.",
+  cta: signUpLabel("en"),
   later: "Maybe later",
   short: "Sign in free and Shishya remembers you — your exams, weak topics, saved results and a personal plan.",
 };
@@ -62,8 +72,8 @@ const HI: SignupPitchCopy = {
     "आपके मॉक, स्कोर और बातचीत सेव रहते हैं, और आपकी परीक्षा के लिए मुफ़्त रोज़-ब-रोज़ प्लान।",
     "आपके लिए चुने गए रोज़ के 5 प्रश्न, और आपकी पढ़ाई की स्ट्रीक।",
   ],
-  privacy: "मुफ़्त। Google से एक टैप — हमें केवल आपका नाम, ईमेल और प्रोफ़ाइल फ़ोटो मिलती है। न पासवर्ड, न फ़ोन नंबर, न भुगतान। 13 साल और उससे बड़े विद्यार्थियों के लिए।",
-  cta: "Google से मुफ़्त साइन इन →",
+  privacy: "मुफ़्त। अपने Google अकाउंट से साइन अप — हमें केवल आपका नाम, ईमेल और प्रोफ़ाइल फ़ोटो मिलती है। न पासवर्ड, न फ़ोन नंबर, न भुगतान। 13 साल और उससे बड़े विद्यार्थियों के लिए।",
+  cta: signUpLabel("hi"),
   later: "बाद में",
   short: "मुफ़्त साइन इन कीजिए, Shishya आपको याद रखेगा — आपकी परीक्षाएँ, कमज़ोर टॉपिक, सेव परिणाम और आपका अपना प्लान।",
 };
@@ -77,8 +87,8 @@ const TE: SignupPitchCopy = {
     "మీ మాక్‌లు, స్కోర్లు, చాట్‌లు సేవ్ అవుతాయి; మీ పరీక్షకు ఉచిత రోజువారీ ప్లాన్.",
     "మీ కోసం ఎంచుకున్న రోజువారీ 5 ప్రశ్నలు, మీ చదువు స్ట్రీక్.",
   ],
-  privacy: "ఉచితం. Google తో ఒక్క ట్యాప్ — మాకు మీ పేరు, ఈమెయిల్, ప్రొఫైల్ ఫోటో మాత్రమే వస్తాయి. పాస్‌వర్డ్ లేదు, ఫోన్ నంబర్ లేదు, చెల్లింపు లేదు. 13 ఏళ్లు, ఆపై వయసు విద్యార్థుల కోసం.",
-  cta: "Google తో ఉచితంగా సైన్ ఇన్ →",
+  privacy: "ఉచితం. మీ Google అకౌంట్‌తో సైన్ అప్ — మాకు మీ పేరు, ఈమెయిల్, ప్రొఫైల్ ఫోటో మాత్రమే వస్తాయి. పాస్‌వర్డ్ లేదు, ఫోన్ నంబర్ లేదు, చెల్లింపు లేదు. 13 ఏళ్లు, ఆపై వయసు విద్యార్థుల కోసం.",
+  cta: signUpLabel("te"),
   later: "తర్వాత",
   short: "ఉచితంగా సైన్ ఇన్ చేస్తే Shishya మిమ్మల్ని గుర్తుంచుకుంటుంది — మీ పరీక్షలు, బలహీన టాపిక్‌లు, సేవ్ అయిన ఫలితాలు, మీ సొంత ప్లాన్.",
 };

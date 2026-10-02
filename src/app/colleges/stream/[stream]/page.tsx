@@ -9,10 +9,12 @@
 // colleges India NIRF", "top NLU India law" etc. — head terms that
 // students type every single day.
 
+import { Fragment } from "react";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
+import { SignupInline } from "@/components/SignupInline";
 import {
   COLLEGES,
   ALL_STREAMS,
@@ -85,6 +87,8 @@ export default async function CollegeStreamPage({
   const streamKey = stream as CollegeStream;
 
   const filtered = COLLEGES.filter((c) => c.streams.includes(streamKey));
+  // 2 Oct 2026: the guest sign-up line sits after this many colleges.
+  const EARLY_ROWS = 5;
   if (filtered.length === 0) notFound();
 
   // Sort by the stream-specific NIRF rank if available; colleges without
@@ -152,55 +156,71 @@ export default async function CollegeStreamPage({
           , Ministry of Education, Government of India ({NIRF_SOURCE_YEAR}).
         </p>
 
-        <ol className="mt-8 space-y-3">
-          {filtered.map((c) => {
-            const streamRank = c.nirf[info.nirfKey];
-            const fallbackOverall = streamRank === undefined ? c.nirf.overall : undefined;
-            return (
-              <li key={c.slug}>
-                <Link
-                  href={`/colleges/${c.slug}`}
-                  className="flex items-start gap-4 rounded-lg border border-ink-200 bg-white p-4 transition-colors hover:border-saffron-400 hover:bg-saffron-50/30"
-                >
-                  {/* Rank circle: stream-specific rank when present; "—"
-                      otherwise (NOT a positional index — that would suggest
-                      "this is the Nth college in the stream", which is
-                      misleading for entries ranked only by overall NIRF). */}
-                  <div className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-md bg-saffron-100 font-bold text-saffron-800">
-                    {streamRank !== undefined ? (
-                      <span className="text-sm">#{streamRank}</span>
-                    ) : fallbackOverall !== undefined ? (
-                      <>
-                        <span className="text-[9px] font-medium leading-none">Overall</span>
-                        <span className="mt-0.5 text-sm leading-none">#{fallbackOverall}</span>
-                      </>
-                    ) : (
-                      <span className="text-sm">—</span>
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-baseline justify-between gap-2">
-                      <h2 className="text-sm font-semibold text-ink-900">{c.shortName}</h2>
-                      <span className="rounded-full bg-ink-100 px-2 py-0.5 text-[10px] font-medium text-ink-600">
-                        {c.type}
-                      </span>
-                    </div>
-                    <p className="mt-0.5 text-xs text-ink-500 line-clamp-1">{c.name}</p>
-                    <p className="mt-1 text-[11px] text-ink-500">
-                      {c.city} · {stateInfo(c.state)?.name ?? c.state} · est. {c.established}
-                    </p>
-                    <p className="mt-2 text-xs text-ink-700 line-clamp-2">{c.blurb}</p>
-                    {formatNirfRanks(c.nirf) && (
-                      <p className="mt-2 text-[10px] font-medium text-saffron-700">
-                        {formatNirfRanks(c.nirf)}
-                      </p>
-                    )}
-                  </div>
-                </Link>
-              </li>
-            );
-          })}
-        </ol>
+        {/* 2 Oct 2026 (founder, standing: a sign-up invitation on every page
+            family): the guest sign-up line. Client-only (no server HTML), guests
+            only, never on a Class 1-7 page. Review, same day: it sits EARLY —
+            after the first five colleges (the list is rendered in two parts,
+            one <ol> each; the rows are unchanged) — not after the whole list,
+            where it stood one short block above the root layout's sign-up card
+            (two invitations on one phone screen). revealOffscreen: it appears
+            only where nothing on screen moves. */}
+        {[filtered.slice(0, EARLY_ROWS), filtered.slice(EARLY_ROWS)].map(
+          (part, pi) =>
+            part.length > 0 && (
+              <Fragment key={pi}>
+                <ol className={pi === 0 ? "mt-8 space-y-3" : "mt-3 space-y-3"}>
+                  {part.map((c) => {
+                    const streamRank = c.nirf[info.nirfKey];
+                    const fallbackOverall = streamRank === undefined ? c.nirf.overall : undefined;
+                    return (
+                      <li key={c.slug}>
+                        <Link
+                          href={`/colleges/${c.slug}`}
+                          className="flex items-start gap-4 rounded-lg border border-ink-200 bg-white p-4 transition-colors hover:border-saffron-400 hover:bg-saffron-50/30"
+                        >
+                          {/* Rank circle: stream-specific rank when present; "—"
+                              otherwise (NOT a positional index — that would suggest
+                              "this is the Nth college in the stream", which is
+                              misleading for entries ranked only by overall NIRF). */}
+                          <div className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-md bg-saffron-100 font-bold text-saffron-800">
+                            {streamRank !== undefined ? (
+                              <span className="text-sm">#{streamRank}</span>
+                            ) : fallbackOverall !== undefined ? (
+                              <>
+                                <span className="text-[9px] font-medium leading-none">Overall</span>
+                                <span className="mt-0.5 text-sm leading-none">#{fallbackOverall}</span>
+                              </>
+                            ) : (
+                              <span className="text-sm">—</span>
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-baseline justify-between gap-2">
+                              <h2 className="text-sm font-semibold text-ink-900">{c.shortName}</h2>
+                              <span className="rounded-full bg-ink-100 px-2 py-0.5 text-[10px] font-medium text-ink-600">
+                                {c.type}
+                              </span>
+                            </div>
+                            <p className="mt-0.5 text-xs text-ink-500 line-clamp-1">{c.name}</p>
+                            <p className="mt-1 text-[11px] text-ink-500">
+                              {c.city} · {stateInfo(c.state)?.name ?? c.state} · est. {c.established}
+                            </p>
+                            <p className="mt-2 text-xs text-ink-700 line-clamp-2">{c.blurb}</p>
+                            {formatNirfRanks(c.nirf) && (
+                              <p className="mt-2 text-[10px] font-medium text-saffron-700">
+                                {formatNirfRanks(c.nirf)}
+                              </p>
+                            )}
+                          </div>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ol>
+                {pi === 0 && <SignupInline surface="colleges-stream" revealOffscreen />}
+              </Fragment>
+            ),
+        )}
 
         {/* Cross-link to other streams */}
         <div className="mt-12 rounded-lg border border-ink-200 bg-white p-5">

@@ -19,6 +19,7 @@ import { STREAM_OPTIONS, findStage } from "@/data/paths";
 import { pathCopy } from "@/lib/paths/copy";
 import { streamPagePath, streamShortLabel } from "@/lib/paths/index-helpers";
 import type { StreamEdgeLine, StreamPageModel } from "@/lib/paths/stream-pages";
+import { SignupInline } from "@/components/SignupInline";
 import { BoardStreamTable } from "./BoardStreamTable";
 import { ExamChipList } from "./ExamChipList";
 import { PathBreadcrumb } from "./PathBreadcrumb";
@@ -103,6 +104,12 @@ export function StreamOptionView({ model, locale }: { model: StreamPageModel; lo
       </dl>
 
       <BoardStreamTable table={model.boardTable} locale={locale} />
+
+      {/* 2 Oct 2026 (founder, standing: a sign-up invitation on every page
+          family): the guest sign-up line after the subjects table. A stream
+          page is for Class 10 leavers (13 and above); client-only, guests
+          only, and off whenever the stage could include children. */}
+      {stage && !stage.mayIncludeChildren && <SignupInline surface="stream-option" revealOffscreen />}
 
       {(model.keepsOpen.length > 0 || model.closes.length > 0) && (
         <div className="mt-10 grid gap-3 sm:grid-cols-2">

@@ -14,6 +14,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
+import { SignUpButton } from "@/components/SignUpButton";
 import { prisma } from "@/lib/db/prisma";
 import { auth } from "@/lib/auth";
 import { JoinBatchButton } from "./JoinBatchButton";
@@ -136,12 +137,18 @@ export default async function JoinBatchPage({
                   <p className="text-sm text-ink-600">
                     Sign in with Google to join this batch — takes a second.
                   </p>
-                  <Link
-                    href={`/login?callbackUrl=${encodeURIComponent(`/join/${inviteCode}`)}`}
-                    className="mt-3 inline-block rounded-md bg-saffron-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-saffron-600"
-                  >
-                    Sign in with Google →
-                  </Link>
+                  {/* 2 Oct 2026 (founder, standing; review, same day): the one
+                      shared sign-up button — Google's dark (filled) button
+                      with the "G" and the one label. The line above says
+                      what it is for; tooltip with a mouse, no caption on
+                      touch. Still /login; door "batch-join". */}
+                  <SignUpButton
+                    href={`/login?callbackUrl=${encodeURIComponent(`/join/${inviteCode}`)}&from=batch-join`}
+                    surface="batch-join"
+                    theme="dark"
+                    explain="tooltip"
+                    className="mt-3"
+                  />
                 </>
               ) : existing && existing.status === "ACTIVE" ? (
                 <p className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">

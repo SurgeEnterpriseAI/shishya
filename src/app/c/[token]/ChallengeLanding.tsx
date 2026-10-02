@@ -25,6 +25,7 @@ import {
   type QuizLabels,
 } from "@/lib/challenge-copy";
 import { madeChallengeKey, playedChallenge, type PlayedChallenge } from "@/lib/challenge-local";
+import { SignUpButton } from "@/components/SignUpButton";
 
 export interface ChallengeLandingData {
   token: string;
@@ -186,13 +187,29 @@ export function ChallengeLanding({
             locale={locale}
           />
         )}
-        <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-          <Link
-            href={`/login?callbackUrl=${encodeURIComponent(`/exams/${data.examCode}`)}`}
-            className="inline-flex flex-1 items-center justify-center rounded-lg bg-saffron-500 px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-saffron-600"
-          >
-            {fillTemplate(L["challenge.played.signIn"], { exam: data.examShort })}
-          </Link>
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-start">
+          {/* 2 Oct 2026 (founder, standing): the one shared "Sign up with
+              Google" button (Google's white button with the "G") and its
+              explanation — a tooltip with a mouse, a caption on a phone. The
+              sign-in returns to this exam's hub, so the words name the exam;
+              a challenge is a quiz, so "tests saved" holds. Always /login
+              (not in the skip-/login test); door "challenge-end" (it was
+              counted as a plain "link"). Review, same day: Google's DARK
+              button — it was the filled button beside the outlined "fresh
+              quiz" one — and the tooltip opens ABOVE it. */}
+          <SignUpButton
+            href={`/login?callbackUrl=${encodeURIComponent(`/exams/${data.examCode}`)}&from=challenge-end`}
+            surface="challenge-end"
+            locale={locale}
+            exam={data.examShort}
+            examCode={data.examCode}
+            practice
+            theme="dark"
+            side="top"
+            block
+            className="flex-1"
+            beaconProps={{ examCode: data.examCode }}
+          />
           <Link
             href={`/exams/${data.examCode}/quiz`}
             className="inline-flex flex-1 items-center justify-center rounded-lg border border-ink-300 bg-white px-5 py-3 text-sm font-semibold text-ink-800 transition-colors hover:bg-ink-50"

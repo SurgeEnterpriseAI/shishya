@@ -10,6 +10,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { SignupInline } from "@/components/SignupInline";
 import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 import { GOVT_JOBS, GOVT_JOB_CATEGORIES, govtJobsByCategory } from "@/data/govt-jobs";
 import { CAREERS } from "@/data/careers";
@@ -194,6 +195,10 @@ export default function JobsLanding() {
           </li>
         </ul>
 
+        {/* 2 Oct 2026 (founder, standing: a sign-up invitation on every page
+            family): the guest sign-up line after the page's answer. Client-only
+            (no server HTML), guests only, never on a Class 1-7 page. */}
+        <SignupInline surface="jobs-index" revealOffscreen />
         {/* Govt jobs preview by category */}
         <h2 className="mt-12 text-base font-semibold text-ink-900">
           Government recruitment — by category

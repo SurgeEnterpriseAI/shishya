@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { SignupInline } from "@/components/SignupInline";
 import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 
 // 26 Sep 2026: own openGraph {title, description, url} — without one the page
@@ -154,6 +155,10 @@ export default function CutoffsPage() {
           ))}
         </ul>
 
+        {/* 2 Oct 2026 (founder, standing: a sign-up invitation on every page
+            family): the guest sign-up line after the page's answer. Client-only
+            (no server HTML), guests only, never on a Class 1-7 page. */}
+        <SignupInline surface="colleges-cutoffs" revealOffscreen />
         {/* How to use */}
         <h2 className="mt-12 text-base font-semibold text-ink-900">
           The 5-step method to use cutoffs

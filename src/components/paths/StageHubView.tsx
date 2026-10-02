@@ -12,11 +12,14 @@
 // answer the FAQPage JSON-LD carries (src/lib/paths/path-jsonld.ts
 // stageHubFaq — printed here, so the structured data never describes hidden
 // text) · 9 sources and last checked.
-// Sign-in is the root layout's guest card after the page (never a wall).
+// Sign-in is the root layout's guest card after the page (never a wall) —
+// and, since 2 Oct 2026, the guest sign-up line after the options
+// (src/components/SignupInline.tsx: server-empty, guests only).
 
 import Link from "next/link";
 import { fillCopy, pathCopy } from "@/lib/paths/copy";
 import type { StageHubModel } from "@/lib/paths/stage-pages";
+import { SignupInline } from "@/components/SignupInline";
 import { PathBreadcrumb } from "./PathBreadcrumb";
 import { PathFactList } from "./PathFactList";
 import { PathNextLinks } from "./PathNextLinks";
@@ -48,6 +51,12 @@ export function StageHubView({
       <p className="mt-3 max-w-3xl text-base text-ink-700">{model.lead}</p>
 
       <StageOptionsTable rows={model.options} note={model.stage.id === "after-10th" ? v.optionsNoteAfter10 : v.optionsNoteAfter12} locale={locale} />
+
+      {/* 2 Oct 2026 (founder, standing: a sign-up invitation on every page
+          family): the guest sign-up line after the options — the page's
+          answer. Client-only, guests only; never on a stage a child may be
+          reading (the same mayIncludeChildren rule as the tutor entry). */}
+      {!model.stage.mayIncludeChildren && <SignupInline surface="stage-hub" revealOffscreen />}
 
       <PathFactList facts={model.facts} locale={locale} />
 
