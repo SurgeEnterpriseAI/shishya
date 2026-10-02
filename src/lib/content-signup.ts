@@ -44,8 +44,10 @@
 // 2 Oct 2026 (founder, standing: "Sign up with Google"): both buttons read
 // the one shared label (src/lib/signup-cta-copy.ts; they were "Sign in free
 // with Google →" and "Sign in free"), through the shared SignUpButton — the
-// early line's as Google's white button with the "G", the bar's as our
-// saffron button with text only (no "G" on a coloured fill). The lines beside
+// early line's as Google's white button with the "G". The bar's was our
+// saffron button with text only until that evening; it is Google's white
+// button with the "G" too now (founder: not "the orange color one"), with
+// the label on two lines so the bar's line keeps its room. The lines beside
 // them are unchanged.
 //
 // Pure: copy + path rules + the trigger, imported by client islands, pages

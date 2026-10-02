@@ -619,16 +619,25 @@ describe("(d) the header's guest button", () => {
     expect(read("src/components/Header.tsx")).not.toContain("signinShort");
     expect(controls).toContain('const [lang, setLang] = useState<CopyLocale>("en");');
     expect(controls).toContain("setLang(clientUiLocale());");
-    expect(controls).toContain("<SignUpBrandLabel locale={lang} stack />");
+    // 2 Oct 2026 (evening): Google's light button — the "G", then the label's
+    // two halves (two lines below sm, one line from sm).
+    expect(controls).toContain("<SignUpStackedFace locale={lang} joinFromSm />");
   });
 
-  it("has a ≥ 40 px phone tap target (44 px); still the filled button; still hidden on Class 1-7 pages", () => {
+  it("has a ≥ 40 px phone tap target (44 px); Google's light button; still hidden on Class 1-7 pages", () => {
     // 2 Oct 2026 (review): the classes are one constant, shared by the button
     // with the tooltip and the plain one on /schooling and board hubs.
-    expect(controls).toContain('const GUEST_BUTTON_CLASS = "btn-primary min-h-[44px] !px-3 !py-1 text-center text-xs sm:!px-4 sm:text-sm";');
+    // Evening (founder: not "the orange color one at the top"): Google's
+    // light button, compact below sm — no longer our saffron btn-primary.
+    expect(controls).toContain('const GUEST_BUTTON_CLASS = "su-google su-google-compact";');
     expect(controls).toMatch(/<Link rel="nofollow" href=\{loginHref\} aria-describedby=\{describedBy\} className=\{GUEST_BUTTON_CLASS\} data-signin-surface="header">/);
     expect(controls).toMatch(/<Link rel="nofollow" href=\{loginHref\} className=\{GUEST_BUTTON_CLASS\} data-signin-surface="header">/);
-    expect(read("src/app/globals.css")).toMatch(/\.btn-primary \{[\s\S]{0,400}min-height: 44px;/);
+    // The 44 px comes from .su-google; the compact size changes no height but the text's line.
+    const css = read("src/app/globals.css");
+    expect(css.slice(css.indexOf("  .su-google {"), css.indexOf("  .su-google-dark {"))).toContain("min-height: 44px;");
+    const compact = css.slice(css.indexOf("    .su-google-compact {"), css.indexOf("    .su-google-compact > .su-google-g {"));
+    expect(compact).toContain("line-height: 16px;");
+    expect(compact).not.toMatch(/min-height|max-height|(?<!-)height:/);
     // Hidden on Class 1-7 pages and wherever the page says a child may be reading (childSafe).
     expect(controls).toMatch(/\) : childSafe \|\| isUnder13SchoolPath\(pathname\) \? null : /);
     expect(controls).toMatch(/\) : \(\s*<SignUpShell text=\{signUpTip\} surface="header" explain="tooltip" align="end" deferText>/);

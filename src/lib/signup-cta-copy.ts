@@ -82,8 +82,9 @@ export function isSignUpLocale(l: string | null | undefined): l is SignUpLocale 
 const loc = (l: string | null | undefined): SignUpLocale => (l === "hi" || l === "te" ? l : "en");
 
 // ── The label ──────────────────────────────────────────────────────────
-// Two parts, so the header can stack them on a phone ("Sign up" over "with
-// Google") and stay inside the 360 px row; everywhere else they are one line.
+// Two parts, so a narrow place — the header on a phone (it must stay inside
+// the 360 px row) and the timed bar — can put them on two lines beside the
+// "G" ("Sign up" over "with Google"); everywhere else they are one line.
 
 const LABEL_PARTS: Readonly<Record<SignUpLocale, readonly [string, string]>> = {
   en: ["Sign up", "with Google"],

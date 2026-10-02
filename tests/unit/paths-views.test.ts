@@ -30,6 +30,7 @@ import ts from "typescript";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as React from "react";
 import * as jsxRuntime from "react/jsx-runtime";
+import * as reactDom from "react-dom";
 import { renderToStaticMarkup } from "react-dom/server";
 
 vi.mock("@/lib/exam-list-rows", () => ({ getExamListRows: vi.fn(async () => []) }));
@@ -95,6 +96,10 @@ const NOT_FOUND = "NEXT_NOT_FOUND";
 const STUBS: Record<string, unknown> = {
   react: React,
   "react/jsx-runtime": jsxRuntime,
+  // 2 Oct 2026: the shared sign-up button (the views mount SignupInline)
+  // imports createPortal for its top-layer tooltip — never called in a static
+  // render (the copy mounts only while the tooltip is open).
+  "react-dom": reactDom,
   "next/link": { __esModule: true, default: LinkStub },
   "next/navigation": {
     notFound: () => {

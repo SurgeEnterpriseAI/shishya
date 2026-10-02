@@ -116,7 +116,10 @@
      button is a block's main action beside or above an outlined alternative
      (hub box, PYQ year, builder, quiz end, try-one, /login, the mock gate),
      so the free sign-in is the louder of the two again (founder, 28 Sep
-     2026). Light stays inside our own tinted cards. */
+     2026). Light stays inside our own tinted cards, and — 2 Oct 2026,
+     founder: "sign up should show like this instead of the orange color one
+     at the top" — it is also the header's button and the timed bar's. No
+     saffron sign-up button is left. */
   .su-google {
     display: inline-flex;
     align-items: center;
@@ -159,6 +162,50 @@
     height: 20px;
     flex: none;
   }
+  /* The COMPACT size, below sm only — the header's guest button on a phone
+     and the timed bar's (2 Oct 2026). The label's two halves sit on two
+     16 px lines beside the "G" ("Sign up" over "with Google": the full
+     approved words). Why: the header row is one line that cannot wrap, and
+     at 360 px it has 159 px for this button; "Sign up with Google" on one
+     line needs 161 px even at 12 px (Hindi 164, Telugu 206), and the two
+     lines at the standard size are 136 px against the 125 px the row has at
+     400 px, where the wordmark appears. Compact, two lines: about 115 px in
+     English, 112 in Hindi, 146-156 in Telugu (font arithmetic, not yet seen
+     on a phone). Kept from .su-google: the 44 px tap height, the pill, the
+     white fill, the stroke, the text colour and weight. The "G" is 18 px,
+     unchanged in colour and shape. 12 px is the size the header label had
+     before. ACCEPTED DEVIATION: Google's page gives 14 / 20 px text,
+     12 / 10 / 12 px paddings and one-line buttons only — settle it before
+     any Google app-verification review. Written after .su-google-g so the
+     18 px wins at equal weight. */
+  @media (max-width: 639.98px) {
+    .su-google-compact {
+      gap: 6px;
+      padding: 0 10px;
+      font-size: 12px;
+      line-height: 16px;
+    }
+    .su-google-compact > .su-google-g {
+      width: 18px;
+      height: 18px;
+    }
+  }
+  /* The header's wordmark (src/components/Header.tsx) gives way to the
+     Telugu button between 400 and 439 px: the wordmark appears at 400 px
+     and leaves 125 px for the button there, and the Telugu compact button
+     is about 146-156 px. English and Hindi fit beside it. Only while that
+     button is on screen: src/components/HeaderAuthControls.tsx writes
+     <html data-hdr-guest="…"> — the language of the guest button's label —
+     while it renders the guest button, and removes it otherwise. So a
+     signed-in Telugu reader, and a Telugu reader of a Class 1-7 page (no
+     button there), keep the wordmark; and the rule can never disagree with
+     the label, because both read the same value. (The first version keyed
+     on html[lang="te"] alone.) */
+  @media (max-width: 439.98px) {
+    html[data-hdr-guest="te"] .hdr-wordmark {
+      display: none;
+    }
+  }
 
   /* The button with its explanation (.su-tip holds both lengths):
        • a screen without hover (phones, tablets) shows the SHORT caption
@@ -168,13 +215,23 @@
          description for a screen reader (aria-describedby points at it).
          2 Oct 2026 review: the full sentence as the caption was 3-4 lines
          of small text under every in-page button;
-       • a screen with a mouse shows the FULL sentence as a tooltip under
-         (or, data-su-side="top", above) the button on hover and on keyboard
-         focus, and no caption. It is position:absolute and display:none
-         until then, so nothing on the page moves and it adds no scroll
-         width; it starts at the button's edge, so it never covers the
-         button. This part is CSS only (it works before and without
-         JavaScript); the script adds Escape and the screen-edge flips.
+       • a screen with a mouse shows the FULL sentence as a tooltip on hover
+         and on keyboard focus, and no caption. Once the page's script runs
+         (the frame carries data-su-float="on") what is seen is a copy in a
+         TOP LAYER — .su-float, below: rendered into <body>, position:
+         fixed, above every other layer, placed from the button's box by
+         src/lib/signup-tip-place.ts — so no ancestor can cut it off and
+         nothing can paint over it (2 Oct 2026, founder: "the hover is
+         hiding behind" — the header's tooltip went under the home page's
+         sticky live strip, the guest tutor's was cut by the scrolling
+         message pane). The in-page element is then never displayed with a
+         mouse; it stays the button's description;
+       • before the script runs, and without JavaScript, the in-page element
+         IS the tooltip: CSS only, under (or, data-su-side="top", above) the
+         button, position:absolute and display:none until hover or focus, so
+         nothing on the page moves and it adds no scroll width; it starts at
+         the button's edge, so it never covers the button. This fallback can
+         still be cut off by what the button sits in.
      data-su-explain="tooltip": no caption on touch (the header button, and
      buttons that already sit beside their own benefit line). */
   .su-wrap {
@@ -247,8 +304,10 @@
     .su-wrap:focus-within > .su-tip {
       display: block;
     }
-    /* Escape closed it: stays closed until the pointer or the focus leaves. */
-    .su-wrap[data-su-closed="true"] > .su-tip {
+    /* The script is running: the top-layer copy (.su-float) is the tooltip
+       now. After the hover rule and of the same weight, so it wins — the two
+       are never on screen together. */
+    .su-wrap[data-su-float="on"] > .su-tip {
       display: none;
     }
     .su-wrap > .su-tip > .su-tip-short {
@@ -262,6 +321,44 @@
       color: #ffffff;
       box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
     }
+  }
+  /* The explanation in the top layer (SignUpTipFloat in
+     src/components/SignUpButton.tsx): a child of <body>, position: fixed, so
+     overflow, a transform, a backdrop blur or a z-index on anything the
+     button sits in cannot cut it off or cover it. z-index 1000: above every
+     other layer of the site (the highest written anywhere else is 100 —
+     tests/unit/signup-cta.test.ts scans src/ and fails if a higher one
+     appears). It starts hidden at the top left corner; the script puts it
+     in place and shows it before the browser paints. pointer-events: none —
+     it can never take a click or a hover. max-width in % of the window
+     without its scrollbar (100vw would count the scrollbar): 8 px stay
+     free on each side. Same look as the CSS tooltip above.
+     The test sees src/ only. A layer drawn by someone else's script is
+     outside it: Google One Tap (planned for about 7 Oct 2026) puts its
+     prompt in the top right corner, where the header's tooltip hangs, at a
+     z-index of its own — check the two together when One Tap is built and
+     decide which gives way. */
+  .su-float {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    visibility: hidden;
+    box-sizing: border-box;
+    width: max-content;
+    max-width: min(20rem, calc(100% - 16px));
+    margin: 0;
+    border-radius: 8px;
+    background-color: theme("colors.ink.900");
+    padding: 8px 10px;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.45;
+    text-align: left;
+    white-space: normal;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
+    pointer-events: none;
   }
 
   .container-prose {

@@ -58,8 +58,9 @@ import { getDailyQuote } from "@/data/motivational-quotes";
 // 2 Oct 2026 (founder, standing): it reads "Sign up with Google" — the words
 // live in src/lib/signup-cta-copy.ts (one place for every sign-up button) and
 // HeaderAuthControls renders them: English in the cached HTML, Hindi / Telugu
-// after mount, text only on our saffron button (Google's guidelines allow the
-// "G" on a white button only). Still hidden on Class 1-7 pages.
+// after mount. Since that evening it is Google's light button — white, with
+// the colour "G" — like every other sign-up button on the site (founder: not
+// "the orange color one at the top"). Still hidden on Class 1-7 pages.
 const RAIL_LABELS = {
   dashboard: "Dashboard",
   signout: "Sign out",
@@ -94,11 +95,14 @@ export function Header({ admin = false, childSafe = false }: { admin?: boolean; 
   // 13 px lines; the longest quotes (119 with the author) need 12 px type.
   const longQuote = quote ? (quote.text + (quote.author ? ` — ${quote.author}` : "")).length > 95 : false;
 
-  // 2 Oct 2026: relative z-30 — the guest button's hover tooltip ("Sign up
-  // with Google", HeaderAuthControls) hangs about 50 px below the header on a
-  // mouse screen; without a z-index the page's own positioned blocks (a hero,
-  // a sticky strip) would paint over its lower half. Bars and sheets that
-  // must sit above everything (z-40 / z-50) still do.
+  // 2 Oct 2026: relative z-30 was added for the guest button's hover tooltip
+  // ("Sign up with Google", HeaderAuthControls), which hung below the header
+  // inside it. It was not enough: on the home page the sticky live strip
+  // right under the header is z-40 and painted over the tooltip's lower
+  // lines. The same evening the tooltip moved to a top layer of its own
+  // (SignUpShell renders it into <body>, position: fixed), so it no longer
+  // depends on this z-index. The class stays: the header has been a layer at
+  // 30 since, and nothing was re-checked in a browser without it.
   return (
     <header className="relative z-30 border-b border-ink-200/50 bg-white/80 backdrop-blur">
       <div className="container-prose flex h-16 items-center gap-2 sm:gap-3">
@@ -116,7 +120,13 @@ export function Header({ admin = false, childSafe = false }: { admin?: boolean; 
             (368 of 368 with 12 px gaps, hence the 8); 412 px signed-in 356
             of 380; 640 px signed-in 581 of 592. Do not "restore" the
             wordmark, Back or the gaps without re-measuring both auth states
-            at 360 and 400 px. Admin pages keep the old brand and Back. */}
+            at 360 and 400 px. Admin pages keep the old brand and Back.
+            2 Oct 2026: hdr-wordmark — the Telugu "Sign up with Google"
+            button is wider than the 125 px the row has at 400 px, so while
+            that button is on screen the wordmark hides below 440 px
+            (html[data-hdr-guest="te"] .hdr-wordmark in src/app/globals.css;
+            HeaderAuthControls writes the attribute). A signed-in reader and
+            a page with no guest button keep the wordmark. */}
         <div className="flex shrink-0 items-center gap-3">
           <Link href="/" className="flex items-center gap-2">
             {/* font-sans (16 Sep 2026): under the body's font-multi stack these
@@ -129,7 +139,7 @@ export function Header({ admin = false, childSafe = false }: { admin?: boolean; 
             {admin ? (
               <span className="text-lg font-semibold tracking-tight text-ink-900">Shishya</span>
             ) : (
-              <span className="hidden flex-col min-[400px]:flex">
+              <span className="hdr-wordmark hidden flex-col min-[400px]:flex">
                 <span className="text-lg font-semibold leading-tight tracking-tight text-ink-900">Shishya</span>
                 {/* 26 Sep 2026: the home page's h1, verbatim — the one place
                     the header says "free". From md only: at sm a signed-in
@@ -186,8 +196,10 @@ export function Header({ admin = false, childSafe = false }: { admin?: boolean; 
           </p>
         )}
 
-        {/* Right: language switcher + auth controls (Sign in stays the filled
-            button at every width).
+        {/* Right: language switcher + auth controls. The guest button is
+            Google's light "Sign up with Google" button at every width (white
+            pill, the colour "G" — see HeaderAuthControls), no longer a
+            filled saffron one.
             26 Sep 2026: the rail's three pills left it, so the row fits a
             360 px phone in both auth states:
               • "🗺️ India's Govt Jobs Map" (/jobs-map) — it belongs under

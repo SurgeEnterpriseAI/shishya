@@ -14,10 +14,10 @@
 //      memory, saved chats, school practice, the guest-chat carry-over); the
 //      exam words only where the sign-in really returns to that exam;
 //   3. THE BUTTON — rendered: role="tooltip" + aria-describedby, the label,
-//      Google's "G" only on the white button, text only on the saffron one,
-//      the caption on touch and none where the tap must stay clear; the CSS
-//      that makes the tooltip open on hover AND keyboard focus with no layout
-//      shift and never over the button; Escape closes it;
+//      Google's "G" on Google's own fills only, the caption on touch and none
+//      where the tap must stay clear; the CSS that makes the tooltip open on
+//      hover AND keyboard focus with no layout shift and never over the
+//      button; Escape closes it;
 //   4. GOOGLE'S NUMBERS — fill, stroke, text colour, 14/20 Medium, 12/10/12;
 //   5. NEVER UNDER 13 — no button on a Class 1-7 page, the /ask line is off
 //      for a Class 1-7 question, life-stage lines are off where children may
@@ -35,6 +35,36 @@
 //   • no early line right above the root layout's sign-up card;
 //   • no header tooltip or beacon on /schooling and board hubs, no header
 //     button for a Class 1-7 question on /ask.
+// 2 Oct 2026 (evening — founder, with a screenshot of the white button: "sign
+// up should show like this instead of the orange color one at the top and
+// also the hover is hiding behind; check all the places") — also pinned:
+//   • NO SAFFRON SIGN-UP BUTTON is left: the header's guest button and the
+//     timed bar's are Google's light button with the "G" (rendered here);
+//     the "brand" variant and its label component are gone from src/;
+//   • THE TOP LAYER — with a mouse and the script running, the explanation
+//     is a copy rendered into <body>, position: fixed, above every z-index
+//     in src/, pointer-events: none, aria-hidden; the CSS tooltip is the
+//     fallback before and without JavaScript and is switched off the moment
+//     the script runs, so the two never show together;
+//   • WHERE IT GOES — src/lib/signup-tip-place.ts as a pure function: under
+//     or above the button, the other side when there is no room, 8 px inside
+//     the window, never over the button (sections 12 and 13).
+// 2 Oct 2026 (review of the evening build) — also pinned:
+//   • the tooltip opens for KEYBOARD focus (:focus-visible) and a hovering
+//     mouse or pen — not for the focus a mouse click leaves on the button;
+//     a focus or pointer that left without an event (a disabled button)
+//     closes it;
+//   • it is placed again when an animation or transition ends and when the
+//     page or the button changes size, and is not shown while the button is
+//     cut off by a scrolling pane;
+//   • the header's wordmark gives way only while the Telugu GUEST BUTTON is
+//     on screen (<html data-hdr-guest>), never on <html lang> alone; the
+//     header label follows the language control at once.
+// What no test here can see: pixels, and the tooltip RUNNING. No DOM test
+// library is installed, so section 6 pins the tooltip's source text; only
+// the placement function (section 12) and the static renders run real code.
+// The 360 px header row and the tooltip on hover and on keyboard focus have
+// to be looked at in a browser.
 // Run: npx vitest run tests/unit/signup-cta.test.ts
 
 import fs from "node:fs";
@@ -43,6 +73,7 @@ import ts from "typescript";
 import { describe, expect, it } from "vitest";
 import * as React from "react";
 import * as jsxRuntime from "react/jsx-runtime";
+import * as reactDom from "react-dom";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import * as copyMod from "@/lib/signup-cta-copy";
@@ -52,6 +83,12 @@ import * as ctaBeaconMod from "@/lib/cta-beacon";
 import * as sessionHintMod from "@/lib/session-hint";
 import * as inAppMod from "@/lib/in-app-browser";
 import * as directMod from "@/lib/direct-signin-ab";
+import * as tipPlaceMod from "@/lib/signup-tip-place";
+import * as i18nMod from "@/lib/i18n";
+import * as studyDayCopyMod from "@/lib/study-day-copy";
+import * as studentClassesMod from "@/lib/school/student-classes";
+import * as uiLocaleCopyMod from "@/lib/ui-locale-copy";
+import * as signupPitchMod from "@/lib/signup-pitch";
 import { signupGoalOf } from "@/lib/signup-goal";
 import { isChildSchoolPath, pitchAllowedPath, signupPitchCopy } from "@/lib/signup-pitch";
 import { contentFamily, nudgeBarCopy, signupLineCopy } from "@/lib/content-signup";
@@ -78,6 +115,7 @@ const {
 } = copyMod;
 const { DIRECT_SIGNIN_AB_KEY, DIRECT_SIGNIN_SURFACES, DIRECT_SIGNIN_TEST_ON, inDirectSigninTest, readOrAssignDirectBucket, signinRoute } = directMod;
 const { SIGNIN_CTA, SIGNIN_SURFACES, isSigninSurface } = signinCtaMod;
+const { SIGNUP_TIP_GAP, SIGNUP_TIP_MARGIN, placeSignUpTip } = tipPlaceMod;
 
 const ROOT = process.cwd();
 const read = (rel: string) => fs.readFileSync(path.join(ROOT, rel), "utf8").replace(/\r\n/g, "\n");
@@ -95,10 +133,26 @@ function LinkStub({ href, prefetch, children, ...rest }: { href: string; prefetc
   return React.createElement("a", { href, ...rest }, children);
 }
 
+/** The path the header's usePathname() reports (set by the header tests). */
+let headerPath = "/";
+
 const STUBS: Record<string, unknown> = {
   react: React,
   "react/jsx-runtime": jsxRuntime,
+  // The real react-dom: createPortal is imported by the button, and never
+  // called in a static render (the top-layer copy mounts only while open).
+  "react-dom": reactDom,
   "next/link": { __esModule: true, default: LinkStub },
+  "next/navigation": { usePathname: () => headerPath },
+  "@/lib/signup-tip-place": tipPlaceMod,
+  // The header's own imports (HeaderAuthControls is rendered in section 14).
+  "./LangSwitcher": { LangSwitcher: () => null },
+  "./NotificationBell": { NotificationBell: () => null },
+  "@/lib/i18n": i18nMod,
+  "@/lib/study-day-copy": studyDayCopyMod,
+  "@/lib/school/student-classes": studentClassesMod,
+  "@/lib/ui-locale-copy": uiLocaleCopyMod,
+  "@/lib/signup-pitch": signupPitchMod,
   "@/lib/signup-cta-copy": copyMod,
   "@/lib/signin-cta": signinCtaMod,
   "@/lib/cta-beacon": ctaBeaconMod,
@@ -145,7 +199,8 @@ const textOf = (html: string) =>
 const ui = load("src/components/SignUpButton.tsx") as {
   SignUpButton: unknown;
   SignUpShell: unknown;
-  SignUpBrandLabel: unknown;
+  SignUpFace: unknown;
+  SignUpStackedFace: unknown;
   GoogleG: unknown;
 };
 const googleBtn = load("src/components/GoogleSignInButton.tsx") as { GoogleSignInButton: unknown };
@@ -259,8 +314,9 @@ describe("2. every primary guest button is the one shared component", () => {
       const tag = src.slice(src.indexOf("<SignUpButton"));
       expect(tag.slice(0, tag.indexOf("/>"))).not.toMatch(/\blabel=|\bchildren=/);
     } else if (b.via === "SignUpShell") {
-      expect(src).toContain('import { SignUpBrandLabel, SignUpShell } from "./SignUpButton";');
-      expect(src).toContain("<SignUpBrandLabel locale={lang} stack />");
+      expect(src).toContain('import { SignUpShell, SignUpStackedFace } from "./SignUpButton";');
+      // Both guest branches: the "G" and the label's two halves (one line from sm).
+      expect(src.match(/<SignUpStackedFace locale=\{lang\} joinFromSm \/>/g)).toHaveLength(2);
     } else {
       expect(src).toContain("<GateSignInButton");
       expect(code("src/components/GuestQuizGate.tsx")).toMatch(/<GoogleSignInButton\s+callbackUrl=\{callbackUrl\}\s+locale=\{locale\}/);
@@ -599,7 +655,7 @@ describe("5. the rendered button: label, Google's mark, tooltip and caption", ()
     const block = render(ui.SignUpButton, { href, surface: "quiz-end", block: true, className: "flex-1" });
     expect(block).toMatch(/^<span class="su-wrap su-block flex-1" data-su-explain="both">/);
     expect(block).toContain('class="su-google w-full"');
-    const top = render(ui.SignUpButton, { href, surface: "signup-nudge", variant: "brand", explain: "tooltip", side: "top", align: "end", buttonClassName: "x" });
+    const top = render(ui.SignUpButton, { href, surface: "signup-nudge", stack: true, explain: "tooltip", side: "top", align: "end" });
     expect(top).toMatch(/^<span class="su-wrap" data-su-explain="tooltip" data-su-side="top" data-su-align="end">/);
     // explain="tooltip": no caption element at all — only the full sentence, for the mouse and the screen reader.
     expect(top).not.toContain("su-tip-short");
@@ -616,8 +672,10 @@ describe("5. the rendered button: label, Google's mark, tooltip and caption", ()
     expect(dark).toMatch(/^<span class="su-wrap" data-su-explain="both" data-su-side="top">/);
     const block = render(ui.SignUpButton, { href, surface: "quiz-end", theme: "dark", block: true });
     expect(block).toContain('class="su-google su-google-dark w-full"');
-    // The brand (saffron) form ignores the theme: it is not a Google button.
-    expect(render(ui.SignUpButton, { href, surface: "signup-nudge", variant: "brand", theme: "dark", buttonClassName: "x" })).not.toContain("su-google");
+    // There is no other form: an unknown `variant` (the saffron "brand" one, removed 2 Oct 2026) changes nothing.
+    const stray = render(ui.SignUpButton, { href, surface: "signup-nudge", variant: "brand", buttonClassName: "x" } as never);
+    expect(attr(stray.match(/<a\b[^>]*>/)?.[0] ?? "", "class")).toBe("su-google x");
+    expect(stray).toContain("<svg");
   });
 
   it("the language follows the page: Hindi and Telugu labels and explanations", () => {
@@ -637,24 +695,33 @@ describe("5. the rendered button: label, Google's mark, tooltip and caption", ()
     expect(textOf(school)).toContain(signUpExplain("en", { kind: "school" }));
   });
 
-  it("the saffron (brand) form is TEXT ONLY — no Google mark on a coloured button", () => {
-    const brand = render(ui.SignUpButton, { href, surface: "signup-nudge", variant: "brand", stack: true, buttonClassName: "rounded-lg bg-saffron-500 text-white" });
-    expect(brand).not.toContain("<svg");
-    expect(brand).not.toContain("su-google");
-    expect(attr(brand.match(/<a\b[^>]*>/)?.[0] ?? "", "class")).toBe("rounded-lg bg-saffron-500 text-white");
-    expect(textOf(brand.slice(brand.indexOf("<a"), brand.indexOf("</a>")))).toBe("Sign up with Google");
-    // Stacked halves on a phone, one line from sm.
-    expect(brand).toContain('<span class="flex flex-col items-center leading-[1.15] sm:flex-row sm:gap-1 sm:leading-normal">');
+  it("no saffron sign-up button is left: the narrow form (the timed bar) is Google's light button too — the G, then the label on two lines", () => {
+    const bar = render(ui.SignUpButton, { href, surface: "signup-nudge", stack: true, explain: "tooltip", side: "top", align: "end", className: "shrink-0" });
+    const a = bar.slice(bar.indexOf("<a"), bar.indexOf("</a>"));
+    // Google's light button, compact below sm — no fill of ours, no dark theme.
+    expect(attr(a, "class")).toBe("su-google su-google-compact");
+    for (const c of ["#EA4335", "#4285F4", "#FBBC05", "#34A853"]) expect(a).toContain(`fill="${c}"`);
+    // The full approved words, in order, each half on its own line; the G first.
+    expect(textOf(a)).toBe("Sign up with Google");
+    expect(a).toContain('<span class="flex flex-col items-start"><span class="whitespace-nowrap">Sign up</span> <span class="whitespace-nowrap">with Google</span></span>');
+    expect(a.indexOf("<svg")).toBeLessThan(a.indexOf("Sign up"));
+    expect(textOf(render(ui.SignUpButton, { href, surface: "signup-nudge", stack: true, locale: "te" }).split("</a>")[0])).toBe("Google తో సైన్ అప్ చేయండి");
     // And nowhere in the app is the G put on a saffron or brand-coloured element.
     for (const b of BUTTONS) {
       const src = code(b.file);
       expect(src, b.file).not.toContain("<GoogleG");
       for (const m of src.matchAll(/className="([^"]*su-google[^"]*)"/g)) expect(m[1], b.file).not.toMatch(/bg-(?!white)/);
+      // No caller hands the button a fill, a text colour or a shape of its own.
+      for (const m of src.matchAll(/buttonClassName="([^"]*)"/g)) expect(m[1], b.file).not.toMatch(/\bbg-|\btext-|\brounded|\bborder/);
     }
     const shared = code("src/components/SignUpButton.tsx");
-    expect(shared.match(/<GoogleG \/>/g)).toHaveLength(1);
-    expect(shared).toContain('const cls = variant === "google" ? `${googleButtonClass(theme)}${block ? " w-full" : ""}${buttonClassName ? ` ${buttonClassName}` : ""}` : buttonClassName ?? "btn-primary";');
+    // The G is drawn in two places, both inside a Google-branded button: the one-line face and the two-line one.
+    expect(shared.match(/<GoogleG \/>/g)).toHaveLength(2);
+    expect(shared).toContain('const cls = `${googleButtonClass(theme)}${stack ? " su-google-compact" : ""}${block ? " w-full" : ""}${buttonClassName ? ` ${buttonClassName}` : ""}`;');
     expect(shared).toContain('return theme === "dark" ? "su-google su-google-dark" : "su-google";');
+    expect(shared).toContain("{stack ? <SignUpStackedFace locale={locale} /> : <SignUpFace label={signUpLabel(locale)} />}");
+    expect(shared).not.toContain("btn-primary");
+    expect(shared).not.toMatch(/saffron/);
   });
 
   it("the straight-to-Google button (/login, the gates): a real <button>, the same face, tooltip and caption", () => {
@@ -710,12 +777,15 @@ describe("5. the rendered button: label, Google's mark, tooltip and caption", ()
     expect(code("src/components/Header.tsx")).not.toMatch(/Sign up|Sign in free/);
   });
 
-  it("the stacked header label keeps both halves on one word-wrap-free line each", () => {
-    const stacked = render(ui.SignUpBrandLabel, { locale: "en", stack: true });
-    expect(stacked).toBe(
-      '<span class="flex flex-col items-center leading-[1.15] sm:flex-row sm:gap-1 sm:leading-normal"><span class="whitespace-nowrap">Sign up</span> <span class="whitespace-nowrap">with Google</span></span>',
-    );
-    expect(render(ui.SignUpBrandLabel, { locale: "hi" })).toBe("Google से साइन अप करें");
+  it("the two-line face keeps both halves on one word-wrap-free line each, after the G; the header joins them from sm", () => {
+    const header = render(ui.SignUpStackedFace, { locale: "en", joinFromSm: true });
+    expect(header).toMatch(/^<svg class="su-google-g"[\s\S]*<\/svg><span class="flex flex-col items-start sm:flex-row sm:gap-1"><span class="whitespace-nowrap">Sign up<\/span> <span class="whitespace-nowrap">with Google<\/span><\/span>$/);
+    const bar = render(ui.SignUpStackedFace, { locale: "hi" });
+    expect(bar).toMatch(/<\/svg><span class="flex flex-col items-start"><span class="whitespace-nowrap">Google से<\/span> <span class="whitespace-nowrap">साइन अप करें<\/span><\/span>$/);
+    // The words are the label, whole: a space joins the halves for a screen reader and a copy.
+    for (const l of SIGNUP_LOCALES) expect(textOf(render(ui.SignUpStackedFace, { locale: l }))).toBe(signUpLabel(l));
+    // The one-line face is unchanged.
+    expect(render(ui.SignUpFace, { label: "Sign up with Google" })).toMatch(/<\/svg><span>Sign up with Google<\/span>$/);
   });
 });
 
@@ -724,7 +794,9 @@ describe("5. the rendered button: label, Google's mark, tooltip and caption", ()
 describe("6. the tooltip: hover AND keyboard focus, no layout shift, never over the button, Escape closes", () => {
   const css = read("src/app/globals.css");
   const hover = css.slice(css.indexOf("@media (hover: hover) and (pointer: fine) {"));
-  const block = hover.slice(0, hover.indexOf("  .container-prose {"));
+  // The mouse-only rules: up to the top-layer copy's own rule.
+  const block = hover.slice(0, hover.indexOf("  .su-float {"));
+  const shell = code("src/components/SignUpButton.tsx");
 
   it("touch / no hover (the default): a plain caption under the button, always visible, in the flow", () => {
     const base = css.slice(css.indexOf("  .su-wrap > .su-tip {"), css.indexOf("@media (hover: hover) and (pointer: fine) {"));
@@ -736,9 +808,11 @@ describe("6. the tooltip: hover AND keyboard focus, no layout shift, never over 
     // Touch shows the SHORT caption; the full sentence is not displayed (it is still the button's description).
     expect(base).toMatch(/\.su-wrap > \.su-tip > \.su-tip-short \{\s*display: block;\s*\}/);
     expect(base).toMatch(/\.su-wrap > \.su-tip > \.su-tip-text \{\s*display: none;\s*\}/);
+    // The top layer is a mouse-only thing: no rule outside the hover query reads data-su-float.
+    expect(css.slice(0, css.indexOf("@media (hover: hover) and (pointer: fine) {")).replace(/\/\*[\s\S]*?\*\//g, "")).not.toContain("data-su-float");
   });
 
-  it("with a mouse: absolutely positioned (no layout shift), closed until hover or focus-within — CSS only", () => {
+  it("the fallback (before and without JavaScript), with a mouse: absolutely positioned (no layout shift), closed until hover or focus-within — CSS only", () => {
     expect(block).toMatch(/\.su-wrap > \.su-tip \{[^}]*position: absolute;[^}]*display: none;/);
     expect(block).toMatch(/\.su-wrap:hover > \.su-tip,\s*\.su-wrap:focus-within > \.su-tip \{\s*display: block;\s*\}/);
     // display:none while closed: it adds no scroll width and cannot intercept a click.
@@ -749,33 +823,144 @@ describe("6. the tooltip: hover AND keyboard focus, no layout shift, never over 
     expect(block).toMatch(/\.su-wrap > \.su-tip > \.su-tip-text \{\s*display: block;/);
   });
 
-  it("side=top with no room above drops below; the measure runs on hover and on focus", () => {
-    const shell = code("src/components/SignUpButton.tsx");
-    expect(shell).toContain('if (side === "top" && r.height > 0 && r.top < 8) setDrop(true);');
-    expect(shell).toContain("data-su-side={drop ? undefined : side}");
-    expect(shell).toMatch(/if \(!active\) \{\s*setClosed\(false\);\s*setDrop\(false\);\s*return;\s*\}/);
-  });
-
-  it("never covers the button: it starts at the button's bottom edge (or its top edge, above)", () => {
+  it("the fallback never covers the button: it starts at the button's bottom edge (or its top edge, above)", () => {
     expect(block).toMatch(/\.su-wrap > \.su-tip \{[^}]*top: 100%;[^}]*padding-top: 8px;/);
     expect(block).toMatch(/\.su-wrap\[data-su-side="top"\] > \.su-tip \{\s*top: auto;\s*bottom: 100%;/);
     expect(block).toMatch(/\.su-wrap\[data-su-align="end"\] > \.su-tip \{\s*right: 0;\s*left: auto;/);
     // Never wider than the screen.
     expect(block).toContain("max-width: min(20rem, calc(100vw - 2rem));");
+    // The frame carries the caller's side and edge as they are (the script no longer rewrites them).
+    expect(shell).toContain("data-su-side={side}");
+    expect(shell).toContain("data-su-align={align}");
+    expect(shell).not.toMatch(/setFlip|setDrop|data-su-closed/);
   });
 
-  it("Escape closes it until the pointer and the focus leave; the closed rule wins over hover", () => {
-    expect(block.indexOf('.su-wrap[data-su-closed="true"] > .su-tip')).toBeGreaterThan(block.indexOf(".su-wrap:focus-within > .su-tip"));
-    expect(block).toMatch(/\.su-wrap\[data-su-closed="true"\] > \.su-tip \{\s*display: none;\s*\}/);
-    const shell = code("src/components/SignUpButton.tsx");
+  it("the two never show together: once the script runs the frame says so and the CSS tooltip is off", () => {
+    // After mount only — the server HTML and the first client render carry no mark (no hydration mismatch).
+    expect(shell).toContain("const [mounted, setMounted] = useState(false);");
+    expect(shell).toMatch(/useEffect\(\(\) => \{\s*setMounted\(true\);/);
+    expect(shell).toContain('data-su-float={mounted ? "on" : undefined}');
+    // The rule comes AFTER the hover / focus rule and weighs the same, so it wins.
+    const off = '.su-wrap[data-su-float="on"] > .su-tip';
+    expect(block.indexOf(off)).toBeGreaterThan(block.indexOf(".su-wrap:focus-within > .su-tip"));
+    expect(block).toMatch(/\.su-wrap\[data-su-float="on"\] > \.su-tip \{\s*display: none;\s*\}/);
+    expect(block.slice(block.indexOf(off))).not.toMatch(/\.su-wrap[^{]*> \.su-tip \{\s*display: block;/);
+    // And the top-layer copy exists only while that mark is on.
+    expect(shell).toContain("{mounted && active && !closed && <SignUpTipFloat frame={frame} text={text} side={side} align={align} />}");
+  });
+
+  it("the top layer: a copy in <body>, position: fixed, never in the way of a click, hidden until placed", () => {
+    // Rendered through a portal into <body>: no ancestor of the button can clip it or paint over it.
+    expect(shell).toContain('import { createPortal } from "react-dom";');
+    expect(shell).toMatch(/return createPortal\(\s*<span ref=\{tip\} className="su-float" aria-hidden="true">\s*\{text\}\s*<\/span>,\s*document\.body,\s*\);/);
+    expect(shell.match(/createPortal\(/g)).toHaveLength(1);
+    const float = css.slice(css.indexOf("  .su-float {"), css.indexOf("  .container-prose {"));
+    expect(float).toMatch(/^  \.su-float \{\s*position: fixed;\s*top: 0;\s*left: 0;\s*z-index: 1000;\s*visibility: hidden;/);
+    expect(float).toContain("pointer-events: none;");
+    // 8 px free on each side of the window (its width without the scrollbar).
+    expect(float).toContain("max-width: min(20rem, calc(100% - 16px));");
+    expect(float).toContain("box-sizing: border-box;");
+    // The same look as the CSS tooltip: white on ink-900, 12 px.
+    expect(float).toMatch(/background-color: theme\("colors\.ink\.900"\);[^}]*color: #ffffff;/);
+    expect(float).toContain("font-size: 12px;");
+    // Not inside the hover query: the script decides when it exists.
+    expect(css.indexOf("  .su-float {")).toBeGreaterThan(css.indexOf('.su-wrap[data-su-float="on"] > .su-tip'));
+  });
+
+  it("the top layer is placed from the button's box before paint, and again while anything scrolls or the window is resized", () => {
+    expect(shell).toContain('import { placeSignUpTip } from "@/lib/signup-tip-place";');
+    // The button itself (the link or <button>), not its frame; the window without its scrollbars.
+    expect(shell).toContain('button: (wrap.querySelector("a, button") ?? wrap).getBoundingClientRect(),');
+    expect(shell).toContain("viewport: { width: root.clientWidth, height: root.clientHeight },");
+    expect(shell).toMatch(/useLayoutEffect\(\(\) => \{[\s\S]*?place\(\);/);
+    expect(shell).toContain("el.style.top = `${p.top}px`;");
+    expect(shell).toContain("el.style.left = `${p.left}px`;");
+    expect(shell).toContain('el.style.visibility = p.hidden || cut ? "hidden" : "visible";');
+    // Passive listeners (a scroll inside a pane too: capture), once a frame, removed when it closes.
+    expect(shell).toContain('window.addEventListener("scroll", later, { passive: true, capture: true });');
+    expect(shell).toContain('window.addEventListener("resize", later, { passive: true });');
+    expect(shell).toContain('window.removeEventListener("scroll", later, { capture: true });');
+    expect(shell).toContain('window.removeEventListener("resize", later);');
+    expect(shell).toContain("if (!raf) raf = window.requestAnimationFrame(place);");
+    expect(shell).toContain("if (raf) window.cancelAnimationFrame(raf);");
+  });
+
+  it("the button moves with no scroll (the timed bar slides up, content loads, the label changes language): placed again; cut off by a scrolling pane: not shown", () => {
+    const float = shell.slice(shell.indexOf("function SignUpTipFloat("), shell.indexOf("export function SignUpShell("));
+    // The end of any animation or transition on the page (the bar's 0.3 s slide), anywhere: capture.
+    for (const ev of ["animationend", "transitionend"]) {
+      expect(float).toContain(`window.addEventListener("${ev}", later, { passive: true, capture: true });`);
+      expect(float).toContain(`window.removeEventListener("${ev}", later, { capture: true });`);
+    }
+    // The page or the button changes size: the same once-a-frame placing. Guarded: an old browser keeps scroll and resize.
+    expect(float).toMatch(/if \(button && typeof ResizeObserver !== "undefined"\) \{\s*sizes = new ResizeObserver\(later\);\s*sizes\.observe\(document\.body\);\s*sizes\.observe\(button\);\s*\}/);
+    // The button is inside the window but cut off by what it sits in (the tutor's message pane): the
+    // browser's own answer, which takes every clipping ancestor into account — then hidden, like a button off screen.
+    expect(float).toMatch(/if \(button && typeof IntersectionObserver !== "undefined"\) \{\s*seen = new IntersectionObserver\(\(entries\) => \{\s*const last = entries\[entries\.length - 1\];\s*if \(!last\) return;\s*cut = !last\.isIntersecting;\s*later\(\);\s*\}\);\s*seen\.observe\(button\);\s*\}/);
+    expect(float).toContain("let cut = false;");
+    // Both observers stop when it closes; a browser without them throws nothing.
+    expect(float).toContain("sizes?.disconnect();");
+    expect(float).toContain("seen?.disconnect();");
+    expect(float.match(/new (?:ResizeObserver|IntersectionObserver)\(/g)).toHaveLength(2);
+    // Placing writes styles, never React state: no render loop from an observer.
+    expect(float).not.toMatch(/useState|set[A-Z]\w*\(/);
+  });
+
+  it("ONE description for a screen reader: the in-page element; the top-layer copy is aria-hidden and carries no role or id", () => {
+    expect(shell.match(/role="tooltip"/g)).toHaveLength(1);
+    expect(shell).toContain('<span id={tipId} role="tooltip" className="su-tip-text">');
+    const portalAt = shell.indexOf("return createPortal(");
+    const float = shell.slice(portalAt, shell.indexOf("document.body", portalAt));
+    expect(float).toContain('aria-hidden="true"');
+    expect(float).not.toMatch(/\brole=|\bid=/);
+    // A static render (the server, the first client render) has no top-layer copy and no mark.
+    const html = render(ui.SignUpButton, { href: loginHrefFor("/exams/SSC_CGL", "hub-box"), surface: "hub-box", side: "top" });
+    expect(html).not.toMatch(/su-float|data-su-float/);
+    expect(html.match(/role="tooltip"/g)).toHaveLength(1);
+  });
+
+  it("Escape closes it until the pointer and the focus leave; leaving the page closes it too", () => {
     expect(shell).toContain('if (e.key === "Escape") setClosed(true);');
     expect(shell).toContain('document.addEventListener("keydown", onKey);');
-    expect(shell).toContain('return () => document.removeEventListener("keydown", onKey);');
-    expect(shell).toContain('data-su-closed={closed ? "true" : undefined}');
+    expect(shell).toContain('document.removeEventListener("keydown", onKey);');
     // Leaving re-arms it.
-    expect(shell).toMatch(/if \(!active\) \{\s*setClosed\(false\);/);
-    // A touch pointer never opens (or counts) anything.
-    expect(shell).toContain('if (e.pointerType !== "mouse" || !canHover()) return;');
+    expect(shell).toMatch(/if \(!active\) \{\s*setClosed\(false\);\s*return;\s*\}/);
+    // A tap on the button itself navigates away: closed, so the back button never finds it stuck open.
+    expect(shell).toContain('window.addEventListener("pagehide", onHide);');
+    expect(shell).toContain('window.removeEventListener("pagehide", onHide);');
+    // A touch pointer never opens (or counts) anything; nor does a screen without a mouse.
+    // A pen that hovers opens it (the CSS tooltip did); only a resting MOUSE is counted, as before.
+    expect(shell).toMatch(/onPointerEnter=\{\(e\) => \{\s*if \(e\.pointerType === "touch" \|\| !canHover\(\)\) return;\s*setHovered\(true\);\s*if \(e\.pointerType !== "mouse"\) return;\s*if \(hoverTimer\.current !== null\) window\.clearTimeout\(hoverTimer\.current\);\s*hoverTimer\.current = window\.setTimeout\(\(\) => explainOpened\(surface, "hover"\), SIGNUP_EXPLAIN_HOVER_MS\);\s*\}\}/);
+    expect(shell).not.toContain('e.pointerType !== "mouse" || !canHover()');
+    expect(shell).toMatch(/if \(!el \|\| !canHover\(\)\) return;/);
+  });
+
+  it("KEYBOARD focus opens it, not the focus a mouse click leaves behind; a focus or pointer that left without telling the frame closes it", () => {
+    // Chrome and Firefox focus a link or button on a mouse click: after a Ctrl-click the tooltip would stay with nobody on it.
+    // :focus-visible is asked FIRST, and only it opens; a browser too old to know it opens on any focus and counts none.
+    expect(shell).toMatch(
+      /onFocus=\{\(e\) => \{\s*if \(!canHover\(\)\) return;\s*let keyboard = false;\s*let opens = true;\s*try \{\s*keyboard = \(e\.target as HTMLElement\)\.matches\(":focus-visible"\);\s*opens = keyboard;\s*\} catch \{\s*keyboard = false;\s*\}\s*if \(opens\) setFocused\(true\);\s*if \(keyboard\) explainOpened\(surface, "focus"\);\s*\}\}/,
+    );
+    // setFocused(true) is never unconditional any more.
+    expect(shell).not.toMatch(/if \(!canHover\(\)\) return;\s*setFocused\(true\);/);
+    expect(shell.match(/setFocused\(true\)/g)).toHaveLength(2);
+    // The hand-over at mount asks the same question of the button (not "is the focus inside the frame").
+    expect(shell).toMatch(/const button = el\.querySelector\("a, button"\);\s*if \(button\?\.matches\(":hover"\)\) setHovered\(true\);\s*if \(button\?\.matches\(":focus-visible"\)\) setFocused\(true\);/);
+    expect(shell).not.toContain("el.contains(document.activeElement)) setFocused(true)");
+    // /login's button turns disabled on its own click and a disabled button sends no blur: asked again when
+    // the focus moves, a pointer goes down, or the pointer enters another element — only while it is open.
+    expect(shell).toContain('if (!el.contains(document.activeElement) || (button instanceof HTMLButtonElement && button.disabled)) setFocused(false);');
+    expect(shell).toContain('if (e.type === "pointerover" && !(e.target instanceof Node && el.contains(e.target))) setHovered(false);');
+    const effect = shell.slice(shell.indexOf("const active = hovered || focused;"), shell.indexOf("}, [active]);"));
+    for (const ev of ["focusin", "pointerdown", "pointerover"]) {
+      expect(effect).toContain(`document.addEventListener("${ev}", onElsewhere, true);`);
+      expect(effect).toContain(`document.removeEventListener("${ev}", onElsewhere, true);`);
+    }
+    // … and nothing is listened for while it is closed.
+    expect(effect).toMatch(/if \(!active\) \{\s*setClosed\(false\);\s*return;\s*\}[\s\S]*document\.addEventListener\("focusin"/);
+    // The beacon is as it was: a mouse resting 600 ms, or keyboard focus — never the mount hand-over, never the close.
+    expect(shell.match(/explainOpened\(surface, "(?:hover|focus)"\)/g)).toEqual(['explainOpened(surface, "hover")', 'explainOpened(surface, "focus")']);
+    expect(SIGNUP_EXPLAIN_HOVER_MS).toBe(600);
   });
 
   it("the tooltip text is readable: white on ink-900", () => {
@@ -814,7 +999,7 @@ describe("7. Google's 'Sign in with Google' branding guidelines (read 2 Oct 2026
     ["src/app/login/page.tsx", 1], // GoogleSignInButton
     ["src/components/GuestQuizGate.tsx", 1], // GoogleSignInButton: the mock gate and both gate quiz-ends
   ];
-  // Inside our own tinted cards the light button stays (and the saffron bar is not a Google button).
+  // Inside our own tinted cards the light button stays; the timed bar's is the light one too (2 Oct 2026, evening).
   const LIGHT = ["src/components/SignupPitch.tsx", "src/components/SignupInline.tsx", "src/components/school/SchoolStudentEntry.tsx", "src/app/chat/ChatInterface.tsx", "src/app/find-your-exam/SaveMatchesNudge.tsx", "src/components/SignupNudge.tsx"];
 
   it("the filled doors wear the dark theme; the tinted cards the light one", () => {
@@ -864,6 +1049,20 @@ describe("7. Google's 'Sign in with Google' branding guidelines (read 2 Oct 2026
   it("keeps the 44px touch target and a visible keyboard focus ring", () => {
     expect(rule).toContain("min-height: 44px;");
     expect(css).toMatch(/\.su-google:focus-visible \{\s*outline: 2px solid theme\("colors\.saffron\.600"\);/);
+  });
+  it("the compact size (the header on a phone, the timed bar): below sm only, smaller text and paddings, an 18px G — the fill, stroke, colour and 44px height stay Google's", () => {
+    const at = css.indexOf("  @media (max-width: 639.98px) {\n    .su-google-compact {");
+    expect(at).toBeGreaterThan(-1);
+    const compact = css.slice(at, css.indexOf("  @media (max-width: 439.98px) {"));
+    expect(compact).toMatch(/\.su-google-compact \{\s*gap: 6px;\s*padding: 0 10px;\s*font-size: 12px;\s*line-height: 16px;\s*\}/);
+    expect(compact).toMatch(/\.su-google-compact > \.su-google-g \{\s*width: 18px;\s*height: 18px;\s*\}/);
+    // It changes sizes only: no fill, no stroke, no text colour, no height, no shape.
+    expect(compact.replace(/\/\*[\s\S]*?\*\//g, "")).not.toMatch(/background|border|(?<!-)color:|min-height|radius/);
+    // After the standard G rule, so the 18 px wins at equal weight; two 16 px lines fit the 44 px button.
+    expect(at).toBeGreaterThan(css.indexOf("  .su-google-g {"));
+    // Written down as a deviation from Google's page.
+    expect(css.slice(css.indexOf("  /* The COMPACT size"), at)).toContain("ACCEPTED DEVIATION");
+    expect(read("src/components/SignUpButton.tsx")).toMatch(/3\. the compact, two-line form/);
   });
   it("the hover state never recolours the button (no saffron, no coloured fill)", () => {
     const hoverRule = css.slice(css.indexOf("  .su-google:hover {"), css.indexOf("  .su-google:focus-visible {"));
@@ -1229,5 +1428,338 @@ describe("11. a button with another action under it opens its tooltip ABOVE (rev
     expect(code("src/components/GuestQuizGate.tsx").match(/<GoogleSignInButton\b[\s\S]*?\/>/)?.[0]).toContain('side="top"');
     // GoogleSignInButton hands side to the frame.
     expect(code("src/components/GoogleSignInButton.tsx")).toContain("<SignUpShell text={text} short={short} surface={surface} explain={mode} side={side} block className={className}>");
+  });
+});
+
+// ── 12. where the top-layer tooltip goes (pure) ───────────────────────────
+
+describe("12. the top-layer tooltip's place: under or above the button, inside the window, never over the button (2 Oct 2026, evening)", () => {
+  // A desktop window and the general sentence's box (320 px wide, four lines).
+  const viewport = { width: 1280, height: 800 };
+  const tip = { width: 320, height: 86 };
+  const at = (top: number, left: number, w = 190, h = 44) => ({ top, left, right: left + w, bottom: top + h });
+
+  it("8 px from the button and 8 px from every edge of the window", () => {
+    expect(SIGNUP_TIP_GAP).toBe(8);
+    expect(SIGNUP_TIP_MARGIN).toBe(8);
+  });
+
+  it("under the button by default, hung from its left edge; above it for side=top; from its right edge for align=end", () => {
+    const button = at(300, 200);
+    expect(placeSignUpTip({ button, tip, viewport })).toEqual({ top: 352, left: 200, side: "bottom", hidden: false });
+    expect(placeSignUpTip({ button, tip, viewport, side: "top" })).toEqual({ top: 206, left: 200, side: "top", hidden: false });
+    expect(placeSignUpTip({ button, tip, viewport, align: "end" })).toEqual({ top: 352, left: 70, side: "bottom", hidden: false });
+    expect(placeSignUpTip({ button, tip, viewport, side: "bottom", align: "start" })).toEqual(placeSignUpTip({ button, tip, viewport }));
+  });
+
+  it("the header's button (top right of the screen): under the top row, wholly on screen — whatever is layered under the header", () => {
+    // 64 px row, 44 px button centred, 16 px from the right edge of a 1280 px window.
+    const p = placeSignUpTip({ button: at(10, 1074), tip, viewport, align: "end" });
+    expect(p).toEqual({ top: 62, left: 944, side: "bottom", hidden: false });
+    // It ends at y = 148: 46 px below the header's 102 px. The live strip there used to paint over those lines.
+    expect(p.top + tip.height).toBe(148);
+    expect(p.left + tip.width).toBeLessThanOrEqual(viewport.width - SIGNUP_TIP_MARGIN);
+  });
+
+  it("the timed bar's button (bottom right): above the bar", () => {
+    expect(placeSignUpTip({ button: at(700, 1100, 136), tip, viewport, side: "top", align: "end" })).toEqual({ top: 606, left: 916, side: "top", hidden: false });
+  });
+
+  it("slides along the button to stay 8 px inside the window, left and right", () => {
+    // Hung from the left edge of a button at the right of the screen: pushed left.
+    expect(placeSignUpTip({ button: at(300, 1074), tip, viewport }).left).toBe(1280 - 8 - 320);
+    // Hung from the right edge of a button at the left of the screen: pushed right.
+    expect(placeSignUpTip({ button: at(300, 16), tip, viewport, align: "end" }).left).toBe(8);
+    // A narrow mouse window (360 px): never off the left edge (the old CSS tooltip checked the right edge only).
+    const narrow = { width: 360, height: 640 };
+    expect(placeSignUpTip({ button: at(560, 190, 136), tip, viewport: narrow, side: "top", align: "end" }).left).toBe(8);
+    expect(placeSignUpTip({ button: at(10, 230, 114), tip, viewport: narrow, align: "end" }).left).toBe(24);
+    // A tooltip wider than the window keeps its start on screen.
+    expect(placeSignUpTip({ button: at(10, 10), tip: { width: 400, height: 86 }, viewport: narrow }).left).toBe(8);
+  });
+
+  it("no room on the side asked for: the other side", () => {
+    // side=top with the button at the top of the screen: under it.
+    expect(placeSignUpTip({ button: at(20, 200), tip, viewport, side: "top" })).toEqual({ top: 72, left: 200, side: "bottom", hidden: false });
+    // Under by default with the button at the bottom of the screen: above it.
+    expect(placeSignUpTip({ button: at(740, 200), tip, viewport })).toEqual({ top: 646, left: 200, side: "top", hidden: false });
+    // Exactly enough room is enough: 300 + 44 + 8 + 86 = 438 = 446 - 8.
+    expect(placeSignUpTip({ button: at(300, 200), tip, viewport: { width: 1280, height: 446 } }).side).toBe("bottom");
+    expect(placeSignUpTip({ button: at(300, 200), tip, viewport: { width: 1280, height: 445 } }).side).toBe("top");
+    // The guest tutor's save card at the top edge of its scrolling pane: the
+    // pane is not in the arithmetic at all — the copy is not inside it.
+    expect(placeSignUpTip({ button: at(260, 400), tip, viewport, side: "top" })).toEqual({ top: 166, left: 400, side: "top", hidden: false });
+  });
+
+  it("no room on either side (a very short window): the roomier side, past the window's edge — still never over the button", () => {
+    const short = { width: 1280, height: 150 };
+    // More room under the button.
+    const under = placeSignUpTip({ button: at(50, 200), tip, viewport: short });
+    expect(under).toEqual({ top: 102, left: 200, side: "bottom", hidden: false });
+    expect(placeSignUpTip({ button: at(50, 200), tip, viewport: short, side: "top" })).toEqual(under);
+    // More room above it.
+    const over = placeSignUpTip({ button: at(90, 200), tip, viewport: short });
+    expect(over).toEqual({ top: -4, left: 200, side: "top", hidden: false });
+    expect(over.top + tip.height).toBe(90 - SIGNUP_TIP_GAP);
+  });
+
+  it("never over the button, and inside the window whenever one side has room — over a grid of buttons, tooltips and windows", () => {
+    // Plain checks collected into one list (one assertion at the end): the grid is about 35,000 placements.
+    const broken: string[] = [];
+    let checked = 0;
+    for (const vh of [200, 400, 800]) {
+      for (const vw of [360, 768, 1280]) {
+        for (const h of [40, 86, 120]) {
+          for (const w of [200, 320]) {
+            for (let top = -40; top <= vh + 40; top += 17) {
+              for (const left of [-50, 0, 90, vw - 200, vw - 60]) {
+                for (const side of [undefined, "top"] as const) {
+                  for (const align of [undefined, "end"] as const) {
+                    const button = at(top, left);
+                    const p = placeSignUpTip({ button, tip: { width: w, height: h }, viewport: { width: vw, height: vh }, side, align });
+                    const fail = (rule: string) => broken.push(`${rule}: vh${vh} vw${vw} h${h} w${w} top${top} left${left} ${side} ${align} -> ${JSON.stringify(p)}`);
+                    // Rule 1: wholly under the button, or wholly above it, with the gap.
+                    const underIt = p.top >= button.bottom + SIGNUP_TIP_GAP;
+                    const aboveIt = p.top + h <= button.top - SIGNUP_TIP_GAP;
+                    if (!underIt && !aboveIt) fail("over the button");
+                    if (p.side !== (underIt ? "bottom" : "top")) fail("side");
+                    // Sideways: always inside (every tooltip here is narrower than the window).
+                    if (p.left < SIGNUP_TIP_MARGIN || p.left + w > vw - SIGNUP_TIP_MARGIN) fail("outside, sideways");
+                    // Up and down: inside whenever it fits on one side of the button.
+                    const roomUnder = button.bottom + SIGNUP_TIP_GAP + h <= vh - SIGNUP_TIP_MARGIN;
+                    const roomAbove = button.top - SIGNUP_TIP_GAP - h >= SIGNUP_TIP_MARGIN;
+                    if ((roomUnder || roomAbove) && (p.top < SIGNUP_TIP_MARGIN || p.top + h > vh - SIGNUP_TIP_MARGIN)) fail("outside, up or down");
+                    // The side asked for is kept whenever it has room.
+                    if (side === "top" && roomAbove && p.side !== "top") fail("left the side asked for (top)");
+                    if (side !== "top" && roomUnder && p.side !== "bottom") fail("left the side asked for (bottom)");
+                    // Whole pixels.
+                    if (!Number.isInteger(p.top) || !Number.isInteger(p.left)) fail("not whole pixels");
+                    checked++;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    expect(broken.slice(0, 5)).toEqual([]);
+    expect(checked).toBeGreaterThan(5000);
+  });
+
+  it("the button has left the screen (it kept the focus, the page was scrolled): nothing is shown; half on screen still is", () => {
+    for (const button of [at(-100, 200), at(-44, 200), at(800, 200), at(900, 200), at(300, -190), at(300, 1280)]) {
+      expect(placeSignUpTip({ button, tip, viewport }).hidden, JSON.stringify(button)).toBe(true);
+    }
+    // Half on screen at the top: shown, under it, never above the window.
+    expect(placeSignUpTip({ button: at(-20, 200), tip, viewport, side: "top" })).toEqual({ top: 32, left: 200, side: "bottom", hidden: false });
+    // Half on screen at the bottom: shown, above it.
+    expect(placeSignUpTip({ button: at(780, 200), tip, viewport })).toEqual({ top: 686, left: 200, side: "top", hidden: false });
+  });
+
+  it("whole pixels out of fractional measurements, rounded away from the button; a missing measurement shows nothing", () => {
+    const p = placeSignUpTip({ button: { top: 10.4, left: 100.5, right: 290.2, bottom: 54.6 }, tip: { width: 319.3, height: 85.7 }, viewport });
+    expect(p).toEqual({ top: 63, left: 101, side: "bottom", hidden: false });
+    const q = placeSignUpTip({ button: { top: 400.6, left: 100.5, right: 290.2, bottom: 444.6 }, tip: { width: 319.3, height: 85.7 }, viewport, side: "top" });
+    expect(q.top).toBe(306);
+    expect(q.top + 86).toBeLessThanOrEqual(400.6 - SIGNUP_TIP_GAP);
+    for (const bad of [
+      { button: at(Number.NaN, 0), tip, viewport },
+      { button: at(10, 10), tip: { width: 0, height: 0 }, viewport },
+      { button: at(10, 10), tip, viewport: { width: 0, height: 0 } },
+      { button: at(10, 10), tip: { width: 320, height: Number.POSITIVE_INFINITY }, viewport },
+    ]) {
+      expect(placeSignUpTip(bad)).toEqual({ top: 0, left: 0, side: "bottom", hidden: true });
+    }
+  });
+
+  it("the module is pure: no React, no DOM, no import at all", () => {
+    const src = read("src/lib/signup-tip-place.ts");
+    expect(src.match(/^import .*$/gm) ?? []).toEqual([]);
+    expect(code("src/lib/signup-tip-place.ts")).not.toMatch(/\bwindow\b|\bdocument\b/);
+  });
+});
+
+// ── 13. above every other layer ──────────────────────────────────────────
+
+describe("13. the top-layer tooltip is above every other layer of the site", () => {
+  it("its z-index is higher than every z-index written anywhere in src/", () => {
+    const css = read("src/app/globals.css");
+    const floatRule = css.slice(css.indexOf("  .su-float {"), css.indexOf("  .container-prose {"));
+    const floatZ = Number(floatRule.match(/z-index: (\d+);/)?.[1]);
+    expect(floatZ).toBe(1000);
+    const walk = (d: string): string[] =>
+      fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(path.join(d, e.name)) : /\.(?:tsx?|css)$/.test(e.name) ? [path.join(d, e.name)] : []));
+    const layers: { file: string; z: number }[] = [];
+    for (const f of walk(path.join(ROOT, "src"))) {
+      const src = fs.readFileSync(f, "utf8");
+      // Tailwind's z-[N] and z-N, a CSS z-index, an inline zIndex.
+      for (const m of src.matchAll(/(?<![\w-])z-\[(\d+)\]|(?<![\w-])z-(\d+)\b|z-index:\s*(\d+)|zIndex:\s*["']?(\d+)/g)) {
+        layers.push({ file: path.relative(ROOT, f).replace(/\\/g, "/"), z: Number(m[1] ?? m[2] ?? m[3] ?? m[4]) });
+      }
+    }
+    // The scan sees the layers the site has (the header, the bars, the modals, the loading bar, the tours).
+    for (const z of [30, 40, 45, 50, 60, 100]) expect(layers.some((l) => l.z === z), `z ${z}`).toBe(true);
+    const own = layers.filter((l) => l.file === "src/app/globals.css" && l.z === floatZ);
+    expect(own).toHaveLength(1);
+    const others = layers.filter((l) => !(l.file === "src/app/globals.css" && l.z === floatZ));
+    const top = others.reduce((a, b) => (b.z > a.z ? b : a));
+    expect(top.z, `${top.file} has z ${top.z}`).toBeLessThan(floatZ);
+  });
+
+  it("it is not inside anything: a child of <body>, which nothing transforms, filters or clips", () => {
+    const layout = code("src/app/layout.tsx");
+    // <body> carries the font only — no transform, filter, backdrop blur or overflow class that would trap a fixed child.
+    expect(layout).toContain('<body className="font-multi">');
+    const css = read("src/app/globals.css");
+    const body = css.slice(css.indexOf("  body {"), css.indexOf("  /* All clickable surfaces"));
+    expect(body.replace(/\/\*[\s\S]*?\*\//g, "")).not.toMatch(/transform|filter|contain|perspective|will-change/);
+    // The same for <html>, <body>'s only ancestor: a transform there would trap a fixed child too.
+    const html = css.slice(css.indexOf("  html {"), css.indexOf("  body {"));
+    expect(html).toMatch(/^  html \{/);
+    expect(html.replace(/\/\*[\s\S]*?\*\//g, "")).not.toMatch(/transform|filter|contain|perspective|will-change/);
+    // <html> carries the two font variables only — no class that transforms, filters or clips.
+    expect(layout).toMatch(/<html\s+lang="en"\s+dir="ltr"\s+className=\{`\$\{inter\.variable\} \$\{notoDevanagari\.variable\}`\}\s*>/);
+  });
+});
+
+// ── 14. the header and the timed bar wear Google's light button ───────────
+
+describe("14. no saffron sign-up button: the header and the timed bar are Google's light button (2 Oct 2026, evening)", () => {
+  const headerMod = load("src/components/HeaderAuthControls.tsx") as { HeaderAuthControls: unknown };
+  /** The header's right rail as the server sends it to a visitor on `p` (the session is not known yet: the guest button). */
+  const rail = (p: string, childSafe = false) => {
+    headerPath = p;
+    return render(headerMod.HeaderAuthControls, { locale: "en", labels: { dashboard: "Dashboard", signout: "Sign out" }, childSafe });
+  };
+  const controls = code("src/components/HeaderAuthControls.tsx");
+
+  it("the header's guest button, rendered: the white pill, the colour G, then 'Sign up with Google' — a plain /login link", () => {
+    for (const p of ["/", "/exams/SSC_CGL", "/colleges", "/schooling/cbse/class-9"]) {
+      const html = rail(p);
+      const a = html.slice(html.indexOf("<a"), html.indexOf("</a>"));
+      expect(attr(a, "class"), p).toBe("su-google su-google-compact");
+      for (const c of ["#EA4335", "#4285F4", "#FBBC05", "#34A853"]) expect(a, p).toContain(`fill="${c}"`);
+      expect(a.match(/<svg /g), p).toHaveLength(1);
+      expect(textOf(a), p).toBe("Sign up with Google");
+      // The G first, then the label's halves: two lines below sm, one line from sm.
+      expect(a, p).toMatch(/<\/svg><span class="flex flex-col items-start sm:flex-row sm:gap-1"><span class="whitespace-nowrap">Sign up<\/span> <span class="whitespace-nowrap">with Google<\/span><\/span>$/);
+      // Still the plain /login link the root layout's listener counts; never a SignInLink.
+      expect(attr(a, "href"), p).toBe("/login");
+      expect(attr(a, "rel"), p).toBe("nofollow");
+      expect(attr(a, "data-signin-surface"), p).toBe("header");
+      expect(a, p).not.toContain("data-signin-beacon");
+      // Inside the frame that carries the explanation — whose words arrive after mount (not in the cached HTML).
+      expect(html, p).toMatch(/^<span class="su-wrap" data-su-explain="tooltip" data-su-align="end"><a /);
+      expect(html, p).not.toMatch(/role="tooltip"|aria-describedby|su-tip|su-float/);
+      // Nothing saffron, nothing of the old button.
+      expect(html, p).not.toMatch(/btn-primary|saffron|text-xs/);
+    }
+  });
+
+  it("the header's classes: one constant for both guest branches, Google's light button, compact below sm", () => {
+    expect(controls).toContain('const GUEST_BUTTON_CLASS = "su-google su-google-compact";');
+    expect(controls.match(/className=\{GUEST_BUTTON_CLASS\}/g)).toHaveLength(2);
+    expect(controls).not.toMatch(/btn-primary|bg-saffron|SignUpBrandLabel/);
+    // The dark theme is not used here: the header's button is the white one in the founder's screenshot.
+    expect(controls).not.toContain("su-google-dark");
+  });
+
+  it("never under 13, exactly as before: nothing on a Class 1-7 page or a child-safe page; the plain link (no frame, no tooltip) on /schooling and a board hub", () => {
+    for (const p of ["/schooling/cbse/class-1", "/schooling/cbse/class-5/maths", "/schooling/tn-state-board/class-7/science/chapter-1"]) {
+      expect(rail(p), p).toBe("");
+    }
+    // The page says a child may be reading (/ask with a Class 1-7 question).
+    expect(rail("/ask", true)).toBe("");
+    expect(rail("/exams/SSC_CGL", true)).toBe("");
+    for (const p of ["/schooling", "/schooling/cbse", "/schooling/tn-state-board"]) {
+      const html = rail(p);
+      // The same white button — but the link alone: no frame, so no tooltip, no description and no "explanation opened" beacon.
+      expect(html, p).toMatch(/^<a /);
+      expect(html, p).not.toMatch(/su-wrap|su-tip|su-float|role="tooltip"|aria-describedby/);
+      expect(attr(html, "class"), p).toBe("su-google su-google-compact");
+      expect(textOf(html), p).toBe("Sign up with Google");
+      expect(explainBeaconDue(p, null), p).toBe(false);
+    }
+    // The branch order in the source is what it was.
+    expect(controls).toMatch(/\) : childSafe \|\| isUnder13SchoolPath\(pathname\) \? null : isChildSchoolPath\(pathname\) \? \(\s*<Link rel="nofollow" href=\{loginHref\} className=\{GUEST_BUTTON_CLASS\} data-signin-surface="header">\s*<SignUpStackedFace locale=\{lang\} joinFromSm \/>\s*<\/Link>\s*\) : \(\s*<SignUpShell /);
+  });
+
+  it("the 360 px row: the wordmark gives way to the Telugu GUEST BUTTON between 400 and 439 px — only while that button is on screen (font arithmetic — not yet seen on a phone)", () => {
+    const css = read("src/app/globals.css");
+    expect(css).toMatch(/@media \(max-width: 439\.98px\) \{\s*html\[data-hdr-guest="te"\] \.hdr-wordmark \{\s*display: none;\s*\}\s*\}/);
+    // Never on the page's language alone: a signed-in Telugu reader, and a Telugu reader of a Class 1-7 page, have no button and keep the wordmark.
+    expect(css.replace(/\/\*[\s\S]*?\*\//g, "")).not.toMatch(/html\[lang[^\]]*\][^{]*\.hdr-wordmark/);
+    expect(css.replace(/\/\*[\s\S]*?\*\//g, "").match(/\.hdr-wordmark/g)).toHaveLength(1);
+    expect(code("src/components/Header.tsx")).toContain('<span className="hdr-wordmark hidden flex-col min-[400px]:flex">');
+    // The mark is written by the header's own island, while it renders the guest button — the same test as its
+    // branches (not signed in, not child-safe, not a Class 1-7 page) — and carries the LABEL's language, so the
+    // rule and the label can never disagree. Removed when the button goes; not set while a reader the hint
+    // cookie says is signed in is still being asked about. Before paint (a layout effect).
+    expect(controls).toContain("const guestButton = !signedIn && !childSafe && !isUnder13SchoolPath(pathname);");
+    expect(controls).toMatch(
+      /useLayoutEffect\(\(\) => \{\s*if \(!guestButton \|\| \(session === null && hasSessionHint\(\)\)\) return;\s*const root = document\.documentElement;\s*root\.setAttribute\("data-hdr-guest", lang\);\s*return \(\) => root\.removeAttribute\("data-hdr-guest"\);\s*\}, \[guestButton, session, lang\]\);/,
+    );
+    expect(controls.match(/data-hdr-guest/g)).toHaveLength(2);
+    // Nothing of it in the server HTML (the cached page is the same for everyone).
+    for (const p of ["/", "/schooling", "/schooling/cbse/class-3"]) expect(rail(p), p).not.toContain("data-hdr-guest");
+  });
+
+  it("the header label follows the language control at once — a change of language does not change the path", () => {
+    // LangSwitcher tells its parent the language it shows at the moment it sets <html lang>.
+    const sw = code("src/components/LangSwitcher.tsx");
+    expect(sw).toContain("setCur(fromUrl ?? readCookieLocale() ?? current);");
+    expect(sw).toMatch(/document\.documentElement\.lang = cur;[\s\S]*?onLocale\?\.\(cur\);\s*\}, \[cur, onLocale\]\);/);
+    expect(sw).toContain("onLocale?: (lc: Locale) => void;");
+    // A language change on a plain URL only refreshes the route: no new path, so the label's own effect would not run.
+    expect(sw).toContain("startTransition(() => router.refresh());");
+    // The header passes a STABLE function (or LangSwitcher's effect would run on every render) that sets the label's language.
+    expect(controls).toContain("const onLocale = useCallback((lc: string) => setLang(asCopyLocale(lc)), []);");
+    expect(controls).toContain("<LangSwitcher current={safeLocale} onLocale={onLocale} />");
+    // The first value after mount, and every navigation, still read the URL prefix, then the cookie — the same two sources.
+    expect(controls).toMatch(/useEffect\(\(\) => \{\s*setLang\(clientUiLocale\(\)\);\s*\}, \[pathname\]\);/);
+    // Any language without its own label is English, as in the label module.
+    for (const [lc, want] of [["te", "te"], ["hi", "hi"], ["en", "en"], ["ta", "en"], ["ur", "en"]] as const) {
+      expect(uiLocaleCopyMod.asCopyLocale(lc), lc).toBe(want);
+      expect(signUpLabelParts(uiLocaleCopyMod.asCopyLocale(lc)).join(" "), lc).toBe(signUpLabel(want));
+    }
+    // The row itself is as it was: one line that cannot wrap, both sides rigid.
+    const header = code("src/components/Header.tsx");
+    expect(header).toContain('<div className="container-prose flex h-16 items-center gap-2 sm:gap-3">');
+    expect(header).toContain('<nav className="ml-auto flex shrink-0 items-center gap-2 text-sm text-ink-700 sm:gap-3">');
+  });
+
+  it("the timed bar's button: the shared button, light, two lines beside the G, tooltip above — no fill of its own", () => {
+    const bar = code("src/components/SignupNudge.tsx");
+    const tag = bar.match(/<SignUpButton\b[\s\S]*?\/>/)?.[0] ?? "";
+    expect(tag).toMatch(/surface="signup-nudge"\s+locale=\{barLocale\}\s+stack\s+explain="tooltip"\s+side="top"\s+align="end"\s+className="shrink-0"\s+beaconProps=\{\{ placement: show \}\}/);
+    expect(tag).not.toMatch(/variant=|theme=|buttonClassName|saffron|bg-/);
+    // The bar's own frame keeps its saffron top border; only the button changed.
+    expect(bar).toContain("border-saffron-300 bg-white");
+    expect(bar).not.toMatch(/bg-saffron-500|hover:bg-saffron-600/);
+  });
+
+  it("the 'brand' variant and its label are gone from src/; no file styles a sign-up button saffron", () => {
+    const walk = (d: string): string[] =>
+      fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(path.join(d, e.name)) : /\.tsx?$/.test(e.name) ? [path.join(d, e.name)] : []));
+    const hits: string[] = [];
+    for (const f of walk(path.join(ROOT, "src"))) {
+      const rel = path.relative(ROOT, f).replace(/\\/g, "/");
+      const src = fs.readFileSync(f, "utf8");
+      if (/SignUpBrandLabel|variant="brand"|variant: "brand"|"google" \| "brand"/.test(src)) hits.push(`${rel}: brand variant`);
+      // Every button of the shared components, wherever it is mounted: no theme but "dark", no class that fills or recolours it.
+      for (const m of src.matchAll(/<(?:SignUpButton|GoogleSignInButton)\b[\s\S]*?\/>/g)) {
+        if (/variant=/.test(m[0])) hits.push(`${rel}: variant prop`);
+        if (/theme=(?!"dark")/.test(m[0])) hits.push(`${rel}: theme other than dark`);
+        const cls = m[0].match(/buttonClassName="([^"]*)"/)?.[1] ?? "";
+        if (/\bbg-|\btext-|\bborder|\brounded/.test(cls)) hits.push(`${rel}: buttonClassName "${cls}"`);
+      }
+      // The G is drawn by the shared component only.
+      if (rel !== "src/components/SignUpButton.tsx" && /<GoogleG\b/.test(src)) hits.push(`${rel}: its own G`);
+    }
+    expect(hits).toEqual([]);
+    expect(Object.keys(ui)).not.toContain("SignUpBrandLabel");
+    const props = code("src/components/SignUpButton.tsx");
+    expect(props).not.toMatch(/\bvariant\b/);
   });
 });

@@ -34,7 +34,18 @@ function readCookieLocale(): Locale | null {
   }
 }
 
-export function LangSwitcher({ current }: { current: Locale }) {
+export function LangSwitcher({
+  current,
+  onLocale,
+}: {
+  current: Locale;
+  /** Told the language this control shows, each time it changes — the same
+   *  moment <html lang> is set. The header's "Sign up with Google" label
+   *  follows it (2 Oct 2026): a change of language here refreshes the route
+   *  without changing the path, and the label used to keep the old language
+   *  until the next page. Pass a stable function (useCallback). */
+  onLocale?: (lc: Locale) => void;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const [pending, startTransition] = useTransition();
@@ -57,7 +68,8 @@ export function LangSwitcher({ current }: { current: Locale }) {
     } catch {
       /* non-DOM env */
     }
-  }, [cur]);
+    onLocale?.(cur);
+  }, [cur, onLocale]);
 
   function setLocale(lc: Locale) {
     if (lc === cur) return;

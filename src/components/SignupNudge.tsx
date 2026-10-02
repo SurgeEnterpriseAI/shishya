@@ -77,14 +77,22 @@
 //
 // 2 Oct 2026 (founder, standing: "Sign up with Google"): the bar's button
 // reads "Sign up with Google" — the one shared sign-up button
-// (src/components/SignUpButton.tsx), here in its TEXT-ONLY saffron form: a
-// slim bar needs a compact brand-coloured button, and Google's guidelines
-// allow the colour "G" on a white button only, so there is no mark. On a
-// phone the label's two halves stack ("Sign up" over "with Google"), so the
-// line beside it keeps the room it had. With a mouse (the desktop corner
-// card) hover or keyboard focus opens the explanation as a tooltip ABOVE the
+// (src/components/SignUpButton.tsx). With a mouse (the desktop corner card)
+// hover or keyboard focus opens the explanation as a tooltip ABOVE the
 // button; on touch there is none — the bar's own line says it. Same link,
 // same "signin-click" beacon (surface "signup-nudge"), same test arms.
+//
+// 2 Oct 2026, evening (founder, with a screenshot of the white Google button:
+// "sign up should show like this instead of the orange color one … check all
+// the places"): the bar's button was our saffron TEXT-ONLY button; it is
+// Google's LIGHT button now — white pill, the colour "G", then the label.
+// `stack`: the label's two halves sit on two lines beside the "G" ("Sign up"
+// over "with Google" — the full approved words) at every width, in the
+// compact size below sm, so the line beside it keeps about the room it had.
+// Font arithmetic, not yet seen on a screen: the button is about 115 px wide
+// on a phone and about 136 px in the 448 px desktop card, where one line
+// would take 190 px (242 in Telugu) and leave the bar's own line about
+// 170 px for its two lines.
 
 import { useEffect, useRef, useState } from "react";
 import { pitchAllowedPath } from "@/lib/signup-pitch";
@@ -304,13 +312,11 @@ export function SignupNudge() {
             href={`/login?callbackUrl=${encodeURIComponent(location.pathname + location.search)}&from=header`}
             surface="signup-nudge"
             locale={barLocale}
-            variant="brand"
             stack
             explain="tooltip"
             side="top"
             align="end"
             className="shrink-0"
-            buttonClassName="rounded-lg bg-saffron-500 px-3 py-2 text-center text-sm font-bold text-white shadow-sm transition-colors hover:bg-saffron-600"
             beaconProps={{ placement: show }}
             onSignInClick={() => {
               try { localStorage.setItem(LS_DONE, "1"); } catch { /* ok */ }

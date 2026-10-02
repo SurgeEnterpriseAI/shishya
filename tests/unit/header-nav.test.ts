@@ -14,8 +14,8 @@
 //      only the Ask chip has a tooltip, and the header's hard-coded English
 //      stays within the /hi /te twin gate's baseline (257 letters);
 //   4. the top rail: logo + Back + quote + language/auth island only — the
-//      Jobs Map, Results and Aptitude pills are gone; Sign in stays the
-//      filled button;
+//      Jobs Map, Results and Aptitude pills are gone; the guest button is
+//      Google's light "Sign up with Google" button (2 Oct 2026);
 //   5. Header stays a pure synchronous server component (no auth(),
 //      cookies(), headers(), getT());
 //   6. honesty + independence: no retired links, nothing "coming soon", no
@@ -259,7 +259,16 @@ describe("Header — the top row", () => {
 
   it("fits a 360 px phone: wordmark from 400 px, Back from sm, 8 px gaps below sm; admin keeps the old brand and Back", () => {
     const top = topBlock();
-    expect(top).toMatch(/className="hidden flex-col min-\[400px\]:flex"/);
+    // 2 Oct 2026: + hdr-wordmark, the hook that hides the wordmark below 440 px
+    // while the Telugu guest button is on screen (the Telugu "Sign up with
+    // Google" button is wider than the 125 px the row has at 400 px). The rule
+    // keys on <html data-hdr-guest="te">, which HeaderAuthControls writes only
+    // while it renders the guest button — never on <html lang> alone, so a
+    // signed-in Telugu reader keeps the wordmark.
+    expect(top).toMatch(/className="hdr-wordmark hidden flex-col min-\[400px\]:flex"/);
+    const css = read("src/app/globals.css").replace(/\r\n/g, "\n");
+    expect(css).toMatch(/@media \(max-width: 439\.98px\) \{\s*html\[data-hdr-guest="te"\] \.hdr-wordmark \{\s*display: none;\s*\}\s*\}/);
+    expect(css.replace(/\/\*[\s\S]*?\*\//g, "")).not.toMatch(/html\[lang[^\]]*\][^{]*\.hdr-wordmark/);
     expect(top).toMatch(/<div className="hidden sm:contents">\s*<BackLink \/>\s*<\/div>/);
     expect(top).toMatch(/container-prose flex h-16 items-center gap-2 sm:gap-3/);
     expect(top).toMatch(/ml-auto flex shrink-0 items-center gap-2 text-sm text-ink-700 sm:gap-3/);
@@ -276,12 +285,16 @@ describe("Header — the top row", () => {
   // 27 Sep 2026 (founder, content first): the link returns to the page it was
   // clicked on (callbackUrl, set after mount), and there is no Sign in on a
   // Class 1-7 school page.
-  it("Sign in stays the filled primary button (HeaderAuthControls, read-only check), returns to this page, and is absent on Class 1-7 pages", () => {
+  // 2 Oct 2026 (evening, founder: "sign up should show like this instead of
+  // the orange color one at the top"): the guest button is Google's light
+  // button with the colour "G" — no longer our saffron primary button.
+  it("the guest button is Google's light button (HeaderAuthControls, read-only check), returns to this page, and is absent on Class 1-7 pages", () => {
     const controls = code(read("src/components/HeaderAuthControls.tsx"));
     // 2 Oct 2026: + aria-describedby (the "Sign up with Google" tooltip, SignUpShell).
     // Review, same day: the classes moved into GUEST_BUTTON_CLASS (two branches share them).
     expect(controls).toMatch(/<Link rel="nofollow" href=\{loginHref\} aria-describedby=\{describedBy\} className=\{GUEST_BUTTON_CLASS\}/);
-    expect(controls).toMatch(/const GUEST_BUTTON_CLASS = "btn-primary min-h-\[44px\]/);
+    expect(controls).toMatch(/const GUEST_BUTTON_CLASS = "su-google su-google-compact";/);
+    expect(controls).not.toContain("btn-primary");
     expect(controls).toMatch(/const \[loginHref, setLoginHref\] = useState\("\/login"\);/);
     // 27 Sep 2026 (review): + from=header, so /login never reads a header click as a gated action.
     expect(controls).toContain("setLoginHref(`/login?callbackUrl=${encodeURIComponent(p + location.search)}&from=header`)");
