@@ -44,14 +44,26 @@
 //     button helps no one (the tooltip stays; the page's own heading and
 //     body, in that language, are the reason there).
 // The click, the hand-off and both beacons are unchanged.
+//
+// 2 Oct 2026, later (founder: every button's explanation is its own): the
+// words are an entry of the table (src/data/signup-places/), chosen by
+// src/lib/signup-place.ts. /login and the mock gate are server pages: they
+// resolve the words (src/lib/signup-place-words.ts) and pass `text` and
+// `short`. A gate's result screen exists only in the browser: the mock
+// gate's passes neither, and the reader's one language is loaded on demand
+// (src/lib/use-signup-words.ts) — no client code imports the table; the
+// builder's is handed its words by the builder's page (they depend on how
+// many questions the builder's topics hold, which the page counted).
 
 import { useEffect, useState } from "react";
 import { ctaBeacon } from "@/lib/cta-beacon";
 import { goToGoogle, warmGoogleHandoff } from "@/lib/google-handoff";
 import { inAppBrowser } from "@/lib/in-app-browser";
 import { cleanFrom, LOGIN_GOOGLE_CTA, loginCallbackFamily } from "@/lib/signin-cta";
-import { googleButtonLabel, isSignUpLocale, signUpContextFor, signUpExplain, signUpExplainShort, signUpLabel } from "@/lib/signup-cta-copy";
-import { SignUpFace, SignUpShell, googleButtonClass, type SignUpExplainMode } from "@/components/SignUpButton";
+import { googleButtonLabel, isSignUpLocale, signUpLabel } from "@/lib/signup-cta-copy";
+import type { SignUpPractice } from "@/lib/signup-place";
+import { useSignUpPageData, useSignUpWords, useSignUpWordsFailed, wantSignUpWords } from "@/lib/use-signup-words";
+import { SIGNUP_CAPTION_PENDING, SignUpFace, SignUpShell, googleButtonClass, type SignUpExplainMode } from "@/components/SignUpButton";
 
 export function GoogleSignInButton({
   callbackUrl,
@@ -61,6 +73,9 @@ export function GoogleSignInButton({
   exam,
   examCode,
   practice,
+  olympiad,
+  text: givenText,
+  short: givenShort,
   surface = "login",
   explain = "both",
   side,
@@ -80,7 +95,14 @@ export function GoogleSignInButton({
    *  when the callback really is that exam's page or mock). */
   exam?: string | null;
   examCode?: string | null;
-  practice?: boolean | null;
+  /** "canServe" / "none"; not known: leave it out (src/lib/signup-place.ts). */
+  practice?: SignUpPractice | null;
+  olympiad?: boolean | null;
+  /** The words, already resolved by a server page (/login, the mock gate):
+   *  the tooltip and the caption. Without them the door's entry is decided
+   *  here and its words are loaded on demand. */
+  text?: string;
+  short?: string;
   /** The door, for the "signup-explain" beacon ("login", "mock-gate" …). */
   surface?: string;
   explain?: SignUpExplainMode;
@@ -106,15 +128,34 @@ export function GoogleSignInButton({
   }, []);
 
   const label = continueLabel ? googleButtonLabel(locale, continueLabel, returning) : signUpLabel(locale);
-  const ctx = signUpContextFor({ callback: callbackUrl, exam, examCode, practice });
-  const text = signUpExplain(locale, ctx);
-  const short = signUpExplainShort(locale, ctx);
   // The words exist in en / hi / te: another language gets no caption (the
   // page's own text above the button, in that language, is the reason).
   const mode: SignUpExplainMode = isSignUpLocale(locale ?? "en") || explain !== "both" ? explain : "own";
+  // What the page said about itself (null on the server and until its island mounts).
+  const page = useSignUpPageData();
+  // A server page passed the words; otherwise the door's entry is resolved once
+  // the reader's language and the rules have loaded (on demand).
+  const words = useSignUpWords(
+    locale,
+    { surface, callback: callbackUrl, exam, examCode, practice, olympiad, page, returning },
+    { given: typeof givenText === "string" ? { text: givenText, short: givenShort ?? "" } : null, now: mode === "both" },
+  );
+  // The fetch of the words failed (a weak signal): the caption's line is let go until a retry brings them.
+  const failed = useSignUpWordsFailed(locale);
+  const text = words?.text ?? "";
+  const short = words ? words.short : failed ? "" : SIGNUP_CAPTION_PENDING;
 
   return (
-    <SignUpShell text={text} short={short} surface={surface} explain={mode} side={side} block className={className}>
+    <SignUpShell
+      text={text}
+      short={short}
+      surface={surface}
+      explain={mode}
+      side={side}
+      block
+      className={className}
+      onWant={typeof givenText === "string" ? undefined : () => wantSignUpWords(locale)}
+    >
       {(describedBy) => (
         <button
           type="button"

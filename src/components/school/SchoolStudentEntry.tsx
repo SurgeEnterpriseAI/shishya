@@ -144,6 +144,7 @@ export function SchoolStudentEntry(p: SchoolStudentEntryProps) {
           rel="nofollow"
           explain="own"
           className="mt-3"
+          vars={{ n: schoolChapterMockCount(p.validatedQuestions ?? 0) }}
           beaconProps={{ examCode: p.examCode }}
           onSignInClick={() => beacon("school-save-google", { examCode: p.examCode, topic: p.topicCode })}
         />

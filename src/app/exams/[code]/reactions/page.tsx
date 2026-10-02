@@ -25,6 +25,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
+import { ExamSignUpContext } from "@/components/ExamSignUpContext";
 import { PhaseArticleView } from "@/components/exam-phase/PhaseArticleView";
 import { ExamNightFacts } from "@/components/exam-phase/ExamNightFacts";
 import { auth } from "@/lib/auth";
@@ -102,6 +103,8 @@ export default async function ReactionsPage({
   return (
     <main className="min-h-screen bg-saffron-50/30">
       <Header />
+      {/* What this page tells the sign-up placements on it (2 Oct 2026): the exam's name and what is true of it. Renders nothing. */}
+      <ExamSignUpContext code={exam.code} exam={exam.shortName} />
       <PhaseArticleView
         code={code}
         phase="REACTIONS"

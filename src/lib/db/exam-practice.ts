@@ -18,6 +18,8 @@ import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
 import { REAL_EXAM_SQL } from "@/lib/db/exam-scope";
 import { NO_PRACTICE, practiceStateFromCounts, type ExamPracticeState, type PracticeCatalogRow } from "@/lib/exam-practice-state";
+import { signUpPracticeOf, type SignUpPractice } from "@/lib/signup-place";
+import { OLYMPIAD_CATEGORY } from "@/lib/school-age";
 
 type Row = { code: string; shortName: string; category: string; state: string | null; candidatesPerYear: number | null; questions: number; systemMocks: number };
 
@@ -64,6 +66,24 @@ export async function examPracticeState(code: string, onError: ExamPracticeState
     return (await loadExamPracticeStates()).get(code)?.practice ?? NO_PRACTICE;
   } catch {
     return onError;
+  }
+}
+
+/** What the "Sign up with Google" words may say about an exam (2 Oct 2026,
+ *  src/lib/signup-place.ts): its practice value — "canServe" with 5 or more
+ *  checked questions, "none" when this read found no checked question and no
+ *  shared mock, undefined otherwise — and whether the catalogue files it as
+ *  an olympiad (school students sit those: the words then name no exam and
+ *  carry the age line). NULL when the read failed or the map does not hold
+ *  the exam (inactive, unknown, a school container): the caller then names no
+ *  exam at all. A failed read is never read as "no practice". */
+export async function examSignUpFacts(code: string): Promise<{ practice: SignUpPractice | undefined; olympiad: boolean } | null> {
+  try {
+    const row = (await loadExamPracticeStates()).get(code);
+    if (!row) return null;
+    return { practice: signUpPracticeOf(row.practice), olympiad: row.category === OLYMPIAD_CATEGORY };
+  } catch {
+    return null;
   }
 }
 

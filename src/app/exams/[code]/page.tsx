@@ -28,6 +28,10 @@ import { buildTimeline } from "@/lib/exam-timeline";
 import { passedEstimateLine, passedEstimateView } from "@/lib/official-source";
 import { ExamWeekBlock, type ExamWeekViewer } from "@/components/ExamWeekBlock";
 import { HubSignInLink, StartMockButton } from "./StartMockButton";
+import { SignUpPageContext } from "@/components/SignUpPageContext";
+import { signUpPracticeOf } from "@/lib/signup-place";
+import { signUpWords } from "@/lib/signup-place-words";
+import { OLYMPIAD_CATEGORY } from "@/lib/school-age";
 import { formatDisplayScorePct } from "@/lib/scoring";
 import { computeScoreBoost } from "@/lib/focus-topics";
 import { ScholarshipsForExamSection } from "@/components/ScholarshipsForExamSection";
@@ -952,6 +956,8 @@ export default async function ExamPage({
       {/* 26 Sep 2026 (G3): no second FAQPage here — ExamFaq below carries the
           one FAQPage, built from the questions its accordion shows. */}
       <Header />
+      {/* What this page tells the sign-up placements on it (2 Oct 2026): the exam's name and what is true of it. Renders nothing. */}
+      <SignUpPageContext exam={exam.shortName} code={exam.code} practice={signUpPracticeOf(practice)} olympiad={String(exam.category) === OLYMPIAD_CATEGORY} />
       {/* Per-category top ribbon — 6px coloured strip that immediately
           signals which "track" the visitor is in (engineering blue,
           medical green, civil-services red, etc). Saffron remains the
@@ -1209,12 +1215,26 @@ export default async function ExamPage({
                   with a mouse) names this exam: the sign-in returns to this exam's
                   page, so the account is enrolled in it at sign-up, and the box
                   only shows where the hub has checked questions (hasContent),
-                  so "tests saved" holds. Same link, beacon and test arms. */}
+                  so "tests saved" holds. Same link, beacon and test arms.
+                  2 Oct 2026, later: the words are this box's own entry of the
+                  table (door.hub-box: the five-question starter test that
+                  opens by itself after sign-up), resolved here on the server.
+                  The box shows from ONE checked question but no paper under
+                  five is served, so that entry is used only for an exam with
+                  five or more; below that the entry that promises no mock. */}
               <HubSignInLink
                 examCode={exam.code}
                 exam={exam.shortName}
                 locale={locale}
                 href={`/login?callbackUrl=${encodeURIComponent(`/exams/${exam.code}?start=practice`)}&from=hub-box`}
+                {...signUpWords(locale, {
+                  surface: "hub-box",
+                  callback: `/exams/${exam.code}?start=practice`,
+                  exam: exam.shortName,
+                  examCode: exam.code,
+                  practice: signUpPracticeOf(practice),
+                  olympiad: String(exam.category) === OLYMPIAD_CATEGORY,
+                })}
               />
               {/* Lever #2 — anonymous 5-question diagnostic. Lets a signed-out
                   visitor experience the mock loop before the sign-in. A

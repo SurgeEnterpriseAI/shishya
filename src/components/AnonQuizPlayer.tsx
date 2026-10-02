@@ -430,7 +430,6 @@ export function AnonQuizPlayer({
               locale={locale}
               exam={quiz.examShort}
               examCode={quiz.examCode}
-              practice
               side="top"
               block
               className="flex-1"

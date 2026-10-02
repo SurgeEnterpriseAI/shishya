@@ -56,6 +56,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
+import { ExamSignUpContext } from "@/components/ExamSignUpContext";
 import { prisma } from "@/lib/db/prisma";
 import { realExamKey } from "@/lib/db/exam-scope";
 import { scoredCount } from "@/lib/marking-scheme";
@@ -285,6 +286,8 @@ export default async function ScoreEstimatePage({ params }: { params: Promise<{ 
     <main className="min-h-screen bg-ink-50/40">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdText(breadcrumbs) }} />
       <Header />
+      {/* What this page tells the sign-up placements on it (2 Oct 2026): the exam's name and what is true of it. Renders nothing. */}
+      <ExamSignUpContext code={exam.code} exam={exam.shortName} />
       <section className="container-prose py-8 sm:py-10">
         <p className="text-xs text-ink-500">
           <Link href={p(`/exams/${exam.code}`)} className="hover:text-ink-800">

@@ -143,7 +143,7 @@ describe("the chat island keeps the chat on any sign-in (source)", () => {
   it("the save card: after the FIRST reply, a full-width button", () => {
     expect(src).toContain('{guestSignInHref && !school && !under13 && !busy && messages.some((m) => m.role === "assistant" && m.content && !m.failed) && (');
     // 2 Oct 2026: the one shared "Sign up with Google" button, full width (block), with the tutor words in its tooltip.
-    expect(src).toMatch(/<SignUpButton\s+href=\{examCode == null \? `\/login\?callbackUrl=\$\{encodeURIComponent\("\/chat\?general=1"\)\}` : guestSignInHref\}\s+surface="chat-save"\s+locale=\{navLang\}\s+context=\{\{ kind: "tutor" \}\}\s+explain="own"\s+side="top"\s+block/);
+    expect(src).toMatch(/<SignUpButton\s+href=\{examCode == null \? `\/login\?callbackUrl=\$\{encodeURIComponent\("\/chat\?general=1"\)\}` : guestSignInHref\}\s+surface="chat-save"\s+locale=\{navLang\}\s+exam=\{examShortName\}\s+examCode=\{examCode\}\s+explain="own"\s+side="top"\s+block/);
     expect(src).toMatch(/onSignInClick=\{\(\) => \{\s*keepGuestChatForSignIn\(\);\s*beacon\(\{ cta: "chat-guest-save", surface: "chat", examCode \}\);/);
     expect(src).not.toContain(".length >= 2 && (\n          <div className=\"rounded-md border border-saffron-200");
   });

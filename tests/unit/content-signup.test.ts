@@ -391,7 +391,11 @@ describe("SignupInline (source)", () => {
     // 2 Oct 2026 (founder, standing): the one shared "Sign up with Google"
     // button (Google's white button with the "G"; SignInLink underneath) —
     // still full width on phones (block; auto from sm), placement = family.
-    expect(code).toMatch(/<SignUpButton\s+href=\{href\}\s+surface="signup-inline"\s+locale=\{lang\}\s+exam=\{exam\}\s+practice=\{practice\}\s+explain="own"\s+block/);
+    // 2 Oct 2026 (later): the button's tooltip is the entry of the page family the line is on
+    // (src/lib/signup-place.ts — pinned in tests/unit/signup-places.test.ts); `exam` and `practice` still write
+    // this line's own sentence and no longer go to the button.
+    expect(code).toMatch(/<SignUpButton\s+href=\{href\}\s+surface="signup-inline"\s+locale=\{lang\}\s+explain="own"\s+block/);
+    expect(code).toContain("setCopy(signupLineCopy(lc, exam, practice));");
     expect(code).toContain('className="mt-3 shrink-0 sm:mt-0 sm:w-auto"');
     expect(code).toContain("beaconProps={{ placement: surface }}");
     expect(code).not.toContain("bg-saffron-500");
@@ -553,12 +557,21 @@ describe("one early line per content page, right after its first answer block", 
       for (const tag of src.match(/<SignupInline\b[^>]*\/>/g) ?? []) {
         if (!/\sexam=/.test(tag)) continue;
         examMounts += 1;
+        // 2 Oct 2026 (review): the checklist's mount, new that day, promises "{exam} mocks" only for an exam that can
+        // SERVE one — five or more checked questions, the test its button's tooltip uses — read from the same cached map.
+        if (file === "src/app/exams/[code]/checklist/page.tsx") {
+          expect(tag, file).toMatch(/\spractice=\{examCanServeMock\}/);
+          expect(src, file).toContain('import { examSignUpFacts } from "@/lib/db/exam-practice";');
+          expect(src, file).toContain('const examCanServeMock = signUpFacts?.practice === "canServe";');
+          continue;
+        }
         expect(tag, file).toMatch(/\spractice=\{(?:practice\.hasPractice|examHasPractice)\}/);
         expect(src, file).toContain('import { examPracticeState } from "@/lib/db/exam-practice";');
         expect(src, file).toMatch(/examPracticeState\((?:exam|row\.exam)\.code\)/);
       }
     }
-    expect(examMounts).toBe(13);
+    // 13 until 2 Oct 2026; the exam-day checklist's line is given its exam too now (a sign-up there sets it).
+    expect(examMounts).toBe(14);
     // tricks reads the practice rule (fails closed), not the buildMock gate (fails open).
     expect(stripComments(read("src/app/exams/[code]/tricks/page.tsx"))).toMatch(/const \[rows, gates, practice\] = await Promise\.all\(\[[\s\S]*?examPageGates\(exam\.code\),\s*examPracticeState\(exam\.code\),\s*\]\);/);
     for (const f of ["src/app/exams/[code]/topics/[topicCode]/page.tsx", "src/app/exams/[code]/topics/[topicCode]/hi/page.tsx"]) {
@@ -625,7 +638,11 @@ describe("SignupNudge (source)", () => {
     expect(code).toContain('className="fixed inset-x-0 bottom-0 z-40 print:hidden sm:inset-x-auto sm:bottom-16 sm:right-4 sm:max-w-md"');
     expect(code).toContain('role="dialog"');
     expect(code).not.toContain("aria-modal");
-    expect(code).toContain("line-clamp-2");
+    // 2 Oct 2026 (review): the line is the page family's caption now, longer than the old line — the clamp is a
+    // ceiling (four lines on a phone, three from sm), so a caption is not cut after two.
+    expect(code).toContain("line-clamp-4");
+    expect(code).toContain("sm:line-clamp-3");
+    expect(code).not.toMatch(/(?:^|[\s"])line-clamp-2\b/);
     expect(code).toMatch(/aria-label=\{copy\.later\}[\s\S]{0,200}✕/);
   });
   // 30 Sep 2026 (review): the desktop card sat exactly on FeedbackWidget's pill.

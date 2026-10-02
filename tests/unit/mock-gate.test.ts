@@ -397,7 +397,9 @@ describe("sign-in is the main action on practice surfaces; no question after it"
     // main action — founder, 28 Sep.
     expect(box.slice(signIn, quiz)).toMatch(/<HubSignInLink\s+examCode=\{exam\.code\}\s+exam=\{exam\.shortName\}\s+locale=\{locale\}/);
     expect(read("src/app/exams/[code]/StartMockButton.tsx")).toContain(
-      'return <SignUpButton href={href} surface="hub-box" locale={locale} exam={exam} examCode={examCode} practice side="top" block className="sm:w-auto" beaconProps={{ examCode }} />;',
+      // 2 Oct 2026 (later): its words are the hub box's own entry of the table, resolved by the hub page and
+      // handed in (`text`, `short`) — no hard-coded practice flag any more.
+      'return <SignUpButton href={href} surface="hub-box" locale={locale} exam={exam} examCode={examCode} text={text} short={short} side="top" block className="sm:w-auto" beaconProps={{ examCode }} />;',
     );
     expect(box.slice(quiz, quiz + 400)).toContain("border border-ink-300 bg-white");
     expect(box.slice(quiz, quiz + 400)).not.toMatch(/border-2|saffron/);
@@ -424,7 +426,9 @@ describe("sign-in is the main action on practice surfaces; no question after it"
     const button = branch.slice(signIn, practise);
     expect(button).toContain('surface="pyq-year"');
     expect(button).toContain("href={`/login?callbackUrl=${encodeURIComponent(`/exams/${code}/pyq/${yearNum}`)}&from=pyq-year`}");
-    expect(button).toContain("exam={exam.shortName}");
+    // 2 Oct 2026 (later): the page resolves the button's words itself (the exam's name, the year, the set's size).
+    expect(button).toContain("{...pyqSignUp}");
+    expect(pyq).toContain("exam: exam.shortName,");
     expect(pyq).not.toContain("P.ctaSignIn");
     expect(branch).toContain("href={`/exams/${code}/quiz?set=${guestSet.join(\",\")}&n=${guestSet.length}`}");
   });

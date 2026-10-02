@@ -191,7 +191,17 @@ export function VerificationPanel({ fact, signedIn, onClose }: Props) {
                   {signUpLabel("en")} to help verify this fact, flag inaccuracies, or
                   suggest an update. Verifications earn contribution badges.
                 </p>
-                <SignUpButton href="/login?from=verify-fact" surface="verify-fact" explain="own" className="mt-3" />
+                {/* 2 Oct 2026, later: the link carried no callbackUrl, so a
+                    new member landed on the dashboard. It returns to the
+                    page this panel was opened on now; the tooltip
+                    (door.verify-fact) then leaves out the sentence that said
+                    "you land on your dashboard". */}
+                <SignUpButton
+                  href={pathname && pathname.startsWith("/") && !pathname.startsWith("//") ? `/login?callbackUrl=${encodeURIComponent(pathname)}&from=verify-fact` : "/login?from=verify-fact"}
+                  surface="verify-fact"
+                  explain="own"
+                  className="mt-3"
+                />
               </div>
             )
           ) : success ? (

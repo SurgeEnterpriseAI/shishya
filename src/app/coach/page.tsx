@@ -20,9 +20,11 @@ import { NOT_SCHOOL_SQL, REAL_EXAM_SQL, realExamKey } from "@/lib/db/exam-scope"
 import { getT } from "@/lib/i18n-server";
 import { Header } from "@/components/Header";
 import { SignUpButton } from "@/components/SignUpButton";
+import { SignUpPageContext } from "@/components/SignUpPageContext";
+import { signUpWords } from "@/lib/signup-place-words";
 import { SHISHYA_ORG_REF } from "@/components/JsonLd";
 import { computeCoachPlan } from "@/lib/coach-plan";
-import { practiceExamCodes } from "@/lib/db/exam-practice";
+import { examSignUpFacts, loadExamPracticeStates, practiceExamCodes } from "@/lib/db/exam-practice";
 import { coachTaskDoneFlags } from "@/lib/coach-done";
 import { CoachIntake, type CoachRollover, type ExamOption } from "./CoachIntake";
 import { CoachPlanView } from "./CoachPlanView";
@@ -213,6 +215,21 @@ export default async function CoachPage({
     : sp.exam
       ? `/coach?exam=${sp.exam.toUpperCase()}`
       : "/coach";
+  // A guest who came with ?exam=CODE (2 Oct 2026): the sign-up button names
+  // that exam — the sign-in returns to /coach?exam=CODE and sets it — only
+  // when the cached practice map holds it (a real, live exam) and it can
+  // serve a mock: the coach works for an exam with practice only. Otherwise,
+  // and on a failed read, the button's words name no exam.
+  const guestExamCode = !userId && sp.exam && EXAM_CODE_RE.test(sp.exam.toUpperCase()) ? sp.exam.toUpperCase() : null;
+  const [guestExamFacts, guestExamShort] = guestExamCode
+    ? await Promise.all([
+        examSignUpFacts(guestExamCode),
+        loadExamPracticeStates()
+          .then((m) => m.get(guestExamCode)?.shortName ?? null)
+          .catch(() => null),
+      ])
+    : [null, null];
+  const guestExam = guestExamCode && guestExamFacts && guestExamShort ? { code: guestExamCode, short: guestExamShort, ...guestExamFacts } : null;
 
   // AEO: the questions aspirants actually type into Google and ask
   // ChatGPT/Gemini/Perplexity about affording coaching, making a plan,
@@ -284,6 +301,8 @@ export default async function CoachPage({
         />
       ))}
       <Header />
+      {/* What this page tells the header's sign-up button (2 Oct 2026). Renders nothing. */}
+      {guestExam && <SignUpPageContext exam={guestExam.short} code={guestExam.code} practice={guestExam.practice} olympiad={guestExam.olympiad} />}
       <section className="container-prose py-8">
         <p className="text-xs font-semibold uppercase tracking-wider text-saffron-700">
           Personal Coach · free forever
@@ -342,6 +361,14 @@ export default async function CoachPage({
             <SignUpButton
               href={`/login?callbackUrl=${encodeURIComponent(selfPath)}&from=coach-start`}
               surface="coach-start"
+              {...signUpWords("en", {
+                surface: "coach-start",
+                callback: selfPath,
+                exam: guestExam?.short,
+                examCode: guestExam?.code,
+                practice: guestExam?.practice,
+                olympiad: guestExam?.olympiad,
+              })}
               explain="own"
               className="mt-2"
             />

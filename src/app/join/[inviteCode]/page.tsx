@@ -15,6 +15,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
 import { SignUpButton } from "@/components/SignUpButton";
+import { signUpWords } from "@/lib/signup-place-words";
 import { prisma } from "@/lib/db/prisma";
 import { auth } from "@/lib/auth";
 import { JoinBatchButton } from "./JoinBatchButton";
@@ -149,6 +150,7 @@ export default async function JoinBatchPage({
                   <SignUpButton
                     href={`/login?callbackUrl=${encodeURIComponent(`/join/${inviteCode}`)}&from=batch-join`}
                     surface="batch-join"
+                    {...signUpWords("en", { surface: "batch-join", callback: `/join/${inviteCode}`, vars: { institute: batch.course.institution.name } })}
                     explain="own"
                     className="mt-3"
                   />

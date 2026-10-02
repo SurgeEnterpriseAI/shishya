@@ -93,6 +93,43 @@
 // on a phone and about 136 px in the 448 px desktop card, where one line
 // would take 190 px (242 in Telugu) and leave the bar's own line about
 // 170 px for its two lines.
+//
+// 2 Oct 2026, later (founder: "Each sign in with Google should be
+// contextualized from the location where it is"; decision: a phone sees no
+// tooltip, so THE BAR'S ONE LINE IS THE PAGE FAMILY'S CAPTION): the line
+// beside the button is the caption of the entry this page takes — "No forms.
+// Your AI tutor chats about schemes are saved." on a scholarship, "No forms.
+// SSC CGL stays on your dashboard as your exam." on its updates page … — and
+// the tooltip (a mouse only) is the same entry's full sentence, the one the
+// header and the site card show on this page (src/lib/signup-place.ts
+// signUpPagePlace). The reader's language (and the rules that choose the
+// entry) are fetched right before the bar shows, so the bar comes up with
+// its line in place; if that fetch fails the
+// bar shows the line it had until today (nudgeBarCopy). Nothing is fetched
+// while the bar is hidden.
+//
+// 2 Oct 2026 (review of that build):
+//   • THE LINE IS NOT CUT. The captions are longer than the old line (47 /
+//     52 / 51 characters in en / hi / te; a caption runs to about 60-70 with
+//     an exam's name), and the paragraph was clamped to two lines — on a
+//     360-375 px phone the text column is about 156-180 px, where the old
+//     Telugu line already lost its verb to that clamp once
+//     (src/lib/content-signup.ts). The clamp is a ceiling now, not the
+//     height: up to four lines on a phone and three from sm, so a caption is
+//     shown as written and the bar is only as tall as its words. Font
+//     arithmetic, not seen on a screen — look at it at 360 and 375 px in all
+//     three languages with a long exam name before it ships. If four lines
+//     are too tall, the answer is a shorter caption in the table, never a
+//     cut one;
+//   • a school page: the line is "Saved practice is on CBSE chapters for
+//     now." on every board (src/lib/signup-place.ts, rule 6) — the bar
+//     cannot know whether this chapter has practice, so it never says "Your
+//     chapter practice scores are saved." on its own;
+//   • the wait for the words (1.5 s at most): if the reader has moved to
+//     another page by then, or the page's own sign-up line has come on
+//     screen, the bar does not show and today's turn is not used up; and the
+//     line the bar comes up with stays — words that arrive later do not
+//     change it under the reader's eyes.
 
 import { useEffect, useRef, useState } from "react";
 import { pitchAllowedPath } from "@/lib/signup-pitch";
@@ -102,6 +139,8 @@ import { fetchSignedIn } from "@/lib/session-hint";
 import { isUnder13SchoolPath } from "@/lib/school/student-classes";
 import { SignUpButton } from "@/components/SignUpButton";
 import { contentFamily, fixedPageLocale, nudgeBarCopy, nudgeTrigger, scrollDepthReached } from "@/lib/content-signup";
+import { cachedSignUpKit, loadSignUpKit, signUpWordsLang } from "@/lib/signup-place-load";
+import { useSignUpPageData, useSignUpWords } from "@/lib/use-signup-words";
 
 const MAX_DISMISSALS = 3;
 
@@ -182,6 +221,23 @@ export function SignupNudge() {
   // every navigation (nothing is stored, on any page).
   const pageSeconds = useRef(0);
   const scrolledPast = useRef(false);
+  // The bar came up before its words arrived: it keeps the old line while it is up.
+  const [oldLine, setOldLine] = useState(false);
+  // The bar's line and its button's tooltip: the entry of the page family the
+  // bar is showing on (nothing is read or fetched while it is hidden).
+  const pageData = useSignUpPageData();
+  // The page's own language (the Hindi notes), else the reader's (URL
+  // prefix, else the shishya-lang cookie).
+  const barLocale = fixedPageLocale(pathname) ?? clientUiLocale();
+  let herePath = pathname ?? "";
+  if (show) {
+    try {
+      herePath = location.pathname + location.search;
+    } catch {
+      /* the router's path */
+    }
+  }
+  const words = useSignUpWords(barLocale, show ? { surface: "signup-nudge", callback: herePath, page: pageData } : null, { now: true, off: !show });
 
   useEffect(() => {
     // Shared, hint-gated probe: false = guest (no request without the
@@ -252,16 +308,38 @@ export function SignupNudge() {
             setAnon(v === true ? false : null);
             return;
           }
-          const here = nudgePlacement(location.pathname);
-          if (document.hidden || !here) return;
+          if (document.hidden || !nudgePlacement(location.pathname)) return;
           try {
             if (localStorage.getItem(LS_LAST) === today) return;
             localStorage.setItem(LS_LAST, today);
           } catch {
             return;
           }
-          setShow(here);
-          beacon("shown", { placement: here, trigger });
+          // The bar's line is its page family's caption: fetch the reader's
+          // language first (a second and a half at most), so the bar comes
+          // up with its line in place.
+          const startPath = location.pathname;
+          const lc = signUpWordsLang(fixedPageLocale(startPath) ?? clientUiLocale());
+          const waited = new Promise<void>((done) => window.setTimeout(done, 1500));
+          void Promise.race([loadSignUpKit(lc).then(() => undefined, () => undefined), waited]).then(() => {
+            const here = nudgePlacement(location.pathname);
+            if (document.hidden || !here || location.pathname !== startPath || inlineOnScreen()) {
+              // Not shown after all (while the words loaded the tab was
+              // hidden, the reader moved to another page — this trigger was
+              // the first page's — or the page's own sign-up line came on
+              // screen): today's turn is not used up.
+              try {
+                localStorage.removeItem(LS_LAST);
+              } catch {
+                /* ok */
+              }
+              return;
+            }
+            // The line it comes up with stays for as long as it is up.
+            setOldLine(!cachedSignUpKit(lc));
+            setShow(here);
+            beacon("shown", { placement: here, trigger });
+          });
         });
       } catch {
         /* private mode — never nudge if we can't be polite about it */
@@ -271,9 +349,6 @@ export function SignupNudge() {
   }, [show, anon]);
 
   if (!show) return null;
-  // The page's own language (the Hindi notes), else the reader's (URL
-  // prefix, else the shishya-lang cookie).
-  const barLocale = fixedPageLocale(pathname) ?? clientUiLocale();
   const copy = nudgeBarCopy(barLocale);
   const dismiss = () => {
     try {
@@ -302,7 +377,7 @@ export function SignupNudge() {
         <style>{`@keyframes slideup{from{transform:translateY(24px);opacity:0}to{transform:translateY(0);opacity:1}}`}</style>
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="min-w-0 flex-1">
-            <p className="line-clamp-2 text-xs font-medium leading-snug text-ink-800 sm:text-sm">{copy.line}</p>
+            <p className="line-clamp-4 text-xs font-medium leading-snug text-ink-800 sm:line-clamp-3 sm:text-sm">{oldLine ? copy.line : words?.short ?? copy.line}</p>
             <p className="mt-0.5 text-[11px] leading-snug text-ink-500">
               {copy.privacy}
               <span className="hidden sm:inline">{copy.privacyMore}</span>

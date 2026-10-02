@@ -9,6 +9,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { Header } from "@/components/Header";
 import { SignUpButton } from "@/components/SignUpButton";
+import { signUpWords } from "@/lib/signup-place-words";
 import { RevisionNotebook, type NotebookQuestion } from "./RevisionNotebook";
 
 export const dynamic = "force-dynamic";
@@ -170,7 +171,13 @@ export default async function RevisionPage() {
               Review, same day: the line said "Free forever" — a promise
               about the future that no code backs. It says "Free" now. */}
           <p className="mt-7 text-sm font-bold text-ink-900">Start your free Mistake Notebook:</p>
-          <SignUpButton href="/login?callbackUrl=%2Frevision&from=revision-start" surface="revision-start" explain="own" className="mt-2" />
+          <SignUpButton
+            href="/login?callbackUrl=%2Frevision&from=revision-start"
+            surface="revision-start"
+            {...signUpWords("en", { surface: "revision-start", callback: "/revision" })}
+            explain="own"
+            className="mt-2"
+          />
           <p data-su-reason className="mt-2 text-xs text-ink-500">
             Free · every exam on Shishya · your notebook fills itself from your very first mock.
           </p>

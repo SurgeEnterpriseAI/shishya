@@ -50,6 +50,9 @@ export function GateSignInButton({
   locale,
   continueLabel,
   exam,
+  olympiad,
+  text,
+  short,
   surface,
   beaconProps,
   className,
@@ -65,6 +68,12 @@ export function GateSignInButton({
   /** The exam's short name: the explanation names it (the sign-in returns
    *  to this exam's mock or builder, so the account is enrolled in it). */
   exam?: string | null;
+  /** That exam is an olympiad (the catalogue's category), when the page knows. */
+  olympiad?: boolean | null;
+  /** The door's words, resolved by a server page (the mock gate). Without
+   *  them the button decides its entry and loads the reader's language. */
+  text?: string;
+  short?: string;
   /** Sign-in door id, e.g. "mock-gate" (src/lib/signin-cta.ts). */
   surface: SigninSurface;
   beaconProps: BeaconProps;
@@ -81,8 +90,10 @@ export function GateSignInButton({
           escape line ends "then sign in with Google", not "sign up". */}
       {inAppHint && <InAppBrowserHint signIn={!!continueLabel && !isSignUpLocale(locale)} />}
       {/* 2 Oct 2026: the one shared "Sign up with Google" button and its
-          explanation. practice: a gate only exists where the exam has a mock
-          or a builder. Review, same day: the tooltip opens ABOVE it (the
+          explanation — this door's own entry of the table (the mock gate,
+          the gate's result screen, the builder's result screen), which names
+          the exam because the sign-in returns to this exam's mock or builder.
+          Review, same day: the tooltip opens ABOVE it (the
           quiz card, or the result screen's tutor button, sits under it).
           One look everywhere: Google's LIGHT button. The gate's sign-in
           stays its main action — it is first, and the "try 5 questions"
@@ -104,7 +115,9 @@ export function GateSignInButton({
           continueLabel={continueLabel}
           exam={exam}
           examCode={beaconProps.examCode}
-          practice
+          olympiad={olympiad}
+          text={text}
+          short={short}
           surface={surface}
           side="top"
           className={className}
@@ -134,6 +147,7 @@ export function GuestQuizGate({
   beacons,
   signinSurface,
   continueLabel,
+  signInWords,
   beaconProps,
   inAppHint = true,
 }: {
@@ -153,6 +167,13 @@ export function GuestQuizGate({
    *  the gate's top button, instead of an English "Sign up with Google".
    *  (Such a language gets no caption: its words exist in three languages.) */
   continueLabel?: string;
+  /** The result button's words, resolved by the SERVER page that mounts this
+   *  (the builder: "you return to the builder to make your own mock" is said
+   *  only where the builder's topics hold a set that can be built — the page
+   *  counted them; src/lib/signup-place.ts, rule 6). Without them the button
+   *  decides its entry in the browser, and a door that needs a count it was
+   *  not given takes its fallback. */
+  signInWords?: { text: string; short: string } | null;
   beaconProps: BeaconProps;
   /** Passed to the result screen's GateSignInButton (default on). */
   inAppHint?: boolean;
@@ -201,6 +222,8 @@ export function GuestQuizGate({
                 locale={locale}
                 continueLabel={continueLabel}
                 exam={quiz.examShort}
+                text={signInWords?.text}
+                short={signInWords?.short}
                 surface={signinSurface}
                 beaconProps={beaconProps}
                 className="mt-0"

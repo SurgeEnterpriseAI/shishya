@@ -659,7 +659,7 @@ describe("(d) the header's guest button", () => {
     expect(compact).not.toMatch(/min-height|max-height|(?<!-)height:/);
     // Hidden on Class 1-7 pages and wherever the page says a child may be reading (childSafe).
     expect(controls).toMatch(/\) : childSafe \|\| isUnder13SchoolPath\(pathname\) \? null : /);
-    expect(controls).toMatch(/\) : \(\s*<SignUpShell text=\{signUpTip\} surface="header" explain="tooltip" align="end" deferText>/);
+    expect(controls).toMatch(/\) : \(\s*<SignUpShell text=\{signUpTip\} surface="header" explain="tooltip" align="end" deferText onWant=\{wantTip\}>/);
   });
 });
 

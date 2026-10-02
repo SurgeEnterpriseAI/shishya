@@ -11,6 +11,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
 import { SignUpButton } from "@/components/SignUpButton";
+import { signUpWords } from "@/lib/signup-place-words";
 import { auth } from "@/lib/auth";
 import { getT } from "@/lib/i18n-server";
 import { GROUP_MAX_MEMBERS, USER_MAX_GROUPS } from "@/lib/study-group";
@@ -77,6 +78,7 @@ export default async function StudyGroupInvitePage({ params }: { params: Promise
                   surface="group-join"
                   locale={locale}
                   continueLabel={t("login.continue")}
+                  {...signUpWords(locale, { surface: "group-join", callback: `/g/${group.token}` })}
                   explain="own"
                   className="mt-2"
                 />

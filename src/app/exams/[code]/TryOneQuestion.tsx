@@ -153,7 +153,6 @@ export function TryOneQuestion({ examCode, examShortName, topicName, locale, que
               locale={locale}
               exam={examShortName}
               examCode={examCode}
-              practice
               explain="own"
               side="top"
               center

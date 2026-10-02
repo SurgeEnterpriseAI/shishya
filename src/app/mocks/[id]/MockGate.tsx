@@ -24,6 +24,9 @@
 import Link from "next/link";
 import { Header } from "@/components/Header";
 import { GateSignInButton, GuestQuizGate } from "@/components/GuestQuizGate";
+import { SignUpPageContext } from "@/components/SignUpPageContext";
+import { signUpWords } from "@/lib/signup-place-words";
+import { schoolContainerClassOf } from "@/lib/school/student-classes";
 import { fillTemplate } from "@/lib/i18n";
 import { INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
 import type { MockGateCopy } from "@/lib/mock-gate-copy";
@@ -43,6 +46,7 @@ export function MockGate({
   copy,
   guestQuiz,
   locale,
+  olympiad,
 }: {
   mockId: string;
   title: string;
@@ -63,11 +67,20 @@ export function MockGate({
   guestQuiz: GuestQuizEmbed | null;
   /** The page's language (2 Oct 2026: the shared sign-up label follows it). */
   locale?: string | null;
+  /** The mock's exam is an olympiad (the catalogue's category). */
+  olympiad?: boolean;
 }) {
   const beaconProps = { examCode, mockId };
   return (
     <main className="min-h-screen bg-ink-50/40">
       <Header />
+      {/* The gate marks the page (2 Oct 2026): the header's sign-up tooltip
+          says "you come straight back to this mock … this mock's exam is set
+          up as your exam" only where this gate is what rendered — never on
+          the "being rebuilt" notice or any other state of /mocks/{id}, and
+          never for a school class's own practice set (it sets no exam: the
+          header then takes the school words). Renders nothing. */}
+      <SignUpPageContext mockGate={schoolContainerClassOf(examCode) === null} code={examCode} olympiad={olympiad} />
       <section className="container-prose py-5 sm:py-10">
         <div className="mx-auto max-w-xl">
           <div className="rounded-xl border border-ink-200 bg-white p-5 shadow-sm sm:p-6">
@@ -93,6 +106,8 @@ export function MockGate({
               locale={locale}
               continueLabel={signInLabel}
               exam={examShort}
+              olympiad={olympiad}
+              {...signUpWords(locale, { surface: "mock-gate", callback: callbackUrl, exam: examShort, examCode, olympiad })}
               surface="mock-gate"
               beaconProps={beaconProps}
               className="mt-4"

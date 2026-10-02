@@ -16,7 +16,8 @@ import { JsonLd, collectionPageLd, breadcrumbLd } from "@/components/JsonLd";
 import { FindExamQuiz } from "./FindExamQuiz";
 import { SaveMatchesNudge } from "./SaveMatchesNudge";
 import { SignUpButton } from "@/components/SignUpButton";
-import { signUpContextFor, signUpExplain } from "@/lib/signup-cta-copy";
+import { signUpContextFor, signUpReason } from "@/lib/signup-cta-copy";
+import { signUpWords } from "@/lib/signup-place-words";
 import { computeExamTags } from "@/lib/exam-tags";
 import { CoachEntry } from "@/components/CoachEntry";
 import {
@@ -133,15 +134,21 @@ export default async function FindYourExamPage({
   // here: "lock your exam" and "get a daily plan" are in no list of what
   // signing in does (a plan needs the coach's three questions), and "mock
   // tests" is promised only where the exam is known to have practice, which
-  // this page does not read. signUpContextFor fails closed: a code the
+  // this page does not read. The resolver fails closed: a code the
   // sign-up would not enrol gets the general sentence. "Start {exam} prep →"
   // stays, goes where it went, and is a quiet 1 px ink outline beside the
   // sign-up. A signed-in visitor's card is unchanged.
+  // 2 Oct 2026, later: the button's TOOLTIP is this door's own entry of the
+  // table (door.finder-start — "Start with {exam}: … Where it has practice,
+  // you can write timed mocks …"), resolved here on the server. The LINE
+  // above the button is kept word for word as it was (a line beside a button
+  // is not part of that change): it is the copy module's reason line
+  // "startExam" now — the sentence the old tooltip and this line shared.
   const top = eligible[0]?.exam ?? null;
   const topHub = top ? `/exams/${top.code}` : null;
-  const topReason = top && topHub
-    ? signUpExplain("en", signUpContextFor({ callback: topHub, exam: top.shortName, examCode: top.code, practice: false }))
-    : null;
+  const topSignUp = top && topHub ? signUpWords("en", { surface: "finder-start", callback: topHub, exam: top.shortName, examCode: top.code }) : null;
+  const topNamed = top && topHub ? signUpContextFor({ callback: topHub, exam: top.shortName, examCode: top.code }).kind === "exam" : false;
+  const topReason = top && topSignUp ? (topNamed ? signUpReason("en", "startExam").replace("{exam}", top.shortName.trim()) : topSignUp.text) : null;
 
   // 26 Sep 2026 (G4): every exam (government and entrance) by the lowest
   // qualification it lists — the /exams/after/{level} membership rule. Only
@@ -353,8 +360,7 @@ export default async function FindYourExamPage({
                         <SignUpButton
                           href={`/login?callbackUrl=${encodeURIComponent(topHub)}&from=finder-start`}
                           surface="finder-start"
-                          exam={top.shortName}
-                          examCode={top.code}
+                          {...topSignUp}
                           explain="own"
                           side="top"
                           beaconProps={{ examCode: top.code }}

@@ -21,45 +21,42 @@
 // other languages /login speaks, the existing "Continue with Google"
 // translation (login.continue in src/lib/i18n.ts).
 //
-// THE EXPLANATION: every sentence must be literally true today. Each variant
-// lists the claims it makes and each claim names the code that makes it true
-// (src/lib/signup-cta-claims.ts — a module only the test imports, so the
-// proof tables are in no page's script); tests/unit/signup-cta.test.ts reads
-// those files, so the words cannot drift from the product:
-//   • "sign up with your Google account, no forms" — Google is the only
-//     provider (src/lib/auth.ts) and the dashboard no longer sends a new
-//     account to the onboarding questions (src/app/dashboard/page.tsx,
-//     13 Jun 2026). NOT "one tap" (2 Oct 2026 review): the route is the
-//     button, Google's account chooser and, on a first sign-in, Google's
-//     share screen — more than one tap in both arms of the skip-/login test;
-//   • "{exam} is set up for you the moment you sign up" — ONLY where the
-//     sign-in returns to a page of that exam (src/lib/signup-goal.ts
-//     signupGoalOf — mirrored here by callbackGoal; src/lib/signup-profile.ts
-//     enrols it). signUpContextFor() below refuses the exam words for any
-//     other callback;
-//   • "your tests and progress are saved" — a member's mocks are Attempt rows
-//     and the weak-topic map is built from them. Said only for an exam that
-//     HAS practice (the same rule as src/lib/content-signup.ts);
-//   • "the AI tutor remembers where you left off" — src/lib/tutor-memory.ts
-//     (members' exam and general chats; the school tutor gets none, so the
-//     school words never mention the tutor);
-//   • "tutor chats are saved" — src/lib/recent-chats.ts;
-//   • school (Class 8-12): chapter practice with the score saved
-//     (src/lib/school/student-copy.ts practiceHonesty) — no exam, no tutor;
-//   • the guest tutor: the chat on screen is carried into the new account
-//     (src/lib/guest-chat-carry.ts).
-// Never: "superintelligence", "everything changes", "fully personalised", a
-// count, a rank or a result promise.
+// THE EXPLANATION (2 Oct 2026, later — founder: "Each sign in with Google
+// should be contextualized from the location where it is. It should not be
+// the same tooltip information for all the Google sign up buttons … each
+// tooltip will show a better use case of how Shishya can be helpful").
+// Until then every button showed one of FIVE sentences, and 48 of 69
+// placements the general one. The words are a table now — 76 entries, one
+// tooltip and one caption each, in English, Hindi and Telugu, written from
+// what a signed-in student really gets in each place and reviewed for
+// honesty and clarity:
+//   • THE WORDS live in ONE data source, src/data/signup-places/{en,hi,te}.json
+//     — never in this module: the header loads this module on every page, and
+//     the table is about 150 KB. A server page reads them through
+//     src/lib/signup-place-words.ts; a client island loads only the reader's
+//     language, lazily, with the rules below (src/lib/signup-place-load.ts);
+//   • WHICH ENTRY a button shows is decided by src/lib/signup-place.ts
+//     (signUpPlaceFor for a door inside a page, signUpPagePlace for the
+//     header, the site card, the timed bar and the early line), which builds
+//     on signUpContextFor() below and keeps its fail-closed rules: a school
+//     return wins first, and an exam is named ONLY where the sign-in returns
+//     to a page of that exam and the page passed its name;
+//   • the five old variants are aliases there (signUpPlaceOfContext):
+//     general → family.fallback, exam → family.exam.practice, examNoPractice
+//     → family.exam.unknown, school → family.schoolCbse, tutor →
+//     door.chat-save.general;
+//   • every sentence is pinned to the code that makes it true
+//     (src/lib/signup-cta-claims.ts — a module only the tests import;
+//     tests/unit/signup-places.test.ts).
+// Never: "one tap" (the route is the button, Google's account chooser and, on
+// a first sign-in, Google's share screen), "superintelligence", "everything
+// changes", "fully personalised", a count, a rank or a result promise.
 //
 // TWO LENGTHS (2 Oct 2026 review): the full sentence is the tooltip (hover
 // and keyboard focus with a mouse, and what a screen reader hears as the
 // button's description); the SHORT caption sits under the button — one line
-// at 360 px ("No forms. SSC CGL is set up as your exam.") — because the full
-// sentence was 3-4 lines of small text under every in-page button and pushed
-// the next action down. The short caption makes a subset of the same claims
-// (pinned by the same test). 2 Oct 2026 (founder: "everywhere try to say
-// something why sign in will help them"): the caption shows on EVERY device
-// now — a desktop used to get the tooltip only.
+// at 360 px ("No forms. SSC CGL is set up as your exam.") — on every device.
+// Both come from the same entry of the table.
 //
 // REASON LINES (signUpReason, at the end of this file): where a sign-in
 // call was a button or link whose own label carried the reason ("Sign in
@@ -125,9 +122,13 @@ export function googleButtonLabel(locale: string | null | undefined, continueLab
   return signUpLabel(locale);
 }
 
-// ── The explanation ────────────────────────────────────────────────────
+// ── The explanation's context ──────────────────────────────────────────
+// (The words themselves: src/data/signup-places/, through
+// src/lib/signup-place.ts.)
 
-/** What the page the button sits on is about. */
+/** What the page the button sits on is about — the first, coarse reading of
+ *  a sign-in link (signUpContextFor). src/lib/signup-place.ts turns it into
+ *  one entry of the table. */
 export type SignUpContext =
   /** An exam page whose sign-in returns to that exam (auto-enrolled). */
   | { kind: "exam"; exam: string; practice: boolean }
@@ -137,83 +138,6 @@ export type SignUpContext =
   | { kind: "school" }
   /** The guest tutor's save card. */
   | { kind: "tutor" };
-
-export type SignUpExplainVariant = "exam" | "examNoPractice" | "general" | "school" | "tutor";
-
-const EXPLAIN: Readonly<Record<SignUpLocale, Readonly<Record<SignUpExplainVariant, string>>>> = {
-  en: {
-    exam: "Sign up with your Google account, no forms. {exam} is set up for you the moment you sign up: your tests and progress are saved and the AI tutor remembers where you left off.",
-    examNoPractice: "Sign up with your Google account, no forms. {exam} is set up as your exam the moment you sign up, and the AI tutor remembers where you left off.",
-    general: "Sign up with your Google account, no forms. Your tests and progress are saved, your tutor chats are saved, and the AI tutor picks up where you left off.",
-    school: "Sign up with your Google account, no forms. Your chapter practice and scores are saved to your account.",
-    tutor: "Sign up with your Google account, no forms. This chat is saved to your account, and the AI tutor remembers what you asked next time.",
-  },
-  hi: {
-    exam: "अपने Google अकाउंट से साइन अप, कोई फ़ॉर्म नहीं। साइन अप करते ही {exam} आपके लिए सेट हो जाता है: आपके टेस्ट और प्रगति सेव रहते हैं और AI ट्यूटर याद रखता है कि आपने कहाँ छोड़ा था।",
-    examNoPractice: "अपने Google अकाउंट से साइन अप, कोई फ़ॉर्म नहीं। साइन अप करते ही {exam} आपकी परीक्षा के रूप में सेट हो जाता है, और AI ट्यूटर याद रखता है कि आपने कहाँ छोड़ा था।",
-    general: "अपने Google अकाउंट से साइन अप, कोई फ़ॉर्म नहीं। आपके टेस्ट और प्रगति सेव रहते हैं, ट्यूटर से हुई बातचीत सेव रहती है, और AI ट्यूटर वहीं से आगे बढ़ता है जहाँ आपने छोड़ा था।",
-    school: "अपने Google अकाउंट से साइन अप, कोई फ़ॉर्म नहीं। आपका चैप्टर अभ्यास और स्कोर आपके अकाउंट में सेव रहते हैं।",
-    tutor: "अपने Google अकाउंट से साइन अप, कोई फ़ॉर्म नहीं। यह बातचीत आपके अकाउंट में सेव हो जाती है, और अगली बार AI ट्यूटर को याद रहता है कि आपने क्या पूछा था।",
-  },
-  te: {
-    exam: "మీ Google అకౌంట్‌తో సైన్ అప్, ఫారాలు లేవు. సైన్ అప్ చేసిన వెంటనే {exam} మీ కోసం సెట్ అవుతుంది: మీ టెస్టులు, ప్రగతి సేవ్ అవుతాయి, మీరు ఎక్కడ ఆపారో AI ట్యూటర్ గుర్తుంచుకుంటుంది.",
-    examNoPractice: "మీ Google అకౌంట్‌తో సైన్ అప్, ఫారాలు లేవు. సైన్ అప్ చేసిన వెంటనే {exam} మీ పరీక్షగా సెట్ అవుతుంది, మీరు ఎక్కడ ఆపారో AI ట్యూటర్ గుర్తుంచుకుంటుంది.",
-    general: "మీ Google అకౌంట్‌తో సైన్ అప్, ఫారాలు లేవు. మీ టెస్టులు, ప్రగతి సేవ్ అవుతాయి, ట్యూటర్ చాట్‌లు సేవ్ అవుతాయి, మీరు ఆపిన చోటు నుంచే AI ట్యూటర్ కొనసాగిస్తుంది.",
-    school: "మీ Google అకౌంట్‌తో సైన్ అప్, ఫారాలు లేవు. మీ చాప్టర్ సాధన, స్కోర్లు మీ అకౌంట్‌లో సేవ్ అవుతాయి.",
-    tutor: "మీ Google అకౌంట్‌తో సైన్ అప్, ఫారాలు లేవు. ఈ చాట్ మీ అకౌంట్‌లో సేవ్ అవుతుంది, తర్వాతిసారి మీరు ఏం అడిగారో AI ట్యూటర్‌కు గుర్తుంటుంది.",
-  },
-};
-
-// The caption under the button (every device since 2 Oct 2026; it was touch
-// only): one line at 360 px. Each says "no forms" (the label above it
-// already says "with Google") and the ONE thing that changes on this
-// surface; the tutor's memory is left to the tooltip.
-const EXPLAIN_SHORT: Readonly<Record<SignUpLocale, Readonly<Record<SignUpExplainVariant, string>>>> = {
-  en: {
-    exam: "No forms. {exam} is set up as your exam.",
-    examNoPractice: "No forms. {exam} is set up as your exam.",
-    general: "No forms. Your tests and tutor chats are saved.",
-    school: "No forms. Your practice scores are saved.",
-    tutor: "No forms. This chat is saved to your account.",
-  },
-  hi: {
-    exam: "कोई फ़ॉर्म नहीं। {exam} आपकी परीक्षा बन जाता है।",
-    examNoPractice: "कोई फ़ॉर्म नहीं। {exam} आपकी परीक्षा बन जाता है।",
-    general: "कोई फ़ॉर्म नहीं। आपके टेस्ट और ट्यूटर से हुई बातचीत सेव रहती है।",
-    school: "कोई फ़ॉर्म नहीं। आपके अभ्यास के स्कोर सेव रहते हैं।",
-    tutor: "कोई फ़ॉर्म नहीं। यह बातचीत आपके अकाउंट में सेव हो जाती है।",
-  },
-  te: {
-    exam: "ఫారాలు లేవు. {exam} మీ పరీక్షగా సెట్ అవుతుంది.",
-    examNoPractice: "ఫారాలు లేవు. {exam} మీ పరీక్షగా సెట్ అవుతుంది.",
-    general: "ఫారాలు లేవు. మీ టెస్టులు, ట్యూటర్ చాట్‌లు సేవ్ అవుతాయి.",
-    school: "ఫారాలు లేవు. మీ సాధన స్కోర్లు సేవ్ అవుతాయి.",
-    tutor: "ఫారాలు లేవు. ఈ చాట్ మీ అకౌంట్‌లో సేవ్ అవుతుంది.",
-  },
-};
-
-/** Which sentence a context gets. */
-export function signUpExplainVariant(ctx: SignUpContext | null | undefined): SignUpExplainVariant {
-  if (!ctx) return "general";
-  if (ctx.kind === "exam") return ctx.exam.trim() ? (ctx.practice ? "exam" : "examNoPractice") : "general";
-  return ctx.kind;
-}
-
-/** The full explanation: the tooltip on hover and keyboard focus, and the
- *  button's description for a screen reader. */
-export function signUpExplain(locale: string | null | undefined, ctx?: SignUpContext | null): string {
-  const v = signUpExplainVariant(ctx);
-  const text = EXPLAIN[loc(locale)][v];
-  return ctx && ctx.kind === "exam" ? text.replace("{exam}", ctx.exam.trim()) : text;
-}
-
-/** The short caption shown under an in-page button on every device (one line
- *  at 360 px). The same variant as the full sentence, a subset of its claims. */
-export function signUpExplainShort(locale: string | null | undefined, ctx?: SignUpContext | null): string {
-  const v = signUpExplainVariant(ctx);
-  const text = EXPLAIN_SHORT[loc(locale)][v];
-  return ctx && ctx.kind === "exam" ? text.replace("{exam}", ctx.exam.trim()) : text;
-}
 
 // ── What a callback sets up (a copy of signupGoalOf's rules) ────────────
 
@@ -307,7 +231,7 @@ export function signUpContextFor(p: {
 
 // ── Reason lines for doors whose old label carried the reason ───────────
 // Plain text beside the button (the caller marks the element with
-// data-su-reason and passes explain="own"). Four today:
+// data-su-reason and passes explain="own"). Five today:
 //   • "writePaper" — /live-test: the old button read "Sign in free to write
 //     it →". A paper is written at /mocks/{id}, which a guest cannot open
 //     (src/app/mocks/[id]/page.tsx shows the sign-in gate), and a member's
@@ -324,8 +248,15 @@ export function signUpContextFor(p: {
 //   • "tryOne" — the exam hub's "try one question" card, after the answer.
 //     The card shows only where the exam has a checked question, so mocks
 //     with saved scores and the weak-topic map hold. "No credit card":
-//     nothing on the site asks for one.
-export type SignUpReason = "writePaper" | "fullMocks" | "vacancies" | "tryOne";
+//     nothing on the site asks for one;
+//   • "startExam" — /find-your-exam's bottom card, above its button
+//     ("Pick your #1 and start today"). Until the tooltips became a table
+//     (2 Oct 2026, later) this line WAS the button's tooltip sentence for an
+//     exam whose practice is not known; the line is kept word for word and
+//     lives here now. "{exam}" is the top match's short name — the page
+//     prints it only where the link returns to that exam's hub
+//     (signUpContextFor).
+export type SignUpReason = "writePaper" | "fullMocks" | "vacancies" | "tryOne" | "startExam";
 
 const REASON: Readonly<Record<SignUpLocale, Readonly<Record<SignUpReason, string>>>> = {
   en: {
@@ -333,18 +264,21 @@ const REASON: Readonly<Record<SignUpLocale, Readonly<Record<SignUpReason, string
     fullMocks: "Sign up for full mocks with your scores saved.",
     vacancies: "Prepping for one of these? Your tests and tutor chats are saved.",
     tryOne: "Sign up free: adaptive mocks with your scores saved, and Shishya tracks your weak topics. No credit card.",
+    startExam: "Sign up with your Google account, no forms. {exam} is set up as your exam the moment you sign up, and the AI tutor remembers where you left off.",
   },
   hi: {
     writePaper: "यह पेपर लिखने के लिए साइन अप करें — आपका स्कोर आपके अकाउंट में सेव रहता है।",
     fullMocks: "पूरे मॉक के लिए साइन अप करें — आपके स्कोर सेव रहते हैं।",
     vacancies: "इनमें से किसी की तैयारी कर रहे हैं? आपके टेस्ट और ट्यूटर से हुई बातचीत सेव रहती है।",
     tryOne: "मुफ़्त साइन अप: अडैप्टिव मॉक, आपके स्कोर सेव रहते हैं, और Shishya आपके कमज़ोर टॉपिक पर नज़र रखता है। क्रेडिट कार्ड नहीं चाहिए।",
+    startExam: "अपने Google अकाउंट से साइन अप, कोई फ़ॉर्म नहीं। साइन अप करते ही {exam} आपकी परीक्षा के रूप में सेट हो जाता है, और AI ट्यूटर याद रखता है कि आपने कहाँ छोड़ा था।",
   },
   te: {
     writePaper: "ఈ పేపర్ రాయడానికి సైన్ అప్ చేయండి — మీ స్కోర్ మీ అకౌంట్‌లో సేవ్ అవుతుంది.",
     fullMocks: "పూర్తి మాక్‌ల కోసం సైన్ అప్ చేయండి — మీ స్కోర్లు సేవ్ అవుతాయి.",
     vacancies: "వీటిలో ఒకదానికి సిద్ధమవుతున్నారా? మీ టెస్టులు, ట్యూటర్ చాట్‌లు సేవ్ అవుతాయి.",
     tryOne: "ఉచితంగా సైన్ అప్ చేయండి: అడాప్టివ్ మాక్‌లు, మీ స్కోర్లు సేవ్ అవుతాయి, Shishya మీ బలహీన టాపిక్‌లను గుర్తిస్తుంది. క్రెడిట్ కార్డ్ అవసరం లేదు.",
+    startExam: "మీ Google అకౌంట్‌తో సైన్ అప్, ఫారాలు లేవు. సైన్ అప్ చేసిన వెంటనే {exam} మీ పరీక్షగా సెట్ అవుతుంది, మీరు ఎక్కడ ఆపారో AI ట్యూటర్ గుర్తుంచుకుంటుంది.",
   },
 };
 

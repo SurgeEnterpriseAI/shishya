@@ -35,6 +35,9 @@ import { PYQ_TEXT_QUESTIONS, pyqFaqItems, pyqModelledEn, pyqOptions, pyqTextShow
 import { faqPageJsonLd } from "@/lib/hub-faq";
 import { GUEST_WHOLE_PAPER_OPEN } from "@/lib/guest-paper";
 import { SignUpButton } from "@/components/SignUpButton";
+import { ExamSignUpContext } from "@/components/ExamSignUpContext";
+import { signUpWords } from "@/lib/signup-place-words";
+import { OLYMPIAD_CATEGORY } from "@/lib/school-age";
 
 // Public SEO landing page — previous-year question sets rarely change.
 export const revalidate = 600;
@@ -206,6 +209,8 @@ export default async function PYQYearPage({
     return (
       <main className="min-h-screen bg-ink-50/40">
         <Header />
+        {/* What this page tells the sign-up placements on it (2 Oct 2026): the exam's name and what is true of it. Renders nothing. */}
+        <ExamSignUpContext code={exam.code} exam={exam.shortName} />
         <section className="container-prose py-10">
           <p className="text-xs text-ink-500">
             <Link href={`/exams/${code}`} className="hover:text-ink-800">{exam.shortName}</Link> · {P.crumb} · {yearNum}
@@ -243,6 +248,20 @@ export default async function PYQYearPage({
     .slice(0, 10)
     .map((q) => q.id);
   const counts = { n: questions.length, m: exam.totalQuestions, year: yearNum };
+  // The guest's sign-up button (2 Oct 2026, later): this door's own entry of
+  // the table, resolved here on the server. door.pyq-year — "take this
+  // {year}-pattern set against the clock" — only where the set holds five or
+  // more questions a paper can serve (the first button below); the smaller
+  // set's button gets the exam's entry that promises no mock.
+  const pyqSignUp = signUpWords(lc, {
+    surface: "pyq-year",
+    callback: `/exams/${code}/pyq/${yearNum}`,
+    exam: exam.shortName,
+    examCode: code,
+    olympiad: String(exam.category) === OLYMPIAD_CATEGORY,
+    setQuestions: guestSet.length,
+    vars: { year: yearNum },
+  });
   const modelled = fillPyq(P.modelled, { n: questions.length, year: yearNum, m: exam.totalQuestions });
   // The structured data below stays English in every locale (inLanguage
   // "en-IN", canonical → the English URL), so its sentence is built in
@@ -434,6 +453,8 @@ export default async function PYQYearPage({
         />
       )}
       <Header />
+      {/* What this page tells the sign-up placements on it (2 Oct 2026): the exam's name and what is true of it. Renders nothing. */}
+      <ExamSignUpContext code={exam.code} exam={exam.shortName} />
       <section className="container-prose py-10">
         <p className="text-xs text-ink-500">
           <Link href={`/exams/${code}`} className="hover:text-ink-800">{exam.shortName}</Link> · {t("exam.pyq.title")} · {yearNum}
@@ -526,9 +547,7 @@ export default async function PYQYearPage({
                     href={`/login?callbackUrl=${encodeURIComponent(`/exams/${code}/pyq/${yearNum}`)}&from=pyq-year`}
                     surface="pyq-year"
                     locale={lc}
-                    exam={exam.shortName}
-                    examCode={code}
-                    practice
+                    {...pyqSignUp}
                     side="top"
                     block
                     align="end"
@@ -552,9 +571,7 @@ export default async function PYQYearPage({
                       href={`/login?callbackUrl=${encodeURIComponent(`/exams/${code}/pyq/${yearNum}`)}&from=pyq-year`}
                       surface="pyq-year"
                       locale={lc}
-                      exam={exam.shortName}
-                      examCode={code}
-                      practice
+                      {...pyqSignUp}
                       side="top"
                       block
                       align="end"

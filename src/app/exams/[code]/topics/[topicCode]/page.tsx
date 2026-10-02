@@ -15,6 +15,7 @@ import { StateExamsLink } from "@/components/StateExamsLink";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
+import { ExamSignUpContext } from "@/components/ExamSignUpContext";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { realExamKey } from "@/lib/db/exam-scope";
@@ -306,6 +307,8 @@ export default async function TopicPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
       <Header />
+      {/* What this page tells the sign-up placements on it (2 Oct 2026): the exam's name and what is true of it. Renders nothing. */}
+      <ExamSignUpContext code={exam.code} exam={exam.shortName} notes={!!notes} topicQuestions={practiceQs.length} />
       <section className="container-prose py-8 sm:py-10">
         {/* Breadcrumb */}
         <p className="text-xs text-ink-500">

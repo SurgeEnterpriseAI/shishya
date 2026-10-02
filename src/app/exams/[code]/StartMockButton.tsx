@@ -55,8 +55,12 @@ import { hubAutoStart, loginHrefFor, signinBeacon } from "@/lib/signin-cta";
  *  2 Oct 2026 (founder, standing): it reads "Sign up with Google" and carries
  *  the explanation — the one shared SignUpButton (src/components/
  *  SignUpButton.tsx), which wraps the same SignInLink: same href, same
- *  beacon, same test arms. `practice` is fixed true: the hub renders this box
- *  only where it has checked questions (hasContent). Full width on a phone
+ *  beacon, same test arms. 2 Oct 2026, later: its words are this door's own
+ *  entry of the table (door.hub-box: the five-question starter test that
+ *  opens by itself) — the hub page resolves them on the server and passes
+ *  `text` and `short`, and only for an exam that can serve a mock (5 or more
+ *  checked questions; the box itself shows from one): below that the page
+ *  hands over the entry that promises no mock. Full width on a phone
  *  (block; its own width from sm): this is the hub's main action — it must
  *  not look smaller than the quiz button under it.
  *  2 Oct 2026 (founder, with a screenshot of the white button: one look
@@ -74,6 +78,8 @@ export function HubSignInLink({
   exam,
   href,
   locale,
+  text,
+  short,
 }: {
   examCode: string;
   /** The exam's short name (the explanation names it). */
@@ -81,8 +87,11 @@ export function HubSignInLink({
   href: string;
   /** The hub page's locale. */
   locale?: string | null;
+  /** The door's words, resolved by the hub page (signUpWords). */
+  text?: string;
+  short?: string;
 }) {
-  return <SignUpButton href={href} surface="hub-box" locale={locale} exam={exam} examCode={examCode} practice side="top" block className="sm:w-auto" beaconProps={{ examCode }} />;
+  return <SignUpButton href={href} surface="hub-box" locale={locale} exam={exam} examCode={examCode} text={text} short={short} side="top" block className="sm:w-auto" beaconProps={{ examCode }} />;
 }
 
 interface Labels {

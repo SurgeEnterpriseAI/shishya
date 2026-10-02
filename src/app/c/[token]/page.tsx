@@ -21,6 +21,7 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
+import { ExamSignUpContext } from "@/components/ExamSignUpContext";
 import type { AnonQuizTranslationPack } from "@/components/AnonQuizPlayer";
 import { auth } from "@/lib/auth";
 import { fillTemplate, localeNames, locales, type Locale } from "@/lib/i18n";
@@ -106,6 +107,10 @@ export default async function ChallengePage({ params }: { params: Promise<Params
   return (
     <main className="min-h-screen bg-ink-50/40">
       <Header />
+      {/* What this page tells the sign-up buttons on it (2 Oct 2026): whether
+          the challenge's exam can serve a mock and whether it is an olympiad.
+          Renders nothing. */}
+      <ExamSignUpContext code={ch.examCode} exam={ch.examShort} />
       <section className="container-prose py-8 sm:py-10">
         <p className="text-xs text-ink-500">
           <Link href={`/exams/${ch.examCode}`} className="hover:text-ink-800">

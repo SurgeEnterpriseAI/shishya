@@ -24,6 +24,7 @@
 
 import Link from "next/link";
 import { SignUpButton } from "@/components/SignUpButton";
+import { signUpWords } from "@/lib/signup-place-words";
 import { homeCopyLocaleOf } from "@/lib/home-ask-link";
 import { signUpLabel } from "@/lib/signup-cta-copy";
 import type { HomeDoorsCopy } from "@/lib/home-doors-copy";
@@ -43,7 +44,7 @@ export function HomeSignIn({ copy, signedIn }: { copy: HomeDoorsCopy; signedIn: 
       ) : (
         <>
           <div data-home-cta="signin" className="mx-auto w-fit max-w-full">
-            <SignUpButton href="/login?callbackUrl=%2Fdashboard" surface="home-signin" locale={homeCopyLocaleOf(copy)} explain="own" center />
+            <SignUpButton href="/login?callbackUrl=%2Fdashboard" surface="home-signin" locale={homeCopyLocaleOf(copy)} {...signUpWords(homeCopyLocaleOf(copy), { surface: "home-signin", callback: "/dashboard" })} explain="own" center />
           </div>
           <p data-su-reason className="mx-auto mt-2 max-w-xl text-xs text-ink-500">{copy.signin.line}</p>
         </>

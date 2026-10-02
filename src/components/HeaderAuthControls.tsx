@@ -110,6 +110,28 @@
 //     no longer paints over its lower lines;
 //   • unchanged: always /login (not in the skip-/login test), surface
 //     "header" counted by the root layout's listener, the words after mount.
+//
+// 2 Oct 2026, later (founder: "Each sign in with Google should be
+// contextualized from the location where it is"): the tooltip is the entry
+// of the PAGE FAMILY this header is on — the home page, an exam's syllabus,
+// a college, a scholarship, a Class 8-12 page … (src/lib/signup-place.ts:
+// the surface "header" takes signUpPagePlace, from the path; the same
+// sentence as the site card, the timed bar and the early line of that page). An exam is NAMED only where
+// the page itself handed over its short name (SignUpPageContext — never
+// from the path alone: /exams/FOO can be a retired exam's "not found" page);
+// until then an exam page gets the sentence that names nothing.
+//   • Neither the words nor the rules that choose them are in this bundle.
+//     The table is about 150 KB and the header is on every page, so the
+//     reader's ONE language — and the rules — are fetched on a screen with a
+//     mouse only, after the window has loaded and the browser is idle
+//     (src/lib/use-signup-words.ts; review of 2 Oct 2026: it used to start
+//     0.3 s after mount on iOS, while the page was still loading, and on
+//     phones, where this tooltip can never open) — or the moment the button
+//     is hovered or takes the keyboard focus (`onWant`) — and not at all
+//     where no button with a tooltip is rendered: a signed-in reader, a
+//     Class 1-7 page, a child-safe page, /schooling and a board hub.
+//   • Phones still see nothing under this button (decision of 2 Oct 2026):
+//     the tooltip opens with a mouse or the keyboard only.
 
 import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import Link from "next/link";
@@ -123,7 +145,7 @@ import { isUnder13SchoolPath } from "@/lib/school/student-classes";
 import { asCopyLocale, clientUiLocale, type CopyLocale } from "@/lib/ui-locale-copy";
 import { callbackOfLoginHref } from "@/lib/signin-cta";
 import { isChildSchoolPath } from "@/lib/signup-pitch";
-import { signUpContextFor, signUpExplain } from "@/lib/signup-cta-copy";
+import { useSignUpPageData, useSignUpWords, wantSignUpWords } from "@/lib/use-signup-words";
 import { SignUpShell, SignUpStackedFace } from "./SignUpButton";
 
 // Re-exported so any import of fetchSignedIn from this file keeps working.
@@ -169,9 +191,11 @@ export function HeaderAuthControls({
   // there refreshes the route without changing the path, so the effect above
   // does not run and the label kept the old language until the next page.
   const onLocale = useCallback((lc: string) => setLang(asCopyLocale(lc)), []);
-  // The explanation for the page this sign-in returns to (general words; the
-  // school words on a Class 8-12 page).
-  const signUpTip = signUpExplain(lang, signUpContextFor({ callback: callbackOfLoginHref(loginHref) }));
+  // The button is hovered or took the keyboard focus before its words came: fetch them now.
+  const wantTip = useCallback(() => wantSignUpWords(lang), [lang]);
+  // What this page said about itself (an exam page: the exam's name and what
+  // is true of it) — null on the server and until the page's island mounts.
+  const pageData = useSignUpPageData();
 
   useEffect(() => {
     let alive = true;
@@ -208,6 +232,17 @@ export function HeaderAuthControls({
   // effect: the mark changes in the same paint as the label, so the row is
   // never seen with the Telugu button AND the wordmark.
   const guestButton = !signedIn && !childSafe && !isUnder13SchoolPath(pathname);
+  // The explanation: the entry of the page this sign-in returns to (this
+  // page). Its words are fetched when the browser is idle, in the label's
+  // language — and never where no tooltip is rendered: no button (a member,
+  // a Class 1-7 or child-safe page), the plain link on /schooling and a board
+  // hub, or a reader the hint cookie says is probably signed in.
+  const signUpTip =
+    useSignUpWords(
+      lang,
+      { surface: "header", callback: callbackOfLoginHref(loginHref), page: pageData },
+      { off: !guestButton || isChildSchoolPath(pathname) || (session === null && hasSessionHint()) },
+    )?.text ?? "";
   useLayoutEffect(() => {
     if (!guestButton || (session === null && hasSessionHint())) return;
     const root = document.documentElement;
@@ -244,7 +279,7 @@ export function HeaderAuthControls({
           <SignUpStackedFace locale={lang} joinFromSm />
         </Link>
       ) : (
-        <SignUpShell text={signUpTip} surface="header" explain="tooltip" align="end" deferText>
+        <SignUpShell text={signUpTip} surface="header" explain="tooltip" align="end" deferText onWant={wantTip}>
           {(describedBy) => (
             <Link rel="nofollow" href={loginHref} aria-describedby={describedBy} className={GUEST_BUTTON_CLASS} data-signin-surface="header">
               <SignUpStackedFace locale={lang} joinFromSm />

@@ -9,6 +9,7 @@ import { getT } from "@/lib/i18n-server";
 import { formatRelative } from "@/lib/relative-time";
 import { ReplyForm } from "./ReplyForm";
 import { SignUpButton } from "@/components/SignUpButton";
+import { signUpWords } from "@/lib/signup-place-words";
 import { UserBadge, type UserBadgeLevel } from "@/components/UserBadge";
 import { isSyntheticHandle } from "@/data/synthetic-handles";
 import { discussionLabelsCopy } from "@/lib/discussion-labels-copy";
@@ -258,6 +259,7 @@ export default async function DiscussionPage({
                   surface="discussion-reply"
                   locale={locale}
                   continueLabel={t("login.continue")}
+                  {...signUpWords(locale, { surface: "discussion-reply", callback: `/discussions/${thread.id}` })}
                   explain="own"
                   center
                 />

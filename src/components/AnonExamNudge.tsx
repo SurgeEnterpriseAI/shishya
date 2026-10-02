@@ -152,7 +152,6 @@ export function AnonExamNudge({
           locale={locale}
           exam={examShort}
           examCode={examCode}
-          practice
           explain="own"
           side="top"
           align="end"

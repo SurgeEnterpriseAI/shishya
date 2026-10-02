@@ -3,8 +3,36 @@
 // "Sign up with Google" — the ONE guest sign-up button (2 Oct 2026, founder,
 // standing: sign-up buttons visible and clear; "Sign up with Google" because
 // students may think sign-up needs a lot of details; on hover, a description
-// of how signing up is useful). Words: src/lib/signup-cta-copy.ts. Styles:
+// of how signing up is useful). Words: the label in
+// src/lib/signup-cta-copy.ts; the explanation in the table
+// src/data/signup-places/ (see THE WORDS OF THE EXPLANATION below). Styles:
 // src/app/globals.css (.su-google, .su-wrap, .su-tip, .su-float).
+//
+// THE WORDS OF THE EXPLANATION (2 Oct 2026, later — founder: "Each sign in
+// with Google should be contextualized from the location where it is. It
+// should not be the same tooltip information for all the Google sign up
+// buttons"). Every placement has its own entry in a table of 76 (a tooltip
+// and a caption each, en / hi / te). The button decides its entry from its
+// door id, its own /login link and what the caller passes
+// (src/lib/signup-place.ts signUpPlaceFor — fail closed: an exam is named
+// only where the link returns to it, mocks are promised only for an exam
+// that can serve one), plus what the page said about itself
+// (src/components/SignUpPageContext.tsx). The words then come one of two ways:
+//   • a SERVER page resolves them (src/lib/signup-place-words.ts) and passes
+//     `text` and `short`: they are in the page's HTML with the button;
+//   • a client island passes neither: the reader's ONE language is loaded on
+//     demand, with the rules that choose the entry
+//     (src/lib/use-signup-words.ts) — the table is about 150 KB, the rules
+//     another 10, and this component is in the header's bundle on every page,
+//     so no client code imports either statically (only their types). Until
+//     they arrive the button shows without its tooltip (as the header's
+//     always did before the script ran), and a caption's line is held open so
+//     nothing moves when it fills. If the fetch FAILS (a weak signal), the
+//     line is let go — a button never stands over an empty line — the fetch
+//     is tried again by itself, and a hover or a keyboard focus on the button
+//     asks for the words again (`onWant`; src/lib/use-signup-words.ts says
+//     when the words are fetched, and that a touch screen fetches none for a
+//     tooltip nobody can open).
 //
 // What it renders:
 //   • the label "Sign up with Google" (en / hi / te), never a surface's own
@@ -106,7 +134,10 @@
 //
 // Measuring: one "signup-explain" beacon when the explanation is opened on a
 // hover device, at most once per page view, never on a school page a child
-// may be reading (Class 1-7, /schooling, a board hub).
+// may be reading (Class 1-7, /schooling, a board hub) — and only when there
+// IS an explanation to open (2 Oct 2026 review): while a client island's
+// words have not arrived, or their fetch failed, a hover or a focus shows
+// nothing and is not counted.
 //
 // Never rendered on a Class 1-7 school page or any under-13 context: that
 // rule stays with the callers (pitchAllowedPath / isUnder13SchoolPath /
@@ -123,14 +154,13 @@ import {
   explainBeaconDue,
   googleButtonLabel,
   isSignUpLocale,
-  signUpContextFor,
-  signUpExplain,
-  signUpExplainShort,
   signUpLabel,
   signUpLabelParts,
   type SignUpContext,
 } from "@/lib/signup-cta-copy";
+import type { SignUpPlace, SignUpPractice, SignUpVars } from "@/lib/signup-place";
 import { placeSignUpTip } from "@/lib/signup-tip-place";
+import { useSignUpPageData, useSignUpWords, useSignUpWordsFailed, wantSignUpWords } from "@/lib/use-signup-words";
 
 /** Google's standard colour "G", exactly as Google's HTML-button generator
  *  (developers.google.com/identity/branding-guidelines) emits it. Do not
@@ -305,13 +335,20 @@ export function SignUpShell({
   align,
   className,
   deferText,
+  onWant,
   children,
 }: {
-  /** The full explanation (signUpExplain): the tooltip, and the button's
-   *  description for a screen reader. */
+  /** The full explanation (the entry's tooltip): the tooltip, and the
+   *  button's description for a screen reader. Empty while a client island's
+   *  words are still loading: no tooltip and no description until then. */
   text: string;
-  /** The short caption shown under the button on every device
-   *  (signUpExplainShort) — rendered for explain "both" only. */
+  /** A client island's words are not here (`text` is empty) and the button
+   *  is hovered or took the keyboard focus: ask for them now
+   *  (src/lib/use-signup-words.ts wantSignUpWords). Not passed where a server
+   *  page gave the words. */
+  onWant?: () => void;
+  /** The short caption shown under the button on every device (the entry's
+   *  caption) — rendered for explain "both" only. */
   short?: string;
   /** The sign-in door this button is (the "signup-explain" beacon's surface). */
   surface: string;
@@ -341,7 +378,16 @@ export function SignUpShell({
   // from now on, and the CSS one is switched off (data-su-float). False on
   // the server and in the first client render, so the HTML is the same.
   const [mounted, setMounted] = useState(false);
-  const ready = mounted || !deferText;
+  // The frame may show its words (the header: only after mount) …
+  const shown = mounted || !deferText;
+  // … and has the full sentence to show (a client island's words load on demand).
+  const ready = shown && text !== "";
+  // The same, for the hover timer, which fires 0.6 s after the pointer came:
+  // the "explanation opened" beacon goes out only if there is one to open.
+  const readyNow = useRef(false);
+  useEffect(() => {
+    readyNow.current = ready;
+  }, [ready]);
   // Escape was pressed: closed until the pointer and the focus have left.
   const [closed, setClosed] = useState(false);
   // The pointer or the keyboard focus is on the button (Escape is listened for).
@@ -426,10 +472,14 @@ export function SignUpShell({
         // Surface pen) does, as the CSS tooltip did.
         if (e.pointerType === "touch" || !canHover()) return;
         setHovered(true);
-        // Counted for a resting MOUSE only, as before.
+        // The words are not here (not fetched yet, or the fetch failed): ask for them.
+        if (text === "") onWant?.();
+        // Counted for a resting MOUSE only, as before — and only when the explanation is there to open.
         if (e.pointerType !== "mouse") return;
         if (hoverTimer.current !== null) window.clearTimeout(hoverTimer.current);
-        hoverTimer.current = window.setTimeout(() => explainOpened(surface, "hover"), SIGNUP_EXPLAIN_HOVER_MS);
+        hoverTimer.current = window.setTimeout(() => {
+          if (readyNow.current) explainOpened(surface, "hover");
+        }, SIGNUP_EXPLAIN_HOVER_MS);
       }}
       onPointerLeave={() => {
         setHovered(false);
@@ -437,7 +487,6 @@ export function SignUpShell({
         hoverTimer.current = null;
       }}
       onFocus={(e) => {
-        if (!canHover()) return;
         // KEYBOARD focus only. A mouse click focuses a link or button too
         // (Chrome, Firefox): after a Ctrl-click or a middle click the focus
         // stays on the button, and the tooltip would stay on screen with
@@ -451,8 +500,14 @@ export function SignUpShell({
         } catch {
           keyboard = false;
         }
+        // The words are not here: a keyboard focus asks for them — on a touch
+        // screen too (a keyboard or a switch on a phone), where they are the
+        // button's description for a screen reader. A tap does not.
+        if (opens && text === "") onWant?.();
+        if (!canHover()) return;
         if (opens) setFocused(true);
-        if (keyboard) explainOpened(surface, "focus");
+        // Counted only when the explanation is there to open.
+        if (keyboard && ready) explainOpened(surface, "focus");
       }}
       onBlur={() => setFocused(false)}
     >
@@ -461,7 +516,7 @@ export function SignUpShell({
           (explain "both" only) — plain text, no role, nothing the button
           points at. It is in the server HTML with the button, so nothing
           moves when the script runs. */}
-      {ready && short && explain === "both" && <span className="su-cap">{short}</span>}
+      {shown && short && explain === "both" && <span className="su-cap">{short}</span>}
       {/* .su-tip is the frame the CSS places: never displayed on touch; with
           a mouse the tooltip, until the script takes over. Inside it the
           full sentence, which carries the id the button points at, so a
@@ -476,9 +531,10 @@ export function SignUpShell({
       )}
       {/* The tooltip a mouse user sees, in the top layer: only once the
           script runs (mounted — by then the sentence is in the page too, the
-          header's included). hovered / focused are only ever set on a screen
-          with a mouse (canHover). */}
-      {mounted && active && !closed && <SignUpTipFloat frame={frame} text={text} side={side} align={align} />}
+          header's included, and a client island's words have arrived).
+          hovered / focused are only ever set on a screen with a mouse
+          (canHover). */}
+      {mounted && active && !closed && text !== "" && <SignUpTipFloat frame={frame} text={text} side={side} align={align} />}
     </span>
   );
 }
@@ -525,13 +581,31 @@ export interface SignUpButtonProps {
   /** The page's language when the caller knows it; otherwise English. */
   locale?: string | null;
   /** The exam this page is about. The explanation names it ONLY when the
-   *  link returns to a page of that exam (signUpContextFor). */
+   *  link returns to a page of that exam (signUpPlaceFor). */
   exam?: string | null;
   examCode?: string | null;
-  /** That exam has practice — only then are "tests and progress" promised. */
-  practice?: boolean | null;
-  /** A fixed context instead (the guest tutor's card). */
+  /** That exam can serve a mock ("canServe": 5 or more checked questions) or
+   *  is known to hold no practice ("none"). Not known: leave it out — mocks
+   *  are promised for "canServe" only. Without it the button takes what the
+   *  page said about this exam (SignUpPageContext), if anything. */
+  practice?: SignUpPractice | null;
+  /** That exam is an olympiad (the catalogue's category). */
+  olympiad?: boolean | null;
+  /** What fills the entry and claims nothing about the account: {year} of a
+   *  previous-year-pattern set, {n} of a chapter's set, {institute} of a
+   *  batch, the live paper's {exam}. */
+  vars?: SignUpVars | null;
+  /** "pyq-year": the questions in this year's set (a timed set needs five). */
+  setQuestions?: number | null;
+  /** A fixed entry of the table instead of the door's own rules. */
+  place?: SignUpPlace;
+  /** One of the five old variants, as an alias (signUpPlaceOfContext). */
   context?: SignUpContext;
+  /** The words, already resolved by a SERVER component
+   *  (src/lib/signup-place-words.ts signUpWords): the tooltip and the
+   *  caption. With them nothing is decided or loaded here. */
+  text?: string;
+  short?: string;
   /** t("login.continue") on a page that speaks all 22 languages: the label
    *  for a language other than en / hi / te (its own "Continue with Google")
    *  instead of English. Such a language gets no caption. */
@@ -553,6 +627,11 @@ export interface SignUpButtonProps {
   rel?: string;
 }
 
+/** Holds a caption's line open while a client island's words load, so the
+ *  page does not move when the caption fills (a no-break space). Let go
+ *  ("") when the fetch has failed: no button stands over an empty line. */
+export const SIGNUP_CAPTION_PENDING = "\u00a0";
+
 /** An in-page "Sign up with Google" button for a GUEST: the shared SignInLink
  *  (beacon + the skip-/login test) with the one label and the explanation. */
 export function SignUpButton({
@@ -562,7 +641,13 @@ export function SignUpButton({
   exam,
   examCode,
   practice,
+  olympiad,
+  vars,
+  setQuestions,
+  place,
   context,
+  text: givenText,
+  short: givenShort,
   continueLabel,
   stack,
   explain = "both",
@@ -576,16 +661,39 @@ export function SignUpButton({
   onSignInClick,
   rel,
 }: SignUpButtonProps) {
-  const ctx = context ?? signUpContextFor({ callback: callbackOfLoginHref(href), exam, examCode, practice });
-  const text = signUpExplain(locale, ctx);
-  const short = signUpExplainShort(locale, ctx);
+  // What the page said about itself (null on the server and until its island mounts).
+  const page = useSignUpPageData();
   const cls = `${googleButtonClass()}${stack ? " su-google-compact" : ""}${block ? " w-full" : ""}${buttonClassName ? ` ${buttonClassName}` : ""}`;
   const label = continueLabel ? googleButtonLabel(locale, continueLabel) : signUpLabel(locale);
   // The caption's words exist in en / hi / te: on a 22-language page another
   // language gets none (English small print under a Tamil button helps no one).
   const mode: SignUpExplainMode = explain === "both" && continueLabel && !isSignUpLocale(locale ?? "en") ? "own" : explain;
+  // A server page passed the words. Otherwise the placement — its door, the
+  // page its own link returns to, what the caller and the page know — is
+  // resolved once the reader's language and the rules have loaded (on demand;
+  // at once where a caption is waiting for them).
+  const words = useSignUpWords(
+    locale,
+    { surface, callback: callbackOfLoginHref(href), exam, examCode, practice, olympiad, page, vars, setQuestions },
+    { given: typeof givenText === "string" ? { text: givenText, short: givenShort ?? "" } : null, place, context, now: mode === "both" },
+  );
+  // The fetch of the words failed (a weak signal): the caption's line is let go until a retry brings them.
+  const failed = useSignUpWordsFailed(locale);
+  const text = words?.text ?? "";
+  const short = words ? words.short : failed ? "" : SIGNUP_CAPTION_PENDING;
   return (
-    <SignUpShell text={text} short={short} surface={surface} explain={mode} block={block} center={center} side={side} align={align} className={className}>
+    <SignUpShell
+      text={text}
+      short={short}
+      surface={surface}
+      explain={mode}
+      block={block}
+      center={center}
+      side={side}
+      align={align}
+      className={className}
+      onWant={typeof givenText === "string" ? undefined : () => wantSignUpWords(locale)}
+    >
       {(describedBy) => (
         <SignInLink href={href} surface={surface} className={cls} beaconProps={beaconProps} onSignInClick={onSignInClick} rel={rel} describedBy={describedBy}>
           {stack ? <SignUpStackedFace locale={locale} /> : <SignUpFace label={label} />}

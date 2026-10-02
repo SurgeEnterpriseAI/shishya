@@ -73,6 +73,20 @@
 //   • the alternative beside a sign-up button is quiet (a text link or a
 //     1 px ink outline) — that, not a dark fill, keeps the sign-up the main
 //     action.
+// 2 Oct 2026 (later — founder: "Each sign in with Google should be
+// contextualized from the location where it is. It should not be the same
+// tooltip information for all the Google sign up buttons") — the explanation
+// is a TABLE now: 76 entries, one per placement, in
+// src/data/signup-places/{en,hi,te}.json, chosen by src/lib/signup-place.ts.
+// tests/unit/signup-places.test.ts pins the table, the resolver, the claims
+// and the page weight. What changed HERE:
+//   • the five old sentences are gone; the five old contexts are aliases of
+//     five entries (section 3 reads them through the aliases);
+//   • the copy module holds no sentence of the explanation; a button gets
+//     its words from a server page (`text`, `short`) or loads the reader's
+//     one language on demand — so the renders below hand the words in, as a
+//     server page does;
+//   • the tooltip box is 360 px wide (it was 320).
 // What no test here can see: pixels, and the tooltip RUNNING. No DOM test
 // library is installed, so section 6 pins the tooltip's source text; only
 // the placement function (section 12) and the static renders run real code.
@@ -91,6 +105,9 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 import * as copyMod from "@/lib/signup-cta-copy";
 import * as claimsMod from "@/lib/signup-cta-claims";
+import * as placeMod from "@/lib/signup-place";
+import * as hooksMod from "@/lib/use-signup-words";
+import { signUpPlaceWords, signUpWords } from "@/lib/signup-place-words";
 import * as signinCtaMod from "@/lib/signin-cta";
 import * as ctaBeaconMod from "@/lib/cta-beacon";
 import * as sessionHintMod from "@/lib/session-hint";
@@ -108,7 +125,8 @@ import { contentFamily, nudgeBarCopy, signupLineCopy } from "@/lib/content-signu
 import { isUnder13SchoolPath } from "@/lib/school/student-classes";
 import { loginHrefFor } from "@/lib/signin-cta";
 
-const { SIGNUP_BANNED_WORDS, SIGNUP_CLAIM_PHRASE_EN, SIGNUP_CLAIM_SHORT_PHRASE_EN, SIGNUP_CLAIM_PROOF, SIGNUP_EXPLAIN_CLAIMS, SIGNUP_SHORT_CLAIMS } = claimsMod;
+const { SIGNUP_BANNED_WORDS, SIGNUP_CLAIM_PROOF, SIGNUP_CLAIM_SAYS_EN } = claimsMod;
+const { signUpPlaceFor, signUpPlaceOfContext } = placeMod;
 const {
   SIGNUP_EXPLAIN_CTA,
   SIGNUP_EXPLAIN_HOVER_MS,
@@ -120,12 +138,15 @@ const {
   googleButtonLabel,
   isSchoolClassCallback,
   signUpContextFor,
-  signUpExplain,
-  signUpExplainShort,
-  signUpExplainVariant,
   signUpLabel,
   signUpLabelParts,
 } = copyMod;
+/** The tooltip and the caption of one of the five OLD contexts — read through
+ *  its alias (general → family.fallback, exam → family.exam.practice,
+ *  examNoPractice → family.exam.unknown, school → family.schoolCbse, tutor →
+ *  door.chat-save.general), from the table. */
+const signUpExplain = (l: string | null | undefined, ctx?: copyMod.SignUpContext | null) => signUpPlaceWords(l, signUpPlaceOfContext(ctx)).text;
+const signUpExplainShort = (l: string | null | undefined, ctx?: copyMod.SignUpContext | null) => signUpPlaceWords(l, signUpPlaceOfContext(ctx)).short;
 const { DIRECT_SIGNIN_AB_KEY, DIRECT_SIGNIN_SURFACES, DIRECT_SIGNIN_TEST_ON, inDirectSigninTest, readOrAssignDirectBucket, signinRoute } = directMod;
 const { SIGNIN_CTA, SIGNIN_SURFACES, isSigninSurface } = signinCtaMod;
 const { SIGNUP_TIP_GAP, SIGNUP_TIP_MARGIN, placeSignUpTip } = tipPlaceMod;
@@ -167,6 +188,10 @@ const STUBS: Record<string, unknown> = {
   "@/lib/ui-locale-copy": uiLocaleCopyMod,
   "@/lib/signup-pitch": signupPitchMod,
   "@/lib/signup-cta-copy": copyMod,
+  "@/lib/signup-place": placeMod,
+  // The hooks: in a static render they answer "nothing yet" (the server
+  // snapshot), so a button without `text` renders without its words.
+  "@/lib/use-signup-words": hooksMod,
   "@/lib/signin-cta": signinCtaMod,
   "@/lib/cta-beacon": ctaBeaconMod,
   "@/lib/session-hint": sessionHintMod,
@@ -206,6 +231,7 @@ const textOf = (html: string) =>
     .replace(/<[^>]+>/g, " ")
     .replace(/&amp;/g, "&")
     .replace(/&#x27;/g, "'")
+    .replace(/&quot;/g, '"')
     .replace(/\s+/g, " ")
     .trim();
 
@@ -339,9 +365,17 @@ describe("2. every primary guest button is the one shared component", () => {
   it("the straight-to-Google button (/login, the gates) takes its words from the one module and wears Google's button", () => {
     const src = code("src/components/GoogleSignInButton.tsx");
     expect(src).toContain("const label = continueLabel ? googleButtonLabel(locale, continueLabel, returning) : signUpLabel(locale);");
-    expect(src).toContain("const ctx = signUpContextFor({ callback: callbackUrl, exam, examCode, practice });");
-    expect(src).toContain("const text = signUpExplain(locale, ctx);");
-    expect(src).toContain("const short = signUpExplainShort(locale, ctx);");
+    // Its entry of the table: decided from its door and its callback (src/lib/signup-place.ts); the words are
+    // handed in by a server page, or the reader's language is loaded on demand.
+    expect(src).toMatch(
+      /const words = useSignUpWords\(\s*locale,\s*\{ surface, callback: callbackUrl, exam, examCode, practice, olympiad, page, returning \},\s*\{ given: typeof givenText === "string" \? \{ text: givenText, short: givenShort \?\? "" \} : null, now: mode === "both" \},\s*\);/,
+    );
+    expect(src).toContain('const text = words?.text ?? "";');
+    // The caption's line is held open while the words load, and let go once their fetch has failed (review, 2 Oct 2026).
+    expect(src).toContain('const short = words ? words.short : failed ? "" : SIGNUP_CAPTION_PENDING;');
+    // Neither the words nor the rules that choose them are imported: only a type.
+    expect(src).not.toMatch(/signUpExplain|signup-place-words|signUpPlaceFor/);
+    expect(src).toContain('import type { SignUpPractice } from "@/lib/signup-place";');
     expect(src).toContain("className={`${googleButtonClass()} w-full`}");
     expect(src).not.toContain("btn-primary");
     // The quiz-end buttons of both gates: the shared label (no label prop left).
@@ -379,30 +413,38 @@ describe("2. every primary guest button is the one shared component", () => {
 // ── 3. the explanation: copy and claims ──────────────────────────────────
 
 describe("3. the explanation: honest, surface-aware, every claim pinned to its feature", () => {
-  it("the English words, exactly — the full sentence (tooltip)", () => {
-    expect(signUpExplain("en", { kind: "exam", exam: "SSC CGL", practice: true })).toBe(
-      "Sign up with your Google account, no forms. SSC CGL is set up for you the moment you sign up: your tests and progress are saved and the AI tutor remembers where you left off.",
-    );
-    expect(signUpExplain("en", { kind: "exam", exam: "AILET", practice: false })).toBe(
-      "Sign up with your Google account, no forms. AILET is set up as your exam the moment you sign up, and the AI tutor remembers where you left off.",
-    );
-    expect(signUpExplain("en", { kind: "general" })).toBe(
-      "Sign up with your Google account, no forms. Your tests and progress are saved, your tutor chats are saved, and the AI tutor picks up where you left off.",
-    );
+  it("the five old sentences are gone: each old context is an alias of one entry of the table, read from the data source", () => {
+    // (The words themselves — 76 entries in three languages — are pinned in tests/unit/signup-places.test.ts.)
+    const entry = (key: placeMod.SignUpPlaceKey, exam?: string) => signUpPlaceWords("en", { key, vars: exam ? { exam } : undefined });
+    expect(signUpExplain("en", { kind: "exam", exam: "SSC CGL", practice: true })).toBe(entry("family.exam.practice", "SSC CGL").text);
+    // "examNoPractice" was used for "not known" too: the entry that says nothing about practice.
+    expect(signUpExplain("en", { kind: "exam", exam: "AILET", practice: false })).toBe(entry("family.exam.unknown", "AILET").text);
+    expect(signUpExplain("en", { kind: "general" })).toBe(entry("family.fallback").text);
     expect(signUpExplain("en")).toBe(signUpExplain("en", { kind: "general" }));
-    expect(signUpExplain("en", { kind: "school" })).toBe("Sign up with your Google account, no forms. Your chapter practice and scores are saved to your account.");
-    expect(signUpExplain("en", { kind: "tutor" })).toBe(
-      "Sign up with your Google account, no forms. This chat is saved to your account, and the AI tutor remembers what you asked next time.",
-    );
-  });
+    expect(signUpExplain("en", { kind: "school" })).toBe(entry("family.schoolCbse").text);
+    expect(signUpExplain("en", { kind: "tutor" })).toBe(entry("door.chat-save.general").text);
+    // Each names what it is about, and ends with the one closing sentence.
+    expect(signUpExplain("en", { kind: "exam", exam: "SSC CGL", practice: true })).toMatch(/^Preparing for SSC CGL\? Sign up and SSC CGL is set up as your exam\./);
+    for (const ctx of [{ kind: "exam", exam: "SSC CGL", practice: true }, { kind: "exam", exam: "AILET", practice: false }, { kind: "general" }, { kind: "school" }, { kind: "tutor" }] as copyMod.SignUpContext[]) {
+      expect(signUpExplain("en", ctx).endsWith("Free, with your Google account, no forms."), JSON.stringify(ctx)).toBe(true);
+    }
+    // The old words are in no file under src/.
+    const walk = (d: string): string[] =>
+      fs.readdirSync(d, { withFileTypes: true }).flatMap((x) => (x.isDirectory() ? walk(path.join(d, x.name)) : /\.(?:tsx?|json)$/.test(x.name) ? [path.join(d, x.name)] : []));
+    const old = ["is set up for you the moment you sign up", "the AI tutor picks up where you left off", "Your chapter practice and scores are saved to your account", "This chat is saved to your account, and the AI tutor remembers"];
+    for (const f of walk(path.join(ROOT, "src"))) {
+      const src = fs.readFileSync(f, "utf8");
+      for (const w of old) expect(src.includes(w), `${path.relative(ROOT, f)}: ${w}`).toBe(false);
+    }
+  }, 60_000);
 
-  it("the English words, exactly — the short caption (touch): one line at 360 px", () => {
-    expect(signUpExplainShort("en", { kind: "exam", exam: "SSC CGL", practice: true })).toBe("No forms. SSC CGL is set up as your exam.");
+  it("the short caption: 'No forms.' and one sentence — one line at 360 px", () => {
+    expect(signUpExplainShort("en", { kind: "exam", exam: "SSC CGL", practice: true })).toBe(signUpPlaceWords("en", { key: "family.exam.practice", vars: { exam: "SSC CGL" } }).short);
     expect(signUpExplainShort("en", { kind: "exam", exam: "AILET", practice: false })).toBe("No forms. AILET is set up as your exam.");
     expect(signUpExplainShort("en", { kind: "general" })).toBe("No forms. Your tests and tutor chats are saved.");
     expect(signUpExplainShort("en")).toBe(signUpExplainShort("en", { kind: "general" }));
-    expect(signUpExplainShort("en", { kind: "school" })).toBe("No forms. Your practice scores are saved.");
-    expect(signUpExplainShort("en", { kind: "tutor" })).toBe("No forms. This chat is saved to your account.");
+    // The tutor's card never says the chat on screen is saved (no carried guest chat has been seen in production).
+    expect(signUpExplainShort("en", { kind: "tutor" })).toBe("No forms. Your chats are saved from then on.");
     // An exam with no name: the general caption, like the full sentence.
     expect(signUpExplainShort("en", { kind: "exam", exam: " ", practice: true })).toBe(signUpExplainShort("en", { kind: "general" }));
     // One line: about 55 characters of 12 px text fit a 360 px phone's 328 px column.
@@ -427,43 +469,35 @@ describe("3. the explanation: honest, surface-aware, every claim pinned to its f
     }
     expect(signupPitchCopy("en").privacy).toMatch(/^Free\. Sign up with your Google account — we get only your name, email and profile picture\./);
     expect(SIGNUP_BANNED_WORDS).toEqual(expect.arrayContaining(["one tap", "एक टैप", "ఒక్క ట్యాప్"]));
-    expect(SIGNUP_CLAIM_PHRASE_EN["google-only-no-forms"]).toBe("Sign up with your Google account, no forms.");
+    // "No forms" is how every entry says there is nothing to fill in — never "one tap".
+    expect(SIGNUP_CLAIM_SAYS_EN["google-only-no-forms"]).toBe("no forms");
   });
 
   it("an exam with no name falls back to the general words; an exam without practice never promises tests", () => {
-    expect(signUpExplainVariant({ kind: "exam", exam: "  ", practice: true })).toBe("general");
-    expect(signUpExplainVariant({ kind: "exam", exam: "NIFT", practice: false })).toBe("examNoPractice");
+    expect(signUpPlaceOfContext({ kind: "exam", exam: "  ", practice: true }).key).toBe("family.fallback");
+    expect(signUpPlaceOfContext({ kind: "exam", exam: "NIFT", practice: false }).key).toBe("family.exam.unknown");
     for (const l of SIGNUP_LOCALES) {
-      expect(signUpExplain(l, { kind: "exam", exam: "NIFT", practice: false })).not.toMatch(/tests|टेस्ट|టెస్టు/);
+      expect(signUpExplain(l, { kind: "exam", exam: "NIFT", practice: false })).not.toMatch(/tests|mock|टेस्ट|मॉक|టెస్టు|మాక్/i);
     }
   });
 
-  it("each variant says exactly the claims it lists — no more, no fewer", () => {
-    const variants = Object.keys(SIGNUP_EXPLAIN_CLAIMS) as (keyof typeof SIGNUP_EXPLAIN_CLAIMS)[];
-    expect(variants.sort()).toEqual(["exam", "examNoPractice", "general", "school", "tutor"]);
-    const ctxOf = (v: (typeof variants)[number]): copyMod.SignUpContext =>
-      v === "exam" ? { kind: "exam", exam: "{exam}", practice: true } : v === "examNoPractice" ? { kind: "exam", exam: "{exam}", practice: false } : { kind: v };
-    for (const v of variants) {
-      const text = signUpExplain("en", ctxOf(v));
-      for (const claim of Object.keys(SIGNUP_CLAIM_PHRASE_EN) as claimsMod.SignUpClaim[]) {
-        const says = text.includes(SIGNUP_CLAIM_PHRASE_EN[claim]);
-        expect(says, `${v} / ${claim}`).toBe(SIGNUP_EXPLAIN_CLAIMS[v].includes(claim));
-      }
-      // The short caption: exactly ITS listed claims, and never a claim the full sentence does not make.
-      const short = signUpExplainShort("en", ctxOf(v));
-      for (const claim of Object.keys(SIGNUP_CLAIM_SHORT_PHRASE_EN) as claimsMod.SignUpClaim[]) {
-        const phrase = SIGNUP_CLAIM_SHORT_PHRASE_EN[claim];
-        const says = phrase !== null && short.includes(phrase);
-        expect(says, `short ${v} / ${claim}`).toBe(SIGNUP_SHORT_CLAIMS[v].includes(claim));
-      }
-      for (const claim of SIGNUP_SHORT_CLAIMS[v]) expect(SIGNUP_EXPLAIN_CLAIMS[v], `short ${v} / ${claim}`).toContain(claim);
-      // Two sentences at most: "No forms." and one more.
-      expect(short.match(/\./g)).toHaveLength(2);
+  it("the captions are two sentences at most, and the school words name no exam, no tutor and no chat", () => {
+    // (That each entry says exactly the claims listed for it is pinned in tests/unit/signup-places.test.ts, section D.)
+    for (const ctx of [{ kind: "exam", exam: "X", practice: true }, { kind: "exam", exam: "X", practice: false }, { kind: "general" }, { kind: "school" }, { kind: "tutor" }] as copyMod.SignUpContext[]) {
+      // "No forms." and one more.
+      expect(signUpExplainShort("en", ctx).match(/\./g), JSON.stringify(ctx)).toHaveLength(2);
     }
-    expect(Object.keys(SIGNUP_SHORT_CLAIMS).sort()).toEqual([...variants].sort());
     // The school words: no exam, no tutor, no chat — the school tutor keeps no memory.
+    // (Decision of 2 Oct 2026: this rule is NOT relaxed. An entry that needs one of these words on a school
+    // surface — family.schoolChat — is not used there; the class page's entry is.)
     expect(signUpExplain("en", { kind: "school" })).not.toMatch(/exam|tutor|chat/i);
     expect(signUpExplainShort("en", { kind: "school" })).not.toMatch(/exam|tutor|chat/i);
+    for (const cb of ["/schooling/cbse/class-9", "/schooling/icse-cisce/class-10/science", "/chat?examCode=NCERT_C09", "/chat?examCode=CISCE_C10"]) {
+      for (const surface of ["header", "signup-pitch", "signup-nudge", "login", "school-save", "chat-save"]) {
+        const words = signUpWords("en", { surface, callback: cb, exam: "SSC CGL", examCode: "SSC_CGL", vars: { n: 10 } });
+        expect(`${words.text} ${words.short}`, `${surface} ${cb}`).not.toMatch(/exam|tutor|chat/i);
+      }
+    }
   });
 
   it("the proof tables are in a module no page loads (the header's bundle holds the words only)", () => {
@@ -473,10 +507,12 @@ describe("3. the explanation: honest, surface-aware, every claim pinned to its f
       .filter((f) => /signup-cta-claims/.test(fs.readFileSync(f, "utf8").replace(/^\s*\/\/.*$/gm, "")))
       .map((f) => path.relative(ROOT, f).replace(/\\/g, "/"));
     expect(importers).toEqual([]);
-    const copy = read("src/lib/signup-cta-copy.ts");
-    for (const name of ["SIGNUP_CLAIM_PROOF", "SIGNUP_CLAIM_PHRASE_EN", "SIGNUP_BANNED_WORDS", "SIGNUP_EXPLAIN_CLAIMS"]) expect(copy, name).not.toContain(name);
-    // And the claims module pulls nothing in but a type.
-    expect(read("src/lib/signup-cta-claims.ts").match(/^import .*$/gm)).toEqual(['import type { SignUpExplainVariant, SignUpReason } from "@/lib/signup-cta-copy";']);
+    for (const f of ["src/lib/signup-cta-copy.ts", "src/lib/signup-place.ts"]) {
+      const src = read(f);
+      for (const name of ["SIGNUP_CLAIM_PROOF", "SIGNUP_CLAIM_SAYS_EN", "SIGNUP_BANNED_WORDS", "SIGNUP_PLACE_CLAIMS"]) expect(src, `${f}: ${name}`).not.toContain(name);
+    }
+    // And the claims module pulls nothing in but two types.
+    expect(read("src/lib/signup-cta-claims.ts").match(/^import .*$/gm)).toEqual(['import type { SignUpReason } from "@/lib/signup-cta-copy";', 'import type { SignUpPlaceKey } from "@/lib/signup-place";']);
   });
 
   it("every claim names code that makes it true today, and that code is there", () => {
@@ -494,7 +530,7 @@ describe("3. the explanation: honest, surface-aware, every claim pinned to its f
     expect(read("src/lib/tutor-memory.ts")).toContain("The school tutor gets none.");
   });
 
-  it("Hindi and Telugu carry the same variants, name Google and the AI tutor, and keep the exam's name", () => {
+  it("Hindi and Telugu carry the same entries, name Google, and keep the exam's name", () => {
     for (const l of ["hi", "te"] as const) {
       for (const ctx of [
         { kind: "exam", exam: "SSC CGL", practice: true },
@@ -508,8 +544,10 @@ describe("3. the explanation: honest, surface-aware, every claim pinned to its f
         expect(text).toContain("Google");
         expect(text).not.toContain("{exam}");
         if (ctx.kind === "exam") expect(text).toContain("SSC CGL");
+        // The school words: no tutor. (The other entries speak of the AI tutor only where it is what the
+        // account adds — the entry for an exam that can serve a mock speaks of its mocks instead.)
         if (ctx.kind === "school") expect(text).not.toMatch(/AI|ट्यूटर|ట్యూటర్/);
-        else expect(text).toContain("AI");
+        if (ctx.kind === "general" || ctx.kind === "tutor") expect(text).toContain("AI");
         expect(/[ऀ-ॿ]/.test(text)).toBe(l === "hi");
         expect(/[ఀ-౿]/.test(text)).toBe(l === "te");
         // The short caption: the same language, the exam's name, no English left behind.
@@ -528,12 +566,15 @@ describe("3. the explanation: honest, surface-aware, every claim pinned to its f
     for (const l of SIGNUP_LOCALES) {
       for (const ctx of [{ kind: "exam", exam: "X", practice: true }, { kind: "exam", exam: "X", practice: false }, { kind: "general" }, { kind: "school" }, { kind: "tutor" }] as copyMod.SignUpContext[]) {
         const text = signUpExplain(l, ctx);
-        for (const both of [text, signUpExplainShort(l, ctx)]) {
+        // The one digit any entry holds is the age sentence's "13" (the school entries), stored once per language.
+        const age = signUpPlaceWords(l, { key: "family.schoolCbse" }).text.match(/[^.।]*13[^.।]*[.।]/)?.[0] ?? "";
+        expect(age.length, l).toBeGreaterThan(10);
+        for (const both of [text.replace(age, ""), signUpExplainShort(l, ctx)]) {
           for (const w of SIGNUP_BANNED_WORDS) expect(both.toLowerCase(), `${l}: ${w}`).not.toContain(w);
           expect(both).not.toMatch(/\d|rank|#1|best|biggest|सबसे|అతిపెద్ద/i);
         }
-        // One or two sentences a student reads in a glance.
-        expect(text.length).toBeLessThan(240);
+        // Two to four sentences a student reads in a glance: at most 300 characters in English, 360 in Hindi and Telugu.
+        expect(text.length).toBeLessThanOrEqual(l === "en" ? 300 : 361);
       }
     }
     expect(SIGNUP_BANNED_WORDS).toEqual(expect.arrayContaining(["superintelligence", "everything changes", "fully personalised"]));
@@ -608,13 +649,22 @@ describe("4. the exam words only where the sign-in really sets that exam up", ()
     expect(signUpContextFor({ callback: "/chat?general=1", tutor: true })).toEqual({ kind: "tutor" });
   });
 
-  it("the shared button derives the context from its own link; callers cannot hand it an exam claim the link does not back", () => {
+  it("the shared button derives its entry from its own link; callers cannot hand it an exam claim the link does not back", () => {
     const btn = code("src/components/SignUpButton.tsx");
-    expect(btn).toContain("const ctx = context ?? signUpContextFor({ callback: callbackOfLoginHref(href), exam, examCode, practice });");
-    // `context` is used by one caller only: the guest tutor's card.
+    // The button hands the rules its door, the page its OWN link returns to, and what the caller and the page know.
+    expect(btn).toMatch(
+      /const words = useSignUpWords\(\s*locale,\s*\{ surface, callback: callbackOfLoginHref\(href\), exam, examCode, practice, olympiad, page, vars, setQuestions \},\s*\{ given: typeof givenText === "string" \? \{ text: givenText, short: givenShort \?\? "" \} : null, place, context, now: mode === "both" \},\s*\);/,
+    );
+    // … which decide the entry (src/lib/use-signup-words.ts): a fixed entry, an old variant's alias, or the door's own rules.
+    expect(code("src/lib/use-signup-words.ts")).toContain("return rules.signUpWordsFrom(table, place ?? (context ? rules.signUpPlaceOfContext(context) : rules.signUpPlaceFor(at)));");
+    // The resolver builds on signUpContextFor: an exam is named only where the link returns to it.
+    expect(code("src/lib/signup-place.ts")).toContain("const ctx = signUpContextFor({ callback, exam: p.exam, examCode: p.examCode });");
+    expect(signUpPlaceFor({ surface: "hub-box", callback: "/colleges/iit-bombay", exam: "JEE Main", examCode: "JEE_MAIN", practice: "canServe" }).key).toBe("family.fallback");
+    expect(signUpPlaceFor({ surface: "hub-box", callback: "/exams/SSC_CHSL", exam: "SSC CGL", examCode: "SSC_CGL", practice: "canServe" }).key).toBe("family.examPath");
+    // No caller passes a fixed context any more: the guest tutor's card (the one that did) passes its exam.
     const users = BUTTONS.filter((b) => /\bcontext=\{/.test(code(b.file))).map((b) => b.file);
-    expect(users).toEqual(["src/app/chat/ChatInterface.tsx"]);
-    expect(code("src/app/chat/ChatInterface.tsx")).toContain('context={{ kind: "tutor" }}');
+    expect(users).toEqual([]);
+    expect(code("src/app/chat/ChatInterface.tsx")).not.toContain('context={{ kind: "tutor" }}');
   });
 });
 
@@ -622,7 +672,10 @@ describe("4. the exam words only where the sign-in really sets that exam up", ()
 
 describe("5. the rendered button: label, Google's mark, tooltip and caption", () => {
   const href = loginHrefFor("/exams/SSC_CGL?start=practice", "hub-box");
-  const hub = render(ui.SignUpButton, { href, surface: "hub-box", exam: "SSC CGL", examCode: "SSC_CGL", practice: true });
+  // The hub box as its server page fills it: the door's own entry, resolved on the server and handed in.
+  const hubInput = { surface: "hub-box", callback: "/exams/SSC_CGL?start=practice", exam: "SSC CGL", examCode: "SSC_CGL", practice: "canServe" } as const;
+  const hubWords = signUpWords("en", hubInput);
+  const hub = render(ui.SignUpButton, { href, surface: "hub-box", exam: "SSC CGL", examCode: "SSC_CGL", ...hubWords });
 
   it("is the same /login link as before, with the same door id and the self-beacon mark", () => {
     const a = hub.match(/<a\b[^>]*>/)?.[0] ?? "";
@@ -654,10 +707,12 @@ describe("5. the rendered button: label, Google's mark, tooltip and caption", ()
     // After the link: the short caption (in the flow, on every device), then the frame that holds the full sentence
     // (the tooltip, and what a screen reader hears).
     const frame = hub.match(/<\/a><span class="su-cap">([^<]*)<\/span><span class="su-tip"><span id="[^"]+" role="tooltip" class="su-tip-text">([^<]*)<\/span><\/span><\/span>$/);
-    expect(frame?.[1]).toBe(signUpExplainShort("en", { kind: "exam", exam: "SSC CGL", practice: true }));
-    expect(frame?.[2]).toBe(signUpExplain("en", { kind: "exam", exam: "SSC CGL", practice: true }));
+    expect(frame?.[1]).toBe(hubWords.short);
+    expect(frame?.[2]).toBe(hubWords.text);
+    expect(signUpPlaceFor(hubInput).key).toBe("door.hub-box");
     // The short caption is plain text: no role, no id, nothing the button points at.
-    expect(hub).toContain('<span class="su-cap">No forms. SSC CGL is set up as your exam.</span>');
+    expect(hub).toContain(`<span class="su-cap">${hubWords.short}</span>`);
+    expect(hubWords.short).toMatch(/^No forms\. .*SSC CGL/);
     expect(hub).not.toContain("su-tip-short");
     // Title-less: a native title tooltip would double it and cannot be styled or dismissed.
     expect(hub).not.toMatch(/\stitle=/);
@@ -670,13 +725,13 @@ describe("5. the rendered button: label, Google's mark, tooltip and caption", ()
     const block = render(ui.SignUpButton, { href, surface: "quiz-end", block: true, className: "flex-1" });
     expect(block).toMatch(/^<span class="su-wrap su-block flex-1" data-su-explain="both">/);
     expect(block).toContain('class="su-google w-full"');
-    const top = render(ui.SignUpButton, { href, surface: "signup-nudge", stack: true, explain: "tooltip", side: "top", align: "end" });
+    const top = render(ui.SignUpButton, { href, surface: "signup-nudge", stack: true, explain: "tooltip", side: "top", align: "end", ...hubWords });
     expect(top).toMatch(/^<span class="su-wrap" data-su-explain="tooltip" data-su-side="top" data-su-align="end">/);
     // explain="tooltip": no caption element at all — only the full sentence, for the mouse and the screen reader.
     expect(top).not.toContain("su-cap");
     expect(top.match(/role="tooltip" class="su-tip-text"/g)).toHaveLength(1);
     // explain="own" (the placement has its own benefit line beside the button): no caption either, the same tooltip.
-    const own = render(ui.SignUpButton, { href, surface: "signup-pitch", explain: "own" });
+    const own = render(ui.SignUpButton, { href, surface: "signup-pitch", explain: "own", ...hubWords });
     expect(own).toMatch(/^<span class="su-wrap" data-su-explain="own">/);
     expect(own).not.toContain("su-cap");
     expect(own.match(/role="tooltip" class="su-tip-text"/g)).toHaveLength(1);
@@ -699,20 +754,34 @@ describe("5. the rendered button: label, Google's mark, tooltip and caption", ()
   });
 
   it("the language follows the page: Hindi and Telugu labels and explanations", () => {
-    const hi = render(ui.SignUpButton, { href, surface: "hub-box", locale: "hi", exam: "SSC CGL", examCode: "SSC_CGL", practice: true });
+    const hiWords = signUpWords("hi", hubInput);
+    const hi = render(ui.SignUpButton, { href, surface: "hub-box", locale: "hi", exam: "SSC CGL", examCode: "SSC_CGL", ...hiWords });
     expect(textOf(hi.slice(hi.indexOf("<a"), hi.indexOf("</a>")))).toBe("Google से साइन अप करें");
-    expect(textOf(hi)).toContain(signUpExplain("hi", { kind: "exam", exam: "SSC CGL", practice: true }));
-    const te = render(ui.SignUpButton, { href: "/login?callbackUrl=%2Fcolleges&from=pitch", surface: "signup-pitch", locale: "te" });
+    expect(textOf(hi)).toContain(hiWords.text);
+    expect(hiWords.text).toContain("SSC CGL");
+    expect(/[ऀ-ॿ]/.test(hiWords.text)).toBe(true);
+    const teWords = signUpWords("te", { surface: "signup-pitch", callback: "/colleges" });
+    const te = render(ui.SignUpButton, { href: "/login?callbackUrl=%2Fcolleges&from=pitch", surface: "signup-pitch", locale: "te", ...teWords });
     expect(textOf(te)).toContain("Google తో సైన్ అప్ చేయండి");
-    expect(textOf(te)).toContain(signUpExplain("te", { kind: "general" }));
+    expect(textOf(te)).toContain(teWords.text);
+    expect(teWords).toEqual(signUpPlaceWords("te", { key: "family.colleges" }));
   });
 
-  it("a button whose link does not return to the exam gets the general words even if a caller names an exam", () => {
-    const wrong = render(ui.SignUpButton, { href: "/login?callbackUrl=%2Fcolleges%2Fiit-bombay&from=pitch", surface: "signup-inline", exam: "JEE Main", practice: true });
-    expect(textOf(wrong)).toContain(signUpExplain("en", { kind: "general" }));
-    expect(textOf(wrong)).not.toContain("JEE Main");
-    const school = render(ui.SignUpButton, { href: "/login?callbackUrl=%2Fschooling%2Fcbse%2Fclass-9%2Fscience%2Fmotion", surface: "school-save", exam: "SSC CGL" });
-    expect(textOf(school)).toContain(signUpExplain("en", { kind: "school" }));
+  it("a button whose link does not return to the exam names no exam even if a caller names one", () => {
+    // The early line on a college page: the page family's entry, whatever a caller passes.
+    const wrong = { surface: "signup-inline", callback: "/colleges/iit-bombay", exam: "JEE Main", practice: "canServe" } as const;
+    expect(signUpPlaceFor(wrong).key).toBe("family.college");
+    expect(signUpWords("en", wrong).text).not.toContain("JEE Main");
+    // A door on another page: the general words.
+    expect(signUpPlaceFor({ surface: "quiz-end", callback: "/colleges/iit-bombay", exam: "JEE Main", examCode: "JEE_MAIN", practice: "canServe" }).key).toBe("family.fallback");
+    // A school return: the school words, whatever exam is passed.
+    const school = { surface: "school-save", callback: "/schooling/cbse/class-9/science/motion", exam: "SSC CGL" } as const;
+    // (The caption is the one that is true on every school page: src/lib/signup-place.ts, rule 6.)
+    expect(signUpWords("en", school)).toEqual(signUpPlaceWords("en", { key: "family.schoolCbse", cap: "family.schoolOtherBoard" }));
+    expect(signUpWords("en", school).text).toBe(signUpExplain("en", { kind: "school" }));
+    // Rendered: a client island's button holds no words until the reader's language has loaded — never a wrong one.
+    const lazy = render(ui.SignUpButton, { href: "/login?callbackUrl=%2Fcolleges%2Fiit-bombay&from=pitch", surface: "signup-inline", exam: "JEE Main", explain: "own" });
+    expect(lazy).not.toMatch(/JEE Main|role="tooltip"|su-cap/);
   });
 
   it("no saffron sign-up button is left: the narrow form (the timed bar) is Google's light button too — the G, then the label on two lines", () => {
@@ -749,7 +818,9 @@ describe("5. the rendered button: label, Google's mark, tooltip and caption", ()
   });
 
   it("the straight-to-Google button (/login, the gates): a real <button>, the same face, tooltip and caption", () => {
-    const login = render(googleBtn.GoogleSignInButton, { callbackUrl: "/exams/SSC_CGL/pyq/2024", locale: "en", continueLabel: "Continue with Google", exam: "SSC CGL", examCode: "SSC_CGL" });
+    // As /login fills it: the words resolved on the server and handed in.
+    const loginWords = signUpWords("en", { surface: "login", callback: "/exams/SSC_CGL/pyq/2024", exam: "SSC CGL", examCode: "SSC_CGL" });
+    const login = render(googleBtn.GoogleSignInButton, { callbackUrl: "/exams/SSC_CGL/pyq/2024", locale: "en", continueLabel: "Continue with Google", exam: "SSC CGL", examCode: "SSC_CGL", ...loginWords });
     const b = login.match(/<button\b[^>]*>/)?.[0] ?? "";
     expect(attr(b, "type")).toBe("button");
     expect(attr(b, "class")).toBe("su-google w-full");
@@ -775,10 +846,15 @@ describe("5. the rendered button: label, Google's mark, tooltip and caption", ()
     // and the page's own heading and body, in that language, are the reason ("own").
     expect(ta).toMatch(/^<span class="su-wrap su-block mt-6" data-su-explain="own">/);
     expect(ta).not.toContain("su-cap");
-    for (const l of ["hi", "te"]) expect(render(googleBtn.GoogleSignInButton, { callbackUrl: "/dashboard", locale: l, continueLabel: "x" })).toContain('<span class="su-cap">');
+    for (const l of ["hi", "te"]) expect(render(googleBtn.GoogleSignInButton, { callbackUrl: "/dashboard", locale: l, continueLabel: "x", ...signUpWords(l, { surface: "login", callback: "/dashboard" }) })).toContain('<span class="su-cap">');
     // A school return: the school words.
-    const school = render(googleBtn.GoogleSignInButton, { callbackUrl: "/schooling/cbse/class-9/science/motion?signedin=1", locale: "en", continueLabel: "Continue with Google" });
+    const schoolCb = "/schooling/cbse/class-9/science/motion?signedin=1";
+    const school = render(googleBtn.GoogleSignInButton, { callbackUrl: schoolCb, locale: "en", continueLabel: "Continue with Google", ...signUpWords("en", { surface: "login", callback: schoolCb }) });
     expect(textOf(school)).toContain(signUpExplain("en", { kind: "school" }));
+    // Without words handed in (a gate's result screen): its caption's line is held open until they load.
+    const lazy = render(googleBtn.GoogleSignInButton, { callbackUrl: "/mocks/cm1234567890?from=signin", locale: "en", exam: "SSC CGL", examCode: "SSC_CGL", surface: "mock-gate-quiz-end" });
+    expect(lazy).toContain('<span class="su-cap">\u00a0</span>');
+    expect(lazy).not.toMatch(/role="tooltip"|aria-describedby/);
   });
 
   it("the header: the words arrive after mount — the cached HTML of every page holds the label and nothing else", () => {
@@ -792,7 +868,7 @@ describe("5. the rendered button: label, Google's mark, tooltip and caption", ()
     });
     expect(shell).toBe('<span class="su-wrap" data-su-explain="tooltip" data-su-align="end"><a href="/login">x</a></span>');
     const controls = code("src/components/HeaderAuthControls.tsx");
-    expect(controls).toMatch(/<SignUpShell text=\{signUpTip\} surface="header" explain="tooltip" align="end" deferText>/);
+    expect(controls).toMatch(/<SignUpShell text=\{signUpTip\} surface="header" explain="tooltip" align="end" deferText onWant=\{wantTip\}>/);
     // On a touch screen there is NO tooltip (the frame that holds the full sentence is never displayed there), and
     // explain="tooltip" renders no caption — nothing can take the tap.
     const css = read("src/app/globals.css");
@@ -800,8 +876,13 @@ describe("5. the rendered button: label, Google's mark, tooltip and caption", ()
     // Still a plain /login link counted by the layout listener (not in the skip-/login test).
     expect(controls).toContain('data-signin-surface="header"');
     expect(controls).not.toContain("SignInLink");
-    // A Class 8-12 page's header gets the school words.
-    expect(controls).toContain("const signUpTip = signUpExplain(lang, signUpContextFor({ callback: callbackOfLoginHref(loginHref) }));");
+    // The header's sentence is the entry of the page family it is on — the school words on a Class 8-12 page —
+    // and its words are fetched after mount, never where no tooltip is rendered.
+    expect(controls).toMatch(
+      /const signUpTip =\s*useSignUpWords\(\s*lang,\s*\{ surface: "header", callback: callbackOfLoginHref\(loginHref\), page: pageData \},\s*\{ off: !guestButton \|\| isChildSchoolPath\(pathname\) \|\| \(session === null && hasSessionHint\(\)\) \},\s*\)\?\.text \?\? "";/,
+    );
+    expect(controls).not.toMatch(/signUpExplain|signup-place-words|@\/lib\/signup-place"/);
+    expect(placeMod.signUpPagePlace("/schooling/cbse/class-9").key).toBe("family.schoolCbse");
     // Header.tsx types no label and gains no title attribute (twin English budget, tests/unit/header-nav.test.ts).
     expect(code("src/components/Header.tsx")).not.toMatch(/Sign up|Sign in free/);
   });
@@ -845,7 +926,11 @@ describe("6. the tooltip: hover AND keyboard focus, no layout shift, never over 
     expect(hover.slice(0, hover.indexOf("  .su-float {")).replace(/\/\*[\s\S]*?\*\//g, "")).not.toMatch(/su-cap|su-tip-short/);
     expect(css.replace(/\/\*[\s\S]*?\*\//g, "")).not.toContain("su-tip-short");
     // The shell renders it for explain "both" only, with the button (no wait for the script: nothing moves).
-    expect(shell).toContain('{ready && short && explain === "both" && <span className="su-cap">{short}</span>}');
+    expect(shell).toContain('{shown && short && explain === "both" && <span className="su-cap">{short}</span>}');
+    // … `shown`: at once, or after mount in the header; `ready`: the full sentence is there too (a client island's
+    // words load on demand).
+    expect(shell).toContain("const shown = mounted || !deferText;");
+    expect(shell).toContain('const ready = shown && text !== "";');
     // The top layer is a mouse-only thing: no rule outside the hover query reads data-su-float.
     expect(css.slice(0, css.indexOf("@media (hover: hover) and (pointer: fine) {")).replace(/\/\*[\s\S]*?\*\//g, "")).not.toContain("data-su-float");
   });
@@ -865,7 +950,7 @@ describe("6. the tooltip: hover AND keyboard focus, no layout shift, never over 
     expect(block).toMatch(/\.su-wrap\[data-su-side="top"\] > \.su-tip \{\s*top: auto;\s*bottom: 100%;/);
     expect(block).toMatch(/\.su-wrap\[data-su-align="end"\] > \.su-tip \{\s*right: 0;\s*left: auto;/);
     // Never wider than the screen.
-    expect(block).toContain("max-width: min(20rem, calc(100vw - 2rem));");
+    expect(block).toContain("max-width: min(22.5rem, calc(100vw - 2rem));");
     // The frame carries the caller's side and edge as they are (the script no longer rewrites them).
     expect(shell).toContain("data-su-side={side}");
     expect(shell).toContain("data-su-align={align}");
@@ -883,7 +968,7 @@ describe("6. the tooltip: hover AND keyboard focus, no layout shift, never over 
     expect(block).toMatch(/\.su-wrap\[data-su-float="on"\] > \.su-tip \{\s*display: none;\s*\}/);
     expect(block.slice(block.indexOf(off))).not.toMatch(/\.su-wrap[^{]*> \.su-tip \{\s*display: block;/);
     // And the top-layer copy exists only while that mark is on.
-    expect(shell).toContain("{mounted && active && !closed && <SignUpTipFloat frame={frame} text={text} side={side} align={align} />}");
+    expect(shell).toContain('{mounted && active && !closed && text !== "" && <SignUpTipFloat frame={frame} text={text} side={side} align={align} />}');
   });
 
   it("the top layer: a copy in <body>, position: fixed, never in the way of a click, hidden until placed", () => {
@@ -895,7 +980,7 @@ describe("6. the tooltip: hover AND keyboard focus, no layout shift, never over 
     expect(float).toMatch(/^  \.su-float \{\s*position: fixed;\s*top: 0;\s*left: 0;\s*z-index: 1000;\s*visibility: hidden;/);
     expect(float).toContain("pointer-events: none;");
     // 8 px free on each side of the window (its width without the scrollbar).
-    expect(float).toContain("max-width: min(20rem, calc(100% - 16px));");
+    expect(float).toContain("max-width: min(22.5rem, calc(100% - 16px));");
     expect(float).toContain("box-sizing: border-box;");
     // The same look as the CSS tooltip: white on ink-900, 12 px.
     expect(float).toMatch(/background-color: theme\("colors\.ink\.900"\);[^}]*color: #ffffff;/);
@@ -951,7 +1036,7 @@ describe("6. the tooltip: hover AND keyboard focus, no layout shift, never over 
     expect(float).toContain('aria-hidden="true"');
     expect(float).not.toMatch(/\brole=|\bid=/);
     // A static render (the server, the first client render) has no top-layer copy and no mark.
-    const html = render(ui.SignUpButton, { href: loginHrefFor("/exams/SSC_CGL", "hub-box"), surface: "hub-box", side: "top" });
+    const html = render(ui.SignUpButton, { href: loginHrefFor("/exams/SSC_CGL", "hub-box"), surface: "hub-box", side: "top", ...signUpWords("en", { surface: "hub-box", callback: "/exams/SSC_CGL" }) });
     expect(html).not.toMatch(/su-float|data-su-float/);
     expect(html.match(/role="tooltip"/g)).toHaveLength(1);
   });
@@ -967,7 +1052,9 @@ describe("6. the tooltip: hover AND keyboard focus, no layout shift, never over 
     expect(shell).toContain('window.removeEventListener("pagehide", onHide);');
     // A touch pointer never opens (or counts) anything; nor does a screen without a mouse.
     // A pen that hovers opens it (the CSS tooltip did); only a resting MOUSE is counted, as before.
-    expect(shell).toMatch(/onPointerEnter=\{\(e\) => \{\s*if \(e\.pointerType === "touch" \|\| !canHover\(\)\) return;\s*setHovered\(true\);\s*if \(e\.pointerType !== "mouse"\) return;\s*if \(hoverTimer\.current !== null\) window\.clearTimeout\(hoverTimer\.current\);\s*hoverTimer\.current = window\.setTimeout\(\(\) => explainOpened\(surface, "hover"\), SIGNUP_EXPLAIN_HOVER_MS\);\s*\}\}/);
+    // (Review, 2 Oct 2026: a button whose words have not arrived asks for them on hover, and the beacon goes out
+    // only if the explanation is there when the 0.6 s are over.)
+    expect(shell).toMatch(/onPointerEnter=\{\(e\) => \{\s*if \(e\.pointerType === "touch" \|\| !canHover\(\)\) return;\s*setHovered\(true\);\s*if \(text === ""\) onWant\?\.\(\);\s*if \(e\.pointerType !== "mouse"\) return;\s*if \(hoverTimer\.current !== null\) window\.clearTimeout\(hoverTimer\.current\);\s*hoverTimer\.current = window\.setTimeout\(\(\) => \{\s*if \(readyNow\.current\) explainOpened\(surface, "hover"\);\s*\}, SIGNUP_EXPLAIN_HOVER_MS\);\s*\}\}/);
     expect(shell).not.toContain('e.pointerType !== "mouse" || !canHover()');
     expect(shell).toMatch(/if \(!el \|\| !canHover\(\)\) return;/);
   });
@@ -976,7 +1063,7 @@ describe("6. the tooltip: hover AND keyboard focus, no layout shift, never over 
     // Chrome and Firefox focus a link or button on a mouse click: after a Ctrl-click the tooltip would stay with nobody on it.
     // :focus-visible is asked FIRST, and only it opens; a browser too old to know it opens on any focus and counts none.
     expect(shell).toMatch(
-      /onFocus=\{\(e\) => \{\s*if \(!canHover\(\)\) return;\s*let keyboard = false;\s*let opens = true;\s*try \{\s*keyboard = \(e\.target as HTMLElement\)\.matches\(":focus-visible"\);\s*opens = keyboard;\s*\} catch \{\s*keyboard = false;\s*\}\s*if \(opens\) setFocused\(true\);\s*if \(keyboard\) explainOpened\(surface, "focus"\);\s*\}\}/,
+      /onFocus=\{\(e\) => \{\s*let keyboard = false;\s*let opens = true;\s*try \{\s*keyboard = \(e\.target as HTMLElement\)\.matches\(":focus-visible"\);\s*opens = keyboard;\s*\} catch \{\s*keyboard = false;\s*\}\s*if \(opens && text === ""\) onWant\?\.\(\);\s*if \(!canHover\(\)\) return;\s*if \(opens\) setFocused\(true\);\s*if \(keyboard && ready\) explainOpened\(surface, "focus"\);\s*\}\}/,
     );
     // setFocused(true) is never unconditional any more.
     expect(shell).not.toMatch(/if \(!canHover\(\)\) return;\s*setFocused\(true\);/);
@@ -1053,7 +1140,7 @@ describe("7. Google's 'Sign in with Google' branding guidelines (read 2 Oct 2026
     // sign-up button stays the main action (28 Sep: hub sign-ups fell from about 11 a day to 4 when it was not).
     const hub = code("src/app/exams/[code]/page.tsx");
     const at = hub.indexOf("<HubSignInLink");
-    const beside = hub.slice(at, at + 900);
+    const beside = hub.slice(at, at + 1400);
     expect(beside).toContain('className="inline-flex min-h-[44px] items-center justify-center rounded-md border border-ink-300 bg-white px-4 py-2 text-sm font-semibold text-ink-800 transition-colors hover:bg-ink-50"');
     expect(beside).not.toMatch(/border-2|saffron/);
   });
@@ -1253,8 +1340,9 @@ describe("9. measuring: the click is unchanged; new doors and new mounts have th
     const shell = code("src/components/SignUpButton.tsx");
     expect(shell).toContain("if (!explainBeaconDue(path, explainSentPath)) return;");
     expect(shell).toContain("ctaBeacon(SIGNUP_EXPLAIN_CTA, { surface, via });");
-    expect(shell).toContain('hoverTimer.current = window.setTimeout(() => explainOpened(surface, "hover"), SIGNUP_EXPLAIN_HOVER_MS);');
-    expect(shell).toContain('if (keyboard) explainOpened(surface, "focus");');
+    // … and only when the explanation is in the page (a client island's words may not have arrived).
+    expect(shell).toMatch(/hoverTimer\.current = window\.setTimeout\(\(\) => \{\s*if \(readyNow\.current\) explainOpened\(surface, "hover"\);\s*\}, SIGNUP_EXPLAIN_HOVER_MS\);/);
+    expect(shell).toContain('if (keyboard && ready) explainOpened(surface, "focus");');
     // Only one beacon call in the component, and it stores nothing.
     expect(shell.match(/ctaBeacon\(/g)).toHaveLength(1);
     expect(shell).not.toMatch(/sessionStorage|document\.cookie/);
@@ -1351,8 +1439,11 @@ describe("9. measuring: the click is unchanged; new doors and new mounts have th
       const tags = src.match(/<SignupInline\b[^>]*\/>/g) ?? [];
       expect(tags, file).toHaveLength(1);
       expect(tags[0], file).toContain(`surface="${id}"`);
-      // No exam name on these mounts: the general line (no practice read on the page).
-      expect(tags[0], file).not.toMatch(/\sexam=/);
+      // No exam name on these mounts: the general line (no practice read on the page) — but the checklist
+      // (decision of 2 Oct 2026): a sign-up there does set the exam, so its line is given the exam and its practice.
+      // Review, same day: "{exam} mocks" there only for an exam that can serve one (five or more checked questions).
+      if (id === "exam-checklist") expect(tags[0], file).toBe('<SignupInline surface="exam-checklist" exam={short} practice={examCanServeMock} revealOffscreen />');
+      else expect(tags[0], file).not.toMatch(/\sexam=/);
       // After the page's h1 — never above the content.
       expect(src.indexOf("<SignupInline"), file).toBeGreaterThan(src.indexOf("<h1"));
     }
@@ -1394,13 +1485,21 @@ describe("10. /login: the exam is named only when the catalogue has it (review b
     expect(read("src/lib/signup-profile.ts")).toContain("return exam && exam.active ? exam : null;");
   });
 
-  it("an unknown code (a typed link, a retired exam's 404 page) gets the general sentence; a known one names the exam", () => {
-    // What the page passes for /login?callbackUrl=/exams/FOO: no name, no code.
-    const unknown = render(googleBtn.GoogleSignInButton, { callbackUrl: "/exams/FOO", locale: "en", continueLabel: "Continue with Google", exam: null, examCode: null });
-    expect(textOf(unknown)).toContain(signUpExplain("en", { kind: "general" }));
-    expect(textOf(unknown)).not.toMatch(/FOO|is set up/);
-    const known = render(googleBtn.GoogleSignInButton, { callbackUrl: "/exams/SSC_CGL", locale: "en", continueLabel: "Continue with Google", exam: "SSC CGL", examCode: "SSC_CGL" });
-    expect(textOf(known)).toContain("SSC CGL is set up as your exam the moment you sign up");
+  it("an unknown code (a typed link, a retired exam's 404 page) names no exam; a known one names the exam", () => {
+    // What the page passes for /login?callbackUrl=/exams/FOO: no name, no code → the entry that names nothing
+    // ("Preparing for an exam? Sign up from its page …" — true as a general statement, on that 404 page too).
+    const unknownInput = { surface: "login", callback: "/exams/FOO", from: "header", exam: null, examCode: null } as const;
+    expect(signUpPlaceFor(unknownInput)).toEqual({ key: "family.examPath" });
+    const unknown = render(googleBtn.GoogleSignInButton, { callbackUrl: "/exams/FOO", locale: "en", continueLabel: "Continue with Google", exam: null, examCode: null, ...signUpWords("en", unknownInput) });
+    expect(textOf(unknown)).toContain(signUpPlaceWords("en", { key: "family.examPath" }).text);
+    expect(textOf(unknown)).not.toMatch(/FOO/);
+    const knownInput = { surface: "login", callback: "/exams/SSC_CGL", from: "header", exam: "SSC CGL", examCode: "SSC_CGL" } as const;
+    const known = render(googleBtn.GoogleSignInButton, { callbackUrl: "/exams/SSC_CGL", locale: "en", continueLabel: "Continue with Google", exam: "SSC CGL", examCode: "SSC_CGL", ...signUpWords("en", knownInput) });
+    expect(textOf(known)).toContain("Following SSC CGL? Sign up and it is set up as your exam");
+    // The page resolves the words itself and hands them to the button.
+    const tag = login.match(/<GoogleSignInButton\b[\s\S]*?\/>/)?.[0] ?? "";
+    expect(tag).toContain("{...signUp}");
+    expect(login).toMatch(/const signUp = signUpWords\(locale, \{\s*surface: "login",\s*callback: cb,\s*from: sp\.from \?\? null,\s*returning: li\.kind === "return",\s*exam: signUpExam\?\.shortName \?\? null,\s*examCode: signUpExam \? examCode : null,/);
   });
 
   it("/login wears the light button and opens its tooltip above — 'Try 5 questions first' sits under it, as a quiet outline", () => {
@@ -1482,7 +1581,7 @@ describe("11. a button with another action under it opens its tooltip ABOVE (rev
     expect(chatTags.find((t) => t.includes('surface="chat-save"'))).toContain('side="top"');
     expect(code("src/components/GuestQuizGate.tsx").match(/<GoogleSignInButton\b[\s\S]*?\/>/)?.[0]).toContain('side="top"');
     // GoogleSignInButton hands side to the frame.
-    expect(code("src/components/GoogleSignInButton.tsx")).toContain("<SignUpShell text={text} short={short} surface={surface} explain={mode} side={side} block className={className}>");
+    expect(code("src/components/GoogleSignInButton.tsx")).toMatch(/<SignUpShell\s+text=\{text\}\s+short=\{short\}\s+surface=\{surface\}\s+explain=\{mode\}\s+side=\{side\}\s+block\s+className=\{className\}/);
   });
 });
 

@@ -283,7 +283,11 @@
       z-index: 50;
       display: none;
       width: max-content;
-      max-width: min(20rem, calc(100vw - 2rem));
+      /* 22.5rem = 360 px (it was 20rem until 2 Oct 2026): each placement has
+         its own sentence now, up to 300 characters in English and 360 in
+         Hindi and Telugu — about six to ten lines of 12 px text at this
+         width. Never wider than the screen. */
+      max-width: min(22.5rem, calc(100vw - 2rem));
       margin: 0;
       padding-top: 8px;
       font-size: 12px;
@@ -331,7 +335,11 @@
      in place and shows it before the browser paints. pointer-events: none —
      it can never take a click or a hover. max-width in % of the window
      without its scrollbar (100vw would count the scrollbar): 8 px stay
-     free on each side. Same look as the CSS tooltip above.
+     free on each side. Same look as the CSS tooltip above, and the same
+     360 px width (22.5rem; 320 px until 2 Oct 2026 — the sentences run to
+     300 characters in English and 360 in Hindi and Telugu). The placement
+     rule (src/lib/signup-tip-place.ts) keeps a box of any size on screen and
+     off the button.
      The test sees src/ only. A layer drawn by someone else's script is
      outside it: Google One Tap (planned for about 7 Oct 2026) puts its
      prompt in the top right corner, where the header's tooltip hangs, at a
@@ -345,7 +353,7 @@
     visibility: hidden;
     box-sizing: border-box;
     width: max-content;
-    max-width: min(20rem, calc(100% - 16px));
+    max-width: min(22.5rem, calc(100% - 16px));
     margin: 0;
     border-radius: 8px;
     background-color: theme("colors.ink.900");

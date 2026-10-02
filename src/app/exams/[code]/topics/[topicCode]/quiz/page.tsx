@@ -19,6 +19,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { ExamSignUpContext } from "@/components/ExamSignUpContext";
 import { auth } from "@/lib/auth";
 import { getT } from "@/lib/i18n-server";
 import { clampAnonQuizCount, getAnonQuiz, parseAnonQuizSet } from "@/lib/anon-quiz";
@@ -55,6 +56,8 @@ export default async function TopicQuizPage({
   return (
     <main className="min-h-screen bg-ink-50/40">
       <Header />
+      {/* What this page tells the sign-up placements on it (2 Oct 2026): the exam's name and what is true of it. Renders nothing. */}
+      {quiz && <ExamSignUpContext code={quiz.examCode} exam={quiz.examShort} />}
       <section className="container-prose py-8 sm:py-10">
         <p className="text-xs text-ink-500">
           <Link href={`/exams/${code}`} className="hover:text-ink-800">

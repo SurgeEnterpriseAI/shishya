@@ -43,11 +43,23 @@
 // result screen signs in and comes back here (src/components/GuestQuizGate).
 // Signed-in visitors, crawlers' view of the form and the JSON-LD are
 // unchanged; the quiz is read only for a guest and only when the form shows.
+//
+// The two sign-up buttons' words (2 Oct 2026 review). The form is shown as
+// soon as ONE topic holds 3 checked questions, but a set under 5 is refused
+// (BuilderForm `tooFew`; /api/mocks/custom MIN_MOCK_QUESTIONS). So "Sign up
+// to build this mock … and take it with your score kept" (door.build-mock-form)
+// and "you return to the builder to make your own mock" (door.build-gate-quiz-end)
+// are said only where the topics LISTED here — in the mode the page is in —
+// hold five or more questions together; a smaller exam, or ?pyq=1 with fewer
+// PYQ-pattern questions, gets the exam's plain sentence (src/lib/signup-place.ts,
+// rule 6). This page counts the topics, so it resolves both buttons' words
+// and hands them over as text.
 
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
+import { ExamSignUpContext } from "@/components/ExamSignUpContext";
 import { prisma } from "@/lib/db/prisma";
 import { realExamKey } from "@/lib/db/exam-scope";
 import { auth } from "@/lib/auth";
@@ -66,6 +78,9 @@ import { loadGuestQuizEmbed } from "@/lib/guest-quiz-embed";
 import { buildGateCallbackPath } from "@/lib/mock-gate";
 import { mockGateCopy } from "@/lib/mock-gate-copy";
 import { GuestQuizGate } from "@/components/GuestQuizGate";
+import { signUpWords } from "@/lib/signup-place-words";
+import { examSignUpFacts } from "@/lib/db/exam-practice";
+import { OLYMPIAD_CATEGORY } from "@/lib/school-age";
 
 // The form's copy in the visitor's locale (13 Sep 2026): cookie / URL /
 // preferredLang via getT(). Not exported — a page file may only export
@@ -283,6 +298,26 @@ export default async function BuildMockPage({
   // original questions.
   const C = buildMockCopy(tt.locale);
   const GC = mockGateCopy(tt.locale);
+
+  // A guest's two sign-up buttons (see the note at the top of this file).
+  // `listedQuestions`: the checked questions in the topics the form lists, in
+  // this mode — what the largest set could draw on. The exam's own practice
+  // value (the cached read the island below makes too) only chooses the plain
+  // sentence a smaller builder falls back to; a failed read leaves it unknown.
+  const listedQuestions = [...subjects.values()].reduce((sum, s) => sum + s.topics.reduce((a, t) => a + t.n, 0), 0);
+  const guestButtons = !signedIn && subjects.size > 0;
+  const signUpFacts = guestButtons ? await examSignUpFacts(exam.code) : null;
+  const builderSignUp = (surface: "build-mock-form" | "build-gate-quiz-end", locale: string, callback: string) =>
+    signUpWords(locale, {
+      surface,
+      callback,
+      exam: exam.shortName,
+      examCode: exam.code,
+      practice: signUpFacts?.practice,
+      olympiad: String(exam.category) === OLYMPIAD_CATEGORY,
+      setQuestions: listedQuestions,
+    });
+  const gateCallback = buildGateCallbackPath(exam.code, pyq, sp);
   const jsonLdText = (d: object) =>
     JSON.stringify(d).replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026");
 
@@ -293,6 +328,8 @@ export default async function BuildMockPage({
       ))}
       <div className={`h-1.5 w-full ${theme.ribbon}`} aria-hidden />
       <Header />
+      {/* What this page tells the sign-up placements on it (2 Oct 2026): the exam's name and what is true of it. Renders nothing. */}
+      <ExamSignUpContext code={exam.code} exam={exam.shortName} />
       <section className="container-prose py-8 sm:py-10">
         <p className="text-xs text-ink-500">
           <Link href={`/exams/${exam.code}`} className="hover:text-ink-800">{exam.shortName}</Link> · {C.crumb}
@@ -345,6 +382,7 @@ export default async function BuildMockPage({
             examCode={exam.code}
             examShort={exam.shortName}
             locale={tt.locale}
+            signUp={guestButtons ? builderSignUp("build-mock-form", tt.locale, `/exams/${exam.code}/build-mock${pyq ? "?pyq=1" : ""}`) : null}
             pyqOnly={pyq}
             subjects={[...subjects.values()]}
             preselected={preIds}
@@ -369,10 +407,11 @@ export default async function BuildMockPage({
                 line: GC.quizLine,
                 start: GC.quizStart,
               }}
-              signInCallbackUrl={buildGateCallbackPath(exam.code, pyq, sp)}
+              signInCallbackUrl={gateCallback}
               beacons={{ start: "build-gate-quiz-start", done: "build-gate-quiz-done" }}
               signinSurface="build-gate-quiz-end"
               continueLabel={tt.t("login.continue")}
+              signInWords={builderSignUp("build-gate-quiz-end", guestQuiz.locale, gateCallback)}
               beaconProps={{ examCode: exam.code }}
             />
           </div>

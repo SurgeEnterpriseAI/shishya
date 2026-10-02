@@ -55,6 +55,18 @@
 // after the intro or the first group, never as the last block above the
 // root layout's sign-up card (one in-content invitation per screen); the
 // /ask, exam archive, /exams/state and closing-soon mounts were removed.
+//
+// 2 Oct 2026, later (founder: "Each sign in with Google should be
+// contextualized from the location where it is"): the button's tooltip is
+// the entry of the PAGE FAMILY this line is on (src/lib/signup-place.ts
+// signUpPagePlace, from this page's path) — the same sentence as the header,
+// the site card and the timed bar of the page. On an exam page it names the
+// exam and says what is true of it only where the page handed that over
+// (<ExamSignUpContext> / <SignUpPageContext>): the exam's short name, whether
+// it can serve a mock, whether it is an olympiad, whether the topic has
+// notes. The `exam` and `practice` props below still write this line's OWN
+// sentence, which is unchanged; they no longer reach the button. The words
+// load on demand in the reader's language (the button does it).
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { fetchSignedIn } from "@/lib/session-hint";
@@ -178,8 +190,6 @@ export function SignupInline({
         href={href}
         surface="signup-inline"
         locale={lang}
-        exam={exam}
-        practice={practice}
         explain="own"
         block
         align="end"

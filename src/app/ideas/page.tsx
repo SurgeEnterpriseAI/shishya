@@ -14,6 +14,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { SignUpButton } from "@/components/SignUpButton";
+import { signUpWords } from "@/lib/signup-place-words";
 import { prisma } from "@/lib/db/prisma";
 import { auth } from "@/lib/auth";
 import {
@@ -202,7 +203,14 @@ export default async function IdeasPage({
                   had nothing to press. The one shared button sits under it;
                   it returns to this board. Door id "ideas-upvote". */}
               {!userId && (
-                <SignUpButton href="/login?callbackUrl=%2Fideas&from=ideas-upvote" surface="ideas-upvote" locale={locale} explain="own" className="mt-2" />
+                <SignUpButton
+                  href="/login?callbackUrl=%2Fideas&from=ideas-upvote"
+                  surface="ideas-upvote"
+                  locale={locale}
+                  {...signUpWords(locale, { surface: "ideas-upvote", callback: "/ideas" })}
+                  explain="own"
+                  className="mt-2"
+                />
               )}
               {open.length === 0 ? (
                 <p className="mt-3 rounded-md border border-dashed border-ink-300 bg-white p-4 text-center text-sm text-ink-500">

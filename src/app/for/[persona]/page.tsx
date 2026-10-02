@@ -23,6 +23,7 @@ import { prisma } from "@/lib/db/prisma";
 import { REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
 import { unstable_cache } from "next/cache";
 import { SignUpButton } from "@/components/SignUpButton";
+import { signUpWords } from "@/lib/signup-place-words";
 import { signUpLabel } from "@/lib/signup-cta-copy";
 
 export const revalidate = 86_400; // 24h
@@ -289,6 +290,7 @@ export default async function PersonaPage({
             <SignUpButton
               href={`/login?callbackUrl=${encodeURIComponent(`/for/${persona.slug}`)}&from=persona-card`}
               surface="persona-card"
+              {...signUpWords("en", { surface: "persona-card", callback: `/for/${persona.slug}` })}
               side="top"
               center
             />

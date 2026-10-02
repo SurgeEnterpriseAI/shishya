@@ -49,6 +49,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { unstable_cache } from "next/cache";
 import { Header } from "@/components/Header";
+import { ExamSignUpContext } from "@/components/ExamSignUpContext";
 import { prisma } from "@/lib/db/prisma";
 import { getExamTheme } from "@/lib/exam-theme";
 import { getT } from "@/lib/i18n-server";
@@ -237,6 +238,8 @@ export default async function NewsPermalinkPage({
       />
       <div className={`h-1.5 w-full ${theme.ribbon}`} aria-hidden />
       <Header />
+      {/* What this page tells the sign-up placements on it (2 Oct 2026): the exam's name and what is true of it. Renders nothing. */}
+      <ExamSignUpContext code={row.exam.code} exam={row.exam.shortName} />
       <section className="container-prose py-10">
         <p className="text-xs text-ink-500">
           <Link href={`/exams/${row.exam.code}`} className="hover:text-ink-800">

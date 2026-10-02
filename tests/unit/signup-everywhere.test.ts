@@ -29,6 +29,13 @@
 //      cutoff box follows rule D, the finder's bottom card has a button, a
 //      /live-test sign-up is not greeted "Welcome back", the gate counts only
 //      clicks on its button, and 22-language pages keep their own language.
+// 2 Oct 2026 (later — founder: every button's explanation is its own): the
+// explanation is one of 76 entries of a table now (src/data/signup-places/,
+// chosen by src/lib/signup-place.ts; pinned in
+// tests/unit/signup-places.test.ts). Changed here: a button gets its words
+// from a server page or loads them on demand, so the renders below hand the
+// words in; the "vouch" button and the fact panel's button return to their
+// page; the finder's line is the reason line "startExam".
 // What no test here can see: pixels. How the white button, its caption and
 // the quiet alternative look side by side — at 360 px and on a desktop — has
 // to be looked at in a browser.
@@ -45,6 +52,9 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 import * as copyMod from "@/lib/signup-cta-copy";
 import * as claimsMod from "@/lib/signup-cta-claims";
+import * as placeMod from "@/lib/signup-place";
+import * as hooksMod from "@/lib/use-signup-words";
+import { signUpPlaceWords, signUpWords } from "@/lib/signup-place-words";
 import * as signinCtaMod from "@/lib/signin-cta";
 import * as ctaBeaconMod from "@/lib/cta-beacon";
 import * as sessionHintMod from "@/lib/session-hint";
@@ -57,7 +67,7 @@ import { isUnder13SchoolPath } from "@/lib/school/student-classes";
 import { loginIntent } from "@/lib/login-intent";
 
 const { SIGNUP_BANNED_WORDS, SIGNUP_CLAIM_PROOF, SIGNUP_REASON_CLAIMS } = claimsMod;
-const { SIGNUP_LOCALES, signUpExplain, signUpExplainShort, signUpLabel, signUpReason } = copyMod;
+const { SIGNUP_LOCALES, signUpLabel, signUpReason } = copyMod;
 const { SIGNIN_SURFACES, cleanFrom, isSigninSurface } = signinCtaMod;
 const { inDirectSigninTest } = directMod;
 
@@ -131,6 +141,8 @@ const STUBS: Record<string, unknown> = {
   "next/link": { __esModule: true, default: LinkStub },
   "@/lib/signup-tip-place": tipPlaceMod,
   "@/lib/signup-cta-copy": copyMod,
+  "@/lib/signup-place": placeMod,
+  "@/lib/use-signup-words": hooksMod,
   "@/lib/signin-cta": signinCtaMod,
   "@/lib/cta-beacon": ctaBeaconMod,
   "@/lib/session-hint": sessionHintMod,
@@ -312,7 +324,8 @@ describe("B. every clickable call to a guest to sign in is the shared button", (
     const picker = all.filter((f) => f !== "src/components/ExamPicker.tsx" && /<ExamPicker\b/.test(code(f)));
     expect(picker).toEqual(["src/app/dashboard/page.tsx"]);
     expect(read("src/app/dashboard/page.tsx")).toContain('if (!session?.user?.id) redirect(loginRedirectPath("/dashboard", sp));');
-  });
+    // It reads every file under src/: on a busy machine that takes longer than the default five seconds.
+  }, 60_000);
 
   it("no saffron sign-up button is left: of the links a guest can see, only the one ACTION button is filled", () => {
     for (const l of LEFT_AS_LINKS.filter((x) => x.guestSees)) {
@@ -440,13 +453,20 @@ describe("C. a visible reason at every button, on every device", () => {
 
   it("explain \"both\" (the default): the caption is in the page with the button — on a desktop too — in en, hi and te", () => {
     for (const l of SIGNUP_LOCALES) {
-      const html = render(ui.SignUpButton, { href: "/login?callbackUrl=%2Fexams%2FSSC_CGL&from=quiz-end", surface: "quiz-end", locale: l, exam: "SSC CGL", examCode: "SSC_CGL", practice: true });
+      // The words are the door's own entry (resolved by its page, or loaded on demand): handed in here.
+      const quizEnd = signUpWords(l, { surface: "quiz-end", callback: "/exams/SSC_CGL", exam: "SSC CGL", examCode: "SSC_CGL", practice: "canServe" });
+      const html = render(ui.SignUpButton, { href: "/login?callbackUrl=%2Fexams%2FSSC_CGL&from=quiz-end", surface: "quiz-end", locale: l, exam: "SSC CGL", examCode: "SSC_CGL", ...quizEnd });
       const cap = html.match(/<span class="su-cap">([^<]*)<\/span>/)?.[1];
-      expect(cap, l).toBe(signUpExplainShort(l, { kind: "exam", exam: "SSC CGL", practice: true }));
+      expect(cap, l).toBe(quizEnd.short);
+      expect(quizEnd, l).toEqual(signUpPlaceWords(l, { key: "door.quiz-end", vars: { exam: "SSC CGL" } }));
       // A sibling of the link inside the frame, before the tooltip's frame: in the flow.
       expect(html, l).toMatch(/<\/a><span class="su-cap">[^<]+<\/span><span class="su-tip">/);
-      const general = render(ui.SignUpButton, { href: "/login?callbackUrl=%2Fdashboard", surface: "home-vacancies", locale: l });
-      expect(general.match(/<span class="su-cap">([^<]*)<\/span>/)?.[1], l).toBe(signUpExplainShort(l, { kind: "general" }));
+      const rail = signUpWords(l, { surface: "home-vacancies", callback: "/dashboard" });
+      const general = render(ui.SignUpButton, { href: "/login?callbackUrl=%2Fdashboard", surface: "home-vacancies", locale: l, ...rail });
+      expect(general.match(/<span class="su-cap">([^<]*)<\/span>/)?.[1], l).toBe(signUpPlaceWords(l, { key: "door.home-vacancies" }).short);
+      // A client island's button, before the reader's language has loaded: the caption's line is held open.
+      const pending = render(ui.SignUpButton, { href: "/login?callbackUrl=%2Fdashboard", surface: "home-vacancies", locale: l });
+      expect(pending, l).toContain('<span class="su-cap">\u00a0</span>');
     }
     // Nothing in the stylesheet hides it with a mouse (it was a touch-only caption until 2 Oct 2026).
     const css = read("src/app/globals.css").replace(/\/\*[\s\S]*?\*\//g, "");
@@ -457,11 +477,13 @@ describe("C. a visible reason at every button, on every device", () => {
   });
 
   it("the full sentence stays the tooltip and the screen reader's description in EVERY mode", () => {
+    const home = signUpWords("en", { surface: "home-signin", callback: "/dashboard" });
+    expect(home).toEqual(signUpPlaceWords("en", { key: "door.home-signin" }));
     for (const explain of ["both", "own", "tooltip"]) {
-      const html = render(ui.SignUpButton, { href: "/login?callbackUrl=%2Fdashboard", surface: "home-signin", explain });
+      const html = render(ui.SignUpButton, { href: "/login?callbackUrl=%2Fdashboard", surface: "home-signin", explain, ...home });
       const id = html.match(/<a\b[^>]*\saria-describedby="([^"]+)"/)?.[1];
       expect(id, explain).toBeTruthy();
-      expect(html, explain).toContain(`<span id="${id}" role="tooltip" class="su-tip-text">${signUpExplain("en", { kind: "general" })}</span>`);
+      expect(html, explain).toContain(`<span id="${id}" role="tooltip" class="su-tip-text">${home.text}</span>`);
       expect(/su-cap/.test(html), explain).toBe(explain === "both");
     }
   });
@@ -652,25 +674,30 @@ describe("E. counting: one click, one \"signin-click\", under the door's own id"
     }
   });
 
-  it("every one still goes to /login (none joins the skip-/login test), to the page it went to before", () => {
+  it("every one still goes to /login (none joins the skip-/login test), to the page it went to before — but the two that had no page to return to", () => {
     const hrefs: [string, string][] = [
       ["src/components/home/HomeSignIn.tsx", 'href="/login?callbackUrl=%2Fdashboard"'],
       ["src/app/live-test/page.tsx", 'href="/login?callbackUrl=%2Flive-test&from=live-test"'],
       ["src/app/g/[token]/page.tsx", "href={`/login?callbackUrl=${encodeURIComponent(`/g/${group.token}`)}&from=group-join`}"],
-      ["src/components/VerificationPanel.tsx", 'href="/login?from=verify-fact"'],
+      // 2 Oct 2026, later (decision): it returns to the page the panel was opened on (it had no callback and
+      // landed on the dashboard); without a path it is the link it was.
+      ["src/components/VerificationPanel.tsx", 'href={pathname && pathname.startsWith("/") && !pathname.startsWith("//") ? `/login?callbackUrl=${encodeURIComponent(pathname)}&from=verify-fact` : "/login?from=verify-fact"}'],
       ["src/components/VacancyExplorer.tsx", 'href={`/login?callbackUrl=${encodeURIComponent("/dashboard")}&from=home-vacancies`}'],
       ["src/app/discussions/[id]/page.tsx", "href={`/login?callbackUrl=${encodeURIComponent(`/discussions/${thread.id}`)}&from=discussion-reply`}"],
       ["src/app/chat/ChatInterface.tsx", "href={`${guestSignInHref}&from=chat-banner`}"],
       ["src/components/AnonExamNudge.tsx", "href={`/login?callbackUrl=${encodeURIComponent(`/exams/${examCode}`)}&from=cutoff-nudge`}"],
       ["src/components/ExamVerdictPoll.tsx", "href={`${loginHref}&from=verdict-poll`}"],
-      ["src/app/community-vouching/[domain]/page.tsx", 'href="/login?from=vouch"'],
+      // 2 Oct 2026, later (decision): it returns to this vouching page.
+      ["src/app/community-vouching/[domain]/page.tsx", "href={`/login?callbackUrl=${encodeURIComponent(`/community-vouching/${dom}`)}&from=vouch`}"],
     ];
     for (const [file, href] of hrefs) expect(code(file), file).toContain(href);
   });
 
   it("the home page: the same door id as before, and its own delegated beacon still fires from the wrapper", () => {
     const home = code("src/components/home/HomeSignIn.tsx");
-    expect(home).toMatch(/<div data-home-cta="signin"[^>]*>\s*<SignUpButton href="\/login\?callbackUrl=%2Fdashboard" surface="home-signin" locale=\{homeCopyLocaleOf\(copy\)\} explain="own" center \/>\s*<\/div>/);
+    expect(home).toMatch(
+      /<div data-home-cta="signin"[^>]*>\s*<SignUpButton href="\/login\?callbackUrl=%2Fdashboard" surface="home-signin" locale=\{homeCopyLocaleOf\(copy\)\} \{\.\.\.signUpWords\(homeCopyLocaleOf\(copy\), \{ surface: "home-signin", callback: "\/dashboard" \}\)\} explain="own" center \/>\s*<\/div>/,
+    );
     // … a wrapper only as wide as the button: a click on the empty space beside it is not a "signin" click.
     expect(home).toContain('<div data-home-cta="signin" className="mx-auto w-fit max-w-full">');
     expect(home).not.toMatch(/data-home-cta="signin" className="[^"]*\bflex\b/);
@@ -773,10 +800,13 @@ describe("G. honesty: the new reason lines say only what the code backs; lines t
     expect(signUpReason("en", "vacancies")).toBe("Prepping for one of these? Your tests and tutor chats are saved.");
     expect(signUpReason("en", "tryOne")).toBe("Sign up free: adaptive mocks with your scores saved, and Shishya tracks your weak topics. No credit card.");
     for (const l of ["ta", "", null, undefined]) expect(signUpReason(l, "fullMocks")).toBe(signUpReason("en", "fullMocks"));
+    // A fifth (2 Oct 2026, later): the finder's bottom card keeps its line word for word — it was the old
+    // tooltip sentence for an exam whose practice is not known, and lives with the reason lines now.
+    expect(signUpReason("en", "startExam")).toBe("Sign up with your Google account, no forms. {exam} is set up as your exam the moment you sign up, and the AI tutor remembers where you left off.");
   });
 
   it("each makes claims from the allowed list only, says them in so many words, and the code that backs them is there", () => {
-    expect(Object.keys(SIGNUP_REASON_CLAIMS).sort()).toEqual(["fullMocks", "tryOne", "vacancies", "writePaper"]);
+    expect(Object.keys(SIGNUP_REASON_CLAIMS).sort()).toEqual(["fullMocks", "startExam", "tryOne", "vacancies", "writePaper"]);
     for (const [key, r] of Object.entries(SIGNUP_REASON_CLAIMS)) {
       const en = signUpReason("en", key as copyMod.SignUpReason);
       expect(en, key).toContain(r.says);
@@ -794,7 +824,7 @@ describe("G. honesty: the new reason lines say only what the code backs; lines t
     expect(read("src/app/exams/[code]/page.tsx")).toMatch(/\{!userId && sampleQuestion && \(\s*<TryOneQuestion/);
     expect(read("prisma/schema.prisma")).toContain("model WeaknessMap {");
     // The rail's line says what the general caption says — the same two claims, the same words.
-    expect(signUpReason("en", "vacancies")).toContain(signUpExplainShort("en", { kind: "general" }).replace("No forms. ", ""));
+    expect(signUpReason("en", "vacancies")).toContain(signUpPlaceWords("en", { key: "family.fallback" }).short.replace("No forms. ", ""));
   });
 
   it("Hindi and Telugu say the same in their own script; no banned word, no number, no rank in any language", () => {
@@ -914,7 +944,11 @@ describe("H. the review's fixes", () => {
   it("the finder's bottom card: a guest gets the button first and the copy module's own sentence — no 'lock your exam', no 'daily plan'", () => {
     const src = code("src/app/find-your-exam/page.tsx");
     // The reason is the allowed sentence for a sign-in that returns to that exam's hub; it fails closed.
-    expect(src).toContain('signUpExplain("en", signUpContextFor({ callback: topHub, exam: top.shortName, examCode: top.code, practice: false }))');
+    // 2 Oct 2026, later: the LINE is kept word for word (the reason line "startExam"); the button's TOOLTIP is
+    // the door's own entry of the table (door.finder-start), resolved here on the server.
+    expect(src).toContain('const topSignUp = top && topHub ? signUpWords("en", { surface: "finder-start", callback: topHub, exam: top.shortName, examCode: top.code }) : null;');
+    expect(src).toContain('const topNamed = top && topHub ? signUpContextFor({ callback: topHub, exam: top.shortName, examCode: top.code }).kind === "exam" : false;');
+    expect(src).toContain('const topReason = top && topSignUp ? (topNamed ? signUpReason("en", "startExam").replace("{exam}", top.shortName.trim()) : topSignUp.text) : null;');
     expect(src).toContain("const topHub = top ? `/exams/${top.code}` : null;");
     const guest = src.slice(src.indexOf("{!signedIn && top && topHub && topReason ? ("), src.indexOf(") : (", src.indexOf("{!signedIn && top && topHub && topReason ? (")));
     expect(guest).toMatch(/<p data-su-reason className="mt-1 text-sm text-ink-600">\s*\{topReason\} Everything free — no coaching fees\.\s*<\/p>/);
@@ -922,12 +956,15 @@ describe("H. the review's fixes", () => {
     const tag = jsxTags(guest, ["SignUpButton"])[0].text;
     expect(tag).toContain("href={`/login?callbackUrl=${encodeURIComponent(topHub)}&from=finder-start`}");
     expect(tag).toContain('explain="own"');
-    expect(tag).toContain("exam={top.shortName}");
-    expect(tag).toContain("examCode={top.code}");
-    // What the sentence says for a real exam, and for a code sign-up would not enrol.
+    expect(tag).toContain("{...topSignUp}");
+    // What the line says for a real exam, and for a code sign-up would not enrol.
     const ctx = copyMod.signUpContextFor({ callback: "/exams/SSC_CGL", exam: "SSC CGL", examCode: "SSC_CGL", practice: false });
-    expect(signUpExplain("en", ctx)).toBe("Sign up with your Google account, no forms. SSC CGL is set up as your exam the moment you sign up, and the AI tutor remembers where you left off.");
+    expect(ctx.kind).toBe("exam");
+    expect(signUpReason("en", "startExam").replace("{exam}", "SSC CGL")).toBe("Sign up with your Google account, no forms. SSC CGL is set up as your exam the moment you sign up, and the AI tutor remembers where you left off.");
     expect(copyMod.signUpContextFor({ callback: "/exams/browse", exam: "Browse", examCode: "browse", practice: false })).toEqual({ kind: "general" });
+    // The tooltip: the door's own entry — "where it has practice …": this page does not read the exam's practice.
+    expect(signUpWords("en", { surface: "finder-start", callback: "/exams/SSC_CGL", exam: "SSC CGL", examCode: "SSC_CGL" })).toEqual(signUpPlaceWords("en", { key: "door.finder-start", vars: { exam: "SSC CGL" } }));
+    expect(signUpWords("en", { surface: "finder-start", callback: "/exams/browse", exam: "Browse", examCode: "browse" })).toEqual(signUpPlaceWords("en", { key: "family.fallback" }));
     // A signed-in visitor's card is the old one, word for word.
     const member = src.slice(src.indexOf(") : (", src.indexOf("{!signedIn && top && topHub && topReason ? (")));
     expect(member).toContain("Sign in free to lock your exam, get a daily plan, mock tests and an AI tutor in your");
@@ -953,7 +990,9 @@ describe("H. the review's fixes", () => {
     // One beacon call in the file, same ids and props as before.
     expect(gate.match(/signinBeacon\(/g)).toHaveLength(1);
     // The caption IS inside that wrapper (which is why the handler has to look): rendered, it follows the button.
-    const html = render(googleBtn.GoogleSignInButton, { callbackUrl: "/mocks/abcd1234?from=signin", locale: "en", continueLabel: "Continue with Google", exam: "SSC CGL", examCode: "SSC_CGL", practice: true, surface: "mock-gate", side: "top" });
+    const gateWords = signUpWords("en", { surface: "mock-gate", callback: "/mocks/abcd1234?from=signin", exam: "SSC CGL", examCode: "SSC_CGL" });
+    expect(gateWords).toEqual(signUpPlaceWords("en", { key: "door.mock-gate", vars: { exam: "SSC CGL" } }));
+    const html = render(googleBtn.GoogleSignInButton, { callbackUrl: "/mocks/abcd1234?from=signin", locale: "en", continueLabel: "Continue with Google", exam: "SSC CGL", examCode: "SSC_CGL", ...gateWords, surface: "mock-gate", side: "top" });
     expect(html).toMatch(/<\/button><span class="su-cap">[^<]+<\/span>/);
   });
 

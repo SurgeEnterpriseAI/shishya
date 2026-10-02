@@ -1,0 +1,319 @@
+{
+ "closing": "Free, with your Google account, no forms.",
+ "age": "For students 13 and above.",
+ "institute": "the institute",
+ "places": {
+  "family.home": {
+   "t": "Sign up and Shishya keeps what you do here: the exam you choose, your mock scores, your weak topics and your AI tutor chats. After your first exam choice, mock or chat, this home page opens with a 'For you' section that takes you back to it.",
+   "c": "No forms. Your exam, mock scores and tutor chats are kept."
+  },
+  "family.exam.practice": {
+   "t": "Preparing for {exam}? Sign up and {exam} is set up as your exam. You can then write whole timed mocks: each score is kept in your account, and every mock you finish records your weak topics for your next practice.",
+   "c": "No forms. {exam} mocks with every score kept."
+  },
+  "family.exam.noPractice": {
+   "t": "Following {exam}? Sign up and it is set up as your exam, so your dashboard and the home page's 'For you' section start from it. What you ask the AI tutor about it is saved. Shishya has no practice questions for {exam} yet.",
+   "c": "No forms. {exam} is set up as your exam."
+  },
+  "family.exam.unknown": {
+   "t": "Following {exam}? Sign up and it is set up as your exam, so your dashboard and the home page's 'For you' section start from it. What you ask the AI tutor about {exam} is saved, and your recent chats are listed to reopen.",
+   "c": "No forms. {exam} is set up as your exam."
+  },
+  "family.examPath": {
+   "t": "Preparing for an exam? Sign up from its page and that exam is set up as your exam: your dashboard starts from it and your AI tutor chats are saved. Where the exam has practice, your timed mock scores and weak topics are kept too.",
+   "c": "No forms. The exam you sign up from becomes your exam."
+  },
+  "family.examOlympiad": {
+   "t": "Sign up from an exam's page and that exam is set up as your exam: your dashboard starts from it and your AI tutor chats are saved. Where the exam has practice, your timed mock scores and weak topics are kept too.",
+   "c": "No forms. The exam you sign up from becomes your exam.",
+   "age": true
+  },
+  "family.examSyllabus.practice": {
+   "t": "Working through the {exam} syllabus? Sign up and {exam} is set up as your exam. This page then marks each topic you have opened or finished, and topic tests keep your score, so you can see what is left to cover.",
+   "c": "No forms. This syllabus marks the topics you have read."
+  },
+  "family.examSyllabus.noPractice": {
+   "t": "Working through the {exam} syllabus? Sign up and {exam} is set up as your exam. This page then marks each topic whose notes you have opened or finished, so you can see what is left to read. Your AI tutor chats are saved too.",
+   "c": "No forms. This syllabus marks the topics you have read."
+  },
+  "family.examTopic.practice": {
+   "t": "Studying this topic? Once you sign up, opening these notes marks it as read, you can mark it done, and where the topic has enough practice questions a topic test saves your score and shows how you did last time. {exam} is set up as your exam.",
+   "c": "No forms. This topic is marked read, your test score kept."
+  },
+  "family.examTopic.noPractice": {
+   "t": "Studying this topic? Once you sign up, opening these notes marks the topic as read and you can mark it done, so the {exam} syllabus shows what is left. {exam} is set up as your exam.",
+   "c": "No forms. Topics you read are marked in your account."
+  },
+  "family.examTopic.testOnly": {
+   "t": "Practising this topic? Sign up and a timed test on this topic is saved with your score, and it records how you did on the topic. {exam} is set up as your exam.",
+   "c": "No forms. A test on this topic, saved with your score."
+  },
+  "family.examUpdates.practice": {
+   "t": "Sign up and {exam} is set up as your exam: your dashboard starts from it, your mock scores and weak topics are kept, and in exam week, when it runs over several announced days, you can save your own shift day. Dates and alerts here need no account.",
+   "c": "No forms. {exam} stays on your dashboard as your exam."
+  },
+  "family.examUpdates.noPractice": {
+   "t": "Sign up and {exam} is set up as your exam: your dashboard starts from it, and in exam week, when it runs over several announced days, you can save your own shift day. Your AI tutor chats are saved too. Dates and alerts here need no account.",
+   "c": "No forms. {exam} stays on your dashboard as your exam."
+  },
+  "family.examCutoff.practice": {
+   "t": "The cutoff table is free to read. To see your own score, sign up and write whole timed {exam} mocks: each score is kept in your account, and every mock you finish records your weak topics. {exam} is set up as your exam.",
+   "c": "No forms. Write {exam} mocks and keep each score."
+  },
+  "family.examGuide.practice": {
+   "t": "Following this {exam} guide? Sign up and {exam} is set up as your exam. Your timed mocks keep each score and record your weak topics, and five questions a day are picked for you from this exam, with a streak for the days you study.",
+   "c": "No forms. {exam} mocks, scores and five questions a day."
+  },
+  "family.examTricks.practice": {
+   "t": "Try these shortcuts where they count: sign up and write timed {exam} mocks. Each score is kept, questions you get wrong go to your Mistake Notebook to re-test, and the sets Shishya builds for you start with questions you have not answered.",
+   "c": "No forms. Wrong answers go to your Mistake Notebook."
+  },
+  "family.examNews.practice": {
+   "t": "Following {exam} news? Sign up and {exam} is set up as your exam, so your dashboard and the home page's 'For you' section start from it. Your mock scores and weak topics are kept, and what you ask the AI tutor about this exam is saved.",
+   "c": "No forms. Your dashboard starts from {exam}."
+  },
+  "family.examChecklist.practice": {
+   "t": "Getting ready for exam day? Sign up and {exam} is set up as your exam. In exam week, when it runs over several announced days, you can save your own shift day, and your mock scores and weak topics are kept for your last revision.",
+   "c": "No forms. {exam} is your exam, with your mock scores."
+  },
+  "family.examList": {
+   "t": "Still choosing an exam? Open one from this list and sign up on its page: that exam is set up as your exam, and where it has practice your mock scores and weak topics are kept. If you sign up here, Shishya asks you once to choose your exam.",
+   "c": "No forms. Choose your exam after you sign up."
+  },
+  "family.college": {
+   "t": "Aiming for this college? Sign up, choose your entrance exam, and where it has practice your timed mock scores and weak topics are kept. Reading about the college needs no account, and an account does not save or shortlist a college.",
+   "c": "No forms. Mock scores for your entrance exam are kept."
+  },
+  "family.colleges": {
+   "t": "Comparing colleges? An account is for the exam that gets you in: sign up, choose your entrance exam, and where it has practice your timed mock scores and weak topics are kept. Your AI tutor chats are saved too. These pages need no account to read.",
+   "c": "No forms. Keep mock scores for your entrance exam."
+  },
+  "family.scholarship": {
+   "t": "Have a question about this scholarship? Sign up first, then ask the AI tutor: that chat is saved, and your recent chats are listed to reopen. Reading this scheme needs no account. The Save star only marks it in this browser; there is no saved list yet.",
+   "c": "No forms. Your AI tutor chats about schemes are saved."
+  },
+  "family.scholarships": {
+   "t": "Looking for a scholarship? Sign up first, then ask the AI tutor which schemes fit you: that chat is saved, and your recent chats are listed to reopen. The lists and the eligibility check need no account; your eligibility answers stay in this browser.",
+   "c": "No forms. Ask about schemes and the chat is saved."
+  },
+  "family.career": {
+   "t": "Wondering how to get into this career? Sign up first, then ask the AI tutor from this page: that chat is saved, and your recent chats are listed to reopen. Mock scores for an exam you choose are kept where it has practice.",
+   "c": "No forms. Your AI tutor chats about careers are saved."
+  },
+  "family.careers": {
+   "t": "Comparing careers? Sign up to keep your AI tutor chats: what you ask about a career is saved, and your recent chats are listed to reopen. Mock scores for the exam that leads there are kept too, where it has practice. Comparing careers needs no account.",
+   "c": "No forms. Your questions about a career path are saved."
+  },
+  "family.currentAffairs": {
+   "t": "Reading current affairs? Sign up first, then ask the AI tutor to quiz you on them: that chat is saved, and your recent chats are listed to reopen. Timed mocks you write for your exam keep their scores too. Reading here needs no account.",
+   "c": "No forms. Your AI tutor quizzes and chats are saved."
+  },
+  "family.jobs": {
+   "t": "Aiming for a government job? An account is for the exam behind it: sign up, choose your exam, and where it has practice your timed mock scores and weak topics are kept. The jobs pages need no account, and an account stores nothing about a job.",
+   "c": "No forms. Mock scores for the job's exam are kept."
+  },
+  "family.examCalendar": {
+   "t": "Writing one of these exams? Sign up on its page and it is set up as your exam; in exam week, when it runs over several announced days, you can save your own shift day. If you sign up here, you choose your exam afterwards. The calendar needs no account.",
+   "c": "No forms. Pick your exam and it stays on your dashboard."
+  },
+  "family.stageHub": {
+   "t": "Choosing what to do next? Sign up and your AI tutor chats about your options are saved: your recent chats are listed to reopen, and in a new chat the tutor has your recent questions. Once you choose an exam, its mock scores are kept where it has practice.",
+   "c": "No forms. Your questions about what to do next are saved."
+  },
+  "family.streamOption": {
+   "t": "Thinking about this stream? Sign up and what you ask the AI tutor about streams and subjects is saved, and your recent chats are listed to reopen. Reading this page needs no account.",
+   "c": "No forms. Your questions about streams are saved."
+  },
+  "family.schoolCbse": {
+   "t": "Sign up and, on chapters that have practice, 'Practise this chapter' builds your own set of answer-checked questions and saves your score, new questions first. Your class is kept on your dashboard. Reading needs no account.",
+   "c": "No forms. Your chapter practice scores are saved.",
+   "age": true
+  },
+  "family.schoolOtherBoard": {
+   "t": "These pages are free to read without an account, and they have no saved practice yet. Chapter practice with a saved score is on CBSE (NCERT) chapters that have checked questions; signing up is useful once you practise there.",
+   "c": "No forms. Saved practice is on CBSE chapters for now.",
+   "age": true
+  },
+  "family.schoolChat": {
+   "t": "Sign up and the questions you ask in this class chat from then on are saved in your account; your recent ones are listed when you open the chat again without a new question. A chat from before you signed up is not carried over.",
+   "c": "No forms. Your class chat questions are saved.",
+   "age": true
+  },
+  "family.fallback": {
+   "t": "Sign up and Shishya keeps what you do: the exam you choose, your timed mock scores and weak topics, and your AI tutor chats; your recent chats are listed to reopen. Reading stays free without an account.",
+   "c": "No forms. Your tests and tutor chats are saved."
+  },
+  "door.hub-box": {
+   "t": "Start {exam} practice now: after you sign up, a five-question starter test opens by itself and {exam} is set up as your exam. From then on you can write whole timed mocks, each score is kept, and every mock records your weak topics.",
+   "c": "No forms. A five-question {exam} test opens for you."
+  },
+  "door.hub-try-one": {
+   "t": "That was one {exam} question. Sign up to write whole timed mocks: each score is kept, every mock you finish records your weak topics, and the practice sets Shishya builds for you start with questions you have not answered.",
+   "c": "No forms. Whole {exam} mocks with your scores kept."
+  },
+  "door.pyq-year": {
+   "t": "Sign up to take this {year}-pattern set against the clock. Your score is kept, and you can review every question with its solution and retake the set later. Shishya wrote these questions on the {exam} pattern. {exam} is set up as your exam.",
+   "c": "No forms. Take this set timed and keep your score."
+  },
+  "door.quiz-end": {
+   "t": "Do not lose this quiz: sign up now, on this browser, and its answers are added to your account's weak topics, so you do not start from zero. {exam} is set up as your exam, and whole timed mocks then keep each score.",
+   "c": "No forms. This quiz is added to your weak topics."
+  },
+  "door.build-mock-form": {
+   "t": "Sign up to build this mock: you choose the topics, size and difficulty, and take it with your score kept. The builder then shows how many questions you have answered in each topic and gives you new ones first. Pick your topics again after signing up.",
+   "c": "No forms. Build your own {exam} mock, score kept."
+  },
+  "door.mock-gate": {
+   "t": "Sign up and you come straight back to this mock. Your answers are saved as you go, so if the page closes you can return while the paper's clock is still running. Your score and weak topics are kept. {exam} is set up as your exam.",
+   "c": "No forms. You come straight back to this mock."
+  },
+  "door.mock-gate.unnamed": {
+   "t": "Sign up and you come straight back to this mock. Your answers are saved as you go, so if the page closes you can return while the paper's clock is still running. Your score and weak topics are kept. This mock's exam is set up as your exam.",
+   "c": "No forms. You come straight back to this mock."
+  },
+  "door.mock-gate-quiz-end": {
+   "t": "Sign up and you come straight back to this mock to write the whole paper with your score kept. The questions you just tried are added to your account's weak topics, and {exam} is set up as your exam.",
+   "c": "No forms. Write the whole paper with your score kept."
+  },
+  "door.build-gate-quiz-end": {
+   "t": "Sign up and you return to the builder to make your own {exam} mock by topic, size and difficulty, with the score kept. The questions you just tried are added to your weak topics when you next open the {exam} page, your dashboard or a mock.",
+   "c": "No forms. Back to the builder, with your scores kept."
+  },
+  "door.cutoff-nudge": {
+   "t": "Want your own score to set beside these cutoffs? After signing up you land on the {exam} page, where its mocks are: you write whole timed mocks and each score stays in your account to open again. The quiz next to this button needs no account.",
+   "c": "No forms. Whole timed {exam} mocks, each score kept."
+  },
+  "door.verdict-poll": {
+   "t": "Your rating is already counted; that needs no account. Sign up and {exam} is set up as your exam, so your dashboard and the home page's 'For you' section start from it, and what you ask the AI tutor about this paper is saved.",
+   "c": "No forms. {exam} is set up as your exam."
+  },
+  "door.challenge-end": {
+   "t": "You have played this challenge. Sign up and {exam} is set up as your exam: whole timed mocks keep each score, and challenge links you made on this browser move into your account, so Shishya can email you when a friend plays one.",
+   "c": "No forms. Your challenge links move into your account."
+  },
+  "family.challengeLink": {
+   "t": "Playing and making a challenge need no account. Sign up and challenge links you made on this browser move into your account, so Shishya can email you when a friend plays one, and the timed mocks you write keep their scores.",
+   "c": "No forms. Your challenge links move into your account."
+  },
+  "family.groupInvite": {
+   "t": "Sign up to join this study group if it still has room: you return here and press Join. Members see first names, the days each one studied this week and the questions practised, never scores. The group's maker is told your first name.",
+   "c": "No forms. Sign up, then join the group if it has room."
+  },
+  "family.discussions": {
+   "t": "Want to join in? Sign up to reply in an open discussion or to ask your own question, and you get a notification on Shishya when someone replies to a question you asked. You return to this page after signing up. Reading every discussion needs no account.",
+   "c": "No forms. Reply in open discussions and ask your own."
+  },
+  "door.live-test": {
+   "t": "Sign up to write this {exam} live paper. Your score is saved, and your result shows where you stand among those who wrote the same paper, however few. After signing up you return to this page and start from 'Write it now'.",
+   "c": "No forms. Write this paper and keep your score."
+  },
+  "door.live-test.unnamed": {
+   "t": "Sign up to write a live paper when one is open. Your score is saved, and your result shows where you stand among those who wrote the same paper, however few. After signing up you return to this page.",
+   "c": "No forms. Write the live paper and keep your score."
+  },
+  "door.guest-paper": {
+   "t": "This result is shown only here and is not carried into an account. Sign up and the papers you write from now on keep their scores, record your weak topics, and can be reviewed question by question with solutions.",
+   "c": "No forms. Your next papers keep their scores."
+  },
+  "door.chat-banner.exam.practice": {
+   "t": "Ask as a guest, or sign up and the {exam} AI tutor works from your own record: once you finish a mock it can look up your results, your weak topics and the questions you got wrong. Your chats are saved, and your recent chats are listed to reopen.",
+   "c": "No forms. The tutor works from your own {exam} mocks."
+  },
+  "door.chat-banner.exam": {
+   "t": "Ask as a guest, or sign up and your {exam} chats are saved: your recent chats are listed to reopen, and in a new chat the AI tutor has your recent questions. {exam} is set up as your exam.",
+   "c": "No forms. Your {exam} chats are saved to your account."
+  },
+  "door.chat-banner.general": {
+   "t": "Ask as a guest, or sign up and your chats are saved: your recent chats are listed to reopen, and in a new chat the AI tutor has your recent questions. A guest chat is gone when the page reloads.",
+   "c": "No forms. Your chats are saved to your account."
+  },
+  "door.chat-save.exam.practice": {
+   "t": "Keep asking as a guest, or sign up and the {exam} AI tutor works from your own record: once you finish a mock it can look up your results, your weak topics and the questions you got wrong. Chats you have after signing up are saved.",
+   "c": "No forms. Your chats are saved from then on."
+  },
+  "door.chat-save.exam": {
+   "t": "Keep asking as a guest, or sign up and the {exam} chats you have from then on are saved: your recent chats are listed to reopen, and in a new chat the AI tutor has your recent questions. {exam} is set up as your exam.",
+   "c": "No forms. Your chats are saved from then on."
+  },
+  "door.chat-save.general": {
+   "t": "Keep asking as a guest, or sign up and the chats you have from then on are saved: your recent chats are listed to reopen, and in a new chat the AI tutor has your recent questions. A guest chat is gone when the page reloads.",
+   "c": "No forms. Your chats are saved from then on."
+  },
+  "door.school-save": {
+   "t": "The practice on this page is not saved to an account. Sign up and 'Practise this chapter' builds you a set of up to {n} answer-checked questions: your score and every question with its solution stay in your account to open again.",
+   "c": "No forms. Practise this chapter with your score saved.",
+   "age": true
+  },
+  "door.home-signin": {
+   "t": "Sign up and you land on your own dashboard. Choose your exam there or start a quick test; after that it shows your results, a paper you left unfinished, your weak topics, your study streak, five questions for the day and your recent AI tutor chats.",
+   "c": "No forms. Your own dashboard, starting from your exam."
+  },
+  "door.home-vacancies": {
+   "t": "Preparing for one of these vacancies? Sign up and you land on your dashboard, where you choose the exam for it. From then on your timed mock scores and weak topics are kept where the exam has practice, and your AI tutor chats are saved.",
+   "c": "No forms. Choose the exam and keep your mock scores."
+  },
+  "door.coach-start": {
+   "t": "Sign up, then tell the coach three things: your exam, its date and your daily time. It gives you a few tasks for today, chosen from the syllabus, your weak topics and the days left, and works them out again each day. No plan exists until you answer.",
+   "c": "No forms. Answer three questions for today's tasks."
+  },
+  "door.coach-start.exam": {
+   "t": "Sign up and {exam} is set up as your exam. Then tell the coach its date and the time you have each day: it gives you a few tasks for today, chosen from the syllabus, your weak topics and the days left, and works them out again each day.",
+   "c": "No forms. Set {exam}, then get today's tasks."
+  },
+  "door.revision-start": {
+   "t": "Sign up and the notebook fills by itself: questions you get wrong in your recent mocks are collected here with the right answer and solution, you can re-test yourself on them and star a question to keep it. It stays empty until your first finished mock.",
+   "c": "No forms. Your wrong answers are collected for you."
+  },
+  "door.finder-save": {
+   "t": "Found exams you can write? Sign up and you come back to these same results: they stay in this page's link, and nothing else about them is stored. Then choose one of these exams, and where it has practice its timed mock scores and weak topics are kept.",
+   "c": "No forms. You come back to these same results."
+  },
+  "door.finder-start": {
+   "t": "Start with {exam}: sign up and it is set up as your exam, and you land on its page. Where it has practice, you can write timed mocks with each score kept and your weak topics recorded. Right after signing up, a strip on the page lets you change it.",
+   "c": "No forms. {exam} is set up as your exam."
+  },
+  "door.persona-card": {
+   "t": "Exam pages with practice have a five-question quiz that needs no account. Sign up when you want your work kept: timed mock scores, weak topics and your AI tutor chats. To set an exam as yours, open it from this page and sign up there.",
+   "c": "No forms. Sign up when you want your work kept."
+  },
+  "door.batch-join": {
+   "t": "Sign up to join this batch if it still has a place: you return to this invite and confirm with 'Join this batch'. Joining shares your name, email and progress with {institute}, and you can leave the batch from your dashboard.",
+   "c": "No forms. Sign up, then confirm to join this batch."
+  },
+  "door.group-join": {
+   "t": "Sign up to join this study group: you return here and press Join. Members see first names, the days each one studied this week and the questions practised, never scores. The group's maker is told your first name.",
+   "c": "No forms. Sign up, then join your friends' group."
+  },
+  "door.discussion-reply": {
+   "t": "Want to reply? Sign up to reply here or to ask your own question, and you get a notification on Shishya when someone replies to a question you asked. You return to this discussion after signing up. Reading every discussion needs no account.",
+   "c": "No forms. Reply here and ask your own questions."
+  },
+  "door.ideas-upvote": {
+   "t": "Want an idea built? Sign up to upvote the ideas you want, one vote for each, and you are told when the team marks one of them built. You return to this board after signing up. Reading the board needs no account.",
+   "c": "No forms. Upvote the ideas you want built."
+  },
+  "door.vouch": {
+   "t": "Signing up is the first step, not the whole of it: vouching here is open only to verified Domain Experts in this field.",
+   "c": "No forms. Vouching also needs a verified credential.",
+   "tail": "After signing up you land on your dashboard, not back on this page."
+  },
+  "door.verify-fact": {
+   "t": "Sign up to confirm this fact against its source, flag it as wrong or suggest a correction; your confirmations are counted on your profile.",
+   "c": "No forms. Confirm, flag or correct this fact.",
+   "tail": "After signing up you land on your dashboard, so come back to this page to act."
+  },
+  "door.login.default": {
+   "t": "After Google's sign-in you land on your dashboard, where you choose your exam if none is set yet. From then on your timed mock scores, your weak topics and your AI tutor chats are kept.",
+   "c": "No forms. Your tests and tutor chats are saved."
+  },
+  "door.login.returning": {
+   "t": "Welcome back. Continue with the Google account you used before, and your saved mocks, weak topics and AI tutor chats are in your account as you left them.",
+   "c": "The same Google account opens your saved work.",
+   "bare": true
+  },
+  "door.soft-wall": {
+   "t": "Sign up to keep your work on Shishya: the exam you choose, your timed mock scores and weak topics, and your AI tutor chats; your recent chats are listed to reopen.",
+   "c": "No forms. Your tests and tutor chats are saved."
+  }
+ }
+}

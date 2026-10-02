@@ -1136,9 +1136,15 @@ export function ChatInterface({
                 says what it is for in a line (the words the old button
                 carried), and its button is the one shared sign-up button —
                 Google's white button with the "G", full width. With a mouse,
-                hover or keyboard focus opens the explanation (this chat is
-                kept, the tutor remembers); on every device the line above
-                says it (explain="own": no second caption).
+                hover or keyboard focus opens the explanation; on every device
+                the line above is the card's own (explain="own": no second
+                caption). 2 Oct 2026, later: the explanation is this card's own
+                entry of the table (door.chat-save.*). It says the chats a
+                student has AFTER signing up are saved — never "this chat is
+                saved": no carried guest chat has been seen in production. On
+                an exam chat it names the exam (the sign-in returns to this
+                exam's chat), and it speaks of the student's own mocks only
+                where the page said the exam can serve one.
                 Still /login (not in the skip-/login test), the same carry-over
                 and the same "chat-guest-save" beacon; its sign-in door is now
                 named "chat-save" (it was counted as a plain "link"). Review,
@@ -1152,7 +1158,8 @@ export function ChatInterface({
               href={examCode == null ? `/login?callbackUrl=${encodeURIComponent("/chat?general=1")}` : guestSignInHref}
               surface="chat-save"
               locale={navLang}
-              context={{ kind: "tutor" }}
+              exam={examShortName}
+              examCode={examCode}
               explain="own"
               side="top"
               block

@@ -18,6 +18,7 @@ import { prisma } from "@/lib/db/prisma";
 import { NOT_SCHOOL_SQL } from "@/lib/db/exam-scope";
 import { Header } from "@/components/Header";
 import { SignUpButton } from "@/components/SignUpButton";
+import { signUpWords } from "@/lib/signup-place-words";
 import { signUpReason } from "@/lib/signup-cta-copy";
 
 export const dynamic = "force-dynamic";
@@ -192,7 +193,18 @@ export default async function LiveTestPage() {
           // A member's "Write it now →" above is unchanged.
           <div className="mt-3">
             <p data-su-reason className="text-xs text-ink-700">{signUpReason("en", "writePaper")}</p>
-            <SignUpButton href="/login?callbackUrl=%2Flive-test&from=live-test" surface="live-test" explain="own" className="mt-2" />
+            {/* 2 Oct 2026, later: the tooltip is this door's own entry
+                (door.live-test), resolved here on the server. It names the
+                paper's exam as a VARIABLE only — this sign-in returns to
+                /live-test and sets no exam — and says where the student
+                stands "among those who wrote the same paper, however few". */}
+            <SignUpButton
+              href="/login?callbackUrl=%2Flive-test&from=live-test"
+              surface="live-test"
+              {...signUpWords("en", { surface: "live-test", callback: "/live-test", vars: { exam: r.short } })}
+              explain="own"
+              className="mt-2"
+            />
           </div>
         ) : state === "upcoming" ? (
           <Link

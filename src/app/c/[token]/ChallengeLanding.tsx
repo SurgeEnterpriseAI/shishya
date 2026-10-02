@@ -203,7 +203,6 @@ export function ChallengeLanding({
             locale={locale}
             exam={data.examShort}
             examCode={data.examCode}
-            practice
             side="top"
             block
             className="flex-1"

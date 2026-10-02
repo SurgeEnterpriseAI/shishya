@@ -46,6 +46,7 @@
 
 import Link from "next/link";
 import { Header } from "@/components/Header";
+import { ExamSignUpContext } from "@/components/ExamSignUpContext";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { NOT_SCHOOL_WHERE, realExamKey } from "@/lib/db/exam-scope";
@@ -248,6 +249,11 @@ export default async function ChatPage({
     return (
       <main className="min-h-screen bg-ink-50/40">
         <Header />
+        {/* What this page tells the sign-up buttons on it (2 Oct 2026): the
+            exam this guest chat is about, whether it can serve a mock and
+            whether it is an olympiad — so the line under the title, the save
+            card and the header say what is true of it. Renders nothing. */}
+        {anonExamCode && anonExamShort && <ExamSignUpContext code={anonExamCode} exam={anonExamShort} />}
         <section
           className="container-prose flex flex-col py-6 sm:py-8"
           style={{ minHeight: "calc(100vh - 64px)" }}

@@ -44,6 +44,7 @@ import { notFound } from "next/navigation";
 import { unstable_cache } from "next/cache";
 import type { ArticleReaction } from "@prisma/client";
 import { Header } from "@/components/Header";
+import { ExamSignUpContext } from "@/components/ExamSignUpContext";
 import { SignupInline } from "@/components/SignupInline";
 import { ExamAlertBox } from "@/components/ExamAlertBox";
 import { ShareExamButton } from "@/components/ShareExamButton";
@@ -70,6 +71,7 @@ import {
 } from "@/lib/exam-checklist";
 import { isRealArticle } from "@/lib/phase-article-quality";
 import { examPageGates } from "@/lib/exam-page-gates";
+import { examSignUpFacts } from "@/lib/db/exam-practice";
 import { renderMarkdown } from "@/lib/markdown";
 import { examPageIndexGates, examPageRobots } from "@/lib/exam-week-gates";
 import type { TimelineInput } from "@/lib/exam-timeline";
@@ -236,7 +238,7 @@ export default async function ChecklistPage({
 
   // /cutoff 404s without rank bands (MP RAEO, KA KSRP — 16 Sep 2026): the
   // link renders only when the page does. A failed gate read keeps it.
-  const [session, articleRow, gates] = await Promise.all([
+  const [session, articleRow, gates, signUpFacts] = await Promise.all([
     auth().catch(() => null),
     prisma.examPhaseArticle
       .findFirst({
@@ -246,7 +248,16 @@ export default async function ChecklistPage({
       })
       .catch(() => null),
     examPageGates(exam.code),
+    // For the early sign-up line's own sentence: "{exam} mocks, scores and
+    // weak topics" only where the exam can SERVE a mock — five or more
+    // checked questions, the same test as the tooltip on that line's button
+    // (family.examChecklist.practice). 2 Oct 2026 review: this mount is new,
+    // and "has practice" is true from one checked question or one shared
+    // mock. The cached read the page's island makes too; a failed read, one
+    // to four questions or shared mocks alone: the line without mocks.
+    examSignUpFacts(exam.code),
   ]);
+  const examCanServeMock = signUpFacts?.practice === "canServe";
   const signedIn = !!session?.user;
   const userId = session?.user?.id ?? null;
 
@@ -320,6 +331,8 @@ export default async function ChecklistPage({
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
       )}
       <Header />
+      {/* What this page tells the sign-up placements on it (2 Oct 2026): the exam's name and what is true of it. Renders nothing. */}
+      <ExamSignUpContext code={exam.code} exam={exam.shortName} />
       <article className="container-prose py-10">
         <nav className="mb-6 flex flex-wrap items-center gap-1.5 text-xs text-ink-500" aria-label={t("chk.crumb.aria")}>
           <Link href="/" className="font-medium text-saffron-700 hover:underline">
@@ -401,8 +414,12 @@ export default async function ChecklistPage({
 
         {/* 2 Oct 2026 (founder, standing: a sign-up invitation on every page
             family): the guest sign-up line after the page's answer. Client-only
-            (no server HTML), guests only, never on a Class 1-7 page. */}
-        <SignupInline surface="exam-checklist" revealOffscreen />
+            (no server HTML), guests only, never on a Class 1-7 page.
+            2 Oct 2026, later (decision): it is given the exam — a sign-up from
+            this page does set this exam as the account's — and whether the
+            exam can serve a mock (five or more checked questions): only then
+            does the line promise "{exam} mocks, scores and weak topics". */}
+        <SignupInline surface="exam-checklist" exam={short} practice={examCanServeMock} revealOffscreen />
 
         {/* 2 — What to carry */}
         <section className={cardCls}>

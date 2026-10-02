@@ -9,6 +9,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
 import { SignUpButton } from "@/components/SignUpButton";
+import { signUpWords } from "@/lib/signup-place-words";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import {
@@ -71,9 +72,19 @@ export default async function CommunityVouchingPage({
                 button, with a line saying why): "Sign in" was an underlined
                 link inside this sentence. The sentence is plain text now —
                 the reason — and the one shared button sits under it. Same
-                destination (/login), its own door id ("vouch"). */}
+                destination (/login), its own door id ("vouch").
+                2 Oct 2026, later: the link carried no callbackUrl, so a new
+                member landed on the dashboard. It returns to this page now,
+                and the tooltip is this door's own entry (door.vouch) without
+                the sentence that said so. */}
             <p data-su-reason>Sign in to vouch (only available to verified Domain Experts in this domain).</p>
-            <SignUpButton href="/login?from=vouch" surface="vouch" explain="own" className="mt-2" />
+            <SignUpButton
+              href={`/login?callbackUrl=${encodeURIComponent(`/community-vouching/${dom}`)}&from=vouch`}
+              surface="vouch"
+              {...signUpWords("en", { surface: "vouch", callback: `/community-vouching/${dom}` })}
+              explain="own"
+              className="mt-2"
+            />
           </div>
         ) : !canVouch ? (
           <div className="mt-6 rounded-md border border-ink-200 bg-ink-50/40 px-4 py-3 text-xs text-ink-700">

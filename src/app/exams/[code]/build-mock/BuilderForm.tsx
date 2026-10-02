@@ -180,6 +180,7 @@ export function BuilderForm({
   examCode,
   examShort,
   locale,
+  signUp,
   pyqOnly = false,
   subjects,
   preselected,
@@ -193,6 +194,12 @@ export function BuilderForm({
    *  with Google" button and its explanation (2 Oct 2026). */
   examShort?: string;
   locale?: string;
+  /** The guest button's tooltip and caption, resolved by the page (2 Oct
+   *  2026 review): "build this mock … take it with your score kept" is said
+   *  only where the topics listed here hold five or more checked questions —
+   *  a smaller set is refused (`tooFew` below, and the API). The page
+   *  counted them; without these words the button takes its fallback. */
+  signUp?: { text: string; short: string } | null;
   /** Counts and the built set are PYQ-pattern questions only (?pyq=1). */
   pyqOnly?: boolean;
   subjects: { name: string; topics: TopicRow[] }[];
@@ -500,14 +507,17 @@ export function BuilderForm({
               // this exam's builder, so the words name the exam. Google's
               // LIGHT button (one look everywhere); it stands where the
               // "Build my mock" button does for a member and is the only
-              // button in this panel.
+              // button in this panel. Its words come from the page
+              // (`signUp`): they are in the HTML with the button, and the
+              // builder's own sentence is used only where a set can be built.
               <SignUpButton
                 href={`/login?callbackUrl=${encodeURIComponent(`${pathname ?? `/exams/${examCode}/build-mock`}${pyqOnly ? "?pyq=1" : ""}`)}&from=build-mock-form`}
                 surface="build-mock-form"
                 locale={locale}
                 exam={examShort}
                 examCode={examCode}
-                practice
+                text={signUp?.text}
+                short={signUp?.short}
                 block
                 className="mt-4"
                 beaconProps={{ examCode }}

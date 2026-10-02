@@ -32,6 +32,14 @@
 // are above the button and its privacy line is right under it — a caption
 // made two small paragraphs in a row. Same link, same "signin-click" beacon
 // (surface "signup-pitch" + placement), same test arms.
+//
+// 2 Oct 2026, later (founder: "Each sign in with Google should be
+// contextualized from the location where it is"): the tooltip is the entry
+// of the PAGE FAMILY the card is on — the shared button decides it from this
+// card's own link (the page it returns to) and from what the page said about
+// itself (src/lib/signup-place.ts signUpPagePlace; SignUpPageContext), so the
+// card says what the header says on the same page. The reader's language is
+// loaded on demand; nothing about the card's own words changed.
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";

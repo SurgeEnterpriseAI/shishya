@@ -38,6 +38,7 @@ import { classifyClient } from "@/lib/client-class";
 import { loadGuestPaper } from "@/lib/guest-paper-db";
 import { GUEST_WHOLE_PAPER_OPEN } from "@/lib/guest-paper";
 import { guestPaperCopy } from "@/lib/guest-paper-copy";
+import { OLYMPIAD_CATEGORY } from "@/lib/school-age";
 
 // 25 Sep 2026: a guest now gets a real page here (the sign-in gate) instead
 // of a redirect, so the page says noindex itself, like /login — on top of
@@ -82,7 +83,7 @@ export default async function MockPlayerPage({
           generatedBy: true,
           questionIds: true,
           config: true,
-          exam: { select: { code: true, shortName: true } },
+          exam: { select: { code: true, shortName: true, category: true } },
         },
       }),
       getT(),
@@ -188,6 +189,7 @@ export default async function MockPlayerPage({
         copy={mockGateCopy(locale)}
         guestQuiz={guestQuiz}
         locale={locale}
+        olympiad={String(guestMock.exam.category) === OLYMPIAD_CATEGORY}
       />
     );
   }
