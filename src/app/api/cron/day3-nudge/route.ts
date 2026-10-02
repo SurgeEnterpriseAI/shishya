@@ -21,12 +21,19 @@
 // selection now drops every school-only account (src/lib/db/enrollment.ts
 // schoolOnlyAccountSql: marked school by its class enrolment or the school
 // code in onbPrepCodes, and no active enrolment on a real exam).
+//
+// 2 Oct 2026 (review of the school-age mail safeguards): "school-only" still
+// let through the school student who follows an olympiad or picked a school
+// stage in the wizard, and this mail invites them to an exam-prep diagnostic
+// and a subject expert. The selection now also drops every school-age account
+// (schoolAgeAccountSql; rule in src/lib/school-age.ts), as the win-back,
+// lapse and evening nudges do.
 // ?dry=1 → the candidates it would mail, sends nothing.
 //
 // Auth: Bearer ${CRON_SECRET}, same as the other cron routes.
 
 import { prisma } from "@/lib/db/prisma";
-import { schoolOnlyAccountSql } from "@/lib/db/enrollment";
+import { schoolAgeAccountSql, schoolOnlyAccountSql } from "@/lib/db/enrollment";
 import { sendDay3NudgeEmail } from "@/lib/email";
 
 export const runtime = "nodejs";
@@ -70,6 +77,8 @@ export async function GET(req: Request) {
       )
       -- 26 Sep 2026: never a school-only account (Class 8-12 student mode).
       AND NOT ${schoolOnlyAccountSql("u")}
+      -- 2 Oct 2026: nor a school-age account (olympiad or class enrolment, school stage).
+      AND NOT ${schoolAgeAccountSql("u")}
     ORDER BY u."createdAt" ASC
   `;
 

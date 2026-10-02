@@ -245,8 +245,9 @@ describe("exam audiences never hold a school-only account", () => {
 
   it("the day-3 nudge (keyed on User only) drops school-only accounts, and offers ?dry=1", () => {
     const src = stripComments(read("src/app/api/cron/day3-nudge/route.ts"));
-    expect(src).toMatch(/AND NOT \$\{schoolOnlyAccountSql\("u"\)\}\s*ORDER BY u\."createdAt" ASC/);
-    expect(src).toMatch(/import \{ schoolOnlyAccountSql \} from "@\/lib\/db\/enrollment";/);
+    // 2 Oct 2026: the school-age exclusion follows it (tests/unit/mail-school-age.test.ts).
+    expect(src).toMatch(/AND NOT \$\{schoolOnlyAccountSql\("u"\)\}[^`]*?AND NOT \$\{schoolAgeAccountSql\("u"\)\}\s*ORDER BY u\."createdAt" ASC/);
+    expect(src).toMatch(/import \{ schoolAgeAccountSql, schoolOnlyAccountSql \} from "@\/lib\/db\/enrollment";/);
     // The exclusion sits inside the candidate query, so a dry run shows it.
     expect(src.indexOf('schoolOnlyAccountSql("u")')).toBeLessThan(src.indexOf("if (dry) {"));
     expect(src.indexOf("if (dry) {")).toBeLessThan(src.indexOf("sendDay3NudgeEmail({"));

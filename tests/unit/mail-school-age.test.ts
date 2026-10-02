@@ -544,7 +544,7 @@ describe("Daily 5 and coach-morning still go out — without the quoted chat lin
     expect(db.questionIds).toEqual([[], []]);
   });
 
-  it("source seams: the two mails ask who is school age; the three come-back mails exclude in SQL; nothing else changed audience", () => {
+  it("source seams: the two mails ask who is school age; the come-back mails and the day-3 nudge exclude in SQL; nothing else changed audience", () => {
     for (const f of ["src/app/api/cron/daily-five/route.ts", "src/app/api/cron/coach-morning/route.ts"]) {
       const src = read(f);
       expect(src, f).toMatch(/const isSchoolAge = await schoolAgeTestFor\(/);
@@ -552,17 +552,20 @@ describe("Daily 5 and coach-morning still go out — without the quoted chat lin
       expect(src, f).toMatch(/loadEmailQuestions\([^;]*!isSchoolAge\(id\)/);
       expect(src, f).not.toContain("schoolAgeAccountSql");
     }
-    for (const f of ["src/app/api/cron/winback/route.ts", "src/app/api/cron/lapse-nudge/route.ts", "src/app/api/cron/evening-nudge/route.ts"]) {
+    // day-3 nudge: added by the review of 2 Oct 2026 (it invites to an exam-prep diagnostic).
+    for (const f of ["src/app/api/cron/winback/route.ts", "src/app/api/cron/lapse-nudge/route.ts", "src/app/api/cron/evening-nudge/route.ts", "src/app/api/cron/day3-nudge/route.ts"]) {
       expect(read(f).match(/NOT \$\{schoolAgeAccountSql\("u"\)\}/g), f).toHaveLength(1);
     }
     // The line's third argument is required: no caller can leave the question unanswered.
     expect(read("src/lib/pickup.ts")).toMatch(/now: Date,\n\s+who: \{ schoolAge: boolean \},\n\): \{ text: string; html: string \} \| null \{/);
-    // The rule is used by exactly these five crons (and by nothing that alerts or monitors).
+    // The rule is used by exactly these six crons (and by nothing that alerts or monitors).
     const cronDir = path.join(ROOT, "src/app/api/cron");
     const users = fs
       .readdirSync(cronDir)
       .filter((d) => fs.existsSync(path.join(cronDir, d, "route.ts")) && /schoolAge(AccountSql|TestFor|UserIds)/.test(read(`src/app/api/cron/${d}/route.ts`)))
       .sort();
-    expect(users).toEqual(["coach-morning", "daily-five", "evening-nudge", "lapse-nudge", "winback"]);
+    expect(users).toEqual(["coach-morning", "daily-five", "day3-nudge", "evening-nudge", "lapse-nudge", "winback"]);
+    // The day-3 nudge keeps its older school-only exclusion beside the new one.
+    expect(read("src/app/api/cron/day3-nudge/route.ts")).toMatch(/NOT \$\{schoolOnlyAccountSql\("u"\)\}/);
   });
 });

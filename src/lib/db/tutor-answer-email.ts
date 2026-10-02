@@ -16,10 +16,15 @@
 //     fails; the chat's promise reads the same row, so it never promises a
 //     mail the cap would hold back.
 // A school chat never promises a mail (the caller passes no userId for it).
+//
+// 2 Oct 2026: each target also says whether the account is school age
+// (schoolAgeAccountSql — an olympiad or class enrolment, or a school stage).
+// Such an account keeps the mail, because the chat promised it, but the mail
+// does not quote the question (src/lib/tutor-late-answer.ts answeredEmailLines).
 
 import { randomUUID } from "node:crypto";
 import { prisma } from "./prisma";
-import { schoolOnlyAccountSql } from "./enrollment";
+import { schoolAgeAccountSql, schoolOnlyAccountSql } from "./enrollment";
 import { ANSWERED_EMAIL_TAG, type LateEmailTarget } from "@/lib/tutor-late-answer";
 
 /** True when a late answer to this member's question would be mailed now. Fails closed (false). */
@@ -47,12 +52,13 @@ export async function tutorAnswerEmailable(userId: string): Promise<boolean> {
 export async function answeredEmailTargets(userIds: readonly string[]): Promise<LateEmailTarget[]> {
   const ids = [...new Set(userIds)].filter(Boolean);
   if (ids.length === 0) return [];
-  const rows = await prisma.$queryRaw<Array<{ id: string; email: string; name: string | null }>>`
-    SELECT u.id, u.email, u.name FROM "User" u
+  const rows = await prisma.$queryRaw<Array<{ id: string; email: string; name: string | null; schoolAge: boolean | null }>>`
+    SELECT u.id, u.email, u.name, ${schoolAgeAccountSql("u")} AS "schoolAge" FROM "User" u
     WHERE u.id = ANY(${ids})
       AND u.email IS NOT NULL AND u.email <> '' AND u."emailOptOut" = FALSE
       AND NOT ${schoolOnlyAccountSql("u")}`;
-  return rows.map((r) => ({ userId: r.id, to: r.email, name: r.name }));
+  // Not school age only on an explicit FALSE from the database.
+  return rows.map((r) => ({ userId: r.id, to: r.email, name: r.name, schoolAge: r.schoolAge !== false }));
 }
 
 /**

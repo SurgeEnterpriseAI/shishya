@@ -1036,6 +1036,7 @@ describe("the mail — right after each student's questions, one per student, ne
         { sessionId: "sess_a", examCode: "SSC_CGL", question: "Why is 1 not a prime number?\u0007", askedAt: hoursAgo(30) },
       ],
       NOW,
+      { schoolAge: false },
     );
     expect(lines.map((l) => l.url)).toEqual([
       "https://shishya.in/chat?examCode=SSC_CGL&session=sess_a&utm_content=tutor-answered",
@@ -1058,6 +1059,42 @@ describe("the mail — right after each student's questions, one per student, ne
     expect(renderTutorAnsweredEmail({ name: "x", lines: [] })).toBeNull();
     expect(askedWhen(hoursAgo(1), NOW)).toBe("Earlier today");
     expect(askedWhen(hoursAgo(70), NOW)).toBe("3 days ago");
+  });
+
+  it("a school-age account: the mail links to the chat and never carries the question's words", () => {
+    const items = [
+      { sessionId: "sess_o", examCode: "NSEJS", question: "Why does a prism split white light?", askedAt: hoursAgo(31) },
+      { sessionId: "sess_o", examCode: "NSEJS", question: "What is total internal reflection?", askedAt: hoursAgo(30) },
+      { sessionId: "sess_p", examCode: null, question: "Which stream after Class 10?", askedAt: hoursAgo(20) },
+    ];
+    const lines = answeredEmailLines(items, NOW, { schoolAge: true });
+    expect(lines).toEqual([
+      { quote: "", count: 2, when: "Yesterday", url: "https://shishya.in/chat?examCode=NSEJS&session=sess_o&utm_content=tutor-answered" },
+      { quote: "", count: 1, when: "Yesterday", url: "https://shishya.in/chat?general=1&session=sess_p&utm_content=tutor-answered" },
+    ]);
+    const mail = renderTutorAnsweredEmail({ name: "Ravi", lines })!;
+    expect(mail.subject).toBe("Your questions are answered");
+    expect(mail.text).toContain("Yesterday you asked Shishya's AI tutor 2 questions.\nRead the answers: https://shishya.in/chat?examCode=NSEJS&session=sess_o");
+    expect(mail.text).toContain("Yesterday you asked Shishya's AI tutor a question.\nRead the answer: https://shishya.in/chat?general=1&session=sess_p");
+    for (const body of [mail.text, mail.html]) {
+      for (const word of ["prism", "reflection", "stream", "“", "&ldquo;"]) expect(body).not.toContain(word);
+    }
+    // One question: singular subject and lead.
+    const one = renderTutorAnsweredEmail({ name: null, lines: answeredEmailLines(items.slice(2), NOW, { schoolAge: true }) })!;
+    expect(one.subject).toBe("Your question is answered");
+    expect(one.text).toContain("has answered it in your chat");
+    // A question with nothing quotable still gets its line here (nothing is quoted anyway).
+    const blank = [{ sessionId: "s", examCode: null, question: "   ", askedAt: hoursAgo(2) }];
+    expect(answeredEmailLines(blank, NOW, { schoolAge: true })).toHaveLength(1);
+    expect(answeredEmailLines(blank, NOW, { schoolAge: false })).toHaveLength(0);
+  });
+
+  it("the quote is written only for an account read as NOT school age (source seams)", () => {
+    const targets = read("src/lib/db/tutor-answer-email.ts");
+    expect(targets).toContain('${schoolAgeAccountSql("u")} AS "schoolAge"');
+    expect(targets).toContain("schoolAge: r.schoolAge !== false");
+    expect(read("src/lib/db/tutor-late-answer.ts")).toContain("answeredEmailLines(items, new Date(), { schoolAge: target.schoolAge !== false })");
+    expect(read("src/lib/tutor-late-answer.ts")).toContain("if (who.schoolAge !== false) {");
   });
 
   it("more than three questions: the rest are counted without claiming they sit in separate chats", () => {

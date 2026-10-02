@@ -504,6 +504,12 @@ export function lateAnswerDeps(): LateAnswerDeps {
     markMailed,
     unmarkMailed,
     sendEmail: (target, items) =>
-      sendTutorAnsweredEmail({ to: target.to, userId: target.userId, name: target.name, lines: answeredEmailLines(items, new Date()) }),
+      // 2 Oct 2026: a school-age account (or one whose age signal was not read) gets no quoted question.
+      sendTutorAnsweredEmail({
+        to: target.to,
+        userId: target.userId,
+        name: target.name,
+        lines: answeredEmailLines(items, new Date(), { schoolAge: target.schoolAge !== false }),
+      }),
   };
 }

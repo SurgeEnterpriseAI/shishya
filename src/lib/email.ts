@@ -1847,8 +1847,10 @@ export async function sendLapseNudgeEmail(p: LapseNudgeProps & { to: string; use
 
 export interface TutorAnsweredEmailProps {
   name: string | null;
-  /** Oldest question first (src/lib/tutor-late-answer.ts answeredEmailLines). */
-  lines: Array<{ quote: string; when: string; url: string }>;
+  /** Oldest question first (src/lib/tutor-late-answer.ts answeredEmailLines).
+   *  A line with `count` quotes nothing (a school-age account, 2 Oct 2026):
+   *  it says how many questions were answered in that chat, and links to it. */
+  lines: Array<{ quote: string; when: string; url: string; count?: number }>;
 }
 
 export function renderTutorAnsweredEmail(p: TutorAnsweredEmailProps): {
@@ -1858,21 +1860,28 @@ export function renderTutorAnsweredEmail(p: TutorAnsweredEmailProps): {
   /** The parts that quote the student (cut from the founder's copy). */
   privateParts: string[];
 } | null {
-  const lines = p.lines.filter((l) => l.quote.trim().length > 0);
+  const unquoted = (l: { count?: number }) => typeof l.count === "number" && l.count > 0;
+  const lines = p.lines.filter((l) => unquoted(l) || l.quote.trim().length > 0);
   if (lines.length === 0) return null;
   const first = (p.name ?? "").split(" ")[0] || "Hi";
   const shown = lines.slice(0, 3);
   const more = lines.length - shown.length;
-  const many = lines.length > 1;
+  const many = lines.reduce((n, l) => n + (unquoted(l) ? l.count! : 1), 0) > 1;
+  const asked = (l: { count?: number }) => (l.count === 1 ? "a question" : `${l.count} questions`);
+  const readIt = (l: { count?: number }) => (unquoted(l) && l.count! > 1 ? "Read the answers" : "Read the answer");
   const subject = many ? "Your questions are answered" : "Your question is answered";
 
   const quotesText = shown
-    .map((l) => `${l.when} you asked Shishya's AI tutor: “${l.quote}”\nRead the answer: ${l.url}`)
+    .map((l) =>
+      unquoted(l)
+        ? `${l.when} you asked Shishya's AI tutor ${asked(l)}.\n${readIt(l)}: ${l.url}`
+        : `${l.when} you asked Shishya's AI tutor: “${l.quote}”\nRead the answer: ${l.url}`,
+    )
     .join("\n\n");
   const quotesHtml = shown
     .map(
       (l) =>
-        `<p style="font-size:14px;line-height:1.6;margin:14px 0 0;color:#0f172a;">${esc(l.when)} you asked Shishya's AI tutor: <em>“${esc(l.quote)}”</em><br><a href="${esc(l.url)}" style="color:#c2410c;font-weight:600;text-decoration:none;">Read the answer →</a></p>`,
+        `<p style="font-size:14px;line-height:1.6;margin:14px 0 0;color:#0f172a;">${esc(l.when)} you asked Shishya's AI tutor${unquoted(l) ? ` ${esc(asked(l))}.` : `: <em>“${esc(l.quote)}”</em>`}<br><a href="${esc(l.url)}" style="color:#c2410c;font-weight:600;text-decoration:none;">${readIt(l)} →</a></p>`,
     )
     .join("\n    ");
   // 1 Oct 2026 review: not "each in its own chat" — several failed questions

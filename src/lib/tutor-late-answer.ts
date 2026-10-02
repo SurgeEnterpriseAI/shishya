@@ -507,6 +507,10 @@ export interface LateEmailTarget {
   userId: string;
   to: string;
   name: string | null;
+  /** 2 Oct 2026: false ONLY when the account was read and is not school age
+   *  (src/lib/school-age.ts). Anything else — true, or not read — and the
+   *  mail carries no quoted question (answeredEmailLines). */
+  schoolAge?: boolean;
 }
 
 export interface LateEmailItem {
@@ -919,24 +923,43 @@ export function askedWhen(askedAt: Date, now: Date): string {
 }
 
 export interface AnsweredEmailLine {
-  /** The student's own question: control characters out, at most 60 characters. */
+  /** The student's own question: control characters out, at most 60 characters.
+   *  Empty on a line that quotes nothing (a school-age account). */
   quote: string;
+  /** Set on a line that quotes nothing: how many questions it stands for. */
+  count?: number;
   when: string;
   /** Their conversation, reopened (sendEmail adds utm_source / medium / campaign). */
   url: string;
 }
 
-/** The mail's lines, oldest question first; questions with no quotable text are left out. */
-export function answeredEmailLines(items: readonly LateEmailItem[], now: Date): AnsweredEmailLine[] {
-  return [...items]
-    .sort((a, b) => a.askedAt.getTime() - b.askedAt.getTime())
-    .map((it) => {
-      const href = chatResumeHref({ examCode: it.examCode, sessionId: it.sessionId });
-      return {
-        quote: emailQuote(it.question),
-        when: askedWhen(it.askedAt, now),
-        url: `https://shishya.in${href}&utm_content=${ANSWERED_EMAIL_TAG}`,
-      };
-    })
+/**
+ * The mail's lines, oldest question first; questions with no quotable text are left out.
+ *
+ * 2 Oct 2026 (review of the school-age mail safeguards, decision PD-5: no
+ * quoted chat line in any mail to a school-age account). The audience of this
+ * mail drops only school-ONLY accounts, so a school student who follows an
+ * olympiad still gets it — the chat promised it. For them the mail says a
+ * question was answered and links to the chat, and never carries the
+ * question's words: one line per conversation and day, with a count. The
+ * quote is written only for an explicit `schoolAge: false`.
+ */
+export function answeredEmailLines(items: readonly LateEmailItem[], now: Date, who: { schoolAge: boolean }): AnsweredEmailLine[] {
+  const sorted = [...items].sort((a, b) => a.askedAt.getTime() - b.askedAt.getTime());
+  const urlOf = (it: LateEmailItem) =>
+    `https://shishya.in${chatResumeHref({ examCode: it.examCode, sessionId: it.sessionId })}&utm_content=${ANSWERED_EMAIL_TAG}`;
+  if (who.schoolAge !== false) {
+    const lines: AnsweredEmailLine[] = [];
+    for (const it of sorted) {
+      const when = askedWhen(it.askedAt, now);
+      const url = urlOf(it);
+      const same = lines.find((l) => l.url === url && l.when === when);
+      if (same) same.count = (same.count ?? 1) + 1;
+      else lines.push({ quote: "", count: 1, when, url });
+    }
+    return lines;
+  }
+  return sorted
+    .map((it) => ({ quote: emailQuote(it.question), when: askedWhen(it.askedAt, now), url: urlOf(it) }))
     .filter((l) => l.quote.length > 0);
 }
