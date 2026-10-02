@@ -9,6 +9,8 @@
 // (the candidate pool fetched from DB by topic/difficulty filters).
 
 import { callClaude, cachedSystem, extractText, TOKEN_LIMITS } from "./client";
+import { classifyTutorFailure, isAiUnavailable } from "./tutor-failure";
+import { AI_UNAVAILABLE_CODE, AI_UNAVAILABLE_COPY } from "@/lib/ai-unavailable-copy";
 import { PLATFORM_PERSONA, ANSWER_FORMAT_RULES, syllabusBlock, studentStateBlock } from "./prompts";
 import type {
   Difficulty,
@@ -285,13 +287,20 @@ Only use ids from the pool.`;
     // A free-form instruction needs the model to read it; a rule-based set
     // titled after the instruction would be a false promise. Say so plainly
     // (never the provider's error text) and point at what works right now.
-    console.error("[generator] mock-user-request: model unavailable:", (err as Error)?.message);
-    throw Object.assign(
-      new Error(
-        "Mocks built from your own instruction need our AI helper, which is unavailable for a few minutes. “Build my own mock” (pick topics and size) works right now.",
-      ),
-      { status: 503, friendly: true },
-    );
+    //
+    // 2 Oct 2026: this catch takes every failure of the call and of reading
+    // its reply, and it said "unavailable for a few minutes" for all of them
+    // (the outages ran 5 to 11 hours, and a reply that could not be read is
+    // not an outage). Now "unavailable" only when the classifier says the AI
+    // was unavailable (code "ai-unavailable", the reason for the route's
+    // analytics row); any other failure gets the plain "could not be built".
+    const reason = classifyTutorFailure(err);
+    if (isAiUnavailable(reason)) {
+      console.error("[generator] mock-user-request: AI unavailable:", reason, (err as Error)?.message);
+      throw Object.assign(new Error(AI_UNAVAILABLE_COPY.customMock), { status: 503, friendly: true, code: AI_UNAVAILABLE_CODE, reason });
+    }
+    console.error("[generator] mock-user-request: failed:", (err as Error)?.message);
+    throw Object.assign(new Error(AI_UNAVAILABLE_COPY.customMockFailed), { status: 500, friendly: true });
   }
   const validIds = new Set(pool.map((q) => q.id));
   const cleanIds: string[] = (parsed.questionIds ?? []).filter((id: string) => validIds.has(id));

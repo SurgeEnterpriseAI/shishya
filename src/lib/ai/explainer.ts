@@ -53,6 +53,9 @@ Style for stepByStep:
 
   const { response } = await callClaude({
     feature: "explain",
+    // 2 Oct 2026: the ledger row names the question, so the repeat rate of
+    // explanations (the same question explained again) can be read from AiUsage.
+    ref: question.id,
     system: systemBlocks,
     messages: [{ role: "user", content: userPrompt }],
     maxTokens: TOKEN_LIMITS.explainer,

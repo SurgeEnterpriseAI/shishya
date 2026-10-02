@@ -20,6 +20,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { apiPost } from "@/lib/api";
+import { AI_UNAVAILABLE_COPY, explainUnavailableLine, isAiUnavailableCode, sentenceOr } from "@/lib/ai-unavailable-copy";
 import { QuestionLangSwitcher } from "@/components/QuestionLangSwitcher";
 import { TalkToTeacher } from "@/components/TalkToTeacher";
 import type { Locale } from "@/lib/i18n";
@@ -101,7 +102,18 @@ export function ResultsReview({
       }
       setTranslations(map);
     } catch (e: any) {
-      setTranslateErr(e?.message ?? "Translation failed; showing original.");
+      // 2 Oct 2026: the AI unavailable is read from the reply's code and
+      // shown with this page's own fixed line, never from the reply's text.
+      // Review, same day: the route answers this only when no question has
+      // a translation, so the line is the plain "shown in English" one (not
+      // the "stored ones are shown in <language>" line — that page answers
+      // 200). Any other failure shows the reply's sentence, never a bare
+      // code word such as INTERNAL_ERROR.
+      setTranslateErr(
+        isAiUnavailableCode(e?.code)
+          ? AI_UNAVAILABLE_COPY.translation
+          : sentenceOr(e?.message, AI_UNAVAILABLE_COPY.translationFailed),
+      );
     } finally {
       setTranslating(false);
     }
@@ -356,7 +368,16 @@ function ReviewBody({
       });
       setExplain(res.explanation);
     } catch (e: any) {
-      setErr(e.message ?? "Could not fetch explanation");
+      // 2 Oct 2026: on an empty Anthropic credit this printed the provider's
+      // billing text (the route passed it through). The AI unavailable is now
+      // read from the reply's code and shown with this page's own fixed line;
+      // the solution sentence is left out when the question has none stored.
+      setErr(
+        isAiUnavailableCode(e?.code)
+          ? explainUnavailableLine(typeof q.solution === "string" && q.solution.trim().length > 0)
+          : // Review, 2 Oct 2026: a 500 printed the bare word "INTERNAL_ERROR".
+            sentenceOr(e?.message, AI_UNAVAILABLE_COPY.explainFailed),
+      );
     } finally {
       setBusy(false);
     }

@@ -20,11 +20,14 @@
 //          first paragraph that looks like narration).
 //   done   {answer, usedWeb, pages, links, next, webSources, notice?} — the
 //          validated answer, byte-for-byte the JSON path's body
-//   error  {error, code}                    — a localised line; Retry fits
+//   error  {error, code}                    — a localised line; Retry fits.
+//          code "ai-unavailable" (2 Oct 2026): the AI itself was unavailable
+//          — the panel keeps its "Get answer" button instead of "Try again"
 // Links in delta text are NOT validated yet — the panel shows them as plain
 // words until `done` swaps in the checked answer (src/lib/ask-links.ts).
 
 import type { PageLink } from "@/lib/search/types";
+import { AI_UNAVAILABLE_CODE, isAiUnavailableCode } from "@/lib/ai-unavailable-copy";
 
 // ── Engine → route events ────────────────────────────────────────────
 
@@ -146,9 +149,11 @@ export interface AskView {
   error: string | null;
   /** Whether a "try again" button fits this error (not for rate limits or a refused browser). */
   canRetry: boolean;
+  /** 2 Oct 2026: "ai-unavailable" when the error was the AI being unavailable (the button reads "Get answer"); null otherwise. */
+  errorCode: typeof AI_UNAVAILABLE_CODE | null;
 }
 
-export const ASK_VIEW_IDLE: AskView = { phase: "idle", status: null, draft: "", metaPages: [], data: null, error: null, canRetry: false };
+export const ASK_VIEW_IDLE: AskView = { phase: "idle", status: null, draft: "", metaPages: [], data: null, error: null, canRetry: false, errorCode: null };
 
 export type AskAction =
   | { type: "start" }
@@ -157,7 +162,7 @@ export type AskAction =
   | { type: "delta"; text: string }
   | { type: "reset"; text: string }
   | { type: "done"; data: AskAnswerPayload }
-  | { type: "error"; message: string; canRetry: boolean }
+  | { type: "error"; message: string; canRetry: boolean; code?: typeof AI_UNAVAILABLE_CODE }
   | { type: "stop" };
 
 const live = (p: AskPhase) => p === "busy" || p === "streaming";
@@ -176,9 +181,9 @@ export function askReducer(s: AskView, a: AskAction): AskView {
       return live(s.phase) ? { ...s, phase: a.text ? "streaming" : "busy", draft: a.text } : s;
     case "done":
       // A stopped answer stays stopped: the person asked for it to end.
-      return s.phase === "stopped" ? s : { ...s, phase: "done", status: null, data: a.data, error: null };
+      return s.phase === "stopped" ? s : { ...s, phase: "done", status: null, data: a.data, error: null, errorCode: null };
     case "error":
-      return s.phase === "done" || s.phase === "stopped" ? s : { ...s, phase: "error", status: null, error: a.message, canRetry: a.canRetry };
+      return s.phase === "done" || s.phase === "stopped" ? s : { ...s, phase: "error", status: null, error: a.message, canRetry: a.canRetry, errorCode: a.code ?? null };
     case "stop":
       return live(s.phase) ? { ...s, phase: "stopped", status: null } : s;
   }
@@ -208,7 +213,13 @@ export function frameToAction(f: SseFrame, failed: string): AskAction | null {
     case "done":
       return "answer" in o ? { type: "done", data: o as unknown as AskAnswerPayload } : null;
     case "error":
-      return { type: "error", message: typeof o.error === "string" && o.error ? o.error : failed, canRetry: true };
+      return {
+        type: "error",
+        message: typeof o.error === "string" && o.error ? o.error : failed,
+        canRetry: true,
+        // 2 Oct 2026: only this one code travels to the panel.
+        ...(isAiUnavailableCode(o.code) ? { code: AI_UNAVAILABLE_CODE } : {}),
+      };
     default:
       return null;
   }

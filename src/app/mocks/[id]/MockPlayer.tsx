@@ -22,6 +22,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { apiPost } from "@/lib/api";
+import { AI_UNAVAILABLE_COPY, isAiUnavailableCode } from "@/lib/ai-unavailable-copy";
 import { QuestionLangSwitcher } from "@/components/QuestionLangSwitcher";
 import { MockTimer } from "@/components/mock-player/MockTimer";
 import { SaveStatus, type SaveState } from "@/components/mock-player/SaveStatus";
@@ -273,7 +274,15 @@ export function MockPlayer({
       const ids = questions.slice(idx, idx + 8).map((q) => q.id);
       await fetchTranslationBatch(target, ids);
     } catch (e: any) {
-      setTranslateErr(e?.message ?? "Translation failed; showing original.");
+      // 2 Oct 2026: on an empty Anthropic credit this printed the provider's
+      // billing text under the language menu (the route appended it). The AI
+      // unavailable is now read from the reply's code and shown with this
+      // page's own fixed line, never from the reply's text.
+      setTranslateErr(
+        isAiUnavailableCode(e?.code)
+          ? AI_UNAVAILABLE_COPY.translation
+          : (e?.message ?? "Translation failed; showing original."),
+      );
     } finally {
       setTranslating(false);
     }

@@ -9,6 +9,15 @@
 // set /api/mocks/custom builds — and returns it in this route's `mock`
 // shape (every client reads mock.id). Without the flag a school code is an
 // unknown exam here, as before (realExamKey).
+//
+// 2 Oct 2026 (honest words, no provider text): the two AI lines here said
+// "unavailable for a few minutes" (the outages ran 5 to 11 hours) whatever
+// the cause. The catch now classifies first: the AI unavailable → 503
+// { code: "ai-unavailable", error: <the fixed line> } and one analytics row;
+// any other model-provider failure → a plain "could not be built" line. A
+// free-text mock's own refusal (src/lib/ai/generator.ts) carries the same
+// code. Only the non-school branch calls the model (realExamKey: a real
+// exam, never a school class). Helper: src/lib/ai/unavailable-reply.ts.
 
 import { z } from "zod";
 import { auth } from "@/lib/auth";
@@ -38,6 +47,8 @@ import {
 import { rankByInstruction, shortfallLine, stripCountClaims, titleWithCount } from "@/lib/mock-fill";
 import { buildSchoolChapterMock } from "@/lib/school/student-db";
 import type { Difficulty, GenerateMockRequest, QuestionRef, SyllabusContext } from "@/lib/ai/types";
+import { AI_UNAVAILABLE_COPY, isAiUnavailableCode } from "@/lib/ai-unavailable-copy";
+import { aiUnavailableBody, aiUnavailableReason, aiUnavailableReply, isOwnBadRequest, recordAiUnavailable, requestIdentity } from "@/lib/ai/unavailable-reply";
 
 /** Narrow-select cap on the validated pool fetched per creation. Seen
  *  exclusion runs over this whole slice (the old code took 200/500 full
@@ -62,9 +73,12 @@ const Body = z.object({
 });
 
 export async function POST(req: Request) {
+  // Known to the catch (the analytics row of an AI-unavailable failure).
+  let who: string | null = null;
   try {
     const session = await auth();
     if (!session?.user?.id) return unauth();
+    who = session.user.id;
     const body = await parseBody(req, Body);
 
     // 26 Sep 2026: school chapter practice — no generator, no enrolment on an
@@ -271,15 +285,29 @@ export async function POST(req: Request) {
     // (the Anthropic SDK's APIError carries `headers` / `error`) must never
     // reach a student verbatim — on 11-13 Sep "credit balance is too low" did,
     // because it arrives with status 400.
-    if (err?.friendly) return Response.json({ error: err.message }, { status: err.status ?? 503 });
+    if (err?.friendly) {
+      // 2 Oct 2026: a free-text mock refused because the AI was unavailable
+      // carries the code and the reason (src/lib/ai/generator.ts).
+      if (isAiUnavailableCode(err.code)) {
+        recordAiUnavailable({ feature: "custom-mock", reason: err.reason ?? "other", userId: who, ...requestIdentity(req), alt: "build-mock" });
+        return Response.json(aiUnavailableBody("custom-mock", err.message), { status: 503 });
+      }
+      return Response.json({ error: err.message }, { status: err.status ?? 503 });
+    }
+    // 2 Oct 2026: classify BEFORE the status check — the empty-balance error
+    // is a 400 too.
+    const reason = aiUnavailableReason(err);
+    if (reason) {
+      console.error("[mocks] AI unavailable:", reason, err?.status ?? "", String(err?.message ?? "").slice(0, 200));
+      recordAiUnavailable({ feature: "mock", reason, userId: who, ...requestIdentity(req), alt: "bank-test" });
+      return aiUnavailableReply("mock");
+    }
     if (err?.headers !== undefined || err?.error?.type !== undefined) {
       console.error("[mocks] model provider error:", err?.status, err?.message);
-      return Response.json(
-        { error: "Our AI helper is unavailable for a few minutes. A topic test or the diagnostic starts right away." },
-        { status: 503 },
-      );
+      return Response.json({ error: AI_UNAVAILABLE_COPY.mockFailed }, { status: 502 });
     }
-    if (err?.status === 400) return bad(err.message);
+    // Only our own validation errors carry a message for the student.
+    if (isOwnBadRequest(err)) return bad(err.message);
     return serverError(err);
   }
 }

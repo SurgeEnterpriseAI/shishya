@@ -41,12 +41,22 @@
 //     as it arrives;
 //   * an error keeps the resolver's page as the way forward and offers Retry;
 //     a JSON reply (Class 1-7, or a server without streaming) still works.
+//
+// 2 Oct 2026 (honest words): when the AI itself is unavailable (an empty
+// credit, an outage) /api/ask answers code "ai-unavailable" — a 503 JSON
+// body or the stream's error frame — with a line that says so in the page's
+// language (copy.aiUnavailable / copy.aiUnavailableNoPage). The panel reads
+// the CODE: it shows that line and keeps the "Get answer" button, not "Try
+// again" (the outages ran 5 to 11 hours; "try again" promised a quick fix).
+// The button is never hidden: a press is the only way the page learns the AI
+// is back.
 
 import { useEffect, useReducer, useRef, useState } from "react";
 import { ChatMarkdown } from "@/components/ChatMarkdown";
 import type { SearchCopy } from "@/lib/search-copy";
 import type { Outcome, PageLink } from "@/lib/search/types";
 import { ASK_ANSWER_KEY, ASK_INTENT_KEY, ASK_INTENT_TTL_MS } from "@/lib/search/types";
+import { AI_UNAVAILABLE_CODE, isAiUnavailableCode } from "@/lib/ai-unavailable-copy";
 import {
   ASK_VIEW_IDLE,
   askReducer,
@@ -179,10 +189,14 @@ export function AskAnswer({
     setShown(0);
     dispatch({ type: "start" });
     let settled = false; // a done or error frame arrived
-    const fail = (message: string, canRetry: boolean) => {
+    // The page's own line for an "ai-unavailable" reply. The server's line says which of the two fits
+    // (pages matched, or none); any other text is not shown — the closest page decides instead.
+    const unavailableLine = (serverLine: unknown) =>
+      serverLine === copy.aiUnavailableNoPage ? copy.aiUnavailableNoPage : serverLine === copy.aiUnavailable || best != null ? copy.aiUnavailable : copy.aiUnavailableNoPage;
+    const fail = (message: string, canRetry: boolean, code?: typeof AI_UNAVAILABLE_CODE) => {
       settled = true;
       if (canRetry) started.current = false; // a failed call may be retried by hand
-      dispatch({ type: "error", message, canRetry });
+      dispatch({ type: "error", message, canRetry, ...(code ? { code } : {}) });
     };
     try {
       const res = await fetch("/api/ask", {
@@ -193,7 +207,13 @@ export function AskAnswer({
       });
       if (res.status === 403) return fail(copy.unavailable, false);
       if (res.status === 429) return fail(copy.rateLimited, false);
-      if (!res.ok) return fail(copy.failed, true);
+      if (!res.ok) {
+        // 2 Oct 2026: a JSON refusal with code "ai-unavailable" gets its own line (the page's own copy, picked
+        // by the code — the body's text is not shown) and the "Get answer" button.
+        const body = (await res.json().catch(() => null)) as { code?: unknown; error?: unknown } | null;
+        if (isAiUnavailableCode(body?.code)) return fail(unavailableLine(body?.error), true, AI_UNAVAILABLE_CODE);
+        return fail(copy.failed, true);
+      }
       if (!(res.headers.get("content-type") ?? "").includes("text/event-stream") || !res.body) {
         // A JSON answer: Class 1-7 (pages only), or a server that does not stream.
         const data = (await res.json().catch(() => null)) as AskAnswerPayload | null;
@@ -216,6 +236,11 @@ export function AskAnswer({
           } else if (a.type === "error") {
             settled = true;
             started.current = false;
+            // 2 Oct 2026: the AI unavailable — the page's own line for the code.
+            if (a.code) {
+              dispatch({ ...a, message: unavailableLine(a.message) });
+              continue;
+            }
           }
           dispatch(a);
         }
@@ -345,7 +370,8 @@ export function AskAnswer({
               onClick={() => void ask("button")}
               className="mt-2 rounded-xl border border-saffron-300 bg-white px-3 py-1.5 text-xs font-semibold text-saffron-800 hover:border-saffron-500"
             >
-              {copy.stream.retry}
+              {/* 2 Oct 2026: the AI unavailable is not a slip to "try again" on — the button keeps its own name. */}
+              {view.errorCode === AI_UNAVAILABLE_CODE ? copy.getAnswer : copy.stream.retry}
             </button>
           )}
         </div>

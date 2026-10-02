@@ -21,7 +21,13 @@ export async function api<T = unknown>(
   }
   if (!res.ok) {
     const msg = data?.error ?? res.statusText ?? `HTTP ${res.status}`;
-    throw new Error(msg);
+    // 2 Oct 2026: the thrown error also carries the reply's status and its
+    // stable `code` (e.g. "ai-unavailable"), so a caller can pick its own
+    // fixed line by the code instead of printing whatever text came back.
+    throw Object.assign(new Error(msg), {
+      status: res.status,
+      code: typeof data?.code === "string" ? (data.code as string) : undefined,
+    });
   }
   return data as T;
 }

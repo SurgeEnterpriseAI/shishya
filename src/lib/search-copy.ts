@@ -38,6 +38,14 @@ export interface SearchCopy {
   rateLimited: string;
   failed: string;
   unavailable: string;
+  /** 2 Oct 2026: the AI itself was unavailable (an empty credit, an outage)
+   *  — shown instead of `failed`, with the "Get answer" button, not "Try
+   *  again" (/api/ask code "ai-unavailable"). Says only what is true: no
+   *  "busy", no "a few minutes"; the outages ran 5 to 11 hours.
+   *  `aiUnavailable` when the search matched pages (they are listed above
+   *  the panel), `aiUnavailableNoPage` when it matched none. */
+  aiUnavailable: string;
+  aiUnavailableNoPage: string;
   sections: Record<SearchSection, string>;
   badges: Record<PageStatus, string>;
   notices: Record<SearchNotice, string>;
@@ -136,8 +144,10 @@ const EN: SearchCopy = {
   footnote: "AI answers can be wrong. Check dates and numbers on the linked Shishya page or the official notice before you act.",
   stages: ["Checking Shishya's pages…", "Reading the exam and school data…", "Writing your answer…"],
   rateLimited: "You've asked a lot in the last hour. Try again a little later, or open one of the pages above.",
-  failed: "The answer engine hiccuped. Open a page above, or try again.",
+  failed: "This question could not be answered this time. Open a page above, or try again.",
   unavailable: "The AI answer is not available here. Open one of the pages above.",
+  aiUnavailable: "The AI answer is unavailable right now. The closest Shishya pages are listed above.",
+  aiUnavailableNoPage: "The AI answer is unavailable right now, and no Shishya page matches this question.",
   sections: {
     school: "School",
     entrance: "Entrance exams",
@@ -252,6 +262,8 @@ const HI: SearchCopy = {
   rateLimited: "पिछले एक घंटे में आपने बहुत पूछा है। थोड़ी देर बाद फिर कोशिश करें, या ऊपर का कोई पेज खोलें।",
   failed: "जवाब देने में दिक्कत आई। ऊपर का कोई पेज खोलें या फिर कोशिश करें।",
   unavailable: "यहाँ AI जवाब उपलब्ध नहीं है। ऊपर का कोई पेज खोलें।",
+  aiUnavailable: "AI जवाब अभी उपलब्ध नहीं है। सबसे मिलते-जुलते शिष्य पेज ऊपर दिए हैं।",
+  aiUnavailableNoPage: "AI जवाब अभी उपलब्ध नहीं है, और इस सवाल से मिलता कोई शिष्य पेज नहीं है।",
   sections: {
     school: "स्कूल",
     entrance: "प्रवेश परीक्षाएं",
@@ -359,6 +371,8 @@ const TE: SearchCopy = {
   rateLimited: "గత గంటలో మీరు చాలా అడిగారు. కొద్దిసేపటి తర్వాత మళ్ళీ ప్రయత్నించండి, లేదా పైన ఉన్న ఒక పేజీ తెరవండి.",
   failed: "సమాధానంలో సమస్య వచ్చింది. పైన ఉన్న పేజీ తెరవండి, లేదా మళ్ళీ ప్రయత్నించండి.",
   unavailable: "ఇక్కడ AI సమాధానం అందుబాటులో లేదు. పైన ఉన్న పేజీ తెరవండి.",
+  aiUnavailable: "AI సమాధానం ప్రస్తుతం అందుబాటులో లేదు. దగ్గరగా సరిపోయే శిష్య పేజీలు పైన ఉన్నాయి.",
+  aiUnavailableNoPage: "AI సమాధానం ప్రస్తుతం అందుబాటులో లేదు, ఈ ప్రశ్నకు సరిపోయే శిష్య పేజీ కూడా లేదు.",
   sections: {
     school: "పాఠశాల",
     entrance: "ప్రవేశ పరీక్షలు",

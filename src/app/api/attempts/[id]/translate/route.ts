@@ -3,6 +3,19 @@
 // Translates the questions of a specific attempt (used by results / review
 // pages where the route key is the attempt id rather than the mock id).
 // Delegates to the same cache + translator pipeline used by mocks.
+//
+// 2 Oct 2026 (honest words, no provider text): when nothing could be
+// translated the line said "Try again in a moment" (the outages ran 5 to 11
+// hours) whatever the cause. Now the first batch error is classified: the AI
+// unavailable → 503 { code: "ai-unavailable", error: <the fixed line> } and
+// one analytics row (never for a Class 1-7 attempt); anything else → a plain
+// "could not be translated" line. The error's own text is logged, never
+// returned. Helper: src/lib/ai/unavailable-reply.ts.
+// 2 Oct 2026 (review): the 503 is answered only when NO question has a
+// translation, so every question on the page is in English. The line is the
+// mock player's plain one ("…so the questions are shown in English"), not
+// the "stored ones are shown in <language>" line: that describes a partly
+// translated page, which answers 200 and shows no line yet (build 6).
 
 import { z } from "zod";
 import { prisma } from "@/lib/db/prisma";
@@ -11,6 +24,17 @@ import { locales, type Locale } from "@/lib/i18n";
 import { translateBatch, MAX_BATCH_SIZE } from "@/lib/ai/translator";
 import { findTranslations, upsertTranslation } from "@/lib/db/questionTranslations";
 import { checkRateLimit, rateLimited } from "@/lib/rate-limit";
+import { auth } from "@/lib/auth";
+import { AI_UNAVAILABLE_COPY } from "@/lib/ai-unavailable-copy";
+import {
+  aiUnavailableReason,
+  aiUnavailableReply,
+  examCodeOfAttempt,
+  isOwnBadRequest,
+  recordAiUnavailable,
+  requestIdentity,
+  schoolBandOfExamCode,
+} from "@/lib/ai/unavailable-reply";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -68,6 +92,10 @@ export async function POST(
       return ok({ locale, questions: out });
     }
 
+    // The first batch error decides which fixed line is shown when nothing
+    // could be translated (2 Oct 2026); its text is logged, never returned.
+    let firstBatchError: unknown = null;
+
     const cached = await findTranslations(qIds, locale);
     const missIds = qIds.filter((qid) => !cached.has(qid)).slice(0, PER_REQUEST_MISS_CAP);
     if (missIds.length > 0) {
@@ -101,6 +129,7 @@ export async function POST(
           .map((r) => r.value);
         for (const f of results.filter((r) => r.status === "rejected")) {
           console.error("[attempts/translate] batch failed", (f as PromiseRejectedResult).reason);
+          firstBatchError = firstBatchError ?? (f as PromiseRejectedResult).reason;
         }
         for (const { translated } of ok) {
           await Promise.all(
@@ -140,20 +169,35 @@ export async function POST(
         solution: q.solution,
       }));
 
+    // 2 Oct 2026: a batch that failed because the AI was unavailable is one
+    // failed AI request by a person — one analytics row. Read on this
+    // failure path only: who asked, and the attempt's exam (no row for
+    // Class 1-7).
+    const unavailable = firstBatchError ? aiUnavailableReason(firstBatchError) : null;
+    if (unavailable) {
+      const session = await auth().catch(() => null);
+      recordAiUnavailable({
+        feature: "translate",
+        reason: unavailable,
+        userId: session?.user?.id ?? null,
+        ...requestIdentity(req),
+        school: schoolBandOfExamCode(await examCodeOfAttempt(attempt.id)),
+      });
+    }
+
     // Silent-failure guard — see /api/mocks/[id]/translate for the
-    // full rationale. If every batch failed, surface a 503 instead of
-    // {questions: []} so the UI shows an actionable error.
+    // full rationale. If every batch failed, answer 503 with a fixed line
+    // instead of {questions: []} so the page can say what happened.
     const requestedMissCount = qIds.filter((qid) => !cached.has(qid)).length;
     if (requestedMissCount === qIds.length && qIds.length > 0) {
-      return bad(
-        "Translation temporarily unavailable. Try again in a moment, or pick a different language.",
-        503,
-      );
+      if (unavailable) return aiUnavailableReply("translate", AI_UNAVAILABLE_COPY.translation);
+      return bad(AI_UNAVAILABLE_COPY.translationFailed, 503);
     }
 
     return ok({ locale, questions });
   } catch (err: any) {
-    if (err?.status === 400) return bad(err.message);
+    // Only our own validation errors carry a message for the student (2 Oct 2026).
+    if (isOwnBadRequest(err)) return bad(err.message);
     return serverError(err);
   }
 }

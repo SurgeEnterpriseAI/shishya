@@ -7,6 +7,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { AI_UNAVAILABLE_COPY, isAiUnavailableCode } from "@/lib/ai-unavailable-copy";
 
 type TaskType = "essay" | "letter" | "precis" | "upsc-answer";
 
@@ -127,9 +128,23 @@ export function DescriptiveStudio() {
         router.push(`/login?callbackUrl=${encodeURIComponent("/descriptive")}`);
         return;
       }
-      const data = await res.json();
+      // 2 Oct 2026: the status is checked before the body is trusted. A
+      // failed reply that was not JSON used to throw here and show "Network
+      // hiccup" — the wrong cause when the AI was unavailable. The fixed
+      // line is picked by the reply's code, never from provider text.
+      const data = await res.json().catch(() => null);
       if (!res.ok) {
-        setErr(data?.error ?? "Evaluation failed — try again.");
+        setErr(
+          isAiUnavailableCode(data?.code)
+            ? AI_UNAVAILABLE_COPY.essay
+            : typeof data?.error === "string" && data.error
+              ? data.error
+              : AI_UNAVAILABLE_COPY.essayFailed,
+        );
+        return;
+      }
+      if (!data) {
+        setErr(AI_UNAVAILABLE_COPY.essayFailed);
         return;
       }
       setResult(data as Evaluation);

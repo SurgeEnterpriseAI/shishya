@@ -13,6 +13,17 @@
 // read every answer before submitting. The player only ever used body and
 // options; translated solutions are still cached (upsertTranslation) for
 // the attempt-owned results route (/api/attempts/[id]/translate).
+//
+// 2 Oct 2026 (honest words, no provider text): when every batch failed, this
+// route appended the first error's message to its 503 — on an empty Anthropic
+// credit that is the provider's "Your credit balance is too low … Plans &
+// Billing", shown in the mock player under the language menu (about 39
+// translations per outage). The reply is now a fixed line: code
+// "ai-unavailable" when the AI was unavailable, a plain "could not be
+// translated" line otherwise. The provider's detail stays in the server log
+// (the console.error below). A request whose translation failed because the
+// AI was unavailable writes one analytics row (never for a Class 1-7 mock).
+// Helper: src/lib/ai/unavailable-reply.ts. Lines: src/lib/ai-unavailable-copy.ts.
 
 import { z } from "zod";
 import { prisma } from "@/lib/db/prisma";
@@ -21,6 +32,17 @@ import { locales, type Locale } from "@/lib/i18n";
 import { translateBatch, MAX_BATCH_SIZE } from "@/lib/ai/translator";
 import { findTranslations, upsertTranslation } from "@/lib/db/questionTranslations";
 import { checkRateLimit, rateLimited } from "@/lib/rate-limit";
+import { auth } from "@/lib/auth";
+import { AI_UNAVAILABLE_COPY } from "@/lib/ai-unavailable-copy";
+import {
+  aiUnavailableReason,
+  aiUnavailableReply,
+  examCodeOfMock,
+  isOwnBadRequest,
+  recordAiUnavailable,
+  requestIdentity,
+  schoolBandOfExamCode,
+} from "@/lib/ai/unavailable-reply";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -89,9 +111,9 @@ export async function POST(
       return ok({ locale, questions: out });
     }
 
-    // Track the first Anthropic error we hit so we can surface it
-    // to the client when EVERY batch fails (otherwise the user sees
-    // a generic "translation unavailable" with no way to debug).
+    // The first batch error: it decides WHICH fixed line the student reads
+    // when every batch fails (AI unavailable, or not). Its text is logged
+    // below and never returned (2 Oct 2026).
     let firstBatchError: any = null;
 
     // 1) Cache lookup.
@@ -189,25 +211,38 @@ export async function POST(
         options: q.options,
       }));
 
+    // 2 Oct 2026: a batch that failed because the AI was unavailable is one
+    // failed AI request by a person — one analytics row, whether or not some
+    // questions came from the store. Read on this failure path only: who
+    // asked, and the mock's exam (no row for Class 1-7).
+    const unavailable = firstBatchError ? aiUnavailableReason(firstBatchError) : null;
+    if (unavailable) {
+      const session = await auth().catch(() => null);
+      recordAiUnavailable({
+        feature: "translate",
+        reason: unavailable,
+        userId: session?.user?.id ?? null,
+        ...requestIdentity(req),
+        school: schoolBandOfExamCode(await examCodeOfMock(mock.id)),
+      });
+    }
+
     // Silent-failure guard: if the caller asked us to translate some
     // questions and we couldn't translate ANY of them (every batch
-    // failed — Anthropic outage, credit exhaustion, malformed JSON),
-    // surface the actual Anthropic error message to the client so
-    // venumuvva can see what's actually wrong on Vercel. Without the
-    // pass-through the user sees "translation unavailable" with zero
-    // debug info, exactly the silent-fail mode we just fixed.
+    // failed — the AI unavailable, malformed JSON), answer 503 with a
+    // fixed line so the player can say so. Never the error's own text:
+    // on an empty credit that is the provider's billing message. The
+    // detail for debugging is in the server log above.
     const requestedMissCount = qIds.filter((qid) => !cached.has(qid)).length;
     if (requestedMissCount === qIds.length && qIds.length > 0) {
-      const detail =
-        firstBatchError?.message ??
-        firstBatchError?.error?.error?.message ??
-        "Translation engine returned no usable output.";
-      return bad(`Translation failed: ${detail}`, 503);
+      if (unavailable) return aiUnavailableReply("translate");
+      return bad(AI_UNAVAILABLE_COPY.translationFailed, 503);
     }
 
     return ok({ locale, questions });
   } catch (err: any) {
-    if (err?.status === 400) return bad(err.message);
+    // Only our own validation errors carry a message for the student (2 Oct 2026).
+    if (isOwnBadRequest(err)) return bad(err.message);
     return serverError(err);
   }
 }

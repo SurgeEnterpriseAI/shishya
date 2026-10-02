@@ -16,6 +16,16 @@
 //
 // RATE LIMIT: max FRESH_LIMIT_PER_DAY on-demand generations per user per
 // rolling 24h — bounds Claude cost. Returns 429 over the cap.
+//
+// 2 Oct 2026 (honest words, no provider text): the generator swallowed every
+// error, so an empty Anthropic credit reached the student as "Try again in a
+// moment" (the outages ran 5 to 11 hours) and the "unavailable for a few
+// minutes" branch below never ran. Now the generator rethrows an
+// AI-unavailable failure and the catch classifies first: AI unavailable →
+// 503 { code: "ai-unavailable", error: <the fixed line> } and one analytics
+// row; any other failure → a plain "could not be made" line. The daily count
+// is of mocks built, so a failed request uses none of the 10.
+// Helper: src/lib/ai/unavailable-reply.ts. Lines: src/lib/ai-unavailable-copy.ts.
 
 import { z } from "zod";
 import { auth } from "@/lib/auth";
@@ -23,6 +33,8 @@ import { prisma } from "@/lib/db/prisma";
 import { realExamKey } from "@/lib/db/exam-scope";
 import { bad, notFound, ok, parseBody, serverError, unauth } from "@/lib/http";
 import { generateFreshQuestions } from "@/lib/ai/on-demand-questions";
+import { AI_UNAVAILABLE_COPY } from "@/lib/ai-unavailable-copy";
+import { aiUnavailableReason, aiUnavailableReply, isOwnBadRequest, recordAiUnavailable, requestIdentity } from "@/lib/ai/unavailable-reply";
 
 const Body = z.object({
   examCode: z.string(),
@@ -34,10 +46,13 @@ const FRESH_LIMIT_PER_DAY = 10;
 const GENERATED_BY = "ai:on-demand";
 
 export async function POST(req: Request) {
+  // Known to the catch (the analytics row of an AI-unavailable failure).
+  let who: string | null = null;
   try {
     const session = await auth();
     if (!session?.user?.id) return unauth();
     const userId = session.user.id;
+    who = userId;
     const body = await parseBody(req, Body);
     const count = body.count ?? 10;
 
@@ -93,7 +108,9 @@ export async function POST(req: Request) {
       count,
     });
     if (fresh.length === 0) {
-      return bad("Couldn't generate fresh questions right now. Try again in a moment.");
+      // The model answered, but with nothing usable — not an outage, so the
+      // line does not say "unavailable" (2 Oct 2026).
+      return bad(AI_UNAVAILABLE_COPY.freshFailed);
     }
 
     // ── Persist questions, then build the mock ────────────────────
@@ -152,16 +169,23 @@ export async function POST(req: Request) {
       },
     });
   } catch (err: any) {
-    // A model-provider error (Anthropic SDK APIError: `headers` / `error`)
-    // arrives with status 400 on a zero credit balance — never show its text.
+    // 2 Oct 2026: classify BEFORE the status check — the empty-balance error
+    // is a 400 too. This exam is a real exam (realExamKey above), never a
+    // school class.
+    const reason = aiUnavailableReason(err);
+    if (reason) {
+      console.error("[mocks/fresh] AI unavailable:", reason, err?.status ?? "", String(err?.message ?? "").slice(0, 200));
+      recordAiUnavailable({ feature: "fresh", reason, userId: who, ...requestIdentity(req), alt: "bank-test" });
+      return aiUnavailableReply("fresh");
+    }
+    // Any other model-provider error (the Anthropic SDK's APIError carries
+    // `headers` / `error`): never its text, and not "unavailable" either.
     if (err?.headers !== undefined || err?.error?.type !== undefined) {
       console.error("[mocks/fresh] model provider error:", err?.status, err?.message);
-      return Response.json(
-        { error: "Fresh questions need our AI helper, which is unavailable for a few minutes. Topic tests from the question bank work right now." },
-        { status: 503 },
-      );
+      return Response.json({ error: AI_UNAVAILABLE_COPY.freshFailed }, { status: 502 });
     }
-    if (err?.status === 400) return bad(err.message);
+    // Only our own validation errors carry a message for the student.
+    if (isOwnBadRequest(err)) return bad(err.message);
     return serverError(err);
   }
 }

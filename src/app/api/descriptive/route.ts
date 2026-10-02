@@ -6,6 +6,15 @@
 // Signed-in only, 3 evaluations per IST day per user (token cost
 // control). What Oliveboard sells as human evaluation, we do free with
 // Claude — instantly.
+//
+// 2 Oct 2026 (honest words, no provider text): the model call had no
+// try/catch, so on an empty Anthropic credit the route answered a 500 that
+// was not JSON, the page's res.json() threw, and the student read "Network
+// hiccup — try again." — the wrong cause, and an invitation to retry into a
+// dry account. Now: the AI unavailable → 503 { code: "ai-unavailable",
+// error: <the fixed line> } and one analytics row; any other failure of the
+// call → a JSON 500 with a plain line. A failed evaluation stores no row, so
+// it uses none of the 3 a day. Helper: src/lib/ai/unavailable-reply.ts.
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,6 +24,8 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { callClaude, cachedSystem, parseJson, MODEL } from "@/lib/ai/client";
+import { AI_UNAVAILABLE_COPY } from "@/lib/ai-unavailable-copy";
+import { aiUnavailableReason, aiUnavailableReply, recordAiUnavailable, requestIdentity } from "@/lib/ai/unavailable-reply";
 
 const Body = z.object({
   taskType: z.enum(["essay", "letter", "precis", "upsc-answer"]),
@@ -61,10 +72,12 @@ export async function POST(req: Request) {
 
   const wordCount = answer.trim().split(/\s+/).length;
 
-  const res = await callClaude({
-    feature: "descriptive-eval",
-    system: cachedSystem(
-      `You are Shishya's descriptive-writing evaluator for Indian government exams (SSC descriptive paper, bank PO essay/letter, UPSC Mains). You evaluate exactly like a fair, experienced examiner: strict but constructive, marks justified by the rubric, feedback specific to THIS answer (quote the student's own phrases when pointing at issues). Students may write in English or Hindi — evaluate in the language they wrote in, but keep JSON keys in English.
+  let res: Awaited<ReturnType<typeof callClaude>>;
+  try {
+    res = await callClaude({
+      feature: "descriptive-eval",
+      system: cachedSystem(
+        `You are Shishya's descriptive-writing evaluator for Indian government exams (SSC descriptive paper, bank PO essay/letter, UPSC Mains). You evaluate exactly like a fair, experienced examiner: strict but constructive, marks justified by the rubric, feedback specific to THIS answer (quote the student's own phrases when pointing at issues). Students may write in English or Hindi — evaluate in the language they wrote in, but keep JSON keys in English.
 Respond with ONLY a JSON object:
 {
   "score": number (0-25, one decimal allowed),
@@ -74,16 +87,29 @@ Respond with ONLY a JSON object:
   "grammarIssues": ["up to 5 actual errors quoted from the answer with the correction, or [] if clean"],
   "modelOutline": "a 4-6 line outline of how a top-scoring answer to this prompt would be structured"
 }`,
-    ),
-    messages: [
-      {
-        role: "user",
-        content: `${RUBRICS[taskType]}\n\nTask prompt given to the student:\n${prompt}\n\nStudent's answer (${wordCount} words):\n${answer}`,
-      },
-    ],
-    maxTokens: 1600,
-    model: MODEL,
-  });
+      ),
+      messages: [
+        {
+          role: "user",
+          content: `${RUBRICS[taskType]}\n\nTask prompt given to the student:\n${prompt}\n\nStudent's answer (${wordCount} words):\n${answer}`,
+        },
+      ],
+      maxTokens: 1600,
+      model: MODEL,
+    });
+  } catch (err: any) {
+    // 2 Oct 2026: never the provider's text; "unavailable" only when that
+    // was the cause. The essay is not stored on a failure — the line says it
+    // is still in the box.
+    const reason = aiUnavailableReason(err);
+    if (reason) {
+      console.error("[descriptive] AI unavailable:", reason, err?.status ?? "", String(err?.message ?? "").slice(0, 200));
+      recordAiUnavailable({ feature: "essay", reason, userId, ...requestIdentity(req) });
+      return aiUnavailableReply("essay");
+    }
+    console.error("[descriptive] evaluation failed:", err);
+    return Response.json({ error: AI_UNAVAILABLE_COPY.essayFailed }, { status: 500 });
+  }
 
   const text = res.response.content
     .map((b) => (b.type === "text" ? b.text : ""))

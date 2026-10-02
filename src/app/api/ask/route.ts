@@ -41,6 +41,21 @@
 // (a Class 1-7 child in distress gets the helplines too). The analytics row
 // of a distress question never stores its text. Web sources are labelled with
 // the wide official list (src/lib/official-domains.ts) when the engine has not.
+//
+// 2 Oct 2026 (honest words): a failed answer said "The answer engine
+// hiccuped — try again" whatever the cause, and the failure was logged
+// nowhere. On an empty Anthropic credit "try again" sends the student back
+// into a dry account. Now every engine failure is logged, and when the
+// classifier (src/lib/ai/tutor-failure.ts) says the AI itself was unavailable
+// the reply carries code "ai-unavailable" and a line in the asker's language
+// that says so (src/lib/search-copy.ts aiUnavailable / aiUnavailableNoPage:
+// pages matched, or none) — JSON: 503 {code, error}; stream: the error frame
+// {error, code}. One analytics row per such failure (props.surface
+// "ai-unavailable"; a school search carries no anon id; a Class 1-7 search
+// never reaches this point). Any other failure gets the plain "could not be
+// answered this time" line (search-copy `failed`; review, 2 Oct 2026: it said
+// "hiccuped"), in the asker's language on both paths. A reader who left gets
+// no line and no row.
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -57,6 +72,8 @@ import { isOfficialUrl } from "@/lib/official-domains";
 import { askScopeOf, offTopicReply } from "@/lib/ask-scope";
 import { searchCopy } from "@/lib/search-copy";
 import { ASK_SSE_HEADERS, askStatusText, sseFrame, type AskFrameName } from "@/lib/ask-stream";
+import { aiUnavailableBody, aiUnavailableReason, recordAiUnavailable } from "@/lib/ai/unavailable-reply";
+import type { TutorFailReason } from "@/lib/tutor-unavailable";
 import type { PageLink, Resolution, SearchIndex } from "@/lib/search/types";
 
 const Via = z.enum(["strip", "page", "ask-page", "button"]);
@@ -156,7 +173,22 @@ export async function POST(req: Request) {
     return Response.json({ answer: null, usedWeb: false, pages, links: pages, next: pages[0] ?? null, webSources: [], notice: "no-ai-young-class" });
   }
 
-  if (wantsStream) return streamAnswer({ req, question, resolution, index, locale, via, event });
+  // 2 Oct 2026: the row of an answer that failed because the AI was
+  // unavailable. A school search (Class 8-12 here; Class 1-7 returned above)
+  // carries no anon id.
+  const unavailableEvent = (reason: TutorFailReason, hasPages: boolean) =>
+    recordAiUnavailable({
+      feature: "ask",
+      reason,
+      userId,
+      anonId,
+      client,
+      path: "/ask",
+      alt: hasPages ? "pages" : null,
+      school: resolution.schoolScope === "none" ? "none" : "student",
+    });
+
+  if (wantsStream) return streamAnswer({ req, question, resolution, index, locale, via, event, unavailableEvent });
 
   try {
     const result = await runAsk(question, { resolution, index, locale, via, signal: req.signal });
@@ -166,8 +198,21 @@ export async function POST(req: Request) {
     event(answerProps(result));
 
     return Response.json(answerBody(result));
-  } catch {
-    return Response.json({ error: "The answer engine hiccuped — please try again." }, { status: 502 });
+  } catch (err) {
+    // 2 Oct 2026: logged (it was swallowed), and classified. A caller who
+    // left is not a failed answer.
+    const gone = req.signal.aborted;
+    if (!gone) console.error("[ask] answer failed:", (err as { status?: unknown })?.status ?? "", String((err as Error)?.message ?? err).slice(0, 200));
+    const reason = gone ? null : aiUnavailableReason(err);
+    if (reason) {
+      const hasPages = prePassHits(resolution).length > 0;
+      unavailableEvent(reason, hasPages);
+      const copy = searchCopy(locale);
+      return Response.json(aiUnavailableBody("ask", hasPages ? copy.aiUnavailable : copy.aiUnavailableNoPage), { status: 503 });
+    }
+    // Review, 2 Oct 2026: this said "The answer engine hiccuped" in English
+    // whatever the asker's language; now the same plain line the stream sends.
+    return Response.json({ error: searchCopy(locale).failed }, { status: 502 });
   }
 }
 
@@ -185,6 +230,7 @@ function streamAnswer(a: {
   locale: Locale;
   via: "strip" | "page" | "ask-page" | "button";
   event: (props: Record<string, unknown>) => void;
+  unavailableEvent: (reason: TutorFailReason, hasPages: boolean) => void;
 }): Response {
   const copy = searchCopy(a.locale);
   const abort = new AbortController();
@@ -223,9 +269,20 @@ function streamAnswer(a: {
         if (abort.signal.aborted) return;
         a.event({ ...answerProps(result), stream: true });
         emit("done", answerBody(result));
-      } catch {
-        // A reader that left needs no error line; anyone still reading gets one, with Retry.
-        emit("error", { error: copy.failed, code: "failed" });
+      } catch (err) {
+        // A reader that left needs no error line (and is not a failed answer);
+        // anyone still reading gets one, with Retry.
+        if (abort.signal.aborted) return;
+        // 2 Oct 2026: logged (it was swallowed), and classified — the AI
+        // unavailable gets its own line and code, and one analytics row.
+        console.error("[ask] streamed answer failed:", (err as { status?: unknown })?.status ?? "", String((err as Error)?.message ?? err).slice(0, 200));
+        const reason = aiUnavailableReason(err);
+        if (reason) {
+          a.unavailableEvent(reason, pages.length > 0);
+          emit("error", aiUnavailableBody("ask", pages.length > 0 ? copy.aiUnavailable : copy.aiUnavailableNoPage));
+        } else {
+          emit("error", { error: copy.failed, code: "failed" });
+        }
       } finally {
         a.req.signal.removeEventListener("abort", onGone);
         open = false;

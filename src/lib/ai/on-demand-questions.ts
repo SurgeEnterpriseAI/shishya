@@ -12,6 +12,7 @@
 
 import { anthropic, MODEL } from "./client";
 import { recordAiUsage } from "./usage";
+import { classifyTutorFailure, isAiUnavailable } from "./tutor-failure";
 
 export interface FreshQuestion {
   body: string;
@@ -79,8 +80,14 @@ Output via the publish_questions tool only.`;
 }
 
 /**
- * Generate a fresh batch. Returns [] on any failure — the caller treats
- * generation as best-effort and falls back to the existing pool.
+ * Generate a fresh batch. Returns [] when the model's reply could not be
+ * used — the caller treats generation as best-effort and falls back to the
+ * existing pool.
+ *
+ * 2 Oct 2026: an AI-unavailable failure (empty credit, overload, timeout …)
+ * is rethrown. Swallowed here, it reached the student as "Couldn't generate
+ * fresh questions right now. Try again in a moment." and the route's own
+ * "unavailable" branch (src/app/api/mocks/fresh/route.ts) could never run.
  */
 export async function generateFreshQuestions(opts: {
   examShortName: string;
@@ -123,6 +130,7 @@ Generate ${Math.min(opts.count, 20)} questions via publish_questions.`;
       .slice(0, opts.count);
   } catch (err) {
     console.error("[on-demand-questions] generation failed:", err);
+    if (isAiUnavailable(classifyTutorFailure(err))) throw err;
     return [];
   }
 }
