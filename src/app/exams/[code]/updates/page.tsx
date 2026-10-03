@@ -43,6 +43,7 @@ import { LangTwinLinks } from "@/components/LangTwinLinks";
 import { StateExamsLink } from "@/components/StateExamsLink";
 import { examPageGates } from "@/lib/exam-page-gates";
 import { passedEstimateLine, passedEstimateView } from "@/lib/official-source";
+import { countdownQualifierKey, dateTierView } from "@/lib/date-tier-view";
 import { RELEASE_SHOWN_DAYS, officialReleases, releaseLineKey, releaseLineText, titleRelease } from "@/lib/official-release";
 import { OfficialReleaseLine } from "@/components/OfficialReleaseLine";
 import { leadDescription, updatesLead } from "@/lib/answer-lead";
@@ -288,9 +289,13 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
   if (nextExam && nextExam.daysFromToday === 0) statusLine = t("tracker.status.examToday");
   else if (nextExam && nextExam.daysFromToday === 1) statusLine = t("tracker.status.examTomorrow");
   else if (nextExam) statusLine = fill(t("tracker.status.examIn"), { n: nextExam.daysFromToday });
-  // An estimated exam day is never stated bare — same qualifier as the
-  // title. Announced days (official OR reported) carry no qualifier.
-  if (statusLine && nextExam && nextExam.tier === "expected") statusLine = `${statusLine} (${t("tracker.expected").toLowerCase()})`;
+  // Only an official exam day is counted down bare — same qualifier as the
+  // title. 3 Oct 2026 (src/lib/date-tier-view.ts): a REPORTED day (announced,
+  // cited to a news or coaching site) said "Exam in 20 days" with no word
+  // while the <title> said "(reported)"; it now carries "(reported)", as an
+  // estimate carries "(expected)".
+  const statusQualifier = nextExam ? countdownQualifierKey(nextExam.tier) : null;
+  if (statusLine && statusQualifier) statusLine = `${statusLine} (${t(statusQualifier).toLowerCase()})`;
   const nextLine = next && next !== nextExam ? fill(t("tracker.status.next"), { label: next.label }) : null;
   const updatesLeadText =
     locale === "en" && urlLocale === "en" ? updatesLead({ short: exam.shortName, year, nextExam, next, last }) : null;
@@ -402,6 +407,11 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
     });
   }
 
+  // A row's "Source ↗" / "Official notice ↗" link: its citation, but never a
+  // denylisted copycat or scraper (3 Oct 2026 — sarkariresult.com.cm was
+  // linked on UP Police Constable's PET rows; src/lib/date-tier-view.ts).
+  const sourceLink = (r: TimelineRow) => dateTierView(r).sourceUrl;
+
   const badge = (r: TimelineRow) =>
     r.tier === "official" ? (
       <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-800">{t("tracker.official")}</span>
@@ -507,8 +517,8 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
                         {badge(row)}
                         {!row.passedEstimate && <span>{statusLabel(row)}</span>}
                       </p>
-                      {row.url && (
-                        <a href={row.url} target="_blank" rel="noopener noreferrer" className="mt-1 block text-xs font-medium text-saffron-700 hover:text-saffron-800">
+                      {sourceLink(row) && (
+                        <a href={sourceLink(row)!} target="_blank" rel="noopener noreferrer" className="mt-1 block text-xs font-medium text-saffron-700 hover:text-saffron-800">
                           {row.official ? t("tracker.officialNotice") : t("tracker.source")}
                         </a>
                       )}
@@ -588,8 +598,8 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
                         <span className="mr-1" aria-hidden>{KIND_ICON[r.kind]}</span>
                         <span className={r.isExamDay && r.status !== "done" ? "font-semibold text-ink-900" : ""}>{r.label}</span>
                         {r.notes && <p className="mt-0.5 text-xs text-ink-500">{r.notes}</p>}
-                        {r.url && (
-                          <a href={r.url} target="_blank" rel="noopener noreferrer" className="ml-1 text-xs font-medium text-saffron-700 hover:text-saffron-800">
+                        {sourceLink(r) && (
+                          <a href={sourceLink(r)!} target="_blank" rel="noopener noreferrer" className="ml-1 text-xs font-medium text-saffron-700 hover:text-saffron-800">
                             {r.official ? t("tracker.officialNotice") : t("tracker.source")}
                           </a>
                         )}

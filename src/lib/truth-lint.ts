@@ -44,7 +44,10 @@
 //     tier is classified by CSS class (emerald = official, sky = reported,
 //     amber = expected) so the hi/te twins parse identically.
 //   hub Important Dates <li>: <p class="text-sm font-medium text-ink-900">label</p>
-//     … <p class="mt-1 text-xs text-ink-500">Fri, 25 Sept, 2026</p>  (no tier!)
+//     … <p class="mt-1 text-xs text-ink-500">Fri, 25 Sept, 2026</p>
+//     <div …><span class="… bg-sky-100 …">Reported</span>[<a>host ↗</a>|<span>host</span>]</div>
+//       (tier badge + source since 3 Oct 2026, src/components/HubDateTier.tsx —
+//        a <div>, never a <p>; this parser does not read it)
 //     [<p class="mt-1.5 text-xs text-ink-600">notes</p>]
 //   score-estimate: "Marking: +2 per correct, …" (ew.score.marking) versus the
 //     refusal sentences of src/lib/marking-scheme.ts / ew.score.mixed.title.
@@ -990,7 +993,8 @@ export function checkAnswerKey(input: AnswerKeyInput): Finding[] {
       }
     }
   }
-  // Hub Important Dates column carries no tier — cross-check with context.md.
+  // The hub's Important Dates parse carries no tier (the HubDateTier badge,
+  // since 3 Oct 2026, is not parsed) — cross-check with context.md.
   const hubUrl = input.hubUrl ?? input.url;
   const from = addDays(input.todayIst, -120);
   const to = addDays(input.todayIst, 365);

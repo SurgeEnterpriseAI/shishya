@@ -14,9 +14,10 @@
 // next download.
 //
 // Honesty in the file itself: every SUMMARY ends with the row's tier word
-// ("SSC CGL Tier 1 (expected)"), expected rows are STATUS:TENTATIVE, and
-// the DESCRIPTION carries the cited source URL (or says the date is an
-// estimate) plus the tracker and hub links.
+// ("SSC CGL Tier 1 (expected)"), only official rows are STATUS:CONFIRMED
+// (reported and expected rows are TENTATIVE), and the DESCRIPTION carries
+// the cited source URL (or says the date is an estimate) plus the tracker
+// and hub links.
 
 import { computeExamWeekState } from "@/lib/exam-week";
 import { buildTimeline, type TimelineInput, type TimelineRow } from "@/lib/exam-timeline";
@@ -164,7 +165,10 @@ export function buildExamWeekIcs(exam: IcsExam, rows: TimelineRow[], now: Date =
       `SUMMARY:${icsEscape(summaryOf(exam, r))}`,
       `DESCRIPTION:${icsEscape(descriptionOf(exam, r))}`,
       `URL:${SITE}/exams/${exam.code}/updates`,
-      `STATUS:${r.tier === "expected" ? "TENTATIVE" : "CONFIRMED"}`,
+      // Only the conducting body's own notice confirms a date: a reported
+      // row (cited to a news or coaching site) is TENTATIVE like an
+      // estimate, or calendar apps show it as a confirmed event (3 Oct 2026).
+      `STATUS:${r.tier === "official" ? "CONFIRMED" : "TENTATIVE"}`,
       "TRANSP:TRANSPARENT",
       `CATEGORIES:${icsEscape(r.kind === "EXAM" ? "Exam day" : r.kind === "ANSWER_KEY" ? "Answer key" : "Result")}`,
       "END:VEVENT",

@@ -35,6 +35,7 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { contextualExamFilter } from "@/lib/exam-aliases";
 import { buildTimeline, fmtDay, stageOf, upcomingOfKind, latestOfKind } from "@/lib/exam-timeline";
 import { sourceTier } from "@/lib/official-source";
+import { countdownQualifierWord } from "@/lib/date-tier-view";
 import { liveTestEmailNotice } from "@/lib/live-test-today";
 
 type Exam = { id: string; code: string; name: string; shortName: string; category: string; state: string | null; candidatesPerYear: number | null };
@@ -167,10 +168,13 @@ async function examCard(exam: Exam): Promise<{ text: string; buttons: InlineButt
   const news = await prisma.examNewsItem
     .findFirst({ where: { examId: exam.id, archivedAt: null }, orderBy: { publishedAt: "desc" }, select: { title: true, url: true, id: true } })
     .catch(() => null);
+  // The countdown is bare only for an official day: a reported one (cited to
+  // a news or coaching site) says "(reported)", as on the tracker (3 Oct 2026).
+  const examTierWord = nextExam ? countdownQualifierWord(nextExam.tier) : null;
   const head = nextExam
     ? nextExam.daysFromToday === 0
       ? `🎯 <b>Exam is TODAY</b>`
-      : `🎯 <b>Exam ${nextExam.daysFromToday > 0 ? `in ${nextExam.daysFromToday} days` : "passed"}</b> — ${tgEscape(fmtDay(nextExam.date))}${nextExam.tier === "expected" ? " (expected)" : ""}`
+      : `🎯 <b>Exam ${nextExam.daysFromToday > 0 ? `in ${nextExam.daysFromToday} days` : "passed"}</b> — ${tgEscape(fmtDay(nextExam.date))}${examTierWord ? ` (${examTierWord})` : ""}`
     : `📅 No dates announced for the next cycle yet`;
   const text = [
     `<b>${tgEscape(exam.shortName)}</b> — ${tgEscape(exam.name)}`,

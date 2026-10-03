@@ -37,6 +37,24 @@ describe("exam-week .ics", () => {
     expect(ics.split("\r\n").every((l) => octets(l) <= 75)).toBe(true);
   });
 
+  it("marks only an official row CONFIRMED — a reported row is TENTATIVE (3 Oct 2026)", () => {
+    // An exam day cited only to a coaching site: announced, but not by the body.
+    const reported = [
+      { id: "r1", label: "Tier 1", date: "2026-09-13T00:00:00.000Z", isExamDay: true, kind: "EXAM", confidence: "official", url: "https://testbook.com/ssc-cgl-exam-date" },
+      { id: "r2", label: "Answer key", date: "2026-09-20T00:00:00.000Z", isExamDay: false, kind: "ANSWER_KEY", confidence: "official", url: "https://ssc.gov.in/key" },
+    ];
+    const events = examWeekCalendarRows(reported, "https://ssc.gov.in", now);
+    expect(events.map((r) => [r.id, r.tier])).toEqual([
+      ["r1", "reported"],
+      ["r2", "official"],
+    ]);
+    const vevents = buildExamWeekIcs(exam, events, now).split("BEGIN:VEVENT").slice(1);
+    expect(vevents[0]).toContain("SUMMARY:SSC CGL Tier 1 (reported)");
+    expect(vevents[0]).toContain("STATUS:TENTATIVE");
+    expect(vevents[0]).not.toContain("STATUS:CONFIRMED");
+    expect(vevents[1]).toContain("STATUS:CONFIRMED");
+  });
+
   it("never invents a missing answer key / result", () => {
     const events = examWeekCalendarRows([rows[0]], null, now);
     expect(events).toHaveLength(1);

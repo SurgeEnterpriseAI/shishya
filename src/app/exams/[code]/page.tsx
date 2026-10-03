@@ -25,6 +25,7 @@ import { standingSitting } from "@/lib/score-sitting";
 import { getExamWeekInputs } from "@/lib/exam-week-inputs";
 import { shiftDayIso } from "@/lib/exam-week-student";
 import { buildTimeline } from "@/lib/exam-timeline";
+import { HubDateTier } from "@/components/HubDateTier";
 import { passedEstimateLine, passedEstimateView } from "@/lib/official-source";
 import { ExamWeekBlock, type ExamWeekViewer } from "@/components/ExamWeekBlock";
 import { HubSignInLink, StartMockButton } from "./StartMockButton";
@@ -497,6 +498,10 @@ export default async function ExamPage({
   const hubDateRef = shared.titleDates.length > 0 ? buildTimeline(shared.titleDates, hubDateNow, officialUrl) : hubDateRows;
   const hubDateView = new Map(hubDateRows.map((r) => [r.id, { view: passedEstimateView(r, hubDateRef, hubDateNow), kind: r.kind }] as const));
   const hubDates = importantDates.filter((d) => hubDateView.get(d.id)?.view !== "omit");
+  // 3 Oct 2026 (signup-100 lever 4): every Important Dates row carries its
+  // tier and source (src/components/HubDateTier.tsx). The list printed an
+  // aggregator's date, or an estimate whose label did not say so, as plain fact.
+  const hubDateRowById = new Map(hubDateRows.map((r) => [r.id, r] as const));
 
   // Answer-key time (14 Sep 2026): the score calculator pill shows while a
   // sitting is open for comparison. Read from the tracker inputs the
@@ -2006,6 +2011,10 @@ export default async function ExamPage({
                             ? passedEstimateLine(est.kind, locale, est.view)
                             : dateObj.toLocaleDateString("en-IN", { weekday: "short", year: "numeric", month: "short", day: "numeric" })}
                         </p>
+                        <HubDateTier
+                          row={hubDateRowById.get(d.id)}
+                          labels={{ official: t("tracker.official"), reported: t("tracker.reported"), expected: t("tracker.expected") }}
+                        />
                         {d.notes && <p className="mt-1.5 text-xs text-ink-600">{d.notes}</p>}
                       </li>
                     );

@@ -9,7 +9,8 @@
 //     re-inserts generic headlines every cycle — those don't count: a
 //     headline is a repeat if a prior row in the last 30 days shares its
 //     URL or its normalised title);
-//   • exam day within 3 days (an official EXAM row) — one reminder.
+//   • exam day within 3 days (an announced EXAM row; a reported one says
+//     "(reported)") — one reminder.
 // Each change carries the time it appeared; a subscriber only gets the
 // changes newer than their last alert, so a result declared the day
 // after an admit-card mail is NOT lost to the 7-day cap — it goes out
@@ -38,6 +39,7 @@ import { sendExamAlertEmail } from "@/lib/email";
 import { alertUnsubApiUrl, alertUnsubUrl } from "@/lib/exam-alerts";
 import { MATERIAL_NEWS_RE, buildTimeline, fmtDay, stageOf } from "@/lib/exam-timeline";
 import { computeExamWeekState } from "@/lib/exam-week";
+import { examSoonTitle } from "@/lib/date-tier-view";
 import { sourceTier } from "@/lib/official-source";
 import { examAlertPushPayload } from "@/lib/push-alert-rules";
 import { pushConfigured, sendPush } from "@/lib/web-push";
@@ -186,14 +188,14 @@ export async function GET(req: Request) {
     const resendDays = examWeek ? EXAM_WEEK_RESEND_DAYS : RESEND_DAYS;
     const capBefore = new Date(now.getTime() - resendDays * 86_400_000);
     // Any ANNOUNCED exam day (official or reported tier) within 3 days
-    // deserves the reminder — only estimates are excluded.
+    // deserves the reminder — only estimates are excluded. A reported day
+    // (cited only to a news or coaching site) says so in the title and the
+    // detail (3 Oct 2026: "Exam in 2 days — …" was bare, as the tracker's
+    // countdown strip was; src/lib/date-tier-view.ts).
     if (nextExam && nextExam.tier !== "expected" && nextExam.daysFromToday >= 0 && nextExam.daysFromToday <= 3 && changes.length < 4) {
       changes.push({
-        title:
-          nextExam.daysFromToday === 0
-            ? `Exam is today — ${nextExam.label}`
-            : `Exam in ${nextExam.daysFromToday} day${nextExam.daysFromToday === 1 ? "" : "s"} — ${nextExam.label}`,
-        detail: fmtDay(nextExam.date),
+        title: examSoonTitle(nextExam),
+        detail: nextExam.tier === "official" ? fmtDay(nextExam.date) : `${fmtDay(nextExam.date)} — announced date (via press reports)`,
         url: nextExam.url,
         linkLabel: nextExam.tier === "official" ? "official notice" : "source",
         at: now,
@@ -234,8 +236,10 @@ export async function GET(req: Request) {
         changes: mine.map(({ title, detail, url }) => ({ title, detail, url })),
         // The template's `official` flag gates "(expected, not yet
         // announced)" — semantically it means ANNOUNCED, so reported
-        // (press-cited) dates must pass it too.
-        nextDate: next ? { label: next.label, date: fmtDay(next.date), official: next.tier !== "expected" } : null,
+        // (press-cited) dates must pass it too, and carry "(reported)".
+        nextDate: next
+          ? { label: next.label, date: next.tier === "reported" ? `${fmtDay(next.date)} (reported)` : fmtDay(next.date), official: next.tier !== "expected" }
+          : null,
         unsubscribeUrl: alertUnsubUrl(s.email, ex.id, ex.code),
         unsubscribeApiUrl: alertUnsubApiUrl(s.email, ex.id),
       }).catch(() => false);
