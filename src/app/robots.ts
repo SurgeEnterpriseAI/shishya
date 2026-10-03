@@ -4,14 +4,23 @@
 // (vs an explicit allow-list, which has to be exhaustively
 // maintained every time a new section ships).
 //
-// Privacy gates:
-//   - /api/ — JSON endpoints, nothing useful to a crawler
-//   - /admin/ — operator UI, must never index
-//   - /dashboard, /me/ — personal data
-//   - /chat — auth-gated AI tutor, conversations are private
-//   - /mocks/, /attempts/ — per-user state
-//   - /logout, /login (callback flows have state) — auth flows
-//   - /onboarding — wizard, no public value to crawlers
+// The rule (3 Oct 2026, fix C14): a search engine obeys `noindex` only on a
+// URL it is allowed to fetch. A URL disallowed here is never fetched, so its
+// noindex is never read — and it can still be listed bare (address and link
+// text, no title) whenever any link points at it. So a private page is kept
+// out of search by its noindex (the X-Robots-Tag header in next.config.ts and
+// the page's own robots tag), NOT by a line here. Until today /dashboard,
+// /admin, /attempts/{id}/results, /today, /me, /onboarding, /logout and
+// /mentor were disallowed: crawlers never saw that they are private (several
+// answered a guest with 200 and "index, follow"). Those 13 lines are gone.
+//
+// Still disallowed, because a fetch costs something or the page is never a
+// landing:
+//   - /api/ — JSON endpoints; a rendering crawler must never reach POST /api/chat
+//   - /mocks/ — per-user mock state; a hub links up to 22 mock URLs
+//   - /chat, /chat/ — the AI tutor, conversations are private
+//   - /login (callback flows have state) — auth flow
+//   - /exams/browse?*, /scholarships?* — query-string variants of canonical pages
 //
 // NOT disallowed, on purpose: /share/ (per-attempt score landings). They
 // carry robots noindex,nofollow in their own metadata (13 Sep 2026); a
@@ -36,33 +45,18 @@ import type { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
   const base = process.env.NEXT_PUBLIC_APP_URL ?? "https://shishya.in";
-  // Private / auth-gated / operator paths kept out of EVERY crawler —
-  // including AI crawlers (no personal data in answer engines / training).
+  // Paths kept out of EVERY crawler — including AI crawlers (no personal
+  // data in answer engines / training). 3 Oct 2026 (fix C14): the private
+  // pages that answer noindex (/admin, /dashboard, /today, /me, /attempts,
+  // /logout, /onboarding, /mentor) are no longer listed — see the rule above.
+  // Never add a bare "/me" or "/mentor" prefix here: robots rules are
+  // prefixes, and either would block the public /mentors page.
   const privatePaths = [
     "/api/",
-    "/admin/",
-    "/admin",
-    "/dashboard",
-    "/dashboard/",
-    "/today",
-    "/today/",
-    // 26 Sep 2026: bare /me prefix-matched the public /mentors page (robots
-    // rules are prefixes, so "/me" also blocked /mentors for every crawler).
-    // "/me$" is the page itself; "/me/" everything under it.
-    "/me$",
-    "/me/",
     "/chat",
     "/chat/",
     "/mocks/",
-    "/attempts/",
     "/login",
-    "/logout",
-    "/onboarding",
-    // Mentor desk (auth-gated, per-student data). NOTE: "/mentor/" +
-    // "/mentor$" — a bare "/mentor" prefix rule would also block the
-    // PUBLIC /mentors marketing page.
-    "/mentor/",
-    "/mentor$",
     // Avoid indexing query-string variants of pages we surface
     // canonically (filtered exam browse, scholarship browser).
     "/exams/browse?*",

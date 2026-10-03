@@ -7,7 +7,8 @@
 // through a small RFC 9309 evaluator (longest match wins, allow wins a tie,
 // "*" wildcard, "$" end anchor) and checks every section landing the sitemap
 // lists, the new context files and a school class page are fetchable, while
-// the private pages stay blocked.
+// the API, mocks, chat and login stay blocked (3 Oct 2026, fix C14: the
+// private pages that answer noindex are fetchable, so crawlers read it).
 // Prisma and next/cache are mocked: sitemap.ts is imported only for its
 // SECTION_LANDING_PATHS list; nothing here reads the DB.
 
@@ -91,20 +92,28 @@ describe("robots.txt: every section is fetchable by search and AI crawlers", () 
     expect(blocked).toEqual([]);
   });
 
-  it.each(CRAWLERS)("%s is kept out of the private pages", (ua) => {
-    for (const p of ["/me", "/me/x", "/me/settings", "/chat", "/chat/abc", "/dashboard", "/mentor", "/mentor/desk", "/api/x", "/login", "/admin", "/mocks/1", "/attempts/1"]) {
+  // 3 Oct 2026 (fix C14): a crawler obeys noindex only on a URL it may fetch.
+  // The private pages that answer noindex (header + their own tag) are now
+  // fetchable; the API, mocks, chat and login stay blocked.
+  it.each(CRAWLERS)("%s is still kept out of the API, mocks, chat and login", (ua) => {
+    for (const p of ["/api/x", "/mocks/1", "/chat", "/chat/abc", "/login"]) {
       expect(allowed(RULES, ua, p), `${ua} ${p}`).toBe(false);
     }
   });
 
-  it("the '/me' rule is the page itself plus everything under it — never a bare prefix", () => {
+  it.each(CRAWLERS)("%s may fetch the private pages that answer noindex, so it can read the noindex", (ua) => {
+    for (const p of ["/dashboard", "/me", "/me/x", "/me/settings", "/today", "/onboarding", "/logout", "/mentor", "/mentor/desk", "/admin", "/admin/insights", "/attempts/1/results"]) {
+      expect(allowed(RULES, ua, p), `${ua} ${p}`).toBe(true);
+    }
+  });
+
+  it("no group lists /me, /me$ or /me/ (a bare /me would block /mentors); /mentors stays allowed", () => {
     for (const rule of RULES) {
       const disallow = list(rule.disallow);
       if (rule.userAgent === "ia_archiver") continue;
-      expect(disallow, String(rule.userAgent)).not.toContain("/me");
-      expect(disallow, String(rule.userAgent)).toContain("/me$");
-      expect(disallow, String(rule.userAgent)).toContain("/me/");
+      for (const p of ["/me", "/me$", "/me/"]) expect(disallow, `${String(rule.userAgent)} ${p}`).not.toContain(p);
     }
+    for (const ua of CRAWLERS) expect(allowed(RULES, ua, "/mentors"), ua).toBe(true);
   });
 });
 
