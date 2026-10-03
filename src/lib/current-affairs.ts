@@ -85,7 +85,17 @@ export async function generateDailyCurrentAffairs(opts: {
     .filter((b): b is Anthropic.Messages.TextBlock => b.type === "text")
     .map((b) => b.text)
     .join("\n");
-  const parsed = parseJson<{ items: CurrentAffairItem[] }>(text);
+  // 3 Oct 2026 (fix C15): three paid runs (12, 17, 27 Sep) stored nothing and
+  // the cause was never seen — the reply text is not kept. On a reply that
+  // does not parse, log why the model stopped and how long the reply was,
+  // then fail as before (nothing is written).
+  let parsed: { items: CurrentAffairItem[] };
+  try {
+    parsed = parseJson<{ items: CurrentAffairItem[] }>(text);
+  } catch (err) {
+    console.error("[current-affairs] reply did not parse", JSON.stringify({ stop_reason: res.stop_reason, chars: text.length }));
+    throw err;
+  }
   const items = (parsed.items ?? []).filter((i) => i.title && i.summary).slice(0, 14);
 
   for (const it of items) {

@@ -19,6 +19,7 @@ import { describe, expect, it } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
 import { TODAY_PM_IST_HOUR } from "@/lib/exam-week";
+import { indexNowWindowMs } from "@/lib/news-dedupe";
 
 const ROOT = path.resolve(__dirname, "..", "..");
 const read = (file: string) => fs.readFileSync(path.join(ROOT, file), "utf8").replace(/\r\n/g, "\n");
@@ -135,5 +136,24 @@ describe(".github/workflows/refresh-portal.yml: a manual button, not a second sc
       expect(text, name).not.toContain("/api/cron/refresh-phase-articles");
       expect(text, name).not.toContain("/api/cron/refresh-discussions");
     }
+  });
+});
+
+// 3 Oct 2026 (fix C15): IndexNow runs daily, and current affairs gets two
+// more same-day chances (the route itself skips a day already written or
+// already paid for — tests/unit/current-affairs-catch-up.test.ts).
+describe("vercel.json: IndexNow daily, current affairs three times a day", () => {
+  it("the IndexNow news scope runs every day at 02:00 UTC, so its window is 30 hours", () => {
+    expect(schedulesOf("/api/cron/indexnow")).toEqual(["0 2 * * *"]);
+    expect(indexNowWindowMs("0 2 * * *")).toBe(30 * 3_600_000);
+  });
+
+  it("current affairs runs at 06:30, 14:30 and 20:30 IST (one entry)", () => {
+    expect(schedulesOf("/api/cron/daily-current-affairs")).toEqual(["0 1,9,15 * * *"]);
+    expect(istTimes("0 1,9,15 * * *")).toEqual(["06:30", "14:30", "20:30"]);
+  });
+
+  it("the live-test job that shared the old expression keeps it", () => {
+    expect(schedulesOf("/api/cron/live-test-create")).toEqual(["0 1 * * *"]);
   });
 });
