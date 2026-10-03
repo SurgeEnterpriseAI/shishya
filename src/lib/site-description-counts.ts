@@ -6,10 +6,15 @@
 //
 //   exams             prisma.exam.count({ where: REAL_EXAM_WHERE })
 //   checkedQuestions  validated, not withdrawn ("rejected" tag), on a live
-//                     real exam or a school container, AND passed by the
-//                     answer-check firewall: validatedBy LIKE 'factory:%'
-//                     and metadata ? 'factoryVerify'
-//                     (scripts/verify-question-bank.ts sets both on a pass)
+//                     real exam, AND passed by the answer-check firewall:
+//                     validatedBy LIKE 'factory:%' and metadata ? 'factoryVerify'
+//                     (scripts/verify-question-bank.ts sets both on a pass).
+//                     3 Oct 2026: exams only — the sentence reads "N entrance
+//                     and government exams with X+ practice questions", so
+//                     the school-chapter questions are not given to the exams
+//                     (it printed 41,700+; the exam figure is 34,800+).
+//                     countCheckedQuestions("site") still adds school
+//                     chapters for /shishya-in-numbers, which says so.
 //   chapters          schoolSurfaceCounts(loadSchoolSurface()).chapters
 //   chaptersWithNotes school chapters with BOTH usable notes and a checked
 //                     guest quiz — the sentence says "notes and checked
@@ -36,9 +41,24 @@ import type { SiteDescriptionCounts } from "@/lib/site-description";
 
 type CountRow = { count: bigint | number | null };
 
-/** Answer-checked practice questions (see the header for the rule). */
-export async function countCheckedQuestions(): Promise<number> {
-  const rows = await prisma.$queryRaw<CountRow[]>`
+/** Answer-checked practice questions (see the header for the rule).
+ *  scope "site" (the default): live real exams AND school chapters — the
+ *  /shishya-in-numbers row (src/lib/public-numbers.ts) that says so.
+ *  scope "exams": live real exams only — the site description's figure. */
+export async function countCheckedQuestions(scope: "site" | "exams" = "site"): Promise<number> {
+  const rows =
+    scope === "exams"
+      ? await prisma.$queryRaw<CountRow[]>`
+    SELECT COUNT(*)::bigint AS count
+    FROM "Question" q
+    JOIN "Exam" e ON e.id = q."examId"
+    WHERE q.validated = TRUE
+      AND NOT (${WITHDRAWN_TAG} = ANY(q.tags))
+      AND ${REAL_EXAM_SQL}
+      AND q."validatedBy" LIKE 'factory:%'
+      AND (q.metadata ? 'factoryVerify')
+  `
+      : await prisma.$queryRaw<CountRow[]>`
     SELECT COUNT(*)::bigint AS count
     FROM "Question" q
     JOIN "Exam" e ON e.id = q."examId"
@@ -54,7 +74,8 @@ export async function countCheckedQuestions(): Promise<number> {
 export async function loadSiteDescriptionCounts(): Promise<SiteDescriptionCounts> {
   const [exams, checkedQuestions, surface] = await Promise.all([
     prisma.exam.count({ where: REAL_EXAM_WHERE }),
-    countCheckedQuestions(),
+    // "exams with X+ practice questions": the exams' own questions only.
+    countCheckedQuestions("exams"),
     loadSchoolSurface(),
   ]);
   let chaptersWithNotes = 0;
