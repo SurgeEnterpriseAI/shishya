@@ -96,6 +96,8 @@ async function main() {
         );
         totals.in += res.usage.input_tokens;
         totals.out += res.usage.output_tokens;
+        // 3 Oct 2026: a reply cut at the token cap is never stored (7 stored guides end mid-sentence).
+        if (res.stop_reason === "max_tokens") { totals.failed++; console.warn(`  ⚠ ${ex.code} cut at the token cap (stop_reason max_tokens) — not stored`); continue; }
         const md = res.content.filter((b): b is Anthropic.TextBlock => b.type === "text").map((b) => b.text).join("").trim();
         if (md.length < 400 || (md.match(/^## /gm)?.length ?? 0) < 4) { totals.failed++; console.warn(`  ⚠ ${ex.code} malformed`); continue; }
         const faq = parseFaq(md);

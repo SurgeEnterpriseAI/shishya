@@ -32,3 +32,27 @@ export function hasUsableNotes(content: string | null | undefined): boolean {
 export function usableNotesSql(content: Prisma.Sql): Prisma.Sql {
   return Prisma.sql`(${content} IS NOT NULL AND length(${content}) >= ${MIN_USABLE_NOTE_CHARS})`;
 }
+
+// ── Cut-off texts (3 Oct 2026, fix plan C9) ─────────────────────────────
+// The Hindi-note, tricks and guide generators stored whatever came back,
+// including replies stopped at their token cap: 246 of 420 Hindi notes, at
+// least 12 tricks and 7 guides end mid-word or mid-bold. Those three
+// generators now refuse such a reply (stop_reason "max_tokens"); these two
+// pure checks find the texts already stored.
+
+/** Markdown headings ("#" to "######" and a space) in a note. */
+export function noteHeadingCount(markdown: string | null | undefined): number {
+  return (markdown ?? "").split(/\r?\n/).filter((l) => /^#{1,6}\s/.test(l.trim())).length;
+}
+
+/** True when a stored text stops mid-sentence: its last non-empty line holds
+ *  an odd number of "**" (bold opened and never closed), or ends on a letter
+ *  with no closing mark ("… Chemistry is generally"). A mechanical test: an
+ *  English bullet that simply omits its full stop also reads as cut. */
+export function isCutOff(markdown: string | null | undefined): boolean {
+  const lines = (markdown ?? "").split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  const last = lines[lines.length - 1];
+  if (!last) return false;
+  if ((last.match(/\*\*/g) ?? []).length % 2 === 1) return true;
+  return /[\p{L}\p{M}]$/u.test(last);
+}

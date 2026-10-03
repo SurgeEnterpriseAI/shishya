@@ -34,11 +34,14 @@ const BUDGET = parseFloat(arg("--budget", "10") ?? "10");
 const totals = { in: 0, out: 0, done: 0, skipped: 0, failed: 0 };
 const spend = () => (totals.in * IN_PER_M + totals.out * OUT_PER_M) / 1_000_000;
 
-async function translate(name: string, content: string): Promise<string> {
+/** The Hindi markdown, or null when the reply stopped at the token cap (a cut
+ *  text is never stored — 3 Oct 2026: 246 of 420 stored Hindi notes were cut
+ *  at the old 4000 cap). */
+async function translate(name: string, content: string): Promise<string | null> {
   const res = await client.messages.create(
     {
       model: MODEL,
-      max_tokens: 4000,
+      max_tokens: 8000,
       system:
         "You translate Indian competitive-exam study notes from English to natural, fluent Hindi (Devanagari). Rules: keep ALL markdown structure (headings, bullets) exactly; keep formulas, numbers, equations and English technical terms that Indian students use as-is (e.g. 'Percentage', 'LCM', option letters); translate explanatory prose fully into Hindi; do not add or remove content; output ONLY the translated markdown.",
       messages: [{ role: "user", content: `Topic: ${name}\n\n${content}` }],
@@ -47,6 +50,7 @@ async function translate(name: string, content: string): Promise<string> {
   );
   totals.in += res.usage.input_tokens;
   totals.out += res.usage.output_tokens;
+  if (res.stop_reason === "max_tokens") return null;
   return res.content.filter((b): b is Anthropic.TextBlock => b.type === "text").map((b) => b.text).join("").trim();
 }
 
@@ -82,6 +86,7 @@ async function main() {
       const t = topics[i];
       try {
         const hi = await translate(t.name, t.teachingNote!.content);
+        if (hi === null) { totals.failed++; console.warn(`  ⚠ ${t.code} cut at the token cap (stop_reason max_tokens) — not stored`); continue; }
         if (hi.length < 200) { totals.failed++; console.warn(`  ⚠ ${t.code} too short`); continue; }
         await prisma.topicNoteTranslation.upsert({
           where: { topicId_locale: { topicId: t.id, locale: "hi" } },
