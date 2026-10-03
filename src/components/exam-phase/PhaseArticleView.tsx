@@ -13,7 +13,8 @@
 //   4. Sources we read (footer transparency)
 //   5. ReactionButtons (👍 / 👎)
 //   6. ShareButtons (X / WhatsApp / Telegram / LinkedIn / FB / copy)
-//   7. Link to / start a Discussion thread scoped to this article
+//   7. Link to this exam's discussions — only when a student has started a
+//      thread for it (3 Oct 2026; src/lib/discussion-visibility.ts)
 //
 // Content comes from the phase-article cron (src/lib/refresh-phase-
 // articles.ts): compiled from public student discussion, published only
@@ -59,6 +60,7 @@ import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db/prisma";
 import { realExamKey } from "@/lib/db/exam-scope";
+import { STUDENT_THREAD_WHERE } from "@/lib/discussion-visibility";
 import { auth } from "@/lib/auth";
 import { ReactionButtons } from "./ReactionButtons";
 import { ShareButtons } from "./ShareButtons";
@@ -147,6 +149,11 @@ export async function PhaseArticleView({
     auth().catch(() => null),
     getT(),
   ]);
+
+  // 3 Oct 2026: the "Talk to other candidates" box only when a student has
+  // started a thread for this exam — every stored thread so far was written
+  // by Shishya and none is listed (src/lib/discussion-visibility.ts).
+  const studentThreads = await prisma.discussion.count({ where: { ...STUDENT_THREAD_WHERE, examId: exam.id } }).catch(() => 0);
 
   // Quality gate: a row that is not REAL is treated as absent. On the
   // exam-night routes the stricter body gate applies to every version.
@@ -404,20 +411,22 @@ export async function PhaseArticleView({
       )}
 
       {/* Discussion CTA — links to existing thread system scoped to
-          this exam. Stage-2 will create per-article threads. */}
-      <section className="mt-10 rounded-xl border border-ink-200 bg-saffron-50/40 p-5">
-        <h3 className="text-base font-semibold text-ink-900">
-          {fillTemplate(t("phase.disc.h2"), { exam: exam.shortName })}
-        </h3>
-        <p className="mt-1 text-sm text-ink-600">{t("phase.disc.body")}</p>
-        <Link
-          href={`/discussions?examCode=${exam.code}`}
-          className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-saffron-700 hover:underline"
-        >
-          {fillTemplate(t("phase.disc.cta"), { exam: exam.shortName })}
-          <span aria-hidden>→</span>
-        </Link>
-      </section>
+          this exam, shown only once a student thread exists for it. */}
+      {studentThreads > 0 && (
+        <section className="mt-10 rounded-xl border border-ink-200 bg-saffron-50/40 p-5">
+          <h3 className="text-base font-semibold text-ink-900">
+            {fillTemplate(t("phase.disc.h2"), { exam: exam.shortName })}
+          </h3>
+          <p className="mt-1 text-sm text-ink-600">{t("phase.disc.body")}</p>
+          <Link
+            href={`/discussions?examCode=${exam.code}`}
+            className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-saffron-700 hover:underline"
+          >
+            {fillTemplate(t("phase.disc.cta"), { exam: exam.shortName })}
+            <span aria-hidden>→</span>
+          </Link>
+        </section>
+      )}
     </article>
   );
 }

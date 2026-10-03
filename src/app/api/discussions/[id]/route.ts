@@ -1,6 +1,9 @@
 // GET /api/discussions/:id — thread + paginated messages (public read)
+// 3 Oct 2026: a thread Shishya wrote (not a student's, not a study room) is
+// not found here, exactly as on /discussions/[id] (src/lib/discussion-visibility.ts).
 
 import { prisma } from "@/lib/db/prisma";
+import { isReadableThread } from "@/lib/discussion-visibility";
 import { ok, notFound, serverError } from "@/lib/http";
 
 export async function GET(
@@ -19,7 +22,7 @@ export async function GET(
         },
       },
     });
-    if (!thread) return notFound("discussion");
+    if (!thread || !isReadableThread(thread)) return notFound("discussion");
     return ok({
       thread: {
         id: thread.id,

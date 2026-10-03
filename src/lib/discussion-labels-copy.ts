@@ -39,6 +39,8 @@ export interface DiscussionLabelsCopy {
   anonymous: string;
   pinned: string;
   locked: string;
+  /** /discussions H1 while no student thread is listed (3 Oct 2026). */
+  listTitleEmpty: string;
 }
 
 /** Thread-state chips — the only labels that are this surface's alone. */
@@ -46,6 +48,14 @@ const THREAD_STATE: Readonly<Record<CopyLocale, Pick<DiscussionLabelsCopy, "pinn
   en: { pinned: "Pinned", locked: "Locked" },
   hi: { pinned: "पिन किया", locked: "बंद" },
   te: { pinned: "పిన్ చేసినది", locked: "లాక్ చేసినది" },
+};
+
+/** The list's H1 when no student has posted: a plain name, never "what other
+ *  students are talking about" over an empty list (3 Oct 2026). */
+const LIST_TITLE_EMPTY: Readonly<Record<CopyLocale, string>> = {
+  en: "Discussions",
+  hi: "चर्चाएँ",
+  te: "Discussions",
 };
 
 export function discussionLabelsCopy(locale: string | null | undefined): DiscussionLabelsCopy {
@@ -58,5 +68,6 @@ export function discussionLabelsCopy(locale: string | null | undefined): Discuss
     anonymous: home.anonymous,
     pinned: state.pinned,
     locked: state.locked,
+    listTitleEmpty: pickCopy(LIST_TITLE_EMPTY, locale),
   };
 }

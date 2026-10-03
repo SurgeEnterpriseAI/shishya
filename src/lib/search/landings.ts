@@ -165,7 +165,7 @@ export const SEARCH_LANDINGS: readonly SearchLanding[] = [
   // the only way in (src/lib/auth.ts), for a new student and for a member alike. Same terms: "sign in"
   // and "login" still find it.
   { path: "/login", section: "more", title: "Sign up with Google", sub: "Free, with your Google account — no forms. Members sign in here too.", terms: ["sign in", "sign up", "login", "log in", "register", "create account", "signup", "साइन अप"] },
-  { path: "/discussions", section: "more", title: "Discussions", sub: "Student discussion threads", terms: ["discussions", "discussion", "discussion forum", "forum", "doubts forum"] },
+  { path: "/discussions", section: "more", title: "Discussions", sub: "Ask a study question; read what students ask", terms: ["discussions", "discussion", "discussion forum", "forum", "doubts forum"] },
   { path: "/editorial-policy", section: "more", title: "Editorial policy", sub: "How Shishya sources and checks its data", terms: ["editorial policy", "how shishya verifies", "data sources", "sources"] },
   // 27 Sep 2026: the public transparency pages.
   { path: "/shishya-in-numbers", section: "more", title: "Shishya in numbers", sub: "Usage, return rates and answer-check results, each with its definition", terms: ["shishya in numbers", "shishya statistics", "shishya stats", "how many students use shishya", "shishya usage"] },

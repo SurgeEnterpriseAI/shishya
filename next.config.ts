@@ -31,6 +31,31 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "lh3.googleusercontent.com" }, // Google profile pics
     ],
   },
+  // 3 Oct 2026: X-Robots-Tag headers. A header, not only a robots meta,
+  // because a header is on every response — a 307 redirect and a streamed
+  // 200 alike — where a page's <head> may never arrive. Checked by
+  // tests/unit/robots-headers.test.ts.
+  //   • /discussions and /discussions/*: no student has started a thread
+  //     yet and every stored thread was written by Shishya; nothing there is
+  //     indexable until the founder opens it (DISCUSSIONS_INDEXABLE in
+  //     src/lib/discussion-visibility.ts — change both together).
+  //   • private pages: a search engine obeys noindex only on a URL it may
+  //     fetch, so these say noindex on every response.
+  async headers() {
+    // Order matters: when two entries match a path and set the same key, Next keeps the LAST.
+    // The private list comes after the discussions list, so /discussions/new ends "noindex, nofollow".
+    const discussions = [{ key: "X-Robots-Tag", value: "noindex, follow" }]; // while DISCUSSIONS_INDEXABLE is false
+    const none = [{ key: "X-Robots-Tag", value: "noindex, nofollow" }];
+    const noindex = [{ key: "X-Robots-Tag", value: "noindex" }];
+    return [
+      { source: "/discussions", headers: discussions },
+      { source: "/discussions/:path*", headers: discussions },
+      ...["/dashboard/:path*", "/today/:path*", "/me/:path*", "/onboarding/:path*", "/logout", "/mentor/:path*",
+          "/attempts/:path*", "/admin/:path*", "/i/:path*", "/discussions/new", "/exams/:code/attempts", "/api/:path*"]
+        .map((source) => ({ source, headers: none })),
+      ...["/login/:path*", "/chat", "/mocks/:path*"].map((source) => ({ source, headers: noindex })),
+    ];
+  },
 };
 
 export default nextConfig;

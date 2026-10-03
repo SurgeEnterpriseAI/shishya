@@ -20,6 +20,7 @@ import { z } from "zod";
 import { after } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
+import { isReadableThread } from "@/lib/discussion-visibility";
 import { bad, forbidden, notFound, ok, parseBody, serverError, unauth } from "@/lib/http";
 import { generateAiReply } from "@/lib/ai/discussion-reply";
 import { createNotification } from "@/lib/db/notifications";
@@ -45,9 +46,12 @@ export async function POST(
 
     const thread = await prisma.discussion.findUnique({
       where: { id },
-      select: { id: true, locked: true, title: true, authorId: true, exam: { select: { shortName: true } } },
+      select: { id: true, locked: true, title: true, authorId: true, isSeed: true, topicCode: true, exam: { select: { shortName: true } } },
     });
     if (!thread) return notFound("discussion");
+    // 3 Oct 2026: a thread Shishya wrote is hidden — no reply to it, and no AI
+    // auto-reply fed by its text (src/lib/discussion-visibility.ts).
+    if (!isReadableThread(thread)) return notFound("discussion");
     if (thread.locked) return forbidden();
 
     const author = await prisma.user.findUnique({

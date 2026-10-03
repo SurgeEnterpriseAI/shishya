@@ -10,6 +10,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { realExamKey } from "@/lib/db/exam-scope";
+import { STUDENT_THREAD_WHERE } from "@/lib/discussion-visibility";
 import { bad, ok, parseBody, serverError, unauth } from "@/lib/http";
 
 // ─── GET ──────────────────────────────────────────────────────────────────
@@ -20,7 +21,8 @@ export async function GET(req: Request) {
     const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "10", 10), 50);
     const cursor = url.searchParams.get("cursor"); // ISO date
 
-    const where: any = {};
+    // 3 Oct 2026: only threads a signed-in student started (src/lib/discussion-visibility.ts).
+    const where: any = { ...STUDENT_THREAD_WHERE };
     if (examCode) where.exam = { code: examCode };
     if (cursor) where.lastActivityAt = { lt: new Date(cursor) };
 

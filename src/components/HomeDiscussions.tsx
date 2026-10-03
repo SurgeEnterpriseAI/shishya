@@ -7,6 +7,7 @@
 
 import Link from "next/link";
 import { prisma } from "@/lib/db/prisma";
+import { STUDENT_THREAD_WHERE } from "@/lib/discussion-visibility";
 import { formatRelative, type RelativeLabels } from "@/lib/relative-time";
 
 export const revalidate = 30;
@@ -43,6 +44,8 @@ export async function HomeDiscussions({
   }> = [];
   try {
     threads = await prisma.discussion.findMany({
+      // 3 Oct 2026: student threads only — never a Shishya-written row's name.
+      where: STUDENT_THREAD_WHERE,
       orderBy: [{ pinned: "desc" }, { lastActivityAt: "desc" }],
       take: limit,
       select: {

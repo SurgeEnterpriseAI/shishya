@@ -3,38 +3,20 @@
 // NOT scheduled since 2 Oct 2026: its vercel.json cron entry and the GitHub
 // Actions step that also called it were removed (8 seed threads, 0 replies,
 // 12 page views in ten days; one model call a run from a credit balance
-// that is topped up by hand). The route still answers a manual call with
-// the cron secret. Seed threads stored before that date stay as they are.
-// Check: tests/unit/spend-schedules.test.ts
+// that is topped up by hand). Check: tests/unit/spend-schedules.test.ts
 //
-// Keeps the homepage right-rail (DiscussionsSidebar) feeling alive by
-// seeding 6-8 plausible "sample" discussion threads for the most-
-// imminent upcoming exam — but ONLY when the rail would otherwise
-// look thin. Real user-created threads are never touched.
-//
-// FLOW
-//   1. Find the exam-day row closest to "now" in IST (within ±3 days).
-//   2. Count NON-SEED threads that are either (a) exam-tagged to that
-//      exam or (b) created in the last 7 days globally.
-//   3. If that count is < 8, pretend the rail is "thin" — delete any
-//      existing isSeed=true threads, then ask Claude for 6-8 fresh
-//      titles for the top exam, and insert them with isSeed=true.
-//   4. If the rail already has enough real activity, no Claude call,
-//      just prune any old seed threads so we never accumulate.
-//
-// Idempotent: re-running the endpoint produces the same set of seed
-// threads modulo Claude's randomness, never accumulates.
+// RETIRED 3 Oct 2026: Shishya no longer writes discussion threads. The job
+// asked the model for 6-8 "starter questions" in a student's first person
+// and deleted every isSeed row on each run — study rooms included, and,
+// since the 34 seed-script threads were marked isSeed = TRUE that day
+// (scripts/mark-seeded-discussions.ts), those too. The route stays so a
+// manual call with the cron secret gets a plain answer: 410 Gone. It reads
+// and writes nothing and calls no model. The seed helper
+// (src/lib/ai/seed-discussions.ts) and the three seed/discussions*.ts
+// scripts are deleted. Checks: tests/unit/discussion-honesty.test.ts
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
 export const dynamic = "force-dynamic";
-
-import { prisma } from "@/lib/db/prisma";
-import { REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
-import { generateSeedThreads } from "@/lib/ai/seed-discussions";
-
-const ACTIVITY_THRESHOLD = 8; // skip seeding when real rail already has ≥ N threads
-const DAY = 86_400_000;
 
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET;
@@ -50,116 +32,8 @@ export async function GET(req: Request) {
     });
   }
 
-  const started = Date.now();
-
-  // ── Find the top-of-mind upcoming exam ────────────────────────────
-  // Window: 3 days past to 30 days future. Sort by absolute distance
-  // to "now" so today / yesterday's exam beats one a month out.
-  const now = new Date();
-  const from = new Date(now.getTime() - 3 * DAY);
-  const to = new Date(now.getTime() + 30 * DAY);
-  const candidates = await prisma.examImportantDate.findMany({
-    where: {
-      date: { gte: from, lte: to },
-      isExamDay: true,
-      // 25 Sep 2026: real exams only — no AI seed threads for a school class.
-      exam: REAL_EXAM_WHERE,
-      archivedAt: null,
-    },
-    include: { exam: { select: { id: true, code: true, shortName: true, name: true } } },
-  });
-  if (candidates.length === 0) {
-    return jsonOk({ ok: true, action: "no upcoming exam-day in window", elapsedMs: Date.now() - started });
-  }
-  const sorted = candidates
-    .map((c) => ({ row: c, absDays: Math.abs((c.date.getTime() - now.getTime()) / DAY) }))
-    .sort((a, b) => a.absDays - b.absDays);
-  const top = sorted[0].row;
-  const daysFromExam = (top.date.getTime() - now.getTime()) / DAY;
-
-  // ── Activity gate ────────────────────────────────────────────────
-  // Threshold = non-seed threads either (a) tagged to this exam OR
-  // (b) created in the last 7 days globally. If the rail's already
-  // lively, no seeding needed.
-  const realActivity = await prisma.discussion.count({
-    where: {
-      isSeed: false,
-      OR: [
-        { examId: top.exam.id },
-        { createdAt: { gte: new Date(now.getTime() - 7 * DAY) } },
-      ],
-    },
-  });
-  if (realActivity >= ACTIVITY_THRESHOLD) {
-    // Real activity is healthy — prune any stale seed threads so
-    // they don't pollute the rail. Skip Claude.
-    const deleted = await prisma.discussion.deleteMany({ where: { isSeed: true } });
-    return jsonOk({
-      ok: true,
-      action: "real activity healthy — pruned seeds",
-      topExam: top.exam.code,
-      realActivity,
-      seedsDeleted: deleted.count,
-      elapsedMs: Date.now() - started,
-    });
-  }
-
-  // ── Generate fresh seed titles via Claude ─────────────────────────
-  const titles = await generateSeedThreads({
-    examShortName: top.exam.shortName,
-    examName: top.exam.name,
-    daysFromExam,
-  });
-  if (titles.length === 0) {
-    return jsonOk({
-      ok: false,
-      action: "claude returned no titles",
-      topExam: top.exam.code,
-      elapsedMs: Date.now() - started,
-    });
-  }
-
-  // ── Replace any prior seed rows + insert the fresh batch ──────────
-  // Disclosure (11 Sep 2026 audit): seed threads are authored by
-  // "Shishya" and every surface labels them "Starter question ·
-  // Shishya". They used to rotate through invented student names so
-  // the rail "read as 6-8 different students chatting" — fabricated
-  // peers, which the founder rules (no synthetic social proof) forbid.
-  await prisma.discussion.deleteMany({ where: { isSeed: true } });
-  const created = await prisma.$transaction(
-    titles.map((t, i) => {
-      return prisma.discussion.create({
-        data: {
-          title: t.title,
-          examId: top.exam.id,
-          isSeed: true,
-          authorName: "Shishya",
-          // Honest timestamps (11 Sep 2026): the threads are created now, so
-          // they say so. The old 23-minute stagger faked recency ("7 hr ago"),
-          // which the no-synthetic-social-proof rule forbids.
-          lastActivityAt: now,
-          messageCount: 0,
-          createdAt: now,
-        },
-        select: { id: true, title: true },
-      });
-    }),
+  return new Response(
+    JSON.stringify({ error: "retired 3 Oct 2026 — Shishya no longer writes discussion threads" }),
+    { status: 410, headers: { "content-type": "application/json" } },
   );
-
-  return jsonOk({
-    ok: true,
-    action: "seeded fresh threads",
-    topExam: top.exam.code,
-    daysFromExam: Math.round(daysFromExam * 10) / 10,
-    realActivity,
-    seeded: created.length,
-    titles: created.map((c) => c.title),
-    elapsedMs: Date.now() - started,
-  });
-}
-
-function jsonOk(body: Record<string, unknown>) {
-  return new Response(JSON.stringify(body, null, 2), {
-    headers: { "content-type": "application/json" },
-  });
 }
