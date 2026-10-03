@@ -41,6 +41,7 @@ import { schoolClassIdentity } from "@/lib/school/context";
 import { schoolLandingSitemapEntries } from "@/lib/school/landings";
 import { EMPTY_SCHOOL_SURFACE, loadSchoolSurface, schoolSitemapEntries } from "@/lib/school/surface";
 import { capsuleLastmods, examPageLastmods, lastModifiedField, type ExamFreshnessRow } from "@/lib/sitemap-lastmod";
+import { dateSpan } from "@/lib/current-affairs-dates";
 import { pulseSitemapEntries } from "@/lib/pulse-rules";
 
 export const revalidate = 86_400; // 24h
@@ -319,24 +320,29 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (calendarTwins[lc]) localeTwinUrls.push({ url: `${base}/${lc}/exam-calendar`, changeFrequency: "daily" as const, priority: 0.7 });
   }
   // Daily current-affairs pages — every date that has content.
+  // 3 Oct 2026 (fix C4): lastmod = when the day's rows were last written
+  // (MAX("generatedAt")), not midnight UTC of the date (05:30 IST, while every
+  // day was written about 06:31 IST). No time read → no lastmod.
   const caDates = await prisma
-    .$queryRaw<{ d: Date }[]>`SELECT DISTINCT date AS d FROM "CurrentAffair" ORDER BY date DESC LIMIT 400`
-    .catch(() => [] as { d: Date }[]);
+    .$queryRaw<{ d: Date; g: Date | null }[]>`SELECT date AS d, MAX("generatedAt") AS g FROM "CurrentAffair" GROUP BY date ORDER BY date DESC LIMIT 400`
+    .catch(() => [] as { d: Date; g: Date | null }[]);
   const currentAffairsUrls: MetadataRoute.Sitemap = caDates.map((r) => {
     const iso = r.d.toISOString().slice(0, 10);
     return {
       url: `${base}/current-affairs/${iso}`,
-      lastModified: r.d,
+      ...lastModifiedField(r.g),
       changeFrequency: "daily" as const,
       priority: 0.6,
     };
   });
   // Monthly capsule pages — one per month that has content.
-  // 26 Sep 2026: lastmod = the newest current-affairs date in that month.
+  // 26 Sep 2026: one URL per month that holds a current-affairs date.
+  // 3 Oct 2026 (fix C4): its lastmod = the newest write time ("g") among that
+  // month's days; the month itself still comes from the date, not the write time.
   const capsuleMonthMods = capsuleLastmods(caDates.map((r) => r.d));
-  const capsuleUrls: MetadataRoute.Sitemap = [...capsuleMonthMods].map(([month, newestDay]) => ({
+  const capsuleUrls: MetadataRoute.Sitemap = [...capsuleMonthMods.keys()].map((month) => ({
     url: `${base}/current-affairs/capsule/${month}`,
-    lastModified: newestDay,
+    ...lastModifiedField(dateSpan(caDates.filter((r) => r.d.toISOString().slice(0, 7) === month).map((r) => r.g))?.latest),
     changeFrequency: "daily" as const,
     priority: 0.7,
   }));

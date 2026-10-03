@@ -15,6 +15,7 @@ import { LandingActions } from "@/components/LandingActions";
 import { currentAffairsActions } from "@/lib/landing-actions";
 import { SoftWall } from "@/components/SoftWall";
 import { SignupInline } from "@/components/SignupInline";
+import { dateSpan } from "@/lib/current-affairs-dates";
 
 export const revalidate = 3600;
 
@@ -26,6 +27,8 @@ interface Row {
   examTags: string[];
   whyItMatters: string | null;
   source: string | null;
+  /** When the row was written (CurrentAffair."generatedAt"). */
+  generatedAt: Date | null;
 }
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -38,7 +41,7 @@ function prettyDate(d: string): string {
 async function load(date: string): Promise<Row[]> {
   return prisma
     .$queryRawUnsafe<Row[]>(
-      `SELECT id, title, summary, category, "examTags", "whyItMatters", source
+      `SELECT id, title, summary, category, "examTags", "whyItMatters", source, "generatedAt"
        FROM "CurrentAffair" WHERE date = $1::date ORDER BY category, title`,
       date,
     )
@@ -86,12 +89,19 @@ export default async function CurrentAffairsDatePage({ params }: { params: Promi
     byCat.get(r.category)!.push(r);
   }
 
+  // 3 Oct 2026 (fix C4): published / modified = the earliest / latest time the
+  // day's rows were actually written (CurrentAffair."generatedAt",
+  // src/lib/current-affairs-dates.ts). Until today both were typed (02:00 and
+  // 14:00 IST) while every day was written about 06:31 IST. No time read → both
+  // fields are left out, never a typed time.
+  const written = dateSpan(rows.map((r) => r.generatedAt));
   const articleLd = {
     "@context": "https://schema.org",
     "@type": "Article",
     headline: `Current Affairs ${pretty} — daily GK digest for Indian government exams`,
-    datePublished: `${date}T02:00:00+05:30`,
-    dateModified: `${date}T14:00:00+05:30`,
+    ...(written
+      ? { datePublished: written.earliest.toISOString(), dateModified: written.latest.toISOString() }
+      : {}),
     inLanguage: "en-IN",
     isAccessibleForFree: true,
     url,
