@@ -109,12 +109,13 @@ export const metadata: Metadata = {
   },
   // Default Twitter card for every page that doesn't override.
   // summary_large_image makes the auto-fetched og:image render at
-  // 1200x630 in Twitter/X timeline previews. @shishyaedu stays until the
-  // founder confirms the handle after deploy (26 Sep 2026).
+  // 1200x630 in Twitter/X timeline previews.
+  // 3 Oct 2026: no twitter:site or twitter:creator until the founder
+  // supplies Shishya's own X handle — nothing shows the handle these tags
+  // named was Shishya's. The same handle then goes into the Organization
+  // sameAs below, together.
   twitter: {
     card: "summary_large_image",
-    site: "@shishyaedu",
-    creator: "@shishyaedu",
   },
   // Search engine verification meta tags — set via env so we can
   // paste the GSC/Bing/Yandex tokens once and they appear in <head>

@@ -9,6 +9,11 @@
 //     tag already meant) plus max-image-preview:large and max-snippet:-1.
 //     A page with its own robots replaces the whole object (Next merges
 //     metadata per top-level key), as before.
+//   • (3 Oct 2026, crawl-audit fix C5) No X handle: twitter:site and
+//     twitter:creator said "@shishyaedu" on every page without its own
+//     twitter block, and nothing shows that handle is Shishya's. The default
+//     card is only summary_large_image until the founder supplies the handle
+//     (which then goes into sameAs too).
 //
 // The layout must stay synchronous and static (no cookies()/headers()/auth())
 // so pages can keep static rendering and edge caching.
@@ -43,7 +48,7 @@ const code = (f: string) =>
 type Node = Record<string, unknown>;
 type LayoutModule = {
   default: (props: { children: React.ReactNode }) => React.ReactElement;
-  metadata: { robots?: unknown };
+  metadata: { robots?: unknown; twitter?: unknown };
 };
 
 const nullComponent = () => null;
@@ -105,6 +110,16 @@ describe("root metadata robots default", () => {
     // A page's googleBot-only rule is its own; the root adds none.
     expect(resolved?.googleBot).toBeNull();
     expect(resolved?.basic).not.toMatch(/noindex|nofollow|nosnippet|noimageindex/);
+  });
+});
+
+describe("default Twitter card: no X handle (3 Oct 2026)", () => {
+  it("the default twitter block is the large card only — no site, no creator", () => {
+    expect(layout.metadata.twitter).toEqual({ card: "summary_large_image" });
+  });
+
+  it("the layout code names no @shishyaedu", () => {
+    expect(code(LAYOUT)).not.toContain("@shishyaedu");
   });
 });
 
