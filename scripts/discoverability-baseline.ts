@@ -25,7 +25,12 @@
 //   /careers, /career-map, /for, /worldwide, /insights and /jobs, and
 //   /context.md. A 0 for those families before that deploy means "not
 //   measured", not "not fetched" — see the "first logged" column.
-// - BotVisit paths are locale-stripped (/hi and /te twins count as English).
+// - Until the 3 Oct 2026 deploy (fix C17) BotVisit paths were stored
+//   locale-stripped (a /hi or /te twin fetch was logged as the English path).
+//   From that deploy on a twin is stored with its /hi or /te prefix; fam() and
+//   codeOf() strip the prefix before classifying, so the section tables still
+//   count twins with their English page. The raw-path lists (the top-15 user
+//   fetches) show the prefix.
 // - Probe bursts (>= 3 distinct bot names on the same path in the same
 //   minute) are our own curl checks and are excluded.
 // - A human landing = the first PAGE_VIEW of an anonymous id (client is not
@@ -54,9 +59,15 @@ function arg(name: string): string | undefined {
 
 // ── Families ─────────────────────────────────────────────────────────────
 
-/** SQL: a fine family for a (locale-stripped) path. 'exam' rows are split
- *  into entrance / government in JS with the exam code. */
-const fam = (col: string) => `CASE
+/** SQL: a path with a leading /hi or /te removed (the twin counts as English). */
+const strip = (col: string) => `regexp_replace(${col}, '^/(hi|te)(/|$)', '/')`;
+
+/** SQL: a fine family for a path; a leading /hi or /te is stripped first
+ *  (3 Oct 2026: BotVisit now stores twins with their prefix). 'exam' rows
+ *  are split into entrance / government in JS with the exam code. */
+const fam = (raw: string) => {
+  const col = strip(raw);
+  return `CASE
   WHEN ${col} = '/robots.txt' THEN 'm:robots.txt'
   WHEN ${col} = '/sitemap.xml' THEN 'm:sitemap.xml'
   WHEN ${col} IN ('/llms.txt', '/llms-full.txt') THEN 'm:llms'
@@ -78,8 +89,9 @@ const fam = (col: string) => `CASE
   WHEN ${col} ~ '^/(mocks|c|g|share)/' THEN 'share'
   WHEN ${col} ~ '^/(login|logout|dashboard|me|today|onboarding|chat|attempts|mentor)(/|$)' THEN 'app'
   ELSE 'other' END`;
-const strip = (col: string) => `regexp_replace(${col}, '^/(hi|te)(/|$)', '/')`;
-const codeOf = (col: string) => `upper(substring(${col} from '^/exams/([A-Za-z0-9_]+)'))`;
+};
+/** SQL: the exam code of an /exams/{code} path, /hi or /te prefix stripped first. */
+const codeOf = (raw: string) => `upper(substring(${strip(raw)} from '^/exams/([A-Za-z0-9_]+)'))`;
 
 const SECTION_ORDER = [
   "Home /",

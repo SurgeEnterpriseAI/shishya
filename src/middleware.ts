@@ -84,7 +84,45 @@ const AI_BOTS: [string, RegExp][] = [
 // (src/app/context.md/route.ts) — same treatment as llms.txt.
 // 27 Sep 2026 (integration): + /sitemap-news.xml, the Bing-only news sitemap
 // (src/app/sitemap-news.xml/route.ts) — whether Bing reads it is the check.
-const OBSERVE_ONLY = new Set(["/llms.txt", "/llms-full.txt", "/robots.txt", "/sitemap.xml", "/sitemap-news.xml", "/context.md"]);
+// 3 Oct 2026 (fix C17): + the public pages no matcher entry reached (27 route
+// files; the crawler log held 0 rows for each in 30 days). Same treatment:
+// logged, then passed through untouched — no cookie, no rewrite, no redirect.
+const OBSERVE_ONLY = new Set([
+  "/llms.txt",
+  "/llms-full.txt",
+  "/robots.txt",
+  "/sitemap.xml",
+  "/sitemap-news.xml",
+  "/context.md",
+  "/about",
+  "/pricing",
+  "/press",
+  "/contact",
+  "/terms",
+  "/privacy",
+  "/refunds",
+  "/editorial-policy",
+  "/recognition",
+  "/verification",
+  "/ideas",
+  "/soft-skills",
+  "/alumni-stories",
+  "/aptitude",
+  "/pulse",
+  "/shishya-in-numbers",
+  "/discussions",
+  "/institutions",
+]);
+// …and every page under these (3 Oct 2026, fix C17): /pulse/{week},
+// /pulse/context.md, /shishya-in-numbers/context.md, /discussions/{id},
+// /discussions/new, /institutions/{slug}, /institutions/new, /u/{handle},
+// /community-vouching/{domain}. Observe only, as above.
+const OBSERVE_ONLY_PREFIXES = ["/pulse/", "/shishya-in-numbers/", "/discussions/", "/institutions/", "/u/", "/community-vouching/"];
+
+/** True for a path that is logged and passed through untouched. */
+function isObserveOnly(path: string): boolean {
+  return OBSERVE_ONLY.has(path) || OBSERVE_ONLY_PREFIXES.some((p) => path.startsWith(p));
+}
 
 /** The canonical BotVisit name of a known AI crawler / fetcher user agent, else null. */
 export function aiBotName(ua: string): string | null {
@@ -159,7 +197,7 @@ function isSectionPath(path: string): boolean {
 
 export function middleware(req: NextRequest, event: NextFetchEvent): NextResponse {
   const rawPath = req.nextUrl.pathname;
-  if (OBSERVE_ONLY.has(rawPath)) {
+  if (isObserveOnly(rawPath)) {
     try {
       logAiBot(req, event, rawPath);
     } catch {
@@ -272,7 +310,9 @@ export function middleware(req: NextRequest, event: NextFetchEvent): NextRespons
   }
 
   // ── AI-crawler observability (cheap: one regex pass, only on match) ──
-  logAiBot(req, event, path);
+  // 3 Oct 2026 (fix C17): a /hi or /te twin is logged with its prefix (it was
+  // logged as the English path, so a twin fetch could not be told apart).
+  logAiBot(req, event, localeMatch ? rawPath : path);
 
   // We intercept several classes of request to make sure NO student
   // reaches sign-in without us first seeing where they came from:
@@ -453,5 +493,31 @@ export const config = {
     "/sitemap.xml",
     "/sitemap-news.xml",
     "/context.md",
+    // 3 Oct 2026 (fix C17): the public pages no entry reached — logged only
+    // (OBSERVE_ONLY and OBSERVE_ONLY_PREFIXES above).
+    "/about",
+    "/pricing",
+    "/press",
+    "/contact",
+    "/terms",
+    "/privacy",
+    "/refunds",
+    "/editorial-policy",
+    "/recognition",
+    "/verification",
+    "/ideas",
+    "/soft-skills",
+    "/alumni-stories",
+    "/aptitude",
+    "/pulse",
+    "/shishya-in-numbers",
+    "/discussions",
+    "/institutions",
+    "/pulse/:path*",
+    "/shishya-in-numbers/:path*",
+    "/discussions/:path*",
+    "/institutions/:path*",
+    "/u/:path*",
+    "/community-vouching/:path*",
   ],
 };

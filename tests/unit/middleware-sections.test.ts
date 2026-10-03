@@ -10,7 +10,7 @@
 // Runs the real middleware against NextRequests with a browser user agent,
 // so the AI-bot logger never fires a request.
 
-import { describe, it, expect } from "vitest";
+import { afterEach, describe, it, expect, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { aiBotName, config, middleware } from "@/middleware";
 
@@ -229,6 +229,141 @@ describe("Content-Language: only the native Hindi notes", () => {
     ]) {
       expect(run(u).headers.get("content-language"), u).toBeNull();
     }
+  });
+});
+
+// ── 3 Oct 2026 (fix C17): the crawler log covers the public pages no matcher
+// entry reached (27 route files, 0 BotVisit rows each in 30 days) and keeps
+// the /hi, /te prefix. Observe only: logged, then passed through untouched.
+
+const NEW_EXACT = [
+  "/about",
+  "/pricing",
+  "/press",
+  "/contact",
+  "/terms",
+  "/privacy",
+  "/refunds",
+  "/editorial-policy",
+  "/recognition",
+  "/verification",
+  "/ideas",
+  "/soft-skills",
+  "/alumni-stories",
+  "/aptitude",
+  "/pulse",
+  "/shishya-in-numbers",
+  "/discussions",
+  "/institutions",
+];
+const NEW_PREFIXED = [
+  "/pulse/:path*",
+  "/shishya-in-numbers/:path*",
+  "/discussions/:path*",
+  "/institutions/:path*",
+  "/u/:path*",
+  "/community-vouching/:path*",
+];
+// Every entry the matcher held before this fix.
+const OLD_ENTRIES = [
+  "/", "/hi", "/te", "/hi/:path*", "/te/:path*", "/exam-calendar", "/login", "/mocks/:path*", "/exams/:path*",
+  "/Exams/:path*", "/EXAMS/:path*", "/schooling", "/colleges", "/post-graduation", "/jobs", "/worldwide", "/insights",
+  "/scholarships", "/current-affairs/:path*", "/find-your-exam", "/results", "/coach", "/ask", "/jobs-map", "/mentors",
+  "/educators", "/revision", "/typing", "/descriptive", "/live-test", "/share/:path*", "/c/:path*", "/g/:path*",
+  "/api/auth/signin/:path*", "/schooling/:path*", "/colleges/:path*", "/scholarships/:path*", "/careers", "/careers/:path*",
+  "/career-map", "/distance-learning", "/for/:path*", "/for", "/worldwide/:path*", "/insights/:path*", "/jobs/:path*",
+  "/mock-tests", "/subjects", "/subjects/:path*", "/after-10th", "/after-10th/:path*", "/after-12th", "/after-12th/:path*",
+  "/llms.txt", "/llms-full.txt", "/robots.txt", "/sitemap.xml", "/sitemap-news.xml", "/context.md",
+];
+
+describe("crawler log: the pages no matcher entry reached (fix C17)", () => {
+  it("the matcher holds each new exact path and each new prefix form", () => {
+    for (const e of [...NEW_EXACT, ...NEW_PREFIXED]) expect(config.matcher, e).toContain(e);
+  });
+
+  it("…and every entry it held before", () => {
+    for (const e of OLD_ENTRIES) expect(config.matcher, e).toContain(e);
+  });
+
+  it.each([
+    "https://shishya.in/about",
+    "https://shishya.in/discussions/abc",
+    "https://shishya.in/pulse/2026-w39",
+    "https://shishya.in/about?utm_source=chatgpt.com",
+    "https://shishya.in/discussions/abc?utm_source=chatgpt.com",
+    "https://shishya.in/pulse/2026-w39?utm_source=chatgpt.com",
+    "https://shishya.in/discussions?utm_source=chatgpt.com",
+    "https://shishya.in/institutions/some-school?utm_source=chatgpt.com",
+    "https://shishya.in/u/someone?utm_source=chatgpt.com",
+    "https://shishya.in/community-vouching/example.org?utm_source=chatgpt.com",
+  ])("%s passes through untouched: no Set-Cookie, no rewrite, no Location", (u) => {
+    const res = run(u, { referer: "https://www.bing.com/" });
+    expect(res.status).toBe(200);
+    expect(res.headers.get("x-middleware-next")).toBe("1");
+    expect(res.headers.get("x-middleware-rewrite")).toBeNull();
+    expect(res.headers.get("location")).toBeNull();
+    expect(res.headers.get("set-cookie")).toBeNull();
+    expect(res.cookies.getAll()).toEqual([]);
+  });
+
+  it("a signed-in visitor without the hint gets no cookie on an observe-only page either", () => {
+    const res = run("https://shishya.in/about", { cookie: "__Secure-next-auth.session-token=x" });
+    expect(res.headers.get("set-cookie")).toBeNull();
+  });
+});
+
+describe("crawler log: what path is posted (fix C17)", () => {
+  const BOT = "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; GPTBot/1.2; +https://openai.com/gptbot)";
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  function posted(url: string): { bot: string; path: string }[] {
+    const fetchMock = vi.fn(async (..._args: unknown[]) => new Response("{}"));
+    vi.stubGlobal("fetch", fetchMock);
+    const waits: Promise<unknown>[] = [];
+    const ev = { waitUntil: (p: Promise<unknown>) => waits.push(p), sourcePage: "" } as never;
+    middleware(new NextRequest(url, { headers: new Headers({ "user-agent": BOT }) }), ev);
+    return fetchMock.mock.calls.map((c) => {
+      const [target, init] = c as [URL, RequestInit];
+      expect(String(target)).toBe("https://shishya.in/api/ops/bot-hit");
+      return JSON.parse(String(init.body));
+    });
+  }
+
+  it("a /hi twin keeps its prefix", () => {
+    expect(posted("https://shishya.in/hi/exams/SSC_CGL")).toEqual([{ bot: "GPTBot", path: "/hi/exams/SSC_CGL" }]);
+  });
+
+  it("a /te twin keeps its prefix", () => {
+    expect(posted("https://shishya.in/te/exams/SSC_CGL/updates")).toEqual([{ bot: "GPTBot", path: "/te/exams/SSC_CGL/updates" }]);
+  });
+
+  it("an English page is posted as it is", () => {
+    expect(posted("https://shishya.in/exams/SSC_CGL")).toEqual([{ bot: "GPTBot", path: "/exams/SSC_CGL" }]);
+  });
+
+  it("a newly observed page is posted once", () => {
+    expect(posted("https://shishya.in/about")).toEqual([{ bot: "GPTBot", path: "/about" }]);
+    expect(posted("https://shishya.in/discussions/abc")).toEqual([{ bot: "GPTBot", path: "/discussions/abc" }]);
+  });
+
+  it("a browser user agent posts nothing", () => {
+    const fetchMock = vi.fn(async () => new Response("{}"));
+    vi.stubGlobal("fetch", fetchMock);
+    run("https://shishya.in/hi/exams/SSC_CGL");
+    run("https://shishya.in/about");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("Class 1-7 school pages take no data (founder rule 5) — unchanged by fix C17", () => {
+  it.each([
+    "https://shishya.in/schooling/cbse/class-5?utm_source=chatgpt.com",
+    "https://shishya.in/schooling/cbse/class-7/science?utm_source=chatgpt.com",
+  ])("%s sets no attribution cookie", (u) => {
+    const res = run(u, { referer: "https://www.bing.com/" });
+    expect(res.cookies.get(ATTRIB)).toBeUndefined();
   });
 });
 
