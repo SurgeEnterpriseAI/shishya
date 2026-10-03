@@ -52,6 +52,7 @@ import { ReactionButtons } from "@/components/exam-phase/ReactionButtons";
 import { ShareButtons } from "@/components/exam-phase/ShareButtons";
 import { prisma } from "@/lib/db/prisma";
 import { realExamKey } from "@/lib/db/exam-scope";
+import { STUDENT_THREAD_WHERE } from "@/lib/discussion-visibility";
 import { auth } from "@/lib/auth";
 import { getT } from "@/lib/i18n-server";
 import { fillTemplate, type StringKey } from "@/lib/i18n";
@@ -258,6 +259,10 @@ export default async function ChecklistPage({
     examSignUpFacts(exam.code),
   ]);
   const examCanServeMock = signUpFacts?.practice === "canServe";
+  // 3 Oct 2026: the "Talk to other candidates" box only when a student has
+  // started a thread for this exam — every stored thread so far was written
+  // by Shishya and none is listed (src/lib/discussion-visibility.ts).
+  const studentThreads = await prisma.discussion.count({ where: { ...STUDENT_THREAD_WHERE, examId: exam.id } }).catch(() => 0);
   const signedIn = !!session?.user;
   const userId = session?.user?.id ?? null;
 
@@ -639,16 +644,18 @@ export default async function ChecklistPage({
           </section>
         )}
 
-        <section className="mt-10 rounded-xl border border-ink-200 bg-saffron-50/40 p-5">
-          <h2 className="text-base font-semibold text-ink-900">{fillTemplate(t("chk.disc.h2"), { exam: short })}</h2>
-          <p className="mt-1 text-sm text-ink-600">{t("chk.disc.body")}</p>
-          <Link
-            href={`/discussions?examCode=${exam.code}`}
-            className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-saffron-700 hover:underline"
-          >
-            {fillTemplate(t("chk.disc.cta"), { exam: short })} <span aria-hidden>→</span>
-          </Link>
-        </section>
+        {studentThreads > 0 && (
+          <section className="mt-10 rounded-xl border border-ink-200 bg-saffron-50/40 p-5">
+            <h2 className="text-base font-semibold text-ink-900">{fillTemplate(t("chk.disc.h2"), { exam: short })}</h2>
+            <p className="mt-1 text-sm text-ink-600">{t("chk.disc.body")}</p>
+            <Link
+              href={`/discussions?examCode=${exam.code}`}
+              className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-saffron-700 hover:underline"
+            >
+              {fillTemplate(t("chk.disc.cta"), { exam: short })} <span aria-hidden>→</span>
+            </Link>
+          </section>
+        )}
       </article>
     </main>
   );

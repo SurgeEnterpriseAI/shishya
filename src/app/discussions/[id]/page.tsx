@@ -1,6 +1,7 @@
 // /discussions/[id] — full thread view, public read.
 // Server component fetches and renders messages; reply form is a client island.
 
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
@@ -13,23 +14,33 @@ import { signUpWords } from "@/lib/signup-place-words";
 import { UserBadge, type UserBadgeLevel } from "@/components/UserBadge";
 import { isSyntheticHandle } from "@/data/synthetic-handles";
 import { discussionLabelsCopy } from "@/lib/discussion-labels-copy";
+import { DISCUSSIONS_INDEXABLE, isReadableThread, isStudentThread, isStudyRoom } from "@/lib/discussion-visibility";
 
 export const revalidate = 0; // always fresh on direct page load
 
+// 3 Oct 2026: a thread Shishya wrote — the 34 seed-script threads under
+// invented names, the retired cron's starter questions — answers not-found,
+// and its head never carries its title (src/lib/discussion-visibility.ts).
+// A study room still opens by its own link. Only a student's thread gets a
+// DiscussionForumPosting, and every reply count counts student replies only.
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ id: string }>;
-}) {
+}): Promise<Metadata> {
   const { id } = await params;
   const thread = await prisma.discussion
-    .findUnique({ where: { id }, select: { title: true } })
+    .findUnique({ where: { id }, select: { title: true, authorId: true, isSeed: true, topicCode: true } })
     .catch(() => null);
-  if (!thread) return { title: "Discussion — Shishya" };
+  if (!thread || !isReadableThread(thread)) return { title: "Discussion — Shishya", robots: { index: false, follow: false } };
   return {
     title: `${thread.title} — Shishya Discussions`,
-    description: `Aspirants discussing: ${thread.title}. Read the thread and join the conversation free on Shishya.`,
+    // A study room is Shishya-made (one per exam topic), not a student's question.
+    description: isStudentThread(thread)
+      ? `A student's question on Shishya: ${thread.title}. Read the thread; sign up free to reply.`
+      : `A study room on Shishya: ${thread.title}. Read it; sign up free to post.`,
     alternates: { canonical: `https://shishya.in/discussions/${id}` },
+    ...(DISCUSSIONS_INDEXABLE && isStudentThread(thread) ? {} : { robots: { index: false, follow: true } }),
   };
 }
 
@@ -48,7 +59,7 @@ export default async function DiscussionPage({
       messages: { orderBy: { createdAt: "asc" }, take: 200 },
     },
   });
-  if (!thread) notFound();
+  if (!thread || !isReadableThread(thread)) notFound();
 
   // Batch-fetch badge levels for all unique authorIds in this thread.
   const authorIds = Array.from(new Set([
@@ -82,43 +93,53 @@ export default async function DiscussionPage({
   // sends no cookie, so the indexed text is unchanged.
   const D = discussionLabelsCopy(locale);
 
+  // Replies a student wrote: every message after the opening post that has
+  // an account behind it. A reply with no account is Shishya AI, not a
+  // student, and is never counted as one (3 Oct 2026). A study room has no
+  // opening post (POST /api/study-room creates it empty), so there every
+  // post with an account counts, the first one included.
+  const studentReplies = thread.messages.filter((m, i) => (isStudyRoom(thread) || i > 0) && m.authorId !== null).length;
+
   // AEO: DiscussionForumPosting is the schema Google's forum rich
   // results + answer engines read for community threads. First message
   // doubles as the posting body; replies are counted, not embedded.
+  // 3 Oct 2026: printed only for a student's thread — a study room is
+  // Shishya's own and never a forum posting.
   const threadUrl = `https://shishya.in/discussions/${thread.id}`;
   const firstMsg = thread.messages[0];
-  const threadJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "DiscussionForumPosting",
-    headline: thread.title,
-    ...(firstMsg ? { articleBody: firstMsg.content.slice(0, 500) } : {}),
-    datePublished: thread.createdAt.toISOString(),
-    dateModified: thread.lastActivityAt.toISOString(),
-    // Seed threads are the platform's own starter questions — never a Person.
-    author: thread.isSeed
-      ? { "@type": "Organization", name: "Shishya" }
-      : { "@type": "Person", name: thread.authorName || "Shishya aspirant" },
-    url: threadUrl,
-    mainEntityOfPage: threadUrl,
-    inLanguage: "en-IN",
-    isAccessibleForFree: true,
-    ...(thread.exam
-      ? { about: { "@type": "Thing", name: thread.exam.shortName } }
-      : {}),
-    interactionStatistic: {
-      "@type": "InteractionCounter",
-      interactionType: "https://schema.org/CommentAction",
-      userInteractionCount: Math.max(thread.messages.length - 1, 0),
-    },
-    publisher: { "@type": "EducationalOrganization", name: "Shishya", url: "https://shishya.in" },
-  };
+  const threadJsonLd = isStudentThread(thread)
+    ? {
+        "@context": "https://schema.org",
+        "@type": "DiscussionForumPosting",
+        headline: thread.title,
+        ...(firstMsg ? { articleBody: firstMsg.content.slice(0, 500) } : {}),
+        datePublished: thread.createdAt.toISOString(),
+        dateModified: thread.lastActivityAt.toISOString(),
+        author: { "@type": "Person", name: thread.authorName || "Shishya aspirant" },
+        url: threadUrl,
+        mainEntityOfPage: threadUrl,
+        inLanguage: "en-IN",
+        isAccessibleForFree: true,
+        ...(thread.exam
+          ? { about: { "@type": "Thing", name: thread.exam.shortName } }
+          : {}),
+        interactionStatistic: {
+          "@type": "InteractionCounter",
+          interactionType: "https://schema.org/CommentAction",
+          userInteractionCount: studentReplies,
+        },
+        publisher: { "@type": "EducationalOrganization", name: "Shishya", url: "https://shishya.in" },
+      }
+    : null;
 
   return (
     <main className="min-h-screen bg-ink-50/40">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(threadJsonLd) }}
-      />
+      {threadJsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(threadJsonLd) }}
+        />
+      )}
       <header className="border-b border-ink-200/50 bg-white/80 backdrop-blur">
         <div className="container-prose flex h-16 items-center justify-between gap-3">
           <Link href="/" className="flex items-center gap-2">
@@ -157,8 +178,11 @@ export default async function DiscussionPage({
             )}
             {/* Disclosure (11 Sep 2026 audit): seed threads are Shishya's
                 starter questions. Older seed rows still carry invented
-                student names as authorName — never show those. */}
-            {thread.isSeed && (
+                student names as authorName — never show those.
+                3 Oct 2026: a study room is stored with isSeed TRUE but is
+                not a starter question — its title says it is a study room
+                and its author line reads Shishya — so it carries no chip. */}
+            {thread.isSeed && !isStudyRoom(thread) && (
               <span className="rounded bg-saffron-50 px-2 py-0.5 text-xs font-medium text-saffron-800 ring-1 ring-saffron-200">
                 {D.starter}
               </span>
@@ -171,7 +195,7 @@ export default async function DiscussionPage({
             <span className="text-ink-300">·</span>
             <span>{formatRelative(thread.createdAt, relLabels, now)}</span>
             <span className="text-ink-300">·</span>
-            <span>{thread.messageCount} {thread.messageCount === 1 ? t("disc.reply") : t("disc.replies")}</span>
+            <span>{studentReplies} {studentReplies === 1 ? t("disc.reply") : t("disc.replies")}</span>
           </p>
         </div>
 
