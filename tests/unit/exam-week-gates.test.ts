@@ -18,6 +18,7 @@ import {
   groupGateRows,
 } from "@/lib/exam-week-gates";
 import { GOOGLE_ONLY_NOINDEX } from "@/lib/news-index-policy";
+import { SITE_DEFAULT_ROBOTS } from "@/lib/site-robots";
 import type { TimelineInput } from "@/lib/exam-timeline";
 
 const ROOT = path.resolve(__dirname, "../..");
@@ -115,7 +116,8 @@ describe("score-estimate: the window AND an official answer key out", () => {
 
 describe("robots and grouping", () => {
   it("in season: the site default; out of season: Google-only noindex,follow (Bing and ChatGPT search keep index,follow)", () => {
-    expect(examPageRobots(true)).toBeUndefined();
+    // 3 Oct 2026: the site default as a value — `undefined` cleared the layout's robots (no meta printed).
+    expect(examPageRobots(true)).toEqual(SITE_DEFAULT_ROBOTS);
     expect(examPageRobots(false)).toBe(GOOGLE_ONLY_NOINDEX);
     expect(examPageRobots(false)).toEqual({ index: true, follow: true, googleBot: { index: false, follow: true } });
   });

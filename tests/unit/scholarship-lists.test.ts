@@ -375,7 +375,7 @@ describe("the lists are linked as plain crawlable links", () => {
   it("the list pages are 404 for any other segment and noindex below the floor", () => {
     const list = read("src/app/scholarships/for/[filter]/page.tsx");
     expect(list).toContain("export const dynamicParams = false;");
-    expect(list).toContain("robots: indexable ? undefined : { index: false, follow: true },");
+    expect(list).toContain("...(indexable ? {} : { robots: { index: false, follow: true } }),");
     // 27 Sep 2026 (repair): some apply hosts are not the awarding body's own
     // (jharkhandscholarship.com, cbci.in, …) — the page promises apply links.
     expect(list).toContain("Amounts & Apply Links");
@@ -383,7 +383,7 @@ describe("the lists are linked as plain crawlable links", () => {
     expect(list).not.toMatch(/Official Links|awarding body's official portal/);
     expect(list).toContain("{reviewLine && <p");
     const soon = read("src/app/scholarships/closing-soon/page.tsx");
-    expect(soon).toContain("robots: isClosingSoonIndexable(list) ? undefined : { index: false, follow: true },");
+    expect(soon).toContain("...(isClosingSoonIndexable(list) ? {} : { robots: { index: false, follow: true } }),");
     // 27 Sep 2026: like the lists, the page counts its re-checked rows and promises apply links.
     expect(soon).toContain("{reviewLine && <p");
     expect(soon).toContain("Each row links the scheme's apply page.");

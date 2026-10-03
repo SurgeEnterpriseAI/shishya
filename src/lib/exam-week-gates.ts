@@ -48,6 +48,7 @@
 
 import { buildTimeline, type TimelineInput } from "@/lib/exam-timeline";
 import { GOOGLE_ONLY_NOINDEX } from "@/lib/news-index-policy";
+import { SITE_DEFAULT_ROBOTS } from "@/lib/site-robots";
 
 export const EXAM_DAY_INDEX_BEFORE_DAYS = 3;
 export const EXAM_DAY_INDEX_AFTER_DAYS = 30;
@@ -96,10 +97,12 @@ export function examPageIndexGates(
   return { examWeek, checklist, scoreEstimate };
 }
 
-/** robots metadata for a gated page: undefined (the site default,
- *  index,follow everywhere) when indexable, else Google-only noindex,follow. */
-export function examPageRobots(indexable: boolean): typeof GOOGLE_ONLY_NOINDEX | undefined {
-  return indexable ? undefined : GOOGLE_ONLY_NOINDEX;
+/** robots metadata for a gated page: the site default (index, follow,
+ *  max-image-preview:large, max-snippet:-1) when indexable, else Google-only
+ *  noindex,follow. 3 Oct 2026: never `undefined` — that value cleared the
+ *  layout's robots and the page printed no robots meta at all. */
+export function examPageRobots(indexable: boolean): typeof SITE_DEFAULT_ROBOTS | typeof GOOGLE_ONLY_NOINDEX {
+  return indexable ? SITE_DEFAULT_ROBOTS : GOOGLE_ONLY_NOINDEX;
 }
 
 /** One exam's rows grouped from a flat read (the sitemap's single SQL). */

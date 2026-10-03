@@ -69,7 +69,7 @@ export async function generateMetadata({ params }: { params: Promise<PageParams>
     title: `${title} | Shishya`,
     description,
     alternates: { canonical: url },
-    robots: indexable ? undefined : { index: false, follow: true },
+    ...(indexable ? {} : { robots: { index: false, follow: true } }),
     openGraph: { title, description, url, siteName: "Shishya", locale: "en_IN", type: "website" },
   };
 }

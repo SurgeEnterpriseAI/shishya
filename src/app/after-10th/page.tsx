@@ -40,7 +40,7 @@ export const metadata: Metadata = {
   title: META_MODEL.title,
   description: META_MODEL.description,
   alternates: { canonical: META_MODEL.canonical, types: { "text/markdown": `${META_MODEL.canonical}/context.md` } },
-  robots: META_MODEL.indexable ? undefined : { index: false, follow: true },
+  ...(META_MODEL.indexable ? {} : { robots: { index: false, follow: true } }),
   keywords: [...PATH_SEARCH_TERMS.en.after10],
   openGraph: { title: META_MODEL.h1, description: META_MODEL.description, url: META_MODEL.canonical, siteName: "Shishya", locale: "en_IN", type: "website" },
 };

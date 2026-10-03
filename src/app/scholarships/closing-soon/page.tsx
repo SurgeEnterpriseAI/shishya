@@ -38,7 +38,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: `${title} | Shishya`,
     description,
     alternates: { canonical: URL },
-    robots: isClosingSoonIndexable(list) ? undefined : { index: false, follow: true },
+    ...(isClosingSoonIndexable(list) ? {} : { robots: { index: false, follow: true } }),
     openGraph: { title, description, url: URL, siteName: "Shishya", locale: "en_IN", type: "website" },
   };
 }
