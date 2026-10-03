@@ -473,8 +473,8 @@ describe("one early line per content page, right after its first answer block", 
   });
 
   it.each([
-    ["src/app/exams/[code]/guide/page.tsx", "guideMd", "guideParts", '<SignupInline surface="guide" exam={exam.shortName} practice={practice.hasPractice} revealOffscreen />', "<NotesMarkdown markdown={guideParts[0]} />", "<NotesMarkdown markdown={guideParts[1]} />"],
-    ["src/app/exams/[code]/tricks/page.tsx", "tricksMd", "tricksParts", '<SignupInline surface="tricks" exam={exam.shortName} practice={practice.hasPractice} revealOffscreen />', "<NotesMarkdown markdown={tricksParts[0]} />", "<NotesMarkdown markdown={tricksParts[1]} />"],
+    ["src/app/exams/[code]/guide/page.tsx", "guideMd", "guideParts", '<SignupInline surface="guide" exam={exam.shortName} practice={practice.hasPractice} revealOffscreen />', "<NotesMarkdown markdown={guideParts[0]} rich demoteH1 />", "<NotesMarkdown markdown={guideParts[1]} rich demoteH1 />"],
+    ["src/app/exams/[code]/tricks/page.tsx", "tricksMd", "tricksParts", '<SignupInline surface="tricks" exam={exam.shortName} practice={practice.hasPractice} revealOffscreen />', "<NotesMarkdown markdown={tricksParts[0]} rich demoteH1 />", "<NotesMarkdown markdown={tricksParts[1]} rich demoteH1 />"],
     ["src/app/exams/[code]/topics/[topicCode]/hi/page.tsx", "hiMd", "hiParts", '<SignupInline surface="topic" exam={exam.shortName} practice={examHasPractice} locale="hi" revealOffscreen />', "<NotesMarkdown markdown={hiParts[0]} rich demoteH1 />", "<NotesMarkdown markdown={hiParts[1]} rich demoteH1 />"],
   ])("%s: between the article's first section and the rest, else after the article", (file, mdVar, parts, tag, first, second) => {
     const src = read(file);

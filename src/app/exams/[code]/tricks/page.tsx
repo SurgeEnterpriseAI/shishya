@@ -216,13 +216,13 @@ export default async function TricksPage({ params }: { params: Promise<{ code: s
         <article className="prose prose-sm sm:prose-base mt-6 max-w-none rounded-xl border border-ink-200 bg-white p-5 sm:p-7">
           {tricksParts ? (
             <>
-              <NotesMarkdown markdown={tricksParts[0]} />
+              <NotesMarkdown markdown={tricksParts[0]} rich demoteH1 />
               {/* 30 Sep 2026 (sign-up build 3): the guest sign-up line, once per page, after the first section — client-only, never on Class 1-7 (src/lib/content-signup.ts). */}
               <SignupInline surface="tricks" exam={exam.shortName} practice={practice.hasPractice} revealOffscreen />
-              <NotesMarkdown markdown={tricksParts[1]} />
+              <NotesMarkdown markdown={tricksParts[1]} rich demoteH1 />
             </>
           ) : (
-            <NotesMarkdown markdown={tricksMd} />
+            <NotesMarkdown markdown={tricksMd} rich demoteH1 />
           )}
         </article>
         {!tricksParts && <SignupInline surface="tricks" exam={exam.shortName} practice={practice.hasPractice} revealOffscreen />}

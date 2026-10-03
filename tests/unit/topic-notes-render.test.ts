@@ -146,13 +146,15 @@ describe("wiring", () => {
     expect(c).toContain("notesMarkdownHtml(markdown, { demoteH1 })");
     // 29 Sep 2026: the Hindi topic page uses the full renderer too (it printed raw "---" and "*italic*").
     expect(read("src/app/exams/[code]/topics/[topicCode]/hi/page.tsx")).toMatch(/<NotesMarkdown[^>]*rich demoteH1/);
-    // The other callers pass neither prop.
-    for (const p of [
-      "src/app/exams/[code]/guide/page.tsx",
-      "src/app/exams/[code]/tricks/page.tsx",
-      "src/app/schooling/[slug]/[classSlug]/[subject]/[chapter]/page.tsx",
-    ]) {
-      expect(read(p), p).not.toMatch(/<NotesMarkdown[^>]*\b(rich|demoteH1)\b/);
+    // 3 Oct 2026: guides and tricks use the full renderer too (they printed raw "###", "---",
+    // "1." runs and *italic*). The school chapter page is not in this loop: its tag is pinned
+    // in tests/unit/schooling-honesty.test.ts.
+    for (const p of ["src/app/exams/[code]/guide/page.tsx", "src/app/exams/[code]/tricks/page.tsx"]) {
+      const src = read(p);
+      expect(src, p).toMatch(/<NotesMarkdown[^>]*rich demoteH1/);
+      const tags = src.match(/<NotesMarkdown[^>]*>/g) ?? [];
+      expect(tags.length, p).toBe(3);
+      for (const t of tags) expect(t, p).toMatch(/\brich\b/);
     }
   });
 });

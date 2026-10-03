@@ -1,13 +1,15 @@
-// Minimal markdown renderer for AI-generated study notes (headings,
-// bullets, paragraphs — the only constructs the note generator emits).
-// Shared by the English topic page and its Hindi twin (/topics/[code]/hi).
+// Markdown renderer for AI-generated study text (notes, guides, tricks,
+// articles).
 //
-// 26 Sep 2026 (discoverability wave 2 G3): two OPTIONAL props, default
-// behaviour unchanged for every existing caller. `rich` renders the full
-// note shape — tables, ordered lists, ### headings, *italic*, `code`, rules,
-// fences — through src/lib/notes-markdown.ts (every piece of text escaped,
-// no raw HTML from the note); `demoteH1` renders "# " as <h2> so the page
-// keeps its one <h1>. The English topic page uses both.
+// Each caller chooses with two OPTIONAL props (26 Sep 2026, discoverability
+// wave 2 G3). `rich` renders the full note shape — tables, ordered lists,
+// ### headings, *italic*, `code`, rules, fences, "•" bullets — through
+// src/lib/notes-markdown.ts (every piece of text escaped, no raw HTML from
+// the note). Without `rich`, the plain branch below draws only "#"/"##"
+// headings, "-"/"*" bullets, paragraphs and **bold**, and joins every other
+// line into the paragraph around it, so "###", "---", "1." and *italic*
+// print as typed: a caller whose text holds more than that passes `rich`.
+// `demoteH1` renders "# " as <h2> so the page keeps its one <h1>.
 
 import React from "react";
 import { notesMarkdownHtml } from "@/lib/notes-markdown";

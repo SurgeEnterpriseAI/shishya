@@ -247,13 +247,13 @@ export default async function GuidePage({ params }: { params: Promise<{ code: st
         <article className="prose prose-sm sm:prose-base mt-6 max-w-none rounded-xl border border-ink-200 bg-white p-5 sm:p-7">
           {guideParts ? (
             <>
-              <NotesMarkdown markdown={guideParts[0]} />
+              <NotesMarkdown markdown={guideParts[0]} rich demoteH1 />
               {/* 30 Sep 2026 (sign-up build 3): the guest sign-up line, once per page, after the first section — client-only, never on Class 1-7 (src/lib/content-signup.ts). */}
               <SignupInline surface="guide" exam={exam.shortName} practice={practice.hasPractice} revealOffscreen />
-              <NotesMarkdown markdown={guideParts[1]} />
+              <NotesMarkdown markdown={guideParts[1]} rich demoteH1 />
             </>
           ) : (
-            <NotesMarkdown markdown={guideMd} />
+            <NotesMarkdown markdown={guideMd} rich demoteH1 />
           )}
         </article>
         {!guideParts && <SignupInline surface="guide" exam={exam.shortName} practice={practice.hasPractice} revealOffscreen />}
