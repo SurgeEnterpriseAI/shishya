@@ -35,6 +35,22 @@
 // The class variant is one line: open a chapter to read or ask — and to
 // practise only when the class has practice (hasPractice). The pages render it
 // only for a CBSE / NCERT class with a chapter map.
+// 3 Oct 2026 (school growth: 86% of chapter visitors left after one page, 0
+// signed up) — slot "next", the chapter page's one sign-up step, AFTER the
+// notes and the free guest quiz, only on a chapter with checked practice
+// (schoolChapterMockCount not null) and only for a known guest (never in the
+// SSR / crawler HTML): "Practise this chapter", what the set is (its real
+// size, with the age line) and the shared sign-up button. Its words come
+// from the per-place table through the button's own rules
+// (src/lib/signup-place.ts): a CBSE chapter callback with no {n} resolves to
+// the CBSE school entry with the caption that is true on every school page.
+// Door id "school-save" (the chapter's door), beacon prop slot "next". A
+// signed-in student gets nothing there: the practise button is in the entry
+// at the top, where the sign-in brings them back.
+// The 27 Sep "save" slot is no longer rendered by the chapter page — "next"
+// took its place, so a guest sees one sign-up block, not two. It is kept
+// unchanged while tests/unit/signup-places.test.ts (the 401-door build)
+// pins its {n}; remove the two together.
 // Every word comes from src/lib/school/student-copy.ts. No leaderboard,
 // streak, challenge, share or teacher piece; nothing stored in the browser.
 
@@ -62,12 +78,14 @@ function beacon(cta: string, extra?: Record<string, unknown>) {
 
 export interface SchoolStudentEntryProps {
   /** "chapter": the tutor entry / practice (slot "tutor") or the guest's
-   *  save-practice line (slot "save"); "class": one "open a chapter" line. */
+   *  sign-up step after the practice (slot "next"); "class": one "open a
+   *  chapter" line. */
   variant: "chapter" | "class";
   /** Chapter variant only. "tutor" (default): the entry before the notes.
-   *  "save": after the page's practice — shown to a guest, and only when the
-   *  chapter has practice. */
-  slot?: "tutor" | "save";
+   *  "next": after the notes and the guest quiz, on a chapter with practice —
+   *  a known guest's one sign-up step; nothing for a signed-in student.
+   *  "save": the 27 Sep save line, no longer rendered by the chapter page. */
+  slot?: "tutor" | "save" | "next";
   cls: number;
   examCode: string;
   /** This page's own path — the sign-in callback. */
@@ -121,7 +139,7 @@ export function SchoolStudentEntry(p: SchoolStudentEntryProps) {
     );
   }
 
-  // ── Chapter page, after the practice: a guest's save line ──────────
+  // ── The 27 Sep save line (no page renders it since 3 Oct 2026) ─────
   // Only once the probe says "guest" (never in the SSR / crawler HTML) and
   // only when the chapter has practice to keep.
   if (slot === "save") {
@@ -149,6 +167,30 @@ export function SchoolStudentEntry(p: SchoolStudentEntryProps) {
           onSignInClick={() => beacon("school-save-google", { examCode: p.examCode, topic: p.topicCode })}
         />
       </div>
+    );
+  }
+
+  // ── Chapter page, after the notes and the guest quiz: the next step ─
+  // Only for a known guest (never in the SSR / crawler HTML) on a chapter
+  // with practice. Signed in: nothing — the practise button is at the top.
+  if (slot === "next") {
+    const nextCount = schoolChapterMockCount(p.validatedQuestions ?? 0);
+    if (nextCount === null || signedIn !== false) return null;
+    return (
+      <section aria-labelledby="school-next-step" className="mt-8 rounded-xl border border-saffron-200 bg-saffron-50/50 p-5">
+        <h2 id="school-next-step" className="text-base font-semibold text-ink-900">
+          {C.nextHeading}
+        </h2>
+        <p className="mt-1 text-sm text-ink-700">{C.nextGuest(nextCount)}</p>
+        <SignUpButton
+          href={signInHref}
+          surface="school-save"
+          rel="nofollow"
+          className="mt-3"
+          beaconProps={{ examCode: p.examCode, slot: "next" }}
+          onSignInClick={() => beacon("school-next-google", { examCode: p.examCode, topic: p.topicCode })}
+        />
+      </section>
     );
   }
 

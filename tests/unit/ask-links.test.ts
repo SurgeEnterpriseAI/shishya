@@ -79,12 +79,22 @@ describe("Shishya links", () => {
     expect(check("[Bihar](https://shishya.in/exams/state/bihar)").pages[0]).toMatchObject({ url: "/exams/state/bihar", section: "government" });
   });
 
-  it("school chapter pages carry their data status", () => {
+  it("school chapter pages carry their data status; a book-only chapter's link is its subject page", () => {
     const ready = idx.docs.find((d) => d.kind === "school-chapter" && d.status === "ready")!;
     const book = idx.docs.find((d) => d.kind === "school-chapter" && d.status === "book-only")!;
+    // 3 Oct 2026 (school growth): a chapter with no Shishya content points at its row on the
+    // subject page (#ch-{slug}), never at its own empty page.
+    const subject = book.path.split("#")[0];
+    const slug = book.id.split(":").pop();
+    expect(book.path).toBe(`${subject}#ch-${slug}`);
     const r = check(`[a](https://shishya.in${ready.path}) [b](https://shishya.in${book.path})`);
-    expect(r.pages.map((p) => p.status)).toEqual(["ready", "book-only"]);
+    expect(r.pages.map((p) => p.status)).toEqual(["ready", undefined]);
+    expect(r.pages[1].url.split("#")[0]).toBe(subject);
     expect(r.pages.every((p) => p.section === "school")).toBe(true);
+    // An answer that links the empty chapter page itself is sent to the subject page.
+    const g = check(`[c](https://shishya.in${subject}/${slug})`);
+    expect(g.answer).toContain(`[c](https://shishya.in${subject})`);
+    expect(g.answer).not.toContain(`${subject}/${slug}`);
   });
 });
 

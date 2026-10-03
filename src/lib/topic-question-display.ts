@@ -28,6 +28,12 @@
 //      page reads the same on every visit. No more than three in a row with
 //      the same correct letter — by moving questions, never options.
 //
+// 3 Oct 2026 (school chapters): a caller may say what a row's "kind" is
+// (PickOptions.kindOf); the default stays the row's first tag. A school
+// question's first tag is its chapter's code (every question of a chapter
+// shares it), so with the default a chapter printed 2 questions at most;
+// src/lib/school/chapter-questions.ts passes the question's own concept tag.
+//
 // Pure: no React, no DB. tests/unit/topic-question-display.test.ts pins it.
 
 export interface QuestionOption {
@@ -168,8 +174,22 @@ export function sameKind(a: ReadonlySet<string>, b: ReadonlySet<string>): boolea
 
 const DIFFICULTY_ORDER: Record<string, number> = { EASY: 0, MEDIUM: 1, HARD: 2 };
 
+export interface PickOptions {
+  /** At most this many (default MAX_SHOWN_QUESTIONS). */
+  max?: number;
+  /** A row's kind for rules 4 and 5: at most two of one kind, one of each
+   *  kind first. Null = no kind (rule 4 then rests on the stem tests only,
+   *  and rule 5 orders by the stem without its numbers). Default: the row's
+   *  first tag. */
+  kindOf?: (q: QuestionRow) => string | null;
+}
+
+const firstTag = (q: QuestionRow): string | null => q.tags[0] ?? null;
+
 /** Up to ten questions a topic page prints in full, in the order it prints them. */
-export function pickShownQuestions(rows: readonly QuestionRow[], max: number = MAX_SHOWN_QUESTIONS): ShownQuestion[] {
+export function pickShownQuestions(rows: readonly QuestionRow[], opts: number | PickOptions = MAX_SHOWN_QUESTIONS): ShownQuestion[] {
+  const max = typeof opts === "number" ? opts : (opts.max ?? MAX_SHOWN_QUESTIONS);
+  const kindOf = typeof opts === "number" ? firstTag : (opts.kindOf ?? firstTag);
   const ok = rows.filter(isShowable).sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 
   // Twins: one of an identical stem, at most two of a stem that differs only in its numbers.
@@ -184,7 +204,7 @@ export function pickShownQuestions(rows: readonly QuestionRow[], max: number = M
     const k = kindKey(q.body);
     const n = kindCount.get(k) ?? 0;
     if (n >= MAX_SAME_KIND_WITH_NEW_NUMBERS) continue;
-    const tag = q.tags[0] ?? null;
+    const tag = kindOf(q);
     const tn = tag === null ? 0 : (tagCount.get(tag) ?? 0);
     if (tn >= MAX_SAME_KIND_WITH_NEW_NUMBERS) continue;
     // The same question in other words ("on a certain sum" / "on a sum of money").
@@ -199,7 +219,7 @@ export function pickShownQuestions(rows: readonly QuestionRow[], max: number = M
     unique.push(q);
   }
 
-  // One of each kind first (a row's first tag names its kind), then the rest; each part easy to hard, then by id.
+  // One of each kind first (kindOf names it; the first tag by default), then the rest; each part easy to hard, then by id.
   const byLevel = (a: QuestionRow, b: QuestionRow) =>
     (DIFFICULTY_ORDER[a.difficulty] ?? 1) - (DIFFICULTY_ORDER[b.difficulty] ?? 1) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
   const sorted = [...unique].sort(byLevel);
@@ -207,7 +227,7 @@ export function pickShownQuestions(rows: readonly QuestionRow[], max: number = M
   const rest: QuestionRow[] = [];
   const kinds = new Set<string>();
   for (const q of sorted) {
-    const kind = q.tags[0] ?? kindKey(q.body);
+    const kind = kindOf(q) ?? kindKey(q.body);
     if (kinds.has(kind)) rest.push(q);
     else {
       kinds.add(kind);

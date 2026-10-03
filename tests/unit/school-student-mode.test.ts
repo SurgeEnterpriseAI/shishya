@@ -21,8 +21,9 @@
 //  6. what the entry renders per class band and auth state
 //     (studentEntryView: guest → the tutor with no sign-in, signed in →
 //     practice + tutor, never a question), the links, and the pages: the
-//     island only under isStudentModeClass (the tutor slot and the
-//     after-practice save slot), the childSafe header on Class 1-7, the
+//     island only under isStudentModeClass (the tutor slot and, since 3 Oct
+//     2026, the after-practice "next" step in the save line's place), the
+//     childSafe header on Class 1-7, the
 //     results page's exam pieces off for a school attempt, the copy's age
 //     line and AI line, no forbidden literal in the island;
 //  7. isUnder13SchoolPath: the Class 1-7 page rule (27 Sep 2026).
@@ -551,12 +552,19 @@ describe("the student entry per class band and auth state", () => {
     // 27 Sep 2026: the chapter page has two slots — the tutor entry before the
     // notes and the guest's save line after the practice — both guarded, so a
     // Class 6 page has none. The class page has one.
+    // 3 Oct 2026 (school growth): the "next" slot — the one sign-up step —
+    // took the save line's place after the guest quiz (one sign-up block for
+    // a guest, not two), guarded the same way. The page renders no save slot.
     expect(chapter.match(/<SchoolStudentEntry/g)?.length).toBe(2);
     expect(chapter.match(/\{isStudentModeClass\(cls\) && \(\s*<SchoolStudentEntry\b/g)?.length).toBe(2);
-    expect(chapter).toMatch(/\{isStudentModeClass\(cls\) && \(\s*<SchoolStudentEntry\s+slot="save"\s+variant="chapter"/);
-    // The save slot sits after the practice block; the tutor slot before the notes.
-    expect(chapter.indexOf('slot="save"')).toBeGreaterThan(chapter.indexOf("<SchoolChapterQuiz"));
+    expect(chapter).toMatch(/\{isStudentModeClass\(cls\) && \(\s*<SchoolStudentEntry\s+slot="next"\s+variant="chapter"/);
+    expect(chapter).not.toContain('slot="save"');
+    // The tutor slot before the notes.
     expect(chapter.search(/<SchoolStudentEntry\s+variant="chapter"/)).toBeLessThan(chapter.indexOf("<NotesMarkdown"));
+    // The next step: after the notes, the printed questions and the guest quiz — never in front of them.
+    expect(chapter.indexOf('slot="next"')).toBeGreaterThan(chapter.indexOf("<NotesMarkdown"));
+    expect(chapter.indexOf('slot="next"')).toBeGreaterThan(chapter.indexOf("<SchoolChapterQuestions"));
+    expect(chapter.indexOf('slot="next"')).toBeGreaterThan(chapter.indexOf("<SchoolChapterQuiz"));
     expect(cls.match(/<SchoolStudentEntry/g)?.length).toBe(1);
   });
 
@@ -587,8 +595,15 @@ describe("the student entry per class band and auth state", () => {
     // The guest view is the tutor link (no sign-in link); the save line shows
     // only to a known guest on a chapter with practice.
     expect(src).toMatch(/if \(!\(signedIn === false && schoolChapterMockCount\(p\.validatedQuestions \?\? 0\) !== null\)\) return null;/);
+    // 3 Oct 2026: the next step after the notes and the guest quiz — only on
+    // a chapter with practice, only for a known guest (never in the cached
+    // HTML; a signed-in student has the practise button at the top).
+    expect(src).toMatch(/if \(nextCount === null \|\| signedIn !== false\) return null;/);
+    // One practise button in the island: the signed-in entry's.
+    expect(src.match(/onClick=\{practise\}/g)).toHaveLength(1);
     const guestStart = src.indexOf('if (view.kind === "guest") {');
     expect(guestStart).toBeGreaterThan(src.indexOf('if (slot === "save") {'));
+    expect(guestStart).toBeGreaterThan(src.indexOf('if (slot === "next") {'));
     const guest = src.slice(guestStart, src.indexOf("const practise = async"));
     expect(guest).toMatch(/href=\{tutorHref\}/);
     expect(guest).toMatch(/rel="nofollow"/);

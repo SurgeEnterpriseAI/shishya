@@ -40,6 +40,7 @@ export const STUDENT_ENTRY_COPY = {
   under13: "Younger than 13? Read this page with a parent.",
   under13Practice: "Younger than 13? Read this page and try its practice with a parent.",
   // Guest, after the practice on the page (the "save" slot): sign-in only to keep practice in an account.
+  // 3 Oct 2026: no page renders the save slot (the "next" step below took its place).
   saveBody: `Want your practice kept? Sign in with Google to practise this chapter with your score saved to your account. ${AGE_LINE}`,
   // 2 Oct 2026: the link under it is the one shared "Sign up with Google"
   // button (src/components/SignUpButton.tsx); "saveLink" is gone.
@@ -60,6 +61,34 @@ export const STUDENT_ENTRY_COPY = {
   tutorButton: "Ask the AI tutor about this chapter →",
   aiLine: AI_TUTOR_LINE,
   error: "That did not work. Please try again.",
+  // 3 Oct 2026 (school growth): the one sign-up step after the notes and the
+  // guest quiz, on a Class 8-12 chapter with checked practice (the "next"
+  // slot, in place of saveBody's line). A known guest reads the heading,
+  // this line and the shared button (its words: the per-place table's CBSE
+  // school entry); a signed-in student sees nothing there (practiceButton
+  // is at the top). {n} = schoolChapterMockCount, the set's real size (at
+  // most 10).
+  nextHeading: "Practise this chapter",
+  nextGuest: (n: number) =>
+    `${n} of Shishya's own answer-checked questions on this chapter, in one set, with your score saved to your account. ${AGE_LINE}`,
+} as const;
+
+// ── Printed practice questions (chapter page, Class 8-12) ───────────
+// 3 Oct 2026 (crawl audit G3): the chapter page can print up to ten checked
+// questions with answers (src/lib/school/chapter-questions.ts — behind a
+// switch, default OFF). The block says once that the questions are written
+// with AI and checked by an automated pass, never a person's check, never
+// the book's or a board's paper — the topic pages' wording
+// (src/lib/topic-questions-copy.ts).
+
+export const CHAPTER_QUESTIONS_COPY = {
+  heading: "Practice questions with answers",
+  intro: (n: number, chapterName: string) =>
+    `${n} of Shishya's own practice ${n === 1 ? "question" : "questions"} on ${chapterName}, written with AI. Each answer was checked by an automated second pass before it is shown, not by a person. They are not taken from the NCERT book or any board paper.`,
+  showAnswer: "Show the answer and explanation",
+  answer: "Answer",
+  explanation: "Explanation",
+  report: "Report an error in this question",
 } as const;
 
 // ── Results page (school attempt) ───────────────────────────────────

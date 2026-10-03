@@ -345,7 +345,10 @@ describe("school practice is answer-checked rows through the school-only getter"
 
   it("notes render through NotesMarkdown after the provenance comment and the official-link section are stripped", () => {
     const chapter = stripComments(read(chapterFile));
-    expect(chapter).toMatch(/<NotesMarkdown markdown=\{notes\.markdown\} \/>/);
+    // 3 Oct 2026 (school growth, fix plan R2): the full renderer — the plain branch printed
+    // "### Example 1", "---" rules and pipe rows as text on 161 of the 230 stored notes.
+    expect(chapter).toMatch(/<NotesMarkdown markdown=\{notes\.markdown\} rich demoteH1 \/>/);
+    expect(chapter).not.toMatch(/<NotesMarkdown markdown=\{notes\.markdown\} \/>/);
     const db = stripComments(read(path.join(ROOT, "src/lib/school/db.ts")));
     expect(db).toMatch(/hasUsableNotes\(content\) \? prepareSchoolNotes\(content\) : null/);
   });

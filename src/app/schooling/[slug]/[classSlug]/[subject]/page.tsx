@@ -51,6 +51,14 @@
 // leads with "a free AI tutor" (the description still carries the tutor
 // line on Class 8-12 subjects with chapters). The chapters with Shishya's
 // notes AND checked practice are listed at the top of the chapter list.
+// 3 Oct 2026 (school growth): in the chapter list only a chapter with
+// Shishya's notes or checked practice (the surface's `indexable`) links its
+// page. An empty chapter — no notes, under 5 checked questions; its page is
+// noindex and says "not ready yet" — is plain text with the official PDF
+// linked out, so crawlers and students are not sent to empty pages (916 of
+// 1,146 chapters on 3 Oct 2026). The chapter pages' previous / next cards
+// follow the same rule, and site search sends a student to such a chapter's
+// row here (id "ch-{slug}", src/lib/school/chapter-row.ts).
 
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -80,6 +88,7 @@ import { bookLanguageName, cbseSyllabusLinksForBooks, chapterLabel, cisceClassDo
 import { schoolClassIdentity } from "@/lib/school/context";
 import { SCHOOL_SITE, SUBJECT_COPY, countsLine } from "@/lib/school/copy";
 import { chapterCounts, getLiveSchoolClass, getLiveSchoolSubject, getSchoolOfficialLinks, type LiveSchoolSubject } from "@/lib/school/db";
+import { schoolChapterRowId } from "@/lib/school/chapter-row";
 import { legacySubjectSlug } from "@/lib/school/legacy-urls";
 import { SCHOOL_GUEST_QUIZ_MIN, hasSchoolGuestQuiz } from "@/lib/school/scope";
 import { isSchoolSubjectIndexable, parseSchoolClassSlug, schoolBoardPath, schoolChapterPath, schoolClassPath, schoolSubjectPath } from "@/lib/school/surface";
@@ -271,7 +280,8 @@ export default async function SubjectPage({ params }: { params: Promise<PagePara
   };
   // 26 Sep 2026: the CollectionPage's chapter list holds only indexable
   // chapter pages (surface `indexable` = isSchoolChapterIndexable, the
-  // sitemap's rule); the page itself still links every chapter.
+  // sitemap's rule). 3 Oct 2026: the page's chapter list links only those
+  // too; an empty chapter is plain text with its official PDF.
   const indexableChapters = chapters.filter((ch) => ch.indexable);
   const collectionJsonLd = {
     "@context": "https://schema.org",
@@ -462,21 +472,46 @@ export default async function SubjectPage({ params }: { params: Promise<PagePara
                       {byBook.size > 1 && <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-500">{book?.title ?? bookCode}</p>}
                       <ol className="mt-2 grid gap-2 sm:grid-cols-2">
                         {list.map((ch) => (
-                          <li key={ch.code}>
-                            <Link
-                              href={schoolChapterPath(board.slug, cls, subject.slug, ch.slug)}
-                              className="flex h-full items-start gap-3 rounded-lg border border-ink-200 bg-white p-3 transition-colors hover:border-saffron-400 hover:bg-saffron-50/30"
-                            >
-                              <span className="mt-0.5 inline-flex h-7 min-w-7 flex-shrink-0 items-center justify-center rounded-md bg-saffron-100 px-1 text-xs font-bold text-saffron-800 tabular-nums">
-                                {ch.meta?.number ?? "·"}
-                              </span>
-                              <span className="min-w-0">
-                                <span className="block text-sm font-semibold text-ink-900">{ch.name}</span>
-                                <span className="mt-1 block">
-                                  <ChapterStatusPill hasNotes={ch.hasNotes} quiz={ch.quiz} />
+                          <li key={ch.code} id={schoolChapterRowId(ch.slug)} className="scroll-mt-20">
+                            {/* 3 Oct 2026: only a chapter with Shishya's notes or checked
+                                practice (indexable) links its page; an empty one is plain
+                                text with its official PDF, so crawlers and students are
+                                not sent to a "not ready yet" page. Site search sends a
+                                student to an empty chapter's row here (#ch-{slug},
+                                src/lib/school/chapter-row.ts). */}
+                            {ch.indexable ? (
+                              <Link
+                                href={schoolChapterPath(board.slug, cls, subject.slug, ch.slug)}
+                                className="flex h-full items-start gap-3 rounded-lg border border-ink-200 bg-white p-3 transition-colors hover:border-saffron-400 hover:bg-saffron-50/30"
+                              >
+                                <span className="mt-0.5 inline-flex h-7 min-w-7 flex-shrink-0 items-center justify-center rounded-md bg-saffron-100 px-1 text-xs font-bold text-saffron-800 tabular-nums">
+                                  {ch.meta?.number ?? "·"}
                                 </span>
-                              </span>
-                            </Link>
+                                <span className="min-w-0">
+                                  <span className="block text-sm font-semibold text-ink-900">{ch.name}</span>
+                                  <span className="mt-1 block">
+                                    <ChapterStatusPill hasNotes={ch.hasNotes} quiz={ch.quiz} />
+                                  </span>
+                                </span>
+                              </Link>
+                            ) : (
+                              <div className="flex h-full items-start gap-3 rounded-lg border border-dashed border-ink-200 bg-white p-3">
+                                <span className="mt-0.5 inline-flex h-7 min-w-7 flex-shrink-0 items-center justify-center rounded-md bg-ink-100 px-1 text-xs font-bold text-ink-600 tabular-nums">
+                                  {ch.meta?.number ?? "·"}
+                                </span>
+                                <span className="min-w-0">
+                                  <span className="block text-sm font-semibold text-ink-700">{ch.name}</span>
+                                  <span className="mt-1 flex flex-wrap items-center gap-2">
+                                    <ChapterStatusPill hasNotes={ch.hasNotes} quiz={ch.quiz} />
+                                    {ch.officialUrl && (
+                                      <a href={ch.officialUrl} target="_blank" rel="noopener noreferrer" className="text-[11px] font-medium text-saffron-700 underline">
+                                        Official PDF ↗
+                                      </a>
+                                    )}
+                                  </span>
+                                </span>
+                              </div>
+                            )}
                           </li>
                         ))}
                       </ol>

@@ -8,7 +8,9 @@
 // what the sitemap calls thin. This module adds what only a page needs:
 //   * the official links (KnowledgeSource rows the seed wrote: the NCERT
 //     chapter PDF per chapter, CISCE's regulation / syllabus PDFs per class);
-//   * one chapter's note content (TopicTeachingNote) and its pieces.
+//   * one chapter's note content (TopicTeachingNote) and its pieces;
+//   * (3 Oct 2026, behind a switch, default OFF) the checked questions a
+//     Class 8-12 chapter page prints with their answers.
 // Every read is pinned to a school container by CATEGORY and code
 // (SCHOOL_CONTAINER_WHERE, like surface.ts — the containers are inactive by
 // design, see scope.ts) and cached SCHOOL_REVALIDATE seconds (unstable_cache, tag
@@ -18,8 +20,10 @@
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
 import { hasUsableNotes } from "@/lib/topic-notes";
+import type { ShownQuestion } from "@/lib/topic-question-display";
+import { pickSchoolChapterQuestions } from "./chapter-questions";
 import { prepareSchoolNotes, type PreparedSchoolNotes } from "./notes";
-import { SCHOOL_CONTAINER_WHERE, SCHOOL_REVALIDATE } from "./scope";
+import { SCHOOL_CONTAINER_WHERE, SCHOOL_REVALIDATE, SCHOOL_SERVABLE_QUESTION_WHERE } from "./scope";
 import {
   findSchoolClass,
   loadSchoolSurface,
@@ -94,6 +98,32 @@ export const getSchoolChapterDetail = unstable_cache(
     };
   },
   ["school-chapter-detail-v1"],
+  { revalidate: SCHOOL_REVALIDATE, tags: ["school-surface"] },
+);
+
+/** 3 Oct 2026 (G3): the checked questions a chapter page prints with their
+ *  answers — the school-servable rows of the chapter and its pieces (the
+ *  guest quiz's own pool), chosen and ordered by pickSchoolChapterQuestions
+ *  (src/lib/school/chapter-questions.ts). The page calls it only while
+ *  SCHOOL_CHAPTER_QUESTIONS_PRINTED is on, for a Class 8-12 chapter. Empty
+ *  when the chapter is not under a school container. */
+export const getSchoolChapterShownQuestions = unstable_cache(
+  async (examCode: string, topicCode: string): Promise<ShownQuestion[]> => {
+    const topic = await prisma.topic.findFirst({
+      where: { code: topicCode, parentId: null, subject: { exam: { ...SCHOOL_CONTAINER_WHERE, code: examCode } } },
+      select: { id: true, children: { select: { id: true } } },
+    });
+    if (!topic) return [];
+    const rows = await prisma.question.findMany({
+      where: { ...SCHOOL_SERVABLE_QUESTION_WHERE, topicId: { in: [topic.id, ...topic.children.map((c) => c.id)] }, exam: SCHOOL_CONTAINER_WHERE },
+      select: { id: true, type: true, difficulty: true, body: true, options: true, answerKey: true, solution: true, tags: true, validatedBy: true, metadata: true },
+      orderBy: { id: "asc" },
+      // A chapter holds about 50 checked questions (49 at most on 3 Oct 2026).
+      take: 200,
+    });
+    return pickSchoolChapterQuestions(rows);
+  },
+  ["school-chapter-questions-v1"],
   { revalidate: SCHOOL_REVALIDATE, tags: ["school-surface"] },
 );
 

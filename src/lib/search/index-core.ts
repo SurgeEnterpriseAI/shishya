@@ -17,6 +17,7 @@
 
 import type { DocKind, ExamFacts, ExamGatesLike, SearchDoc, SearchIndex, SearchSection } from "./types";
 import { normaliseTerm } from "./normalize";
+import { schoolChapterSearchPath } from "@/lib/school/chapter-row";
 import { SEARCH_LANDINGS } from "./landings";
 import { scholarshipSub } from "./labels";
 import { BRANCH_SYNONYMS, CITY_SYNONYMS, MONTH_NAMES, SCHOLARSHIP_ALIASES, STAGE_EXAM_WORDS } from "./lexicon";
@@ -427,7 +428,11 @@ export function buildSearchIndex(inputs: SearchIndexInputs, tier: "lite" | "deep
           section: "school",
           title: ch.name,
           sub: `Class ${c.cls} ${s.name} · Chapter ${chapterNo}`,
-          path: `${subjectPath}/${ch.slug}`,
+          // 3 Oct 2026 (school growth): a chapter with no Shishya content (book-only;
+          // its page is noindex, "not ready yet") opens its row on the subject page,
+          // where its official PDF is linked — never the empty page. The subject
+          // page and the chapter pages link it the same way (src/lib/school/chapter-row.ts).
+          path: schoolChapterSearchPath(subjectPath, ch.slug, ready),
           terms: uniqTerms([ch.name]),
           weight: 0.1,
           status: ready ? "ready" : "book-only",

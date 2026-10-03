@@ -1214,7 +1214,7 @@ describe("8. never on a Class 1-7 page or in an under-13 context", () => {
     for (const p of ["/schooling", "/schooling/cbse"]) expect(isChildSchoolPath(p), p).toBe(true);
   });
 
-  it("no school page file mounts the early line; the school island's button is the Class 8-12 save line only", () => {
+  it("no school page file mounts the early line; the school island's buttons are the Class 8-12 next step and the (unrendered) save line only", () => {
     const walk = (d: string): string[] =>
       fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(path.join(d, e.name)) : e.name.endsWith(".tsx") ? [path.join(d, e.name)] : []));
     for (const f of walk(path.join(ROOT, "src/app/schooling"))) {
@@ -1223,11 +1223,22 @@ describe("8. never on a Class 1-7 page or in an under-13 context", () => {
       expect(src, f).not.toContain("<SignUpButton");
     }
     const island = code("src/components/school/SchoolStudentEntry.tsx");
-    expect(island.match(/<SignUpButton/g)).toHaveLength(1);
+    // 3 Oct 2026: two buttons in the file — the next step (the chapter page's one sign-up step, after the
+    // guest quiz) and the 27 Sep save line, which no page renders any more.
+    expect(island.match(/<SignUpButton/g)).toHaveLength(2);
     // Inside the save slot, which renders only for a known guest on a chapter with practice …
-    const save = island.slice(island.indexOf('if (slot === "save") {'), island.indexOf("const tutorHref ="));
+    const save = island.slice(island.indexOf('if (slot === "save") {'), island.indexOf('if (slot === "next") {'));
     expect(save).toContain("<SignUpButton");
     expect(save).toContain("if (!(signedIn === false && schoolChapterMockCount(p.validatedQuestions ?? 0) !== null)) return null;");
+    // … and inside the next slot, which renders only for a known guest on a chapter with practice.
+    const next = island.slice(island.indexOf('if (slot === "next") {'), island.indexOf("const tutorHref ="));
+    expect(next).toContain("<SignUpButton");
+    expect(next).toContain("const nextCount = schoolChapterMockCount(p.validatedQuestions ?? 0);");
+    expect(next).toContain("if (nextCount === null || signedIn !== false) return null;");
+    // The chapter page renders the next step and never the save line.
+    const chapterPage = code("src/app/schooling/[slug]/[classSlug]/[subject]/[chapter]/page.tsx");
+    expect(chapterPage).toContain('slot="next"');
+    expect(chapterPage).not.toContain('slot="save"');
     // … and the island renders nothing at all below Class 8.
     expect(island.indexOf('if (view.kind === "none") return null;')).toBeLessThan(island.indexOf('if (slot === "save") {'));
   });

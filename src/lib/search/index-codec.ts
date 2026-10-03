@@ -13,12 +13,19 @@
 // and the lite wire stays under 200 KB raw / 47 KB gzipped (same test; 27 Sep
 // 2026: measured with the capsule months production adds, index-core.ts
 // LITE_CAPSULE_MONTHS).
+// 3 Oct 2026 (school growth): a chapter's slug is read from its id, not its
+// path, because a chapter with no Shishya content ("book-only") may point at
+// its row on the subject page (src/lib/school/chapter-row.ts) instead of its
+// own empty page. One wire flag, `bs`, says which form the book-only chapters
+// use; a chapter in the other form travels as a full row, so the round trip
+// stays exact in either form (tests/unit/school-chapter-search-row.test.ts).
 
 import type { DocKind, ExamFacts, PageStatus, SearchDoc, SearchIndex } from "./types";
 import { SEARCH_SECTIONS } from "./types";
 import { normaliseTerm } from "./normalize";
 import { scholarshipSub } from "./labels";
 import { STATES } from "@/lib/state-info";
+import { schoolChapterSearchPath } from "@/lib/school/chapter-row";
 
 const KINDS: readonly DocKind[] = [
   "exam", "exam-state", "exam-category", "school-board", "school-class", "school-subject", "school-chapter", "topic-note", "college",
@@ -96,6 +103,9 @@ export interface WireIndex {
   d: Row[];
   sc: ClassRow[];
   ss: SubjectRow[];
+  /** 3 Oct 2026: 1 when a book-only chapter's path is its row on the subject
+   *  page (schoolChapterSearchPath); absent when it is the chapter's own page. */
+  bs?: 1;
 }
 
 const bit = (b: boolean): 0 | 1 => (b ? 1 : 0);
@@ -144,6 +154,9 @@ export function encodeIndex(index: SearchIndex): WireIndex {
   const classRef = new Map<string, number>();
   const subjectRef = new Map<string, number>();
   const lastOrder = new Map<number, number>();
+  // Which form the book-only chapters use (see the header): their subject
+  // page's row as soon as one of them does.
+  const bookOnlyRow = index.docs.some((d) => d.kind === "school-chapter" && d.status === "book-only" && d.path.includes("#"));
   for (const doc of index.docs) {
     const key = doc.id.slice(doc.kind.length + 1);
     if (doc.kind === "school-class") {
@@ -162,8 +175,12 @@ export function encodeIndex(index: SearchIndex): WireIndex {
     }
     if (doc.kind === "school-chapter") {
       const si = subjectRef.get(`${doc.board}:${doc.cls}:${doc.subjectSlug}`);
-      const slug = doc.path.split("/").pop() ?? "";
-      if (si != null && doc.terms.length === 1 && doc.terms[0] === normaliseTerm(doc.title) && (doc.status === "ready" || doc.status === "book-only")) {
+      // The chapter's own slug is the id's last segment (a book-only chapter's
+      // path may end in its subject's slug and a #row anchor).
+      const slug = key.split(":").pop() ?? "";
+      const ready = doc.status === "ready";
+      const wantPath = schoolChapterSearchPath(`/schooling/${doc.board}/class-${doc.cls}/${doc.subjectSlug}`, slug, ready || !bookOnlyRow);
+      if (si != null && doc.path === wantPath && doc.terms.length === 1 && doc.terms[0] === normaliseTerm(doc.title) && (ready || doc.status === "book-only")) {
         const order = (doc.book ?? 1) * 100 + (doc.chapterNo ?? 0);
         const prev = lastOrder.get(si);
         lastOrder.set(si, order);
@@ -211,7 +228,7 @@ export function encodeIndex(index: SearchIndex): WireIndex {
       extra.length ? extra : 0,
     ]);
   }
-  return { v: 1, w: 2, builtAt: index.builtAt, tier: index.tier, exams, d, sc, ss };
+  return { v: 1, w: 2, builtAt: index.builtAt, tier: index.tier, exams, d, sc, ss, ...(bookOnlyRow ? { bs: 1 as const } : {}) };
 }
 
 const STATE_KINDS: ReadonlySet<DocKind> = new Set(["exam", "topic-note", "scholarship", "school-board", "college", "college-branch"]);
@@ -301,6 +318,7 @@ export function decodeIndex(wire: unknown): SearchIndex {
   }));
   const subjectDocs: SearchDoc[] = [];
   const chapterDocs: SearchDoc[] = [];
+  const bookOnlyRow = w.bs === 1;
   for (const [ci, slug, name, terms, chapters] of w.ss ?? []) {
     const c = classDocs[ci];
     const s: SearchDoc = {
@@ -330,7 +348,7 @@ export function decodeIndex(wire: unknown): SearchIndex {
         section: "school",
         title: cname,
         sub: `Class ${s.cls} ${name} · Chapter ${chapterNo}`,
-        path: `${s.path}/${chapterSlug}`,
+        path: schoolChapterSearchPath(s.path, chapterSlug, order < 0 || !bookOnlyRow),
         terms: [normaliseTerm(cname)],
         weight: 0.1,
         status: order < 0 ? "ready" : "book-only",

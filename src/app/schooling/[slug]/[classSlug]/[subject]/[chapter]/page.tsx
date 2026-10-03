@@ -28,7 +28,8 @@
 // this chapter" (an account set of up to 10 of the chapter's checked
 // questions) once signed in, and — after the practice, for a guest on a
 // chapter with practice — the save-practice sign-in line for students 13
-// and above. The page itself reads no session — it stays public and
+// and above (3 Oct 2026: the "next" step below in its place). The page
+// itself reads no session — it stays public and
 // ISR-cached; the island asks after mount. A Class 1-7 page renders none of
 // it, and its header shows no sign-in and no Ask Shishya link (childSafe).
 // Old URLs (the 25 Sep hand-picked subject segments and chapter slugs that
@@ -43,12 +44,36 @@
 // quizzes (src/lib/schooling-quizzes.ts) were switched off — none had an
 // answer check. They are not read here any more: practice comes from
 // Question rows that passed scripts/verify-question-bank.ts.
+//
+// 3 Oct 2026 (school growth — chapter pages are the one growing section,
+// but 86% of visitors left after one page and none signed up):
+//   * the notes render through NotesMarkdown's full renderer (rich,
+//     demoteH1): the plain branch printed "### Example 1", "---" rules and
+//     pipe rows as text on 161 of the 230 stored notes
+//     (scripts/check-school-notes-render.ts reads every one; 0 after);
+//   * Class 8-12, a chapter with checked practice: one sign-up step AFTER
+//     the notes and the free guest quiz, in place of the 27 Sep save line —
+//     "Practise this chapter" with the shared sign-up button
+//     (SchoolStudentEntry slot "next"), for a known guest only. A guest
+//     sees one sign-up block; a signed-in student already has the practise
+//     button in the entry at the top, so "next" shows them nothing;
+//   * Class 8-12: up to ten checked questions printed with their answers
+//     under <details> (src/lib/school/chapter-questions.ts) — behind
+//     SCHOOL_CHAPTER_QUESTIONS_PRINTED, default OFF, so it ships as its own
+//     search-surface change; while off there is no extra read;
+//   * a neighbouring chapter with no Shishya content (noindex) is printed as
+//     plain text, not linked, so neither crawlers nor students are sent to
+//     an empty page (site search sends them to the chapter's row on the
+//     subject page: src/lib/school/chapter-row.ts). A Class 1-7 page gets
+//     the renderer and the plain neighbours only: no sign-in, no data, no
+//     new section.
 
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import { Header } from "@/components/Header";
 import { NotesMarkdown } from "@/components/NotesMarkdown";
+import { SchoolChapterQuestions } from "@/components/school/SchoolChapterQuestions";
 import { SchoolChapterQuiz } from "@/components/school/SchoolChapterQuiz";
 import { SchoolStudentEntry } from "@/components/school/SchoolStudentEntry";
 import { ChapterStatusPill, OfficialLink, SchoolCrumbs } from "@/components/school/SchoolBits";
@@ -66,13 +91,21 @@ import { getSchoolGuestQuiz } from "@/lib/anon-quiz";
 import { quizLabels } from "@/lib/challenge-copy";
 import { tk } from "@/lib/i18n";
 import { bookOfChapter, chapterLabel, ncertBooksForSubject, ncertChapterMeta } from "@/lib/school/books";
+import { printsSchoolChapterQuestions } from "@/lib/school/chapter-questions";
 import { CHAPTER_COPY, CHAPTER_QUIZ_COPY, SCHOOL_SITE, chapterHasParts, subjectShortName } from "@/lib/school/copy";
-import { getLiveSchoolChapter, getLiveSchoolClass, getSchoolChapterDetail, getSchoolOfficialLinks, type LiveSchoolChapter } from "@/lib/school/db";
+import {
+  getLiveSchoolChapter,
+  getLiveSchoolClass,
+  getSchoolChapterDetail,
+  getSchoolChapterShownQuestions,
+  getSchoolOfficialLinks,
+  type LiveSchoolChapter,
+} from "@/lib/school/db";
 import { legacyChapterSlug, legacySubjectSlug } from "@/lib/school/legacy-urls";
 import { hasSchoolGuestQuiz } from "@/lib/school/scope";
 import { isStudentModeClass } from "@/lib/school/student-classes";
 import { fitTitle } from "@/lib/section-seo";
-import { parseSchoolClassSlug, schoolBoardPath, schoolChapterPath, schoolClassPath, schoolSubjectPath } from "@/lib/school/surface";
+import { parseSchoolClassSlug, schoolBoardPath, schoolChapterPath, schoolClassPath, schoolSubjectPath, type SchoolSurfaceChapter } from "@/lib/school/surface";
 
 // Public page; notes and practice land in batches. 10 minutes = SCHOOL_REVALIDATE
 // (src/lib/school/scope.ts; Next needs the literal here).
@@ -201,6 +234,10 @@ export default async function ChapterPage({ params }: { params: Promise<PagePara
   const officialUrl = links.byChapter[chapter.code] ?? meta?.pdfUrl ?? notes?.officialUrl ?? null;
   const quizOffered = hasSchoolGuestQuiz(chapter);
   const quiz = quizOffered ? await getSchoolGuestQuiz({ examCode, topicCode: chapter.code }) : null;
+  // Class 8-12, behind the switch (default OFF: no read, nothing printed).
+  const printed = printsSchoolChapterQuestions({ cls, validatedQuestions: chapter.validatedQuestions })
+    ? await getSchoolChapterShownQuestions(examCode, chapter.code)
+    : [];
   const labels = quizLabels((k) => tk(k, "en"));
   const pieces = detail?.pieces ?? [];
 
@@ -312,11 +349,16 @@ export default async function ChapterPage({ params }: { params: Promise<PagePara
               {CHAPTER_COPY.notesHeading}
             </h2>
             <article className="prose prose-sm sm:prose-base mt-3 max-w-none rounded-lg border border-ink-200 bg-white p-5 sm:p-6">
-              <NotesMarkdown markdown={notes.markdown} />
+              <NotesMarkdown markdown={notes.markdown} rich demoteH1 />
             </article>
             <p className="mt-2 text-[11px] text-ink-500">{CHAPTER_COPY.notesFooter(notesDateText)}</p>
           </>
         ) : null}
+
+        {/* 3 Oct 2026 (G3): checked questions with their answers, printed in
+            the HTML — Class 8-12 only, behind SCHOOL_CHAPTER_QUESTIONS_PRINTED
+            (default OFF: `printed` is empty and nothing renders). */}
+        {printed.length > 0 && <SchoolChapterQuestions questions={printed} chapterName={chapter.name} reportLabel={`${chapter.name}, Class ${cls} ${subject.name}`} />}
 
         {quiz ? (
           <div className="mt-10">
@@ -328,10 +370,16 @@ export default async function ChapterPage({ params }: { params: Promise<PagePara
 
         {/* 27 Sep 2026 (content first): after the practice, a guest on a
             Class 8-12 chapter with practice may keep it in an account — the
-            island shows the line only then (never in the cached HTML). */}
+            island shows it only then (never in the cached HTML).
+            3 Oct 2026 (school growth): the one sign-up step, "Practise this
+            chapter" with the shared sign-up button (slot "next"), in place
+            of the save line — after the notes, the printed questions and
+            the guest quiz, never in front of them. Nothing for a signed-in
+            student (the practise button is at the top); a Class 1-7 page
+            renders none of it. */}
         {isStudentModeClass(cls) && (
           <SchoolStudentEntry
-            slot="save"
+            slot="next"
             variant="chapter"
             cls={cls}
             examCode={examCode}
@@ -357,26 +405,11 @@ export default async function ChapterPage({ params }: { params: Promise<PagePara
           </div>
         )}
 
-        {/* Prev / Next navigation */}
+        {/* Prev / Next navigation. 3 Oct 2026: a neighbour with no Shishya
+            content is plain text, not a link (NeighbourChapter). */}
         <div className="mt-10 grid gap-3 sm:grid-cols-2">
-          {prev ? (
-            <Link href={schoolChapterPath(board.slug, cls, subject.slug, prev.slug)} className="rounded-lg border border-ink-200 bg-white p-4 transition-colors hover:border-saffron-400">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-ink-500">{CHAPTER_COPY.prev}</p>
-              <p className="mt-1 text-sm font-semibold text-ink-900">{prev.name}</p>
-              <p className="mt-0.5 text-xs text-ink-500">{chapterLabel(ncertChapterMeta(cls, prev.code))}</p>
-            </Link>
-          ) : (
-            <div />
-          )}
-          {next ? (
-            <Link href={schoolChapterPath(board.slug, cls, subject.slug, next.slug)} className="rounded-lg border border-ink-200 bg-white p-4 transition-colors hover:border-saffron-400">
-              <p className="text-right text-[10px] font-semibold uppercase tracking-wider text-ink-500">{CHAPTER_COPY.next}</p>
-              <p className="mt-1 text-right text-sm font-semibold text-ink-900">{next.name}</p>
-              <p className="mt-0.5 text-right text-xs text-ink-500">{chapterLabel(ncertChapterMeta(cls, next.code))}</p>
-            </Link>
-          ) : (
-            <div />
-          )}
+          <NeighbourChapter ch={prev} side="prev" cls={cls} href={prev ? schoolChapterPath(board.slug, cls, subject.slug, prev.slug) : ""} />
+          <NeighbourChapter ch={next} side="next" cls={cls} href={next ? schoolChapterPath(board.slug, cls, subject.slug, next.slug) : ""} />
         </div>
 
         <div className="mt-6">
@@ -386,6 +419,31 @@ export default async function ChapterPage({ params }: { params: Promise<PagePara
         </div>
       </section>
     </main>
+  );
+}
+
+/** The previous / next chapter card. 3 Oct 2026: linked only when that
+ *  chapter has Shishya's notes or checked practice (the surface's
+ *  `indexable`, the sitemap's rule); an empty chapter (noindex, "not ready
+ *  yet") is the same card as plain text, with no arrow and no link, so the
+ *  pages do not send crawlers or students from one empty page to the next.
+ *  Its official PDF is linked from the subject page's chapter list. */
+function NeighbourChapter({ ch, side, cls, href }: { ch: SchoolSurfaceChapter | null; side: "prev" | "next"; cls: number; href: string }) {
+  if (!ch) return <div />;
+  const right = side === "next" ? "text-right " : "";
+  const heading = side === "prev" ? CHAPTER_COPY.prev : CHAPTER_COPY.next;
+  const body = (linked: boolean) => (
+    <>
+      <p className={`${right}text-[10px] font-semibold uppercase tracking-wider text-ink-500`}>{linked ? heading : heading.replace(/^←\s*|\s*→$/g, "")}</p>
+      <p className={`mt-1 ${right}text-sm font-semibold ${linked ? "text-ink-900" : "text-ink-600"}`}>{ch.name}</p>
+      <p className={`mt-0.5 ${right}text-xs text-ink-500`}>{chapterLabel(ncertChapterMeta(cls, ch.code))}</p>
+    </>
+  );
+  if (!ch.indexable) return <div className="rounded-lg border border-dashed border-ink-200 bg-white p-4">{body(false)}</div>;
+  return (
+    <Link href={href} className="rounded-lg border border-ink-200 bg-white p-4 transition-colors hover:border-saffron-400">
+      {body(true)}
+    </Link>
   );
 }
 

@@ -111,7 +111,8 @@ describe("2. school pages and exam-page words", () => {
   it("practice, notes and syllabus words still open the school page", () => {
     expect(res("class 10 maths questions").best?.url).toBe("/schooling/cbse/class-10/mathematics");
     expect(res("cbse class 10 syllabus").best?.url).toBe("/schooling/cbse/class-10");
-    expect(res("class 9 science chapter 3").best?.url).toBe("/schooling/cbse/class-9/science/tissues-in-action");
+    // 3 Oct 2026: a book-only chapter (this snapshot) opens its row on the subject page, not its empty page.
+    expect(res("class 9 science chapter 3").best?.url).toBe("/schooling/cbse/class-9/science#ch-tissues-in-action");
   });
 });
 
@@ -130,7 +131,7 @@ describe("3. a bare 'paper' beside an exam is its previous papers", () => {
   });
 
   it("beside a school word, or inside a page's name, it stays a word", () => {
-    expect(res("class 3 paper boats").best?.url).toBe("/schooling/cbse/class-3/english/paper-boats");
+    expect(res("class 3 paper boats").best?.url).toBe("/schooling/cbse/class-3/english#ch-paper-boats");
     expect(res("descriptive paper").best?.url).toBe("/descriptive");
     expect(parseQuery("ssc cgl paper 2").intent).not.toBe("pyq"); // a sitting, not the papers
   });

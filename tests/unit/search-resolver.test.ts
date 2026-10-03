@@ -152,7 +152,8 @@ const DIRECT: [q: string, url: string][] = [
   ["ssc cgl ki salary kitni hai", "/exams/SSC_CGL#salary"],
   ["ఏపీ పోలీస్", "/exams/AP_POLICE_PC"],
   ["తెలంగాణ టెట్", "/exams/TS_TET"],
-  ["10వ తరగతి సైన్స్ అధ్యాయం 2", "/schooling/cbse/class-10/science/acids-bases-and-salts"],
+  // 3 Oct 2026: a chapter with no Shishya content (book-only in this snapshot) opens its row on the subject page.
+  ["10వ తరగతి సైన్స్ అధ్యాయం 2", "/schooling/cbse/class-10/science#ch-acids-bases-and-salts"],
   ["ఇంజనీరింగ్ కాలేజీలు", "/colleges/stream/engineering"],
   // Entrance exams: the default family, and the explicit one always wins.
   ["neet syllabus", "/exams/NEET_UG/syllabus"],
@@ -162,13 +163,16 @@ const DIRECT: [q: string, url: string][] = [
   ["upsc", "/exams/UPSC_PRELIMS"],
   ["gate", "/exams/GATE_CSE"],
   // School: class, subject, chapter by number or name, board, native scripts.
-  ["class 9 science chapter 3", "/schooling/cbse/class-9/science/tissues-in-action"],
-  ["10th maths chapter 3", "/schooling/cbse/class-10/mathematics/pair-of-linear-equations-in-two-variables"],
+  // 3 Oct 2026 (school growth): a chapter with no Shishya content — book-only in this 26 Sep
+  // snapshot; its page is noindex, "not ready yet" — opens its row on the subject page, where
+  // its official PDF is linked (#ch-{slug}, src/lib/school/chapter-row.ts), never the empty page.
+  ["class 9 science chapter 3", "/schooling/cbse/class-9/science#ch-tissues-in-action"],
+  ["10th maths chapter 3", "/schooling/cbse/class-10/mathematics#ch-pair-of-linear-equations-in-two-variables"],
   ["कक्षा 6 गणित", "/schooling/cbse/class-6/mathematics"],
   ["10వ తరగతి గణితం", "/schooling/cbse/class-10/mathematics"],
   ["icse class 10 maths", "/schooling/icse-cisce/class-10/mathematics"],
-  ["class 7 science light", "/schooling/cbse/class-7/science/light-shadows-and-reflections"],
-  ["photosynthesis class 11", "/schooling/cbse/class-11/biology/photosynthesis-in-higher-plants"],
+  ["class 7 science light", "/schooling/cbse/class-7/science#ch-light-shadows-and-reflections"],
+  ["photosynthesis class 11", "/schooling/cbse/class-11/biology#ch-photosynthesis-in-higher-plants"],
   ["class 11 physics", "/schooling/cbse/class-11/physics"],
   ["class 12", "/schooling/cbse/class-12"],
   // College & scholarships.
@@ -254,11 +258,11 @@ describe("several pages fit: a list, never a guess", () => {
     const amb = res("class 10 english chapter 1");
     expect(amb.outcome).toBe("list");
     expect(amb.notices).toContain("chapter-ambiguous");
-    expect(amb.hits.map((h) => h.url)).toEqual(expect.arrayContaining(["/schooling/cbse/class-10/english/a-letter-to-god-jeff1", "/schooling/cbse/class-10/english/a-triumph-of-surgery"]));
+    expect(amb.hits.map((h) => h.url)).toEqual(expect.arrayContaining(["/schooling/cbse/class-10/english#ch-a-letter-to-god-jeff1", "/schooling/cbse/class-10/english#ch-a-triumph-of-surgery"]));
     const cum = res("class 11 physics chapter 9");
     expect(cum.outcome).toBe("list");
     expect(cum.notices).toContain("no-page-for-intent");
-    expect(cum.hits.map((h) => h.url)).toContain("/schooling/cbse/class-11/physics/mechanical-properties-of-fluids");
+    expect(cum.hits.map((h) => h.url)).toContain("/schooling/cbse/class-11/physics#ch-mechanical-properties-of-fluids");
   });
 
   it("a subject the class does not teach lists the class and the nearest subject", () => {
@@ -270,7 +274,7 @@ describe("several pages fit: a list, never a guess", () => {
 
 describe("no page fits, or a real doubt: the AI answers with real pages beside it", () => {
   it.each([
-    ["what is photosynthesis", "/schooling/cbse/class-11/biology/photosynthesis-in-higher-plants"],
+    ["what is photosynthesis", "/schooling/cbse/class-11/biology#ch-photosynthesis-in-higher-plants"],
     ["tspsc group 2 age limit", "/exams/TS_TSPSC_GROUP2"],
     ["uksssc kanishk sayhak", "/exams/UK_UKSSSC"],
     ["uttrakhand sub inspector", "/exams/state/uttarakhand"],
@@ -397,7 +401,16 @@ describe("honest URLs", () => {
     expect(knownUrl("/exams/SSC_CGL/pyq/1999", deep)).toBeNull();
     expect(knownUrl("/exams/SSC_CGL/topics/NOT_A_TOPIC", deep)).toBeNull();
     expect(knownUrl("/exams/NOT_AN_EXAM", deep)).toBeNull();
-    expect(knownUrl("/schooling/cbse/class-9/science/tissues-in-action", deep)).toBe("/schooling/cbse/class-9/science/tissues-in-action");
+    // 3 Oct 2026 (school growth): a book-only chapter's own page (noindex, "not ready yet") is not a
+    // page search vouches for; its row on the subject page is. A chapter with content keeps its page.
+    expect(knownUrl("/schooling/cbse/class-9/science/tissues-in-action", deep)).toBeNull();
+    expect(knownUrl("/schooling/cbse/class-9/science#ch-tissues-in-action", deep)).toBe("/schooling/cbse/class-9/science");
+    const readyChapter = deep.docs.find((d) => d.kind === "school-chapter" && d.status === "ready")!;
+    expect(readyChapter.path).not.toContain("#");
+    expect(knownUrl(readyChapter.path, deep)).toBe(readyChapter.path);
+    for (const d of deep.docs.filter((x) => x.kind === "school-chapter" && x.status === "book-only")) {
+      expect(d.path, d.id).toBe(`/schooling/${d.board}/class-${d.cls}/${d.subjectSlug}#ch-${d.id.split(":").pop()}`);
+    }
     expect(knownUrl("/exams/SSC_CGL/build-mock?pyq=1", deep)).toBe("/exams/SSC_CGL/build-mock?pyq=1");
     for (const bad of ["//evil.example/x", "/\\evil.example", "https://evil.example/exams/SSC_CGL", "javascript:alert(1)", "/exams/SSC_CGL\"><script>"]) {
       expect(knownUrl(bad, deep), bad).toBeNull();
@@ -611,7 +624,7 @@ describe("wire codec and size", () => {
       const r = resolveQuery(q, decoded);
       if (r.outcome === "direct") expect(r.best?.url, q).toBe(url);
     }
-    expect(resolveQuery("class 9 science chapter 3", decoded).best?.url).toBe("/schooling/cbse/class-9/science/tissues-in-action");
+    expect(resolveQuery("class 9 science chapter 3", decoded).best?.url).toBe("/schooling/cbse/class-9/science#ch-tissues-in-action");
     expect(resolveQuery("ssc cgl", decoded).needsServer).toBe(false);
     expect(resolveQuery("rrb je", decoded).needsServer).toBe(true);
     // The client has no topic-note pages: it lists, never claims "not in the catalogue", and the server opens the topic.

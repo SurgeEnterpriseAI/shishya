@@ -210,12 +210,19 @@ describe("page tools (fixture index)", () => {
 
   it("page_facts: school pages give status, official links and the tutor rule — never chapter text", () => {
     const book = idx.docs.find((d) => d.kind === "school-chapter" && d.cls === 10 && d.subjectSlug === "science" && d.status === "book-only")!;
+    // 3 Oct 2026 (school growth): a book-only chapter's link is its row on the subject page
+    // (#ch-{slug}), so its facts are the subject page's — the official books, the tutor rule and how
+    // many chapters have Shishya's notes or practice. Its own empty page is not one the tools vouch for.
+    const slug = book.id.split(":").pop();
+    expect(book.path).toBe(`/schooling/cbse/class-10/science#ch-${slug}`);
     const f = pageFacts(idx, { url: `https://shishya.in${book.path}` });
-    expect(f.status).toBe(STATUS_WORDS["book-only"]);
+    expect(f.kind).toBe("school-subject");
+    expect(f.url).toBe("https://shishya.in/schooling/cbse/class-10/science");
     expect(String(f.tutor)).toMatch(/Class 8-12/);
     expect(String(f.rule)).toMatch(/never reproduces, summarises or translates textbook text/);
     expect((f.officialBooks as { url: string }[]).length).toBeGreaterThan(0);
-    for (const k of Object.keys(f)) expect(["kind", "url", "board", "class", "title", "status", "tutor", "rule", "officialBooks", "chapterNumber", "officialChapterPdf"]).toContain(k);
+    for (const k of Object.keys(f)) expect(["kind", "url", "board", "class", "title", "tutor", "rule", "officialBooks", "chaptersListed", "chaptersWithShishyaNotesOrPractice"]).toContain(k);
+    expect(String(pageFacts(idx, { url: `https://shishya.in/schooling/cbse/class-10/science/${slug}` }).error)).toMatch(/not a page Shishya has/);
     const ready = idx.docs.find((d) => d.kind === "school-chapter" && d.status === "ready" && d.cls === 6)!;
     const g = pageFacts(idx, { url: ready.path });
     expect(g.status).toBe(STATUS_WORDS.ready);
@@ -225,7 +232,8 @@ describe("page tools (fixture index)", () => {
   it("page_facts never promises practice a school page does not have (26 Sep 2026 review)", () => {
     const book = idx.docs.find((d) => d.kind === "school-chapter" && d.cls === 10 && d.subjectSlug === "science" && d.status === "book-only")!;
     const f = pageFacts(idx, { url: book.path });
-    expect(String(f.tutor)).toMatch(/not written yet — do not promise practice/);
+    // 3 Oct 2026: the subject page's facts (see above) — they never promise practice either.
+    expect(String(f.tutor)).toMatch(/do not promise practice|never promise it for the others/);
     expect(String(f.tutor)).not.toMatch(/can sign in to practise/);
     const under = idx.docs.filter((d) => d.kind === "school-chapter" && d.board === "cbse" && d.cls === 10 && d.subjectSlug === "science");
     const subj = pageFacts(idx, { url: "/schooling/cbse/class-10/science" });
@@ -421,13 +429,17 @@ describe("runAsk", () => {
     expect(r.answer).toContain(`➡️ [${r.next!.label}](https://shishya.in${r.next!.url})`);
   });
 
-  it("a route-only school question starts with its chapter's facts; a resolver miss starts with the loose name matches", async () => {
+  it("a route-only school question starts with its chapter's page facts (a book-only chapter: its subject page's); a resolver miss starts with the loose name matches", async () => {
     create.mockResolvedValue(msg([{ type: "text", text: "Pages.\n➡️ Open next: [Class 10 Science](https://shishya.in/schooling/cbse/class-10/science)" }]));
     await runAsk("class 10 science electricity — explain ohm's law", { index: idx });
     const school = String((create.mock.calls[0] as unknown as [Record<string, any>])[0].messages[0].content);
     expect(school).toMatch(/ROUTE-ONLY/);
-    expect(school).toContain('"kind":"school-chapter"');
-    expect(school).toContain('"url":"https://shishya.in/schooling/cbse/class-10/science/electricity"');
+    // 3 Oct 2026 (school growth): Electricity is book-only in this snapshot — it is listed with its
+    // status and its row on the subject page, and the facts read for it are the subject page's.
+    expect(school).toContain("https://shishya.in/schooling/cbse/class-10/science#ch-electricity");
+    expect(school).toContain('"kind":"school-subject"');
+    expect(school).toContain('"url":"https://shishya.in/schooling/cbse/class-10/science"');
+    expect(school).not.toContain("https://shishya.in/schooling/cbse/class-10/science/electricity");
     expect(school).toContain(STATUS_WORDS["book-only"]);
     await runAsk("NMMS scholarship eligibility and amount", { index: idx });
     const nmms = String((create.mock.calls[1] as unknown as [Record<string, any>])[0].messages[0].content);
