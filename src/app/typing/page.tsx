@@ -52,7 +52,7 @@ const JSON_LD = [
         name: "What typing speed is needed for the SSC CHSL DEST typing test?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "SSC's Data Entry Speed Test is measured in key depressions per hour: 8,000 KDPH, which works out to roughly 27 words per minute sustained over the test. Accuracy matters as much as raw speed, because errors are deducted. You can practise it free at https://shishya.in/typing, which scores exactly this way.",
+          text: "SSC's Data Entry Speed Test is measured in key depressions per hour: 8,000 KDPH, which works out to roughly 27 words per minute sustained over the test. Accuracy matters as much as raw speed, because errors are deducted. You can practise it free at https://shishya.in/typing — it scores exactly this way.",
         },
       },
       {

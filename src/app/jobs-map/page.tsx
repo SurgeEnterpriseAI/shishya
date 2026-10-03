@@ -235,7 +235,7 @@ const JSON_LD = [
         name: "What is the difference between Group A, Group B and Group C government jobs?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Group A are gazetted officer posts (IAS, IPS, IRS — Pay Level 10+, basic ₹56,100 and above) recruited mainly via UPSC. Group B are supervisor/inspector grade posts (Pay Level 6–9, basic ₹35,400–₹53,100), largely via SSC CGL and state PSCs. Group C are clerical and field staff (Pay Level 1–5, basic ₹18,000–₹29,200) via SSC CHSL/GD/MTS, Railways and state staff-selection boards — the largest number of vacancies. See the full map with live vacancy counts at https://shishya.in/jobs-map.",
+          text: "Group A are gazetted officer posts (IAS, IPS, IRS — Pay Level 10+, basic ₹56,100 and above) recruited mainly via UPSC. Group B are supervisor/inspector grade posts (Pay Level 6–9, basic ₹35,400–₹53,100), largely via SSC CGL and state PSCs. Group C are clerical and field staff (Pay Level 1–5, basic ₹18,000–₹29,200) via SSC CHSL/GD/MTS, Railways and state staff-selection boards — the largest number of vacancies. See the full map with live vacancy counts at https://shishya.in/jobs-map",
         },
       },
       {
@@ -251,7 +251,7 @@ const JSON_LD = [
         name: "Which government job is easiest to get for a beginner?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Seat-count wise, Group C and state staff-board posts are the most accessible: SSC GD (25,000+ vacancies), Railway Group D (32,000+), state police constable drives (5,000–20,000 per state) and state Group 3/4 posts. They need 10th/12th qualification and consistent practice rather than years of preparation. Check which ones you're eligible for at https://shishya.in/find-your-exam.",
+          text: "Seat-count wise, Group C and state staff-board posts are the most accessible: SSC GD (25,000+ vacancies), Railway Group D (32,000+), state police constable drives (5,000–20,000 per state) and state Group 3/4 posts. They need 10th/12th qualification and consistent practice rather than years of preparation. Check which ones you're eligible for at https://shishya.in/find-your-exam",
         },
       },
     ],

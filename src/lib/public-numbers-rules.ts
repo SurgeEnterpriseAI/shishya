@@ -609,7 +609,7 @@ export const NUMBERS_PATH = "/shishya-in-numbers";
 export const NUMBERS_URL = `${SITE_URL}${NUMBERS_PATH}`;
 
 export function citationLine(today: string): string {
-  return `Shishya, “Shishya in numbers”, ${NUMBERS_URL}, as of ${istDayLabel(today)}.`;
+  return `Shishya, “Shishya in numbers”, as of ${istDayLabel(today)}: ${NUMBERS_URL}`;
 }
 
 /** "28.7% (213 of 742)" — or null when either side, or the rest (den − num),

@@ -450,7 +450,7 @@ export function scholarshipFaq(s: Scholarship, today: string): FaqItem[] {
     q: `How do I apply for ${s.name}?`,
     a: s.closed
       ? `It no longer takes new applicants. ${s.closed.note}`
-      : `Apply on the awarding body's official portal: ${s.applyUrl}. Shishya does not collect applications. ${cycleLeadLine(s, today)}`,
+      : `Apply on the awarding body's official portal: ${s.applyUrl} — Shishya does not collect applications. ${cycleLeadLine(s, today)}`,
   });
   return out;
 }

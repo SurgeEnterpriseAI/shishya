@@ -41,7 +41,7 @@ const MENTOR_FEE = `₹${MENTOR_SESSION_FEE_PAISE / 100}`;
 /** Same facts as /pricing, /terms and /contact. */
 const FREE_ANSWER = `Yes. Every study feature on Shishya is free with no paywall and no premium tier — school chapters, practice questions, mock tests, previous-year-pattern sets, notes, exam trackers, the AI tutor, and the colleges, scholarships and careers pages. The only paid item is an optional session with a human mentor: the first session is free, later ones are ${MENTOR_FEE} each, inclusive of GST, paid only after a mentor accepts the request.`;
 const WHO_ANSWER =
-  "Shishya is built and operated by Surge Software Solutions Pvt Ltd, an Indian software company in Bengaluru, Karnataka. Contact: corp@surgesoftware.co.in or https://shishya.in/contact.";
+  "Shishya is built and operated by Surge Software Solutions Pvt Ltd, an Indian software company in Bengaluru, Karnataka. Contact: corp@surgesoftware.co.in or https://shishya.in/contact";
 
 async function aboutDescription(): Promise<string> {
   try {

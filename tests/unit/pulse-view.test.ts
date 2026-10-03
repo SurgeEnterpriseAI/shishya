@@ -145,7 +145,7 @@ describe("the gated view", () => {
     // Definitions and the caveat travel with the numbers.
     expect(md).toContain("not a difficulty rating");
     expect(md).toContain("The text of questions is never read for this page.");
-    expect(md).toContain("Shishya Pulse, week 38 of 2026 (14–20 Sep 2026), https://shishya.in/pulse/2026-w38, computed 27 Sep 2026.");
+    expect(md).toContain("Shishya Pulse, week 38 of 2026 (14–20 Sep 2026), computed 27 Sep 2026: https://shishya.in/pulse/2026-w38");
     expect(md).toContain("- Shishya Pulse, week 38 of 2026 (14–20 Sep 2026): https://shishya.in/pulse/2026-w38");
     // Dates only: no timestamps (the method's "Monday 00:00 to Sunday 23:59" is the week rule, not a time of anything).
     expect(md).not.toMatch(/T\d{2}:\d{2}|\d{1,2}:\d{2}\s?(am|pm|IST)/i);
@@ -173,7 +173,7 @@ describe("titles, citation and JSON-LD", () => {
   it("titles say what the page counts", () => {
     expect(pulseWeekTitle(W38)).toBe("Shishya Pulse, week 38 of 2026 (14–20 Sep 2026) — mocks, topics and exam dates");
     expect(pulseHubTitle(W38)).toBe("Shishya Pulse — what students practised in the week of 14–20 Sep 2026");
-    expect(pulseCitation(W38, "2026-09-27")).toBe("Shishya Pulse, week 38 of 2026 (14–20 Sep 2026), https://shishya.in/pulse/2026-w38, computed 27 Sep 2026.");
+    expect(pulseCitation(W38, "2026-09-27")).toBe("Shishya Pulse, week 38 of 2026 (14–20 Sep 2026), computed 27 Sep 2026: https://shishya.in/pulse/2026-w38");
   });
 
   it("a week is an Article in the Pulse series, published the Monday after it, dates only", () => {

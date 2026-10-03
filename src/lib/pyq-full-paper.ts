@@ -170,7 +170,7 @@ export function publishersOf(rows: readonly Pick<OfficialPaperRow, "publisher">[
 export function fullMockFaqNote(link: FullPatternLink | null, examCode: string): string {
   if (!link) return "";
   const size = link.minutes ? `${link.questions} questions, ${link.minutes} minutes` : `${link.questions} questions`;
-  return ` For a whole paper in one sitting, Shishya has a free full-length mock in the real pattern (${size}): the "Full-Length Mock (Real Pattern)" tile at https://shishya.in/exams/${examCode}.`;
+  return ` For a whole paper in one sitting, Shishya has a free full-length mock in the real pattern (${size}): the "Full-Length Mock (Real Pattern)" tile at https://shishya.in/exams/${examCode}`;
 }
 
 export interface PyqFullPaperCopy {

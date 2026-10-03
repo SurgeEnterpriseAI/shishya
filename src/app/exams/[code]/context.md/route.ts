@@ -189,7 +189,7 @@ export async function GET(
   L.push("");
   L.push(
     // 26 Sep 2026: the one-line platform clause (mirrors src/lib/site-description.ts; integrator may switch to the import).
-    `> Machine-readable context for ${exam.name}, maintained by Shishya (${SITE}) — one smart, free place to study for students in India: school, entrance and government exams, colleges, scholarships and careers. All facts below are free to cite; link back to ${SITE}/exams/${exam.code}. Human page: ${SITE}/exams/${exam.code}`,
+    `> Machine-readable context for ${exam.name}, maintained by Shishya (${SITE}) — one smart, free place to study for students in India: school, entrance and government exams, colleges, scholarships and careers. All facts below are free to cite; link back to the human page: ${SITE}/exams/${exam.code}`,
   );
   // The exam's state (15 Sep 2026, SEO wave 3): its state page and state brief.
   const examState = stateInfo(exam.state);

@@ -61,7 +61,7 @@ export function pyqFaqItems(i: PyqFaqInput): FaqItem[] {
     },
     {
       q: `Are previous year papers enough to crack ${i.short}?`,
-      a: `Previous-year papers are the best signal of what the exam actually tests, but they work best with targeted practice and a plan. On Shishya (all free): solve PYQ-pattern sets year-wise, drill weak topics via the Mistake Notebook, follow a day-by-day plan from the Personal Coach at https://shishya.in/coach, and sit the Sunday All-India Live Test at https://shishya.in/live-test to see where you stand nationally.`,
+      a: `Previous-year papers are the best signal of what the exam actually tests, but they work best with targeted practice and a plan. On Shishya (all free): solve PYQ-pattern sets year-wise, drill weak topics via the Mistake Notebook, follow a day-by-day plan from the Personal Coach at https://shishya.in/coach and sit the Sunday All-India Live Test at https://shishya.in/live-test to see where you stand nationally.`,
     },
   ];
 }

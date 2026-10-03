@@ -37,9 +37,9 @@ function readOn(day: string): string {
   return fillCopy(pathCopy().sources.readOn, { day });
 }
 
-/** "National Testing Agency (NTA), "JEE (Main) 2026 Information Bulletin", https://…, read on 2026-09-30". */
+/** "National Testing Agency (NTA), "JEE (Main) 2026 Information Bulletin", read on 2026-09-30: https://…" — the URL ends the line (3 Oct 2026: never a comma or stop after it). */
 export function sourceText(s: PathSource): string {
-  return `${s.publisher}, "${s.title}", ${s.url}, ${readOn(s.checkedOn)}${s.tier === "reported" ? ` (${pathCopy().sources.reported})` : ""}`;
+  return `${s.publisher}, "${s.title}", ${readOn(s.checkedOn)}${s.tier === "reported" ? ` (${pathCopy().sources.reported})` : ""}: ${s.url}`;
 }
 
 /** A printable fact with its source (confirmed) or the word "estimate". */
@@ -139,7 +139,7 @@ export function stageHubContextMarkdown(model: StageHubModel, asOf: string, site
 
 function boardRowLine(r: BoardStreamCombination): string {
   const code = r.groupCode ? ` (group code ${r.groupCode})` : "";
-  return `- ${r.boardName} — ${r.localName}${code} — subjects as printed: ${r.subjects.join(", ")} — source: ${r.source.url}, ${readOn(r.source.checkedOn)}`;
+  return `- ${r.boardName} — ${r.localName}${code} — subjects as printed: ${r.subjects.join(", ")} — source (${readOn(r.source.checkedOn)}): ${r.source.url}`;
 }
 
 function streamMarkdown(model: StreamPageModel, asOf: string, site: string): string {

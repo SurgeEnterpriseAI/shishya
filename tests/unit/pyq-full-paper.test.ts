@@ -241,7 +241,7 @@ describe("fullMockFaqNote (English structured data)", () => {
   it("states the mock's own size and points to the hub tile, not /mocks/", () => {
     const note = fullMockFaqNote({ id: "m1", questions: 200, minutes: 180 }, "TS_POLICE_PC");
     expect(note).toBe(
-      ' For a whole paper in one sitting, Shishya has a free full-length mock in the real pattern (200 questions, 180 minutes): the "Full-Length Mock (Real Pattern)" tile at https://shishya.in/exams/TS_POLICE_PC.',
+      ' For a whole paper in one sitting, Shishya has a free full-length mock in the real pattern (200 questions, 180 minutes): the "Full-Length Mock (Real Pattern)" tile at https://shishya.in/exams/TS_POLICE_PC',
     );
     expect(note).not.toContain("/mocks/");
   });

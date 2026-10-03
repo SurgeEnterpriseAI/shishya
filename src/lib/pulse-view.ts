@@ -139,7 +139,7 @@ export function pulseWeekDescription(w: PulseWeek): string {
 
 /** The "How to cite" line. */
 export function pulseCitation(w: PulseWeek, computedDay: string): string {
-  return `Shishya Pulse, ${pulseWeekPhrase(w)}, ${pulseWeekUrl(w)}, computed ${istDayLabel(computedDay)}.`;
+  return `Shishya Pulse, ${pulseWeekPhrase(w)}, computed ${istDayLabel(computedDay)}: ${pulseWeekUrl(w)}`;
 }
 
 /** Labels of a merged group in one phrase: "Olympiads and entrance exams";

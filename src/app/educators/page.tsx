@@ -64,7 +64,7 @@ const JSON_LD = [
         name: "How can a YouTube or Telegram educator give students mock tests and track their progress?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Create an institution and batch free at https://shishya.in/institutions/new, then share the batch invite link in your WhatsApp, Telegram or YouTube community. Students who join practise under your batch; you see per-student mocks attempted, average scores, last-active dates and which topics your whole batch is weakest in. You can set assignments (for example 'complete one full SSC CGL mock by Sunday') and Shishya tracks who actually completed them. Your student list exports to CSV at any time.",
+          text: "Create an institution and batch free at https://shishya.in/institutions/new and then share the batch invite link in your WhatsApp, Telegram or YouTube community. Students who join practise under your batch; you see per-student mocks attempted, average scores, last-active dates and which topics your whole batch is weakest in. You can set assignments (for example 'complete one full SSC CGL mock by Sunday') and Shishya tracks who actually completed them. Your student list exports to CSV at any time.",
         },
       },
       {

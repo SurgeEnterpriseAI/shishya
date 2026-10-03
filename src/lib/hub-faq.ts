@@ -142,7 +142,7 @@ export function hubFaqExtraItems(i: HubFaqInput): FaqItem[] {
           }
         : {
             q: `What is the expected cutoff for ${i.short}?`,
-            a: `Cutoffs change every cycle with paper difficulty and vacancies. Shishya maintains indicative score-to-rank bands and category-wise (General/EWS/OBC/SC/ST) expected cutoffs — not official figures — at ${SITE}/exams/${i.code}/cutoff.`,
+            a: `Cutoffs change every cycle with paper difficulty and vacancies. Shishya maintains indicative score-to-rank bands and category-wise (General/EWS/OBC/SC/ST) expected cutoffs — not official figures — at ${SITE}/exams/${i.code}/cutoff`,
           },
     );
   }
@@ -161,7 +161,7 @@ export function hubFaqExtraItems(i: HubFaqInput): FaqItem[] {
   if (i.buildMock) {
     out.push({
       q: `Can I build a topic-wise ${i.short} mock test?`,
-      a: `Yes — pick any topics from the ${i.short} syllabus, choose 10, 25 or 50 questions and the difficulty, and attempt it as a timed mock with solutions and weak-topic analysis, free, at ${SITE}/exams/${i.code}/build-mock. Questions can be read in Hindi and ${i.otherLanguageCount} other Indian languages inside the test.`,
+      a: `Yes — pick any topics from the ${i.short} syllabus, choose 10, 25 or 50 questions and the difficulty, and attempt it as a timed mock with solutions and weak-topic analysis, free, at ${SITE}/exams/${i.code}/build-mock — questions can be read in Hindi and ${i.otherLanguageCount} other Indian languages inside the test.`,
     });
   }
   const pyq = hubPyqOffer(i.hasPyqSets, i.hasOfficialPapers);

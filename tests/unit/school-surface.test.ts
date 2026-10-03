@@ -580,7 +580,7 @@ describe("the spine's documents decide what a subject line claims and whether a 
     const c3 = findSchoolClass(s, "icse-cisce", 3)!;
     const md3 = schoolClassContextMarkdown(c3, schoolClassIdentity("CISCE", 3), "2026-09-26");
     expect(md3).toContain(
-      "> What this file is: the subjects CISCE lists for Class 3 (CISCE (cisce.org), read 2026-09-25). CISCE prescribes syllabuses, not one textbook series, so there is no chapter map. CISCE publishes one curriculum document for this stage and no per-subject syllabus PDF. Level document: CISCE Curriculum — Primary Classes (I-V) — https://cisce.org/wp-content/uploads/2025/03/PrimaryCurriculum.pdf.",
+      "> What this file is: the subjects CISCE lists for Class 3 (CISCE (cisce.org), read 2026-09-25). CISCE prescribes syllabuses, not one textbook series, so there is no chapter map. CISCE publishes one curriculum document for this stage and no per-subject syllabus PDF. Level document: CISCE Curriculum — Primary Classes (I-V) — https://cisce.org/wp-content/uploads/2025/03/PrimaryCurriculum.pdf",
     );
     expect(md3).not.toMatch(/per-subject syllabus PDFs|Official syllabus \(CISCE\)/);
     expect(md3).toContain(
@@ -638,7 +638,7 @@ describe("class and subject context.md", () => {
     const md = schoolClassContextMarkdown(c6, id, "2026-09-26");
     expect(md).toMatch(/^# NCERT Class 6 — CBSE \(NCERT textbooks\) — Shishya school context\n/);
     expect(md).toContain(`> Class page: ${SITE}/schooling/cbse/class-6 · board: ${SITE}/schooling/cbse · all school pages: ${SITE}/schooling · data as of 2026-09-26 (IST)`);
-    expect(md).toContain("(NCERT textbook index, https://ncert.nic.in/textbook.php, read 2026-09-25)");
+    expect(md).toContain("(NCERT textbook index, read 2026-09-25) at https://ncert.nic.in/textbook.php and, for every book");
     expect(md).toContain("- Subjects: 3 · chapters listed: 9 · with Shishya notes: 5 · with answer-checked practice (5+ questions): 6");
     expect(md).toContain("- Shishya content last updated: 2026-09-26");
     expect(md).toContain(`### Mathematics — ${SITE}/schooling/cbse/class-6/mathematics (context: ${SITE}/schooling/cbse/class-6/mathematics/context.md)`);
@@ -667,7 +667,7 @@ describe("class and subject context.md", () => {
     const md = schoolClassContextMarkdown(c10, id, "2026-09-26");
     expect(md).toMatch(/^# CISCE Class 10 — CISCE \(ICSE \/ ISC\) — Shishya school context\n/);
     expect(md).toContain(
-      "(CISCE (cisce.org), read 2026-09-25) with CISCE's per-subject syllabus PDFs. CISCE prescribes syllabuses, not one textbook series, so there is no chapter map. Level document: ICSE 2027 regulations and syllabuses — https://cisce.org/wp-content/uploads/2025/03/1.-Regulations.pdf.",
+      "(CISCE (cisce.org), read 2026-09-25) with CISCE's per-subject syllabus PDFs. CISCE prescribes syllabuses, not one textbook series, so there is no chapter map. Level document: ICSE 2027 regulations and syllabuses — https://cisce.org/wp-content/uploads/2025/03/1.-Regulations.pdf",
     );
     expect(md).not.toMatch(/one curriculum document for this stage/);
     expect(md).toContain("- Subjects: 2 · chapters listed: 0");

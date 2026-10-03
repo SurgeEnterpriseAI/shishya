@@ -212,7 +212,7 @@ describe("stream context: board rows confirmed only, each with its source", () =
       const boards = new Set(confirmed.map((r) => r.board)).size;
       expect(md).toContain(`## Subjects, board by board (${confirmed.length} ${confirmed.length === 1 ? "list" : "lists"} from ${boards} ${boards === 1 ? "board" : "boards"})`);
       for (const r of confirmed) {
-        expect(md).toContain(`- ${r.boardName} — ${r.localName}${r.groupCode ? ` (group code ${r.groupCode})` : ""} — subjects as printed: ${r.subjects.join(", ")} — source: ${r.source.url}, read on ${r.source.checkedOn}`);
+        expect(md).toContain(`- ${r.boardName} — ${r.localName}${r.groupCode ? ` (group code ${r.groupCode})` : ""} — subjects as printed: ${r.subjects.join(", ")} — source (read on ${r.source.checkedOn}): ${r.source.url}`);
       }
     }
   });

@@ -281,7 +281,7 @@ describe("printed output", () => {
     expect(md).toContain(DEFINITIONS.cameBack7);
     expect(md).toContain(DEFINITIONS.signupSources);
     expect(md).toContain(citationLine(WIN.today));
-    expect(citationLine(WIN.today)).toBe("Shishya, “Shishya in numbers”, https://shishya.in/shishya-in-numbers, as of 27 Sep 2026.");
+    expect(citationLine(WIN.today)).toBe("Shishya, “Shishya in numbers”, as of 27 Sep 2026: https://shishya.in/shishya-in-numbers");
     expect(md).toContain("Search engines + Direct or unknown + Other websites");
   });
 
