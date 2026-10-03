@@ -57,8 +57,9 @@ export async function generateMetadata({
     description,
     alternates: { canonical: "https://shishya.in/find-your-exam" },
     // Personalised result views are noindex (infinite param combos); the
-    // bare landing is the indexable, AEO-citeable page.
-    robots: hasAnswers ? { index: false, follow: true } : undefined,
+    // bare landing is the indexable, AEO-citeable page. The key is left out
+    // there (not set to undefined, which clears the layout's default robots).
+    ...(hasAnswers ? { robots: { index: false, follow: true } } : {}),
     keywords: [
       "which government exam should i take",
       "government job eligibility by age",
