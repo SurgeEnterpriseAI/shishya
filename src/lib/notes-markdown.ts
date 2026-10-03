@@ -9,7 +9,7 @@
 //
 // This renders the constructs the note generator actually emits: headings
 // (#–######; "# " demoted to <h2> on request so the page keeps ONE <h1>),
-// paragraphs, - / * / + and 1. / 1) lists (one nested level, items separated
+// paragraphs, - / * / + / • and 1. / 1) lists (one nested level, items separated
 // by blank lines stay one list), GFM tables (wrapped so a phone scrolls the
 // table, never the page), --- rules, ``` fences, > quotes, **bold** /
 // __bold__, *italic* / _italic_, `code` and [text](https://…) links. Every
@@ -56,6 +56,13 @@ export function inlineHtml(s: string): string {
         i = j + 2;
         continue;
       }
+      // 3 Oct 2026: an unpaired "**" (a text cut off mid-bold, or bold closed
+      // on another line) is not printed — unless it sits between two word
+      // characters, where it is arithmetic ("2**3").
+      if (c === "*" && j === -1 && !(isWordChar(text[i - 1]) && isWordChar(text[i + 2]))) {
+        i += 2;
+        continue;
+      }
     }
     // *italic* / _italic_ — the opener is followed and the closer preceded by
     // a non-space, so "2 * 3 * 4" stays arithmetic; "_" only at word edges,
@@ -66,7 +73,14 @@ export function inlineHtml(s: string): string {
         let j = i + 1;
         let found = -1;
         while ((j = text.indexOf(c, j)) !== -1) {
-          const closeOk = text[j - 1] !== " " && text[j + 1] !== c && (c === "*" || !isWordChar(text[j + 1]));
+          // 3 Oct 2026: a "**…**" pair inside the span is bold, never the
+          // closer ("*He **don't** know.*" printed "<em>He *</em>don't**").
+          if (text[j + 1] === c) {
+            const k = text.indexOf(c + c, j + 2);
+            j = k === -1 ? j + 2 : k + 2;
+            continue;
+          }
+          const closeOk = text[j - 1] !== " " && (c === "*" || !isWordChar(text[j + 1]));
           if (closeOk && j > i + 1) {
             found = j;
             break;
@@ -99,7 +113,7 @@ const HEADING_RE = /^(#{1,6})\s+(.*?)\s*#*\s*$/;
 const HR_RE = /^(?:-{3,}|\*{3,}|_{3,})\s*$/;
 const FENCE_RE = /^(```|~~~)/;
 const OL_RE = /^(\s*)(\d{1,3})[.)]\s+(.*)$/;
-const UL_RE = /^(\s*)[-*+]\s+(.*)$/;
+const UL_RE = /^(\s*)[-*+•]\s+(.*)$/; // "•" too (3 Oct 2026: 99 notes carry "• " runs)
 const TABLE_SEP_RE = /^\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)*\|?\s*$/;
 
 function splitCells(line: string): string[] {

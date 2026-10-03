@@ -13,17 +13,16 @@
 // imported here because it pulls the Anthropic client into a page bundle
 // (tests/unit/school-pages.test.ts pins them equal).
 //
-// 26 Sep 2026 (fixer): the shared renderer (src/components/NotesMarkdown.tsx)
-// draws only "#"/"##" headings, "-"/"*" bullets, paragraphs and **bold**; it
-// joins any other consecutive lines into one paragraph. Two stored notes
-// already carry what it cannot draw — pipe tables (Class 6 Maths ch 4, tally
-// and frequency tables) and single-asterisk italics ("*Solution:*", ch 2) —
-// and the notes prompt does not forbid either, so every future batch can.
-// The page must not change the shared renderer for school-only content, so
-// the conversion happens here, on the school note only: a table block
-// becomes one bullet per row ("Colour: **Red** · Tally: |||| · Frequency:
-// 4"), *italics* become **bold**. Nothing is added, nothing dropped: every
-// cell of every row lands in its bullet.
+// 26 Sep 2026 (fixer): stored school notes carry pipe tables (Class 6 Maths
+// ch 4, tally and frequency tables) and single-asterisk italics
+// ("*Solution:*", ch 2), and the notes prompt does not forbid either, so
+// every future batch can. The conversion happens here, on the school note
+// only, whichever way the page then renders it: a table block becomes one
+// bullet per row ("Colour: **Red** · Tally: |||| · Frequency: 4") — a tally
+// mark is content, and a table drawer that splits a cell on every "|" would
+// break it — and *italics* become **bold**. Nothing is added, nothing
+// dropped: every cell of every row lands in its bullet; a first cell that is
+// already bold keeps its own marks (3 Oct 2026).
 
 import { stripProvenanceComment } from "./provenance";
 
@@ -69,7 +68,8 @@ function tableToBullets(block: string[]): string[] {
     const cells = tableCells(r, header.length);
     const parts = cells.map((c, i) => {
       const h = header[i] ?? "";
-      const v = i === 0 && c ? `**${c}**` : c;
+      // A first cell already bold stays as stored ("**R**", not "****R****").
+      const v = i === 0 && c && !c.includes("**") ? `**${c}**` : c;
       return h ? `${h}: ${v}` : v;
     });
     out.push(`- ${parts.join(" · ")}`);
@@ -84,7 +84,7 @@ export function italicsToBold(line: string): string {
   return line.replace(/(^|[^*\w])\*(?!\s)([^*\n]+?)(?<!\s)\*(?![*\w])/g, "$1**$2**");
 }
 
-/** What the shared NotesMarkdown cannot draw, rewritten into what it can. */
+/** A school note's pipe tables and *italics*, rewritten as bullets and **bold** (see the header). */
 export function normalizeSchoolMarkdown(md: string): string {
   const lines = md.split("\n");
   const out: string[] = [];

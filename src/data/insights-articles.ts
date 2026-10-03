@@ -20,9 +20,11 @@ export interface InsightArticle {
   tags: string[];
   /** Cited sources at the end of each article */
   sources: Array<{ label: string; url: string }>;
-  /** Markdown-lite content. We render with a simple paragraph splitter
-   *  + heading/list parser to avoid pulling in a heavyweight MD library
-   *  for a few hundred words. */
+  /** Markdown content, drawn by the shared notes renderer
+   *  (src/lib/notes-markdown.ts, rich mode: headings, lists, pipe tables,
+   *  **bold**, *italic*). A wrapped continuation line must not start with
+   *  "+ ", "* ", "- " or "• ": the renderer reads it as a new list item
+   *  (tests/unit/notes-markdown-cases.test.ts). */
   body: string;
 }
 
@@ -142,8 +144,8 @@ can deal with German bureaucracy.
   enter, hard to settle". Canada is the inverse: rising study-permit difficulty,
   but PR remains attainable for graduates who land jobs.
 - **Country-of-origin advantages matter**. Top US universities admit Indian
-  students in proportion (large applicant pool → moderate admit rate). Canadian
-  + Australian universities have explicit "international tuition revenue"
+  students in proportion (large applicant pool → moderate admit rate). Canadian +
+  Australian universities have explicit "international tuition revenue"
   business models — admit rates are higher but tuition is higher too.
 
 ## Practical implications for an Indian student picking today
@@ -798,8 +800,8 @@ on a few patterns about AI's impact on jobs over 2025-2030:
 
 - **General engineering**: BTech + commodity work compresses; senior
   product engineering + research grow.
-- **General CA/CMA**: Routine tax + audit at risk; tax strategy + advisory
-  + IFRS-specialist roles immune.
+- **General CA/CMA**: Routine tax + audit at risk; tax strategy + advisory +
+  IFRS-specialist roles immune.
 - **General medicine (non-specialist)**: First-pass diagnosis automatable;
   patient relationship + complex case management immune.
 - **Marketing**: Performance marketing automation; brand + creative

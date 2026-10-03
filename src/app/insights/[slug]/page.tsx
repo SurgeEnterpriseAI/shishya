@@ -1,13 +1,15 @@
 // /insights/[slug] — per-article page.
 //
-// Lightweight markdown-lite renderer (paragraphs + headings + bullet
-// lists + bold/italic inline) — keeps us off a heavyweight MD lib for
-// what's currently a handful of articles.
+// 3 Oct 2026: the body is drawn by the shared notes renderer
+// (src/components/NotesMarkdown.tsx, rich → src/lib/notes-markdown.ts). The
+// local markdown-lite renderer it replaces knew no tables, so 11 of 23
+// articles printed their pipe tables as raw text.
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { NotesMarkdown } from "@/components/NotesMarkdown";
 import { findArticle, INSIGHTS_ARTICLES } from "@/data/insights-articles";
 
 interface PageParams { slug: string }
@@ -84,8 +86,8 @@ export default async function ArticlePage({
         <p className="mt-3 text-base text-ink-700 leading-relaxed">{a.dek}</p>
 
         {/* Body */}
-        <article className="prose-article mt-8">
-          <Markdown text={a.body} />
+        <article className="prose prose-sm sm:prose-base mt-8 max-w-none">
+          <NotesMarkdown markdown={a.body} rich />
         </article>
 
         {/* Sources */}
@@ -135,94 +137,5 @@ export default async function ArticlePage({
         )}
       </section>
     </main>
-  );
-}
-
-// ── Minimal markdown-lite renderer ─────────────────────────────────────
-function Markdown({ text }: { text: string }) {
-  const blocks = text
-    .replace(/\r\n/g, "\n")
-    .split(/\n{2,}/)
-    .map((b) => b.trim())
-    .filter(Boolean);
-
-  return (
-    <div className="space-y-4 text-sm text-ink-800 leading-relaxed">
-      {blocks.map((b, i) => {
-        if (b.startsWith("## ")) {
-          return (
-            <h2 key={i} className="mt-6 text-lg font-semibold text-ink-900">
-              {b.replace(/^## /, "")}
-            </h2>
-          );
-        }
-        if (b.startsWith("### ")) {
-          return (
-            <h3 key={i} className="mt-4 text-base font-semibold text-ink-900">
-              {b.replace(/^### /, "")}
-            </h3>
-          );
-        }
-        // Ordered list (line-prefixed with "1. " etc.)
-        if (/^\d+\.\s/.test(b.split("\n")[0])) {
-          const items = b.split("\n").filter((l) => /^\d+\.\s/.test(l)).map((l) => l.replace(/^\d+\.\s+/, ""));
-          return (
-            <ol key={i} className="list-decimal space-y-1.5 pl-5">
-              {items.map((it, j) => <li key={j}><InlineMd text={it} /></li>)}
-            </ol>
-          );
-        }
-        // Bullet list
-        if (b.startsWith("- ")) {
-          const items = b.split("\n").filter((l) => l.startsWith("- ")).map((l) => l.replace(/^- /, ""));
-          return (
-            <ul key={i} className="list-disc space-y-1.5 pl-5">
-              {items.map((it, j) => <li key={j}><InlineMd text={it} /></li>)}
-            </ul>
-          );
-        }
-        // Paragraph
-        return <p key={i}><InlineMd text={b.replace(/\n/g, " ")} /></p>;
-      })}
-    </div>
-  );
-}
-
-function InlineMd({ text }: { text: string }) {
-  // Bold (**...**) → <strong>; italic (*...*) → <em>; backticks (`...`) → <code>
-  const parts: Array<{ kind: "text" | "bold" | "italic" | "code"; value: string }> = [];
-  let i = 0;
-  while (i < text.length) {
-    if (text.startsWith("**", i)) {
-      const end = text.indexOf("**", i + 2);
-      if (end === -1) { parts.push({ kind: "text", value: text.slice(i) }); break; }
-      parts.push({ kind: "bold", value: text.slice(i + 2, end) });
-      i = end + 2;
-    } else if (text[i] === "*") {
-      const end = text.indexOf("*", i + 1);
-      if (end === -1) { parts.push({ kind: "text", value: text.slice(i) }); break; }
-      parts.push({ kind: "italic", value: text.slice(i + 1, end) });
-      i = end + 1;
-    } else if (text[i] === "`") {
-      const end = text.indexOf("`", i + 1);
-      if (end === -1) { parts.push({ kind: "text", value: text.slice(i) }); break; }
-      parts.push({ kind: "code", value: text.slice(i + 1, end) });
-      i = end + 1;
-    } else {
-      const nextSpecial = text.slice(i).search(/(\*\*|\*|`)/);
-      if (nextSpecial === -1) { parts.push({ kind: "text", value: text.slice(i) }); break; }
-      parts.push({ kind: "text", value: text.slice(i, i + nextSpecial) });
-      i += nextSpecial;
-    }
-  }
-  return (
-    <>
-      {parts.map((p, idx) => {
-        if (p.kind === "bold") return <strong key={idx} className="font-semibold text-ink-900">{p.value}</strong>;
-        if (p.kind === "italic") return <em key={idx}>{p.value}</em>;
-        if (p.kind === "code") return <code key={idx} className="rounded bg-ink-100 px-1 text-[12px]">{p.value}</code>;
-        return <span key={idx}>{p.value}</span>;
-      })}
-    </>
   );
 }

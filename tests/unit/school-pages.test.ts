@@ -384,6 +384,13 @@ describe("stored notes → rendered markdown", () => {
     expect(normalizeSchoolMarkdown("|---|---|")).toBe("");
   });
 
+  it("a first cell that is already bold keeps its own marks, never '****R****' (3 Oct 2026; 4 stored notes)", () => {
+    expect(normalizeSchoolMarkdown("| | R | r |\n|---|---|---|\n| **R** | RR | Rr |")).toBe("- **R** · R: RR · r: Rr");
+    expect(normalizeSchoolMarkdown("| Class | fᵢ |\n|---|---|\n| **Total** | 50 |")).toBe("- Class: **Total** · fᵢ: 50");
+    // a plain first cell is still made bold
+    expect(normalizeSchoolMarkdown("| Class | fᵢ |\n|---|---|\n| 10-20 | 5 |")).toBe("- Class: **10-20** · fᵢ: 5");
+  });
+
   it("empty or provenance-only content is no notes", () => {
     expect(prepareSchoolNotes(null)).toBeNull();
     expect(prepareSchoolNotes("")).toBeNull();
