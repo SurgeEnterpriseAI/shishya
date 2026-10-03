@@ -7,6 +7,11 @@ import { prisma } from "@/lib/db/prisma";
 import { REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
 import { getT } from "@/lib/i18n-server";
 import { ComposeForm } from "./ComposeForm";
+import type { Metadata } from "next";
+
+// 3 Oct 2026 (fix C13): a private page carries its own noindex and title — a
+// guest's fetch printed the site default "index, follow".
+export const metadata: Metadata = { title: "Start a discussion — Shishya", robots: { index: false, follow: false } };
 
 export default async function NewDiscussionPage() {
   const session = await auth();

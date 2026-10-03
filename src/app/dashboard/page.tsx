@@ -63,6 +63,12 @@ import { loadPickup } from "@/lib/db/pickup";
 import { pickupView } from "@/lib/pickup";
 import { PickupCard } from "@/components/PickupCard";
 import { AnonQuizRecall } from "@/components/AnonQuizRecall";
+import type { Metadata } from "next";
+
+// 3 Oct 2026 (fix C13): a private page carries its own noindex and title — a
+// guest's fetch answered 200 with the site default "index, follow" (the
+// redirect arrives inside the stream because of loading.tsx).
+export const metadata: Metadata = { title: "Your dashboard — Shishya", robots: { index: false, follow: false } };
 
 // ?joined=1 (JoinBatchButton) is read below; the utm_* tags only by the
 // signed-out redirect. Next hands over every query param, so the type says so.

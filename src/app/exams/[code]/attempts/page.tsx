@@ -9,8 +9,13 @@ import { prisma } from "@/lib/db/prisma";
 import { realExamKey } from "@/lib/db/exam-scope";
 import { getT } from "@/lib/i18n-server";
 import { formatDisplayScorePct } from "@/lib/scoring";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
+
+// 3 Oct 2026 (fix C13): a private page carries its own noindex and title — a
+// guest's fetch printed the site default "index, follow" on its redirect.
+export const metadata: Metadata = { title: "Your attempts — Shishya", robots: { index: false, follow: false } };
 
 export default async function AttemptsPage({
   params,

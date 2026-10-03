@@ -9,8 +9,12 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { getT } from "@/lib/i18n-server";
 import { LogoutConfirm } from "./LogoutConfirm";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
+
+// 3 Oct 2026 (fix C13): a private page carries its own noindex and title.
+export const metadata: Metadata = { title: "Sign out — Shishya", robots: { index: false, follow: false } };
 
 export default async function LogoutPage() {
   const [session, { t }] = await Promise.all([auth(), getT()]);

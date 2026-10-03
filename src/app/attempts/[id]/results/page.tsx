@@ -56,6 +56,12 @@ import { schoolMockConfigOf } from "@/lib/school/student-db";
 import { schoolMistakesHeading, schoolMistakesSeed, schoolResultsCopy } from "@/lib/school/student-copy";
 import { findMistakeReviewChat } from "@/lib/db/recent-chats";
 import { chatResumeHref, continueReviewNoteText, recentChatsCopy } from "@/lib/recent-chats";
+import type { Metadata } from "next";
+
+// 3 Oct 2026 (fix C13): a private page carries its own noindex and title — a
+// guest's fetch answered 200 with the site default "index, follow" (the
+// redirect arrives inside the stream because of loading.tsx).
+export const metadata: Metadata = { title: "Your result — Shishya", robots: { index: false, follow: false } };
 
 export default async function ResultsPage({
   params,
