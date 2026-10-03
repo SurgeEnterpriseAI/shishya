@@ -1,0 +1,338 @@
+{
+ "script": "fix-tracker-dates-2026-10-03",
+ "kind": "apply",
+ "startedAt": "2026-10-03T10:29:12.558Z",
+ "status": "applied",
+ "only": "fix",
+ "release": [],
+ "entries": [
+  {
+   "type": "archive",
+   "group": "fix",
+   "exam": "NSEJS",
+   "rowId": "cmtv71iw4002lkjwm8s3ifpe4",
+   "before": {
+    "label": "NSEA exam",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "ai-generated:claude",
+    "notes": "National Standard Examination in Astronomy (NSEA) from 2:30 PM to 4:30 PM; parallel olympiad for senior students · no key published for this stage",
+    "confidence": "official",
+    "url": "https://iapt.org.in/?id=2423",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "NSEA exam",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "ai-generated:claude:suppressed",
+    "notes": "National Standard Examination in Astronomy (NSEA) from 2:30 PM to 4:30 PM; parallel olympiad for senior students · no key published for this stage",
+    "confidence": "official",
+    "url": "https://iapt.org.in/?id=2423",
+    "archivedAt": "2026-10-03T10:29:11.654Z"
+   },
+   "why": "NSEA's exam day filed under NSEJS (the hub lead read \"NSEJS — NSEA exam: 21 Nov 2026\"). IAPT puts NSEA on Sat 21 Nov and NSEJS on Sun 22 Nov 2026; the NSEJS row of 22 Nov, already cited to IAPT, stays.",
+   "evidenceUrl": "https://iapt.org.in/?id=2423"
+  },
+  {
+   "type": "archive",
+   "group": "fix",
+   "exam": "CTET",
+   "rowId": "cmtwzgl9m005onjx0eipcayz6",
+   "before": {
+    "label": "CTET Sept 2026 admit card (expected)",
+    "kind": "ADMIT_CARD",
+    "isExamDay": false,
+    "source": "ai-generated:claude",
+    "notes": "To be released by 5 PM on October 4, 2026",
+    "confidence": "official",
+    "url": "https://www.adda247.com/teaching-jobs-exam/ctet-exam-dates-2026/",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "CTET Sept 2026 admit card (expected)",
+    "kind": "ADMIT_CARD",
+    "isExamDay": false,
+    "source": "ai-generated:claude:suppressed",
+    "notes": "To be released by 5 PM on October 4, 2026",
+    "confidence": "official",
+    "url": "https://www.adda247.com/teaching-jobs-exam/ctet-exam-dates-2026/",
+    "archivedAt": "2026-10-03T10:29:11.654Z"
+   },
+   "why": "\"CTET Sept 2026 admit card (expected)\", 4 Oct, from adda247. CBSE's notice of 14 Sep 2026 moved the 22nd CTET to 12–13 Dec 2026 and says the admit card comes two days before the exam.",
+   "evidenceUrl": "https://cdnbbsr.s3waas.gov.in/s3443dec3062d0286986e21dc0631734c9/uploads/2026/09/20260914325514446.pdf"
+  },
+  {
+   "type": "archive",
+   "group": "fix",
+   "exam": "UP_UPSSSC_PET",
+   "rowId": "cmtyevrzp004r1jdzmvakx4ah",
+   "before": {
+    "label": "PET 2026 exam - Day 1",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "ai-generated:claude",
+    "notes": "Two shifts: 10 AM-12 PM and 3-5 PM; announced Sept 9, 2026 · no key published for this stage",
+    "confidence": "official",
+    "url": "https://testbook.com/news/upsssc-pet-exam-date-2026-out/",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "PET 2026 exam - Day 1",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "ai-generated:claude:suppressed",
+    "notes": "Two shifts: 10 AM-12 PM and 3-5 PM; announced Sept 9, 2026 · no key published for this stage",
+    "confidence": "official",
+    "url": "https://testbook.com/news/upsssc-pet-exam-date-2026-out/",
+    "archivedAt": "2026-10-03T10:29:11.654Z"
+   },
+   "why": "Superseded: UPSSSC's notice 1423 of 25 Sep 2026 moved PET-2026 from 23, 24 and 25 Oct to 25 Oct, 30 Oct and 1 Nov 2026.",
+   "evidenceUrl": "https://upsssc.gov.in/ViewPdf.aspx?NJbKyTiDxAqQnRYKCqojRTHwngIdnR5KGQXPSU/8zc0="
+  },
+  {
+   "type": "archive",
+   "group": "fix",
+   "exam": "UP_UPSSSC_PET",
+   "rowId": "cmtyevrzs004t1jdzd6n0cteo",
+   "before": {
+    "label": "PET 2026 exam - Day 2",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "ai-generated:claude",
+    "notes": "Two shifts: 10 AM-12 PM and 3-5 PM · no key published for this stage",
+    "confidence": "official",
+    "url": "https://testbook.com/news/upsssc-pet-exam-date-2026-out/",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "PET 2026 exam - Day 2",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "ai-generated:claude:suppressed",
+    "notes": "Two shifts: 10 AM-12 PM and 3-5 PM · no key published for this stage",
+    "confidence": "official",
+    "url": "https://testbook.com/news/upsssc-pet-exam-date-2026-out/",
+    "archivedAt": "2026-10-03T10:29:11.654Z"
+   },
+   "why": "Superseded: UPSSSC's notice 1423 of 25 Sep 2026 moved PET-2026 from 23, 24 and 25 Oct to 25 Oct, 30 Oct and 1 Nov 2026.",
+   "evidenceUrl": "https://upsssc.gov.in/ViewPdf.aspx?NJbKyTiDxAqQnRYKCqojRTHwngIdnR5KGQXPSU/8zc0="
+  },
+  {
+   "type": "archive",
+   "group": "fix",
+   "exam": "UK_UKPSC_PCS",
+   "rowId": "cmt5vyduf02mz13qebyt8s6cm",
+   "before": {
+    "label": "2026 Prelims Exam (expected)",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "ai-generated:claude",
+    "notes": "Official notice confirms first fortnight of October 2026 (1-15 Oct)",
+    "confidence": "official",
+    "url": "https://testbook.com/ukpsc-combined-upper-subordinate-service",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "2026 Prelims Exam (expected)",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "ai-generated:claude:suppressed",
+    "notes": "Official notice confirms first fortnight of October 2026 (1-15 Oct)",
+    "confidence": "official",
+    "url": "https://testbook.com/ukpsc-combined-upper-subordinate-service",
+    "archivedAt": "2026-10-03T10:29:11.654Z"
+   },
+   "why": "Wrong date. UKPSC's exam calendar (updated 1 Sep 2026) proposes 29 Nov 2026 for the PCS 2026 prelims; its PCS notice of 9 Sep gives no exam date. The row's note (\"Official notice confirms first fortnight of October\") is not what UKPSC's documents say.",
+   "evidenceUrl": "https://psc.uk.gov.in/public/uploads/pdf/1788267804.pdf"
+  },
+  {
+   "type": "archive",
+   "group": "fix",
+   "exam": "UK_UKPSC_PCS",
+   "rowId": "cmt5vydxe02n313qepshokbvn",
+   "before": {
+    "label": "2026 Prelims Result (expected)",
+    "kind": "RESULT",
+    "isExamDay": false,
+    "source": "ai-generated:claude",
+    "notes": "Based on previous cycle timeline of 6-8 weeks",
+    "confidence": "expected",
+    "url": null,
+    "archivedAt": null
+   },
+   "after": {
+    "label": "2026 Prelims Result (expected)",
+    "kind": "RESULT",
+    "isExamDay": false,
+    "source": "ai-generated:claude:suppressed",
+    "notes": "Based on previous cycle timeline of 6-8 weeks",
+    "confidence": "expected",
+    "url": null,
+    "archivedAt": "2026-10-03T10:29:11.654Z"
+   },
+   "why": "An estimate counted 6–8 weeks from the wrong 11 Oct prelims date; with the prelims proposed for 29 Nov it would fall 16 days after the exam. No replacement estimate is written.",
+   "evidenceUrl": "https://psc.uk.gov.in/public/uploads/pdf/1788267804.pdf"
+  },
+  {
+   "type": "create",
+   "group": "fix",
+   "exam": "UK_UKPSC_PCS",
+   "rowId": "cmus9282g000212skbamrwma9",
+   "before": null,
+   "after": {
+    "label": "PCS 2026 Prelims (tentative, UKPSC exam calendar)",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "official-research:2026-10-03",
+    "notes": "Combined State Civil/Upper Subordinate Services Exam-2026, preliminary exam: proposed date Sunday 29 Nov 2026 in UKPSC's Exam Calendar 2026-27 (updated, letter 115/2026-27 of 1 Sep 2026). UKPSC's PCS 2026 notice of 9 Sep gives the application dates only.",
+    "confidence": "official",
+    "url": "https://psc.uk.gov.in/public/uploads/pdf/1788267804.pdf",
+    "archivedAt": null
+   },
+   "why": "The date the body states, replacing the archived 11 Oct row.",
+   "evidenceUrl": "https://psc.uk.gov.in/public/uploads/pdf/1788267804.pdf"
+  },
+  {
+   "type": "archive",
+   "group": "fix",
+   "exam": "MP_MPESB",
+   "rowId": "cmurpds57002wypwcrtgliaws",
+   "before": {
+    "label": "Group 3 Sub Engineer — Exam (expected)",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "ai-generated:claude",
+    "notes": "Exam starting from October 7 for Sub Engineer and other technical posts, 1,700 vacancies; application reopened October 13 · no key published for this stage",
+    "confidence": "official",
+    "url": "https://esb.mp.gov.in/Rulebooks/RB_2026/Group03_2026_Updated_27082026.pdf",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "Group 3 Sub Engineer — Exam (expected)",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "ai-generated:claude:suppressed",
+    "notes": "Exam starting from October 7 for Sub Engineer and other technical posts, 1,700 vacancies; application reopened October 13 · no key published for this stage",
+    "confidence": "official",
+    "url": "https://esb.mp.gov.in/Rulebooks/RB_2026/Group03_2026_Updated_27082026.pdf",
+    "archivedAt": "2026-10-03T10:29:11.654Z"
+   },
+   "why": "Postponed: ESB's notice of 1 Oct 2026 moves the Group-3 Sub Engineer combined test planned from 7 Oct to December–January (the row was official-tier, inside the hub's exam-week window).",
+   "evidenceUrl": "https://esb.mp.gov.in/Advertisement/ADV_2026/Group3_2026_ExamDate_changeNotice_01102026.jpg"
+  },
+  {
+   "type": "archive",
+   "group": "fix",
+   "exam": "MP_POLICE_PC",
+   "rowId": "cmttrnykd003whrm53dyktlsc",
+   "before": {
+    "label": "Notification (2026 cycle - expected)",
+    "kind": "NOTIFICATION",
+    "isExamDay": false,
+    "source": "ai-generated:claude",
+    "notes": "Next cycle notification expected in October/November 2026 based on coaching portal estimates; approximately 7,500-8,500 vacancies anticipated",
+    "confidence": "expected",
+    "url": null,
+    "archivedAt": null
+   },
+   "after": {
+    "label": "Notification (2026 cycle - expected)",
+    "kind": "NOTIFICATION",
+    "isExamDay": false,
+    "source": "ai-generated:claude:suppressed",
+    "notes": "Next cycle notification expected in October/November 2026 based on coaching portal estimates; approximately 7,500-8,500 vacancies anticipated",
+    "confidence": "expected",
+    "url": null,
+    "archivedAt": "2026-10-03T10:29:11.654Z"
+   },
+   "why": "Superseded estimate (\"Notification (2026 cycle - expected)\", 15 Oct): ESB has already issued it — online applications for the Police Constable (GD) Recruitment Test 2026 opened 22 Sep and close 6 Oct 2026 (ESB rulebook, revised page 1).",
+   "evidenceUrl": "https://esb.mp.gov.in/Rulebooks/RB_2026/PCRT_2026_Rulebook_Revised_Page_01_15092026.pdf"
+  },
+  {
+   "type": "archive",
+   "group": "fix",
+   "exam": "MP_POLICE_PC",
+   "rowId": "cmttrnykg003yhrm5cm2jcqsa",
+   "before": {
+    "label": "Written exam (2026 cycle - expected)",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "ai-generated:claude",
+    "notes": "Tentative exam window December 2026 to January 2027 based on typical cycle pattern · no key published for this stage",
+    "confidence": "expected",
+    "url": null,
+    "archivedAt": null
+   },
+   "after": {
+    "label": "Written exam (2026 cycle - expected)",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "ai-generated:claude:suppressed",
+    "notes": "Tentative exam window December 2026 to January 2027 based on typical cycle pattern · no key published for this stage",
+    "confidence": "expected",
+    "url": null,
+    "archivedAt": "2026-10-03T10:29:11.654Z"
+   },
+   "why": "Superseded estimate (\"Written exam (2026 cycle - expected)\", 15 Dec): ESB's rulebook gives the probable exam date as from 19 Nov 2026.",
+   "evidenceUrl": "https://esb.mp.gov.in/Rulebooks/RB_2026/PCRT_2026_Rulebook_Revised_Page_01_15092026.pdf"
+  },
+  {
+   "type": "create",
+   "group": "fix",
+   "exam": "MP_POLICE_PC",
+   "rowId": "cmus928eo000412skoy75n4xf",
+   "before": null,
+   "after": {
+    "label": "Online application closes",
+    "kind": "APPLICATION_END",
+    "isExamDay": false,
+    "source": "official-research:2026-10-03",
+    "notes": "ESB rulebook, revised page 1 (15 Sep 2026): online applications 22 Sep–6 Oct 2026, corrections until 11 Oct; probable exam date: from 19 Nov 2026, two shifts (10:00–12:00, 15:00–17:00).",
+    "confidence": "official",
+    "url": "https://esb.mp.gov.in/Rulebooks/RB_2026/PCRT_2026_Rulebook_Revised_Page_01_15092026.pdf",
+    "archivedAt": null
+   },
+   "why": "The date ESB's rulebook states.",
+   "evidenceUrl": "https://esb.mp.gov.in/Rulebooks/RB_2026/PCRT_2026_Rulebook_Revised_Page_01_15092026.pdf"
+  },
+  {
+   "type": "create",
+   "group": "fix",
+   "exam": "MP_POLICE_PC",
+   "rowId": "cmus928ic000612sks8tq5f11",
+   "before": null,
+   "after": {
+    "label": "Last date to correct the application",
+    "kind": "CORRECTION_WINDOW",
+    "isExamDay": false,
+    "source": "official-research:2026-10-03",
+    "notes": "ESB rulebook, revised page 1 (15 Sep 2026): online applications 22 Sep–6 Oct 2026, corrections until 11 Oct; probable exam date: from 19 Nov 2026, two shifts (10:00–12:00, 15:00–17:00).",
+    "confidence": "official",
+    "url": "https://esb.mp.gov.in/Rulebooks/RB_2026/PCRT_2026_Rulebook_Revised_Page_01_15092026.pdf",
+    "archivedAt": null
+   },
+   "why": "The date ESB's rulebook states.",
+   "evidenceUrl": "https://esb.mp.gov.in/Rulebooks/RB_2026/PCRT_2026_Rulebook_Revised_Page_01_15092026.pdf"
+  },
+  {
+   "type": "create",
+   "group": "fix",
+   "exam": "MP_POLICE_PC",
+   "rowId": "cmus928m3000812skae0p4d58",
+   "before": null,
+   "after": {
+    "label": "Written exam begins (probable date, ESB)",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "official-research:2026-10-03",
+    "notes": "ESB rulebook, revised page 1 (15 Sep 2026): online applications 22 Sep–6 Oct 2026, corrections until 11 Oct; probable exam date: from 19 Nov 2026, two shifts (10:00–12:00, 15:00–17:00).",
+    "confidence": "official",
+    "url": "https://esb.mp.gov.in/Rulebooks/RB_2026/PCRT_2026_Rulebook_Revised_Page_01_15092026.pdf",
+    "archivedAt": null
+   },
+   "why": "The date ESB's rulebook states (\"संभावित परीक्षा दिनांक … 19-11-2026 से प्रारंभ\" — probable, from 19 Nov), replacing the archived 15 Dec estimate.",
+   "evidenceUrl": "https://esb.mp.gov.in/Rulebooks/RB_2026/PCRT_2026_Rulebook_Revised_Page_01_15092026.pdf"
+  }
+ ]
+}
