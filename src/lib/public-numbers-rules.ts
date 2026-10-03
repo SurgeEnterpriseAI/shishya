@@ -361,7 +361,7 @@ export const WEEKLY_COLUMNS: readonly { key: WeeklyColumn; label: string; defini
     key: "peopleWhoCame",
     label: "People who came",
     definition:
-      "People with a page view that week (not tagged as a bot) who meet the all-time counter's rule — an identity seen on 2 or more page views, or on one view with a referrer — plus page views by verified browsers that carry no identity. Proves a visit, not learning. The home page strip calls this counter 'learners'.",
+      "People with a page view that week (not tagged as a bot) who meet the all-time counter's rule — a person (an account, or a browser id) seen on 2 or more page views, or on one view with a referrer or a tag; a new account and the browser id it signed up from are one person for accounts made since 11 Sep 2026 — plus browsers that came without an identity, counted once per device per IST day (so a device that came on three days of the week counts three times; tagged bots excluded). Proves a visit, not learning. The home page strip calls this counter 'learners'.",
   },
   { key: "mocks", label: "Mocks taken", definition: "Mocks submitted or auto-submitted, by finish time." },
   {

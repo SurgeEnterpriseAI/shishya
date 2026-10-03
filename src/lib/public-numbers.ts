@@ -44,6 +44,7 @@ import { CAREERS } from "@/data/careers";
 import { INDIAN_LANGUAGE_COUNT, LANGUAGE_COUNT } from "@/lib/languages";
 import { type IsoWeek, IST_OFFSET_MS, istDayLabel, istDayRangeLabel, istDayString } from "@/lib/iso-week";
 import { sourceFamilySql } from "@/lib/source-family";
+import { SIGNUP_LINK_CTE, landingKeySql, personKeySql, signupJoinSql, walkInWhereSql } from "@/lib/learner-count";
 import {
   DEFINITIONS,
   HUMAN_RULE_HAVING,
@@ -107,13 +108,58 @@ function activitySql(since: Date): Prisma.Sql {
       WHERE cm.role = 'USER' AND cm."createdAt" >= ${since}`;
 }
 
-/** The "people who came" counter's human rule over all-time page views. */
+/** The "people who came" counter's human rule over all-time page views, one
+ *  key per account or browser id (used by the new-people sources split). */
 const HUMAN_IDS = Prisma.sql`
   SELECT COALESCE("userId", "anonId") AS k
   FROM "AnalyticsEvent"
   WHERE kind = 'PAGE_VIEW' AND COALESCE("userId", "anonId") IS NOT NULL
   GROUP BY 1
   ${Prisma.raw(HUMAN_RULE_HAVING)}`;
+
+/** The same rule on the strip's merged person (src/lib/learner-count.ts): a
+ *  new account and the browser id it signed up from are one person (SIGNUP
+ *  rows carry that link since 11 Sep 2026). Needs `WITH ${SIGNUP_LINK_CTE}`. */
+const HUMAN_PERSONS = Prisma.sql`
+  SELECT ${Prisma.raw(personKeySql("e"))} AS k
+  FROM "AnalyticsEvent" e ${Prisma.raw(signupJoinSql("e"))}
+  WHERE e.kind = 'PAGE_VIEW' AND COALESCE(e."userId", e."anonId") IS NOT NULL
+  GROUP BY 1
+  ${Prisma.raw(HUMAN_RULE_HAVING)}`;
+
+/** The weekly "People who came" column (rows of wk, n) for [from, to): the
+ *  home strip's learners counter counted per IST week, on the strip's own
+ *  keys (3 Oct 2026, src/lib/learner-count.ts) — persons (merged through
+ *  the SIGNUP link) who meet the counter's rule and have a page view that
+ *  week not tagged as a bot, plus that week's identity-less landing keys
+ *  (one per device per IST day; tagged bots never enter). The counter's
+ *  gap-era overlap correction (identities born 31 Jul–16 Aug) cannot touch
+ *  these weeks: the column starts at PEOPLE_FIRST_WEEK. Team accounts out. */
+export function weeklyPeopleSql(from: Date, to: Date, team: string[]): Prisma.Sql {
+  return Prisma.sql`
+      WITH ${Prisma.raw(SIGNUP_LINK_CTE)}, human AS (${HUMAN_PERSONS}),
+      ids AS (
+        SELECT x.wk, COUNT(DISTINCT x.k) AS n
+        FROM (
+          SELECT ${istWeek(`e."createdAt"`)} AS wk, ${Prisma.raw(personKeySql("e"))} AS k
+          FROM "AnalyticsEvent" e ${Prisma.raw(signupJoinSql("e"))}
+          WHERE e.kind = 'PAGE_VIEW' AND (e."client" IS NULL OR e."client" <> 'bot')
+            AND COALESCE(e."userId", e."anonId") IS NOT NULL
+            AND e."createdAt" >= ${from} AND e."createdAt" < ${to}
+        ) x JOIN human h ON h.k = x.k
+        WHERE NOT (h.k = ANY(${team}::text[]))
+        GROUP BY 1
+      ),
+      walk AS (
+        SELECT ${istWeek(`a."createdAt"`)} AS wk, COUNT(DISTINCT ${Prisma.raw(landingKeySql("a"))}) AS n
+        FROM "AnalyticsEvent" a
+        WHERE ${Prisma.raw(walkInWhereSql("a"))}
+          AND a."createdAt" >= ${from} AND a."createdAt" < ${to}
+        GROUP BY 1
+      )
+      SELECT COALESCE(ids.wk, walk.wk) AS wk, (COALESCE(ids.n, 0) + COALESCE(walk.n, 0))::int AS n
+      FROM ids FULL JOIN walk ON walk.wk = ids.wk`;
+}
 
 /** ADMIN_EMAILS, parsed exactly as src/lib/admin.ts does. */
 function adminEmails(): string[] {
@@ -245,28 +291,11 @@ async function readWeeklyUsage(): Promise<WeeklyUsage> {
       FROM act
       WHERE d >= ${fromDay}::date AND d <= ${toDay}::date AND NOT (u = ANY(${team}::text[]))
       GROUP BY 1`,
-    // People who came: the counter's human identities with a page view that
-    // week (bots out), plus that week's identity-less browser landings. The
-    // counter's gap-era overlap correction (identities born 31 Jul–16 Aug)
-    // cannot touch these weeks: the column starts at PEOPLE_FIRST_WEEK.
-    prisma.$queryRaw<WkN[]>`
-      WITH human AS (${HUMAN_IDS}),
-      ids AS (
-        SELECT ${istWeek(`e."createdAt"`)} AS wk, COUNT(DISTINCT COALESCE(e."userId", e."anonId")) AS n
-        FROM "AnalyticsEvent" e JOIN human h ON h.k = COALESCE(e."userId", e."anonId")
-        WHERE e.kind = 'PAGE_VIEW' AND (e."client" IS NULL OR e."client" <> 'bot')
-          AND e."createdAt" >= ${from} AND e."createdAt" < ${to}
-          AND NOT (h.k = ANY(${team}::text[]))
-        GROUP BY 1
-      ),
-      walk AS (
-        SELECT ${istWeek(`"createdAt"`)} AS wk, COUNT(*) AS n FROM "AnalyticsEvent"
-        WHERE kind = 'PAGE_VIEW' AND "client" = 'browser' AND "userId" IS NULL AND "anonId" IS NULL
-          AND "createdAt" >= ${from} AND "createdAt" < ${to}
-        GROUP BY 1
-      )
-      SELECT COALESCE(ids.wk, walk.wk) AS wk, (COALESCE(ids.n, 0) + COALESCE(walk.n, 0))::int AS n
-      FROM ids FULL JOIN walk ON walk.wk = ids.wk`,
+    // People who came: the strip's learners counter per week, on its own
+    // keys (3 Oct 2026: merged persons + one landing per device per IST day;
+    // until then every identity-less page view counted and a new account
+    // counted apart from its browser id).
+    prisma.$queryRaw<WkN[]>(weeklyPeopleSql(from, to, team)),
   ]);
   const clean = (rows: WkN[]) => rows.map((r) => ({ wk: r.wk, n: num(r.n) }));
   return buildWeeklyUsage(

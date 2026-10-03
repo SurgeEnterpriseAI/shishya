@@ -4,16 +4,20 @@
 // graduates, postgraduates …, you decide the names").
 //
 // Every learner (src/lib/live-counts-server.ts uniqueVisitors: engaged
-// identities + identity-less browser landings − the gap-era overlap) is
-// counted in exactly ONE group, so the groups add up to the learners count:
-//   • an identity goes to the section where it has the most page views
+// persons + identity-less landings − the gap-era overlap; the keys are
+// src/lib/learner-count.ts's) is counted in exactly ONE group, so the groups
+// add up to the learners count:
+//   • a person goes to the section where it has the most page views
 //     (a tie goes to the section it viewed last); pages that belong to no
-//     section (home, Ask, dashboard, sign-in …) do not vote, and an identity
+//     section (home, Ask, dashboard, sign-in …) do not vote, and a person
 //     with only such pages is "general pages only" (key: exploring);
-//   • an identity-less landing goes to the section of its one page;
+//   • an identity-less landing (3 Oct 2026: one per device per IST day, not
+//     one per page view) goes to its most-viewed section the same way;
 //   • the gap-era overlap is taken from the identity's own group.
 // Checked on production on 30 Sep 2026: the groups summed to 16,035 = the
-// learners counter, and today's groups to +76 = its "+N today".
+// learners counter, and today's groups to +76 = its "+N today". Again on
+// 3 Oct 2026 with the person / device keys (scripts/tmp-strip-5.ts): 14,902
+// and +97 on both sides.
 //
 // Sections come from the page path, and for exam pages from the exam's own
 // row: government recruitment and eligibility exams (SSC, banking, railways,
@@ -53,6 +57,7 @@
 // text, no DB.
 
 import { Prisma } from "@prisma/client";
+import { SIGNUP_LINK_CTE, landingKeySql, personKeySql, signupJoinSql, walkInWhereSql } from "@/lib/learner-count";
 import { ENTRANCE_EXCEPTION_CODES, STATE_CET_CODES } from "@/lib/exam-kind";
 import { PG_ENTRANCE_CODES } from "@/lib/pg-entrances";
 
@@ -100,14 +105,21 @@ export function sectionCaseSql(): string {
 }
 
 /** One query, rows of (sec, part, n, today): part 'engaged' / 'walkin' /
- *  'overlap', n all-time, today since dayStart. The learner rule and the
- *  overlap window are the uniqueVisitors counter's own. */
+ *  'overlap', n all-time, today since dayStart. The learner rule, the
+ *  person key (a new account and its pre-sign-in anonymous id are one
+ *  person, for accounts made since 11 Sep 2026 — earlier SIGNUP rows carry
+ *  no browser id), the landing key (one per device per IST day) and the overlap
+ *  window are the uniqueVisitors counter's own (src/lib/learner-count.ts).
+ *  A landing key goes to its most-viewed section like a person does (a
+ *  device may open several pages the same day). */
 export function learnerSectionsSql(dayStart: Date): Prisma.Sql {
   return Prisma.sql`
-    WITH pv AS MATERIALIZED (
-      SELECT COALESCE(a."userId", a."anonId") AS k, a."createdAt", a."refHost", a."utmSource", a."client", a."userId", a."anonId",
+    WITH ${Prisma.raw(SIGNUP_LINK_CTE)}, pv AS MATERIALIZED (
+      SELECT ${Prisma.raw(personKeySql("a"))} AS k,
+        CASE WHEN ${Prisma.raw(walkInWhereSql("a"))} THEN ${Prisma.raw(landingKeySql("a"))} END AS lk,
+        a."createdAt", a."refHost", a."utmSource",
         regexp_replace(a.path, '^/(hi|te)(/|$)', '/') AS sp
-      FROM "AnalyticsEvent" a WHERE a.kind = 'PAGE_VIEW'
+      FROM "AnalyticsEvent" a ${Prisma.raw(signupJoinSql("a"))} WHERE a.kind = 'PAGE_VIEW'
     ), pv2 AS (
       SELECT pv.*, COALESCE(e1.code, e2.code, e3.code) AS ecode, COALESCE(e1.category, e2.category, e3.category)::text AS ecat
       FROM pv
@@ -132,6 +144,14 @@ export function learnerSectionsSql(dayStart: Date): Prisma.Sql {
     ), learners AS (
       SELECT i.*, COALESCE(pr.sec, 'exploring') AS sec FROM ids i LEFT JOIN prim pr ON pr.k = i.k
       WHERE i.c >= 2 OR (i.c = 1 AND (i.r OR i.u))
+    ), wsecs AS (
+      SELECT lk, sec, COUNT(*) AS n, MAX("createdAt") AS last_at FROM s WHERE lk IS NOT NULL AND sec <> 'exploring' GROUP BY lk, sec
+    ), wprim AS (
+      SELECT DISTINCT ON (lk) lk, sec FROM wsecs ORDER BY lk, n DESC, last_at DESC
+    ), walkins AS (
+      SELECT w.lk, w.today, COALESCE(wp.sec, 'exploring') AS sec
+      FROM (SELECT lk, bool_or("createdAt" >= ${dayStart}) AS today FROM s WHERE lk IS NOT NULL GROUP BY lk) w
+      LEFT JOIN wprim wp ON wp.lk = w.lk
     ), learner_sections AS (
       SELECT sec, 'engaged' AS part, COUNT(*)::int AS n,
         COUNT(*) FILTER (WHERE NOT (cb >= 2 OR (cb = 1 AND (rb OR ub))))::int AS today
@@ -140,8 +160,8 @@ export function learnerSectionsSql(dayStart: Date): Prisma.Sql {
       SELECT sec, 'overlap', COUNT(*)::int, COUNT(*) FILTER (WHERE cb < 2)::int
       FROM learners WHERE c >= 2 AND first_at >= '2026-07-30T20:00:00Z' AND first_at < '2026-08-16T17:00:00Z' GROUP BY sec
       UNION ALL
-      SELECT sec, 'walkin', COUNT(*)::int, COUNT(*) FILTER (WHERE "createdAt" >= ${dayStart})::int
-      FROM s WHERE "client" = 'browser' AND "userId" IS NULL AND "anonId" IS NULL GROUP BY sec
+      SELECT sec, 'walkin', COUNT(*)::int, COUNT(*) FILTER (WHERE today)::int
+      FROM walkins GROUP BY sec
     )
     SELECT sec, part, n, today FROM learner_sections
   `;

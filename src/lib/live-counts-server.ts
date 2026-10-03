@@ -35,6 +35,7 @@ import { WITHDRAWN_TAG } from "@/lib/question-withdrawn";
 import { usableNotesSql } from "@/lib/topic-notes";
 import { loadSchoolSurface, schoolSurfaceCounts } from "@/lib/school/surface";
 import { SECTION_TTL_MS, foldSectionRows, learnerSectionsSql, type LearnerSectionCounts } from "@/lib/learner-sections";
+import { SIGNUP_LINK_CTE, landingKeySql, personKeySql, signupJoinSql, walkInWhereSql } from "@/lib/learner-count";
 
 export interface LiveCounts {
   /** Distinct people with ANY activity in the last 30 minutes: a human
@@ -55,16 +56,22 @@ export interface LiveCounts {
   /** PAGE_VIEW rows TODAY (since IST midnight), tagged bots excluded.
    *  Calendar-day number, not a rolling 24 h window. */
   pageViewsToday: number;
-  /** Distinct people who came to Shishya — engaged identities (2+ page
-   *  views, or one referred view) PLUS identity-less browser landings,
-   *  overlap-corrected. The strip calls this "learners" (founder's
-   *  word, 26 Sep 2026): everyone who came to Shishya to study. */
+  /** Distinct people who came to Shishya — engaged persons (2+ page
+   *  views, or one referred / tagged view; a new account and its
+   *  pre-sign-in anonymous id are ONE person, 3 Oct 2026 — for accounts
+   *  made since 11 Sep 2026 only: earlier SIGNUP rows carry no browser
+   *  id, so an estimated 660 to 1,030 people of 30 Jul – 11 Sep still
+   *  count twice, see src/lib/learner-count.ts) PLUS
+   *  identity-less browser landings counted as people (one per device per
+   *  IST day, 3 Oct 2026 — src/lib/learner-count.ts), overlap-corrected.
+   *  The strip calls this "learners" (founder's word, 26 Sep 2026):
+   *  everyone who came to Shishya to study. */
   uniqueVisitors: number;
   /** Learners added TODAY (since IST midnight): uniqueVisitors now minus
-   *  uniqueVisitors as it stood at midnight — identities that first met
+   *  uniqueVisitors as it stood at midnight — persons that first met
    *  the learner rule today (a second page view, or a first view from
-   *  another site or a tagged link), plus today's identity-less browser
-   *  landings, less the gap-era overlap that closed today. 30 Sep 2026
+   *  another site or a tagged link), plus today's identity-less landings
+   *  (devices), less the gap-era overlap that closed today. 30 Sep 2026
    *  (founder: "how many learners increased today"). */
   uniqueVisitorsToday: number;
   // The 14 learners-by-section fields are OPTIONAL (30 Sep 2026 review): a
@@ -112,15 +119,16 @@ export interface LiveCounts {
   learnersExploring?: number;
   /** The same group's learners added since IST midnight. */
   learnersExploringToday?: number;
-  /** Walk-ins: page views by verified BROWSERS that carry no identity —
-   *  the single-page landers. They're humans too (a crawler can't be
-   *  classified 'browser' AND they reached us somehow), we just don't
-   *  know their seriousness yet. Countable only since the 31 Jul 2026
-   *  classification cutover, so it starts small and grows honestly.
-   *  Includes each future-visitor's very first page view (identity
-   *  starts on their second view) — i.e. this is "human first-touch
-   *  landings", which is exactly what a walk-in is. The internal split
-   *  of uniqueVisitors; not shown on the strip. */
+  /** Walk-ins: landings by browsers that carry no identity — the
+   *  single-page landers — counted as PEOPLE (3 Oct 2026): one per device
+   *  (ipHash + uaHash) per IST day; a Class 1-7 page one per class page per
+   *  IST day; a pre-fingerprint row (before 18 Aug 2026) one per row, only
+   *  with a referrer, a tag or an entry page (src/lib/learner-count.ts).
+   *  Rows the ingest or the hourly bot scrub tagged are out. Includes each
+   *  future-visitor's very first page view when it had no referrer and no
+   *  tag (identity starts on their second view). The internal split of
+   *  uniqueVisitors; not shown on the strip. Until 3 Oct 2026 it was every
+   *  identity-less browser page view. */
   walkIns: number;
   /** Mock exams TAKEN: Attempt rows with status SUBMITTED or
    *  AUTO_SUBMITTED — a mock the student finished, on any exam or school
@@ -193,9 +201,9 @@ export const LIVE_COUNT_DEFINITIONS: Record<keyof LiveCounts, string> = {
   totalPageViews: "PAGE_VIEW events all-time, ingest-tagged bots and pre-30-Jul-2026 phantom ids excluded.",
   pageViewsToday: "PAGE_VIEW events since 00:00 IST today, tagged bots excluded.",
   uniqueVisitors:
-    "Distinct people who came to Shishya: identities on 2+ page views, or one view that arrived from another site or a tagged link (for example utm_source=chatgpt.com — 27 Sep 2026: these were being missed), plus identity-less browser landings, overlap-corrected. Proves a visit, not learning.",
+    "Distinct people who came to Shishya: people (an account, or a browser id) on 2+ page views, or on one view that arrived from another site or a tagged link (for example utm_source=chatgpt.com — 27 Sep 2026: these were being missed), plus browsers that came without an identity, one per device per IST day (tagged bots excluded), overlap-corrected. A new account and the browser id it signed up from are one person for accounts made since 11 Sep 2026; for the 1,033 accounts made between 30 Jul and 11 Sep 2026 the sign-up record does not carry the browser id, so most of those people (an estimated 660 to 1,030) are counted twice. Proves a visit, not learning.",
   uniqueVisitorsToday:
-    "Learners added since 00:00 IST today: the learners count now minus the same count at midnight — people who first met the learner rule today (a second page view, or a first view from another site or a tagged link) plus today's identity-less browser landings.",
+    "Learners added since 00:00 IST today: the learners count now minus the same count at midnight — people who first met the learner rule today (a second page view, or a first view from another site or a tagged link; a new account is not a new person if its browser already counted) plus today's devices that came without an identity, one per device.",
   learnersGovt:
     "Learners whose most-viewed section is government recruitment and eligibility exams (SSC, banking, railways, police, state PSCs, UPSC, TET / CTET), current affairs, jobs map, typing, descriptive and the government-exam finder (pages outside every section — home, Ask, the AI tutor chat, sign-in, dashboard, and pages listing every kind of exam — do not count; one view is enough; a tie goes to the section viewed last). Each learner is in one group, so the groups add up to learners as of the last refresh (every 5 minutes); a group under 20 people is not shown.",
   learnersGovtToday: "Learners who first counted today (since 00:00 IST) and whose group is this one; the groups' today numbers add up to the learners' +N today.",
@@ -217,7 +225,8 @@ export const LIVE_COUNT_DEFINITIONS: Record<keyof LiveCounts, string> = {
   learnersExploring:
     "Learners whose page views are all outside every section so far — home, Ask, the AI tutor chat, sign-in, dashboard, coach, and pages listing every kind of exam (browse, calendar, results, alerts, live tests). Refreshed every 5 minutes; under 20 people not shown.",
   learnersExploringToday: "Learners who first counted today (since 00:00 IST) and whose page views are all outside every section.",
-  walkIns: "Identity-less browser page views (single-page landers) — the internal split of uniqueVisitors; not shown.",
+  walkIns:
+    "Browsers that came without an identity, counted as people: one per device (address + user agent fingerprint) per IST day, a Class 1-7 page one per class page per day, a row from before 18 Aug 2026 one per row only with a referrer, a tag or an entry page; tagged bots excluded — the internal split of uniqueVisitors; not shown.",
   mocksTaken: "Attempt rows with status SUBMITTED or AUTO_SUBMITTED — mocks a student finished, any exam or school chapter — plus whole papers guests finished without an account (counted when the server grades one with at least one answer; from 27 Sep 2026, founder call).",
   mocksToday: "Attempts submitted since 00:00 IST today, plus guest papers graded since then.",
   totalSignups: "User rows (accounts).",
@@ -545,11 +554,17 @@ export async function getLiveCounts(now: Date = new Date()): Promise<LiveCounts>
     // left exactly one identity-less landing each — subtracted below.
     // Pre-cutover crawler-minted ids (1 view, no referrer) stay out of
     // every class. We'd still rather understate than inflate.
+    // 3 Oct 2026: one person, one key — a new account's pre-sign-in
+    // anonymous id is merged into the account through its SIGNUP row
+    // (src/lib/learner-count.ts; 18 of 2 Oct's 19 new accounts were
+    // counted twice before this). SIGNUP rows carry that id only since
+    // 11 Sep 2026, so accounts made 30 Jul – 11 Sep stay split.
     prisma.$queryRaw<CountRow[]>`
+      WITH ${Prisma.raw(SIGNUP_LINK_CTE)}
       SELECT COUNT(*)::bigint AS count FROM (
-        SELECT COALESCE("userId", "anonId") AS k
-        FROM "AnalyticsEvent"
-        WHERE kind = 'PAGE_VIEW' AND COALESCE("userId", "anonId") IS NOT NULL
+        SELECT ${Prisma.raw(personKeySql("e"))} AS k
+        FROM "AnalyticsEvent" e ${Prisma.raw(signupJoinSql("e"))}
+        WHERE e.kind = 'PAGE_VIEW' AND COALESCE(e."userId", e."anonId") IS NOT NULL
         GROUP BY 1
         HAVING COUNT(*) >= 2 OR (bool_or("refHost" IS NOT NULL) AND COUNT(*) = 1) OR (COUNT(*) = 1 AND bool_or("utmSource" IS NOT NULL))
       ) humans
@@ -623,33 +638,41 @@ export async function getLiveCounts(now: Date = new Date()): Promise<LiveCounts>
         finishedAt: { gte: dayStart },
       },
     }),
-    // Walk-ins: ALL identity-less browser page views — founder call
-    // (16 Aug 2026): "no genuine visit should miss." This includes the
-    // no-referrer landings (WhatsApp-app opens, privacy browsers, typed
-    // URLs) at the cost of counting any cookie-less crawler that spoofs
-    // a browser UA and sends no referrer. Known crawlers stay excluded
-    // (ingest-tagged bots never enter; July's phantom-id sweeps are
-    // scrubbed elsewhere). Public number: complete over pristine.
+    // Walk-ins: identity-less browser landings — founder call (16 Aug
+    // 2026): "no genuine visit should miss" (WhatsApp-app opens, privacy
+    // browsers, typed URLs). 3 Oct 2026: counted as PEOPLE, not page views
+    // — one per device (ipHash + uaHash) per IST day; a Class 1-7 page
+    // (no fingerprint by design) one per class page per IST day; a
+    // pre-fingerprint row (before 18 Aug 2026) one per row, only with a
+    // referrer, a tag or an entry page (landingKeySql, src/lib/learner-count.ts,
+    // explains each from the data). Bots stay out: ingest-tagged rows and
+    // rows the hourly scrub tags (src/lib/bot-scrub.ts) are client = 'bot'.
+    // Until 3 Oct every row counted: on 2 Oct one reader's 176 page views
+    // were 176 "learners".
     prisma.$queryRaw<CountRow[]>`
-      SELECT COUNT(*)::bigint AS count FROM "AnalyticsEvent"
-      WHERE kind = 'PAGE_VIEW' AND "client" = 'browser'
-        AND "userId" IS NULL AND "anonId" IS NULL
+      SELECT COUNT(DISTINCT ${Prisma.raw(landingKeySql("a"))})::bigint AS count
+      FROM "AnalyticsEvent" a
+      WHERE ${Prisma.raw(walkInWhereSql("a"))}
     `,
     // Overlap correction: an identity that BEGAN in the gap era (between
     // the 30 Jul cutover and the 16 Aug referred-first-hit fix) left its
     // first landing as an identity-less event before the cookie kicked
     // in — subtract so those people aren't counted twice. Identities
-    // born after the fix carry their id from the first event, so they
-    // leave no orphan landing and need no correction.
+    // born after the fix with a referrer or a tag carry their id from the
+    // first event and leave no orphan landing. (A direct first hit — no
+    // referrer, no tag — still leaves one; that overlap is not corrected:
+    // see the 3 Oct 2026 note in src/lib/learner-count.ts.) Merged person
+    // key as above.
     prisma.$queryRaw<CountRow[]>`
+      WITH ${Prisma.raw(SIGNUP_LINK_CTE)}
       SELECT COUNT(*)::bigint AS count FROM (
-        SELECT COALESCE("userId", "anonId") AS k
-        FROM "AnalyticsEvent"
-        WHERE kind = 'PAGE_VIEW' AND COALESCE("userId", "anonId") IS NOT NULL
+        SELECT ${Prisma.raw(personKeySql("e"))} AS k
+        FROM "AnalyticsEvent" e ${Prisma.raw(signupJoinSql("e"))}
+        WHERE e.kind = 'PAGE_VIEW' AND COALESCE(e."userId", e."anonId") IS NOT NULL
         GROUP BY 1
         HAVING COUNT(*) >= 2
-          AND MIN("createdAt") >= '2026-07-30T20:00:00Z'
-          AND MIN("createdAt") < '2026-08-16T17:00:00Z'
+          AND MIN(e."createdAt") >= '2026-07-30T20:00:00Z'
+          AND MIN(e."createdAt") < '2026-08-16T17:00:00Z'
       ) gap_era_engaged
     `,
     // AI tutor questions, whole site (26 Sep 2026): member turns (every
@@ -725,33 +748,40 @@ export async function getLiveCounts(now: Date = new Date()): Promise<LiveCounts>
     // today's identities are aggregated, so this reads a day's rows plus
     // their history, not the whole table. walkInsTodayRows adds today's
     // identity-less landings: together, uniqueVisitors now minus at midnight.
+    // 3 Oct 2026: on the merged person key (a new account is one person —
+    // a guest who was already a learner before midnight and signs up today
+    // is not new today; before, the account counted as a second learner).
     prisma.$queryRaw<CountRow[]>`
+      WITH ${Prisma.raw(SIGNUP_LINK_CTE)}
       SELECT (
         COUNT(*) FILTER (WHERE (c >= 2 OR (c = 1 AND (r OR u))) AND NOT (cb >= 2 OR (cb = 1 AND (rb OR ub))))
         - COUNT(*) FILTER (WHERE c >= 2 AND cb < 2 AND first_at >= '2026-07-30T20:00:00Z' AND first_at < '2026-08-16T17:00:00Z')
       )::bigint AS count
       FROM (
-        SELECT COALESCE("userId", "anonId") AS k,
+        SELECT ${Prisma.raw(personKeySql("e"))} AS k,
           COUNT(*) AS c,
-          bool_or("refHost" IS NOT NULL) AS r,
-          bool_or("utmSource" IS NOT NULL) AS u,
-          COUNT(*) FILTER (WHERE "createdAt" < ${dayStart}) AS cb,
-          COALESCE(bool_or("refHost" IS NOT NULL) FILTER (WHERE "createdAt" < ${dayStart}), FALSE) AS rb,
-          COALESCE(bool_or("utmSource" IS NOT NULL) FILTER (WHERE "createdAt" < ${dayStart}), FALSE) AS ub,
-          MIN("createdAt") AS first_at
-        FROM "AnalyticsEvent"
-        WHERE kind = 'PAGE_VIEW' AND COALESCE("userId", "anonId") IN (
-          SELECT DISTINCT COALESCE("userId", "anonId") FROM "AnalyticsEvent"
-          WHERE kind = 'PAGE_VIEW' AND "createdAt" >= ${dayStart} AND COALESCE("userId", "anonId") IS NOT NULL
-        )
+          bool_or(e."refHost" IS NOT NULL) AS r,
+          bool_or(e."utmSource" IS NOT NULL) AS u,
+          COUNT(*) FILTER (WHERE e."createdAt" < ${dayStart}) AS cb,
+          COALESCE(bool_or(e."refHost" IS NOT NULL) FILTER (WHERE e."createdAt" < ${dayStart}), FALSE) AS rb,
+          COALESCE(bool_or(e."utmSource" IS NOT NULL) FILTER (WHERE e."createdAt" < ${dayStart}), FALSE) AS ub,
+          MIN(e."createdAt") AS first_at
+        FROM "AnalyticsEvent" e ${Prisma.raw(signupJoinSql("e"))}
+        WHERE e.kind = 'PAGE_VIEW' AND COALESCE(e."userId", e."anonId") IS NOT NULL
+          AND ${Prisma.raw(personKeySql("e"))} IN (
+            SELECT DISTINCT ${Prisma.raw(personKeySql("t"))} FROM "AnalyticsEvent" t ${Prisma.raw(signupJoinSql("t"))}
+            WHERE t.kind = 'PAGE_VIEW' AND t."createdAt" >= ${dayStart} AND COALESCE(t."userId", t."anonId") IS NOT NULL
+          )
         GROUP BY 1
       ) learners_today
     `,
-    // Today's identity-less browser landings — the walk-in rule above, since midnight.
+    // Today's identity-less browser landings — the walk-in rule above, since
+    // midnight. A landing key carries its IST date, so every key seen since
+    // midnight is new today.
     prisma.$queryRaw<CountRow[]>`
-      SELECT COUNT(*)::bigint AS count FROM "AnalyticsEvent"
-      WHERE kind = 'PAGE_VIEW' AND "client" = 'browser' AND "createdAt" >= ${dayStart}
-        AND "userId" IS NULL AND "anonId" IS NULL
+      SELECT COUNT(DISTINCT ${Prisma.raw(landingKeySql("a"))})::bigint AS count
+      FROM "AnalyticsEvent" a
+      WHERE ${Prisma.raw(walkInWhereSql("a"))} AND a."createdAt" >= ${dayStart}
     `,
     // Live tests taken today: the ranked rule above, submitted since midnight.
     prisma.$queryRaw<CountRow[]>`
@@ -768,10 +798,10 @@ export async function getLiveCounts(now: Date = new Date()): Promise<LiveCounts>
   ]);
 
   // Combined "visitors" (founder call, 31 Jul; relabelled 26 Sep 2026):
-  // engaged visitors PLUS verified-browser single-page landers — they
-  // reached Shishya somehow and are provably not a tagged crawler, we
-  // just can't say what they did. Overlap-corrected so a lander who
-  // later engages counts once.
+  // engaged persons PLUS verified-browser single-page landers (one per
+  // device per IST day since 3 Oct 2026) — they reached Shishya somehow
+  // and are not a tagged crawler, we just can't say what they did.
+  // Overlap-corrected so a gap-era lander who later engaged counts once.
   const engaged = n(uniqueVisitorsRows);
   const landers = n(walkInsRows);
   const overlap = n(overlapRows);

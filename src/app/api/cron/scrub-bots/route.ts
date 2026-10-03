@@ -5,7 +5,8 @@
 // Running the scrub hourly keeps the public counters never more than an
 // hour stale, so the botnet inflation is never visible (founder call,
 // 21 Aug 2026). Removes only unmistakable botnets (≥15 IPs on one UA, no
-// referrer, 1 view/IP) and restores everything ambiguous to human.
+// referrer, 1 view/IP) and restores everything ambiguous to human. 3 Oct
+// 2026: also tags the deep reader (src/lib/bot-scrub.ts, deep-reader rule).
 //
 // Auth: Bearer ${CRON_SECRET}. Idempotent + self-correcting.
 

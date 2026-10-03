@@ -5,6 +5,7 @@
 import { describe, expect, it } from "vitest";
 import { LEARNER_SECTIONS, PG_ENTRANCE_EXTRA_CODES, POSTGRAD_CODES, foldSectionRows, learnerSectionsSql, sectionCaseSql, zeroSectionCounts } from "@/lib/learner-sections";
 import { PG_ENTRANCE_CODES } from "@/lib/pg-entrances";
+import { SIGNUP_LINK_CTE, landingKeySql, personKeySql, walkInWhereSql } from "@/lib/learner-count";
 import { STATE_CET_CODES } from "@/lib/exam-kind";
 
 describe("the groups", () => {
@@ -57,16 +58,21 @@ describe("the groups", () => {
     const sql = learnerSectionsSql(new Date("2026-09-29T18:30:00Z")).sql;
     expect(sql).toContain(`pv.sp LIKE '/mocks/%' AND m.id = substring(pv.sp from '^/mocks/([a-z0-9]+)')`);
     expect(sql).toContain(`pv.sp LIKE '/attempts/%' AND at.id = substring(pv.sp from '^/attempts/([a-z0-9]+)')`);
-    expect(sql).toContain("WITH pv AS MATERIALIZED (");
+    expect(sql).toContain(", pv AS MATERIALIZED (");
   });
 
-  it("uses the learners counter's own rule and overlap window", () => {
+  it("uses the learners counter's own rule, keys and overlap window (3 Oct 2026: merged person, device-day landings)", () => {
     const sql = learnerSectionsSql(new Date("2026-09-29T18:30:00Z")).sql;
     expect(sql).toContain("WHERE i.c >= 2 OR (i.c = 1 AND (i.r OR i.u))");
     expect(sql).toContain("first_at >= '2026-07-30T20:00:00Z' AND first_at < '2026-08-16T17:00:00Z'");
-    expect(sql).toContain(`FROM s WHERE "client" = 'browser' AND "userId" IS NULL AND "anonId" IS NULL`);
-    // One group per identity: the section with the most views, a tie to the latest.
+    // Persons merge through the SIGNUP link; landings are keyed (src/lib/learner-count.ts), never one per row.
+    expect(sql).toContain(`WITH ${SIGNUP_LINK_CTE}, pv AS MATERIALIZED (`);
+    expect(sql).toContain(`SELECT ${personKeySql("a")} AS k,`);
+    expect(sql).toContain(`CASE WHEN ${walkInWhereSql("a")} THEN ${landingKeySql("a")} END AS lk`);
+    expect(sql).not.toContain(`FROM s WHERE "client" = 'browser' AND "userId" IS NULL AND "anonId" IS NULL`);
+    // One group per identity: the section with the most views, a tie to the latest — and the same for a device.
     expect(sql).toContain("SELECT DISTINCT ON (k) k, sec FROM secs ORDER BY k, n DESC, last_at DESC");
+    expect(sql).toContain("SELECT DISTINCT ON (lk) lk, sec FROM wsecs ORDER BY lk, n DESC, last_at DESC");
   });
 });
 

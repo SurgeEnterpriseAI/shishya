@@ -173,7 +173,7 @@ const EXPECTED: LiveCounts = {
   totalPageViews: fixed.totalPageViews,
   pageViewsToday: fixed.pageViewsToday,
   uniqueVisitors: fixed.engaged + (fixed.walkIns - fixed.overlap), // 14,437
-  uniqueVisitorsToday: fixed.learnersToday + fixed.walkInsToday, // 175
+  uniqueVisitorsToday: fixed.learnersToday + fixed.walkInsToday, // 175 = 131 persons + 44 devices (3 Oct 2026: devices, not page views)
   // engaged + walk-ins − overlap per group (the fixture's section rows)
   learnersGovt: 10170,
   learnersGovtToday: 119,
@@ -511,6 +511,34 @@ describe("getLiveCounts — the read", () => {
     expect(calls.exam[0]).toEqual({ where: { active: true, category: { not: "SCHOOL_BOARD" } } });
     expect(calls.enrollment[0]).toEqual({ where: { active: true, exam: { category: { not: "SCHOOL_BOARD" } } } });
     expect(calls.attempt).toContainEqual({ where: { status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] } } });
+  });
+
+  it("learners count people, not page views (3 Oct 2026): one key per person, one per device per day, bots out", async () => {
+    await getLiveCounts(NOW);
+    const find = (frag: string) => sqlLog.find((s) => s.includes(frag)) ?? "";
+    // A new account and its pre-sign-in browser id are one person: every person query merges through sig.
+    for (const frag of [") humans", ") gap_era_engaged", ") learners_today"]) {
+      const q = find(frag);
+      expect(q, frag).toContain(`WITH sig AS (`);
+      expect(q, frag).toContain(`COALESCE(e."userId", sig."userId", e."anonId")`);
+      expect(q, frag).toContain(`LEFT JOIN sig ON sig."anonId" = e."anonId"`);
+    }
+    // Identity-less landings: DISTINCT device-day keys of untagged browser rows — never COUNT(*) of rows.
+    const walk = sqlLog.filter((s) => s.includes(`a."client" = 'browser'`) && !s.includes("learner_sections AS"));
+    expect(walk.length).toBe(2);
+    for (const q of walk) {
+      expect(q).toMatch(/SELECT COUNT\(DISTINCT CASE\s+WHEN a\."ipHash" IS NOT NULL THEN 'd'/);
+      expect(q).toContain(`a."userId" IS NULL AND a."anonId" IS NULL`);
+      expect(q).not.toMatch(/SELECT COUNT\(\*\)/);
+    }
+    expect(walk.filter((q) => q.includes(`a."createdAt" >= ?`)).length).toBe(1);
+    // The definitions say so.
+    expect(LIVE_COUNT_DEFINITIONS.uniqueVisitors).toMatch(/one per device per IST day/);
+    // …and only as far as it is true (review, 3 Oct 2026): SIGNUP rows carry the browser id since 11 Sep 2026 only.
+    expect(LIVE_COUNT_DEFINITIONS.uniqueVisitors).toMatch(/A new account and the browser id it signed up from are one person for accounts made since 11 Sep 2026;/);
+    expect(LIVE_COUNT_DEFINITIONS.uniqueVisitors).toMatch(/1,033 accounts made between 30 Jul and 11 Sep 2026 .* \(an estimated 660 to 1,030\) are counted twice/);
+    expect(LIVE_COUNT_DEFINITIONS.uniqueVisitorsToday).toMatch(/one per device/);
+    expect(LIVE_COUNT_DEFINITIONS.walkIns).toMatch(/one per device \(address \+ user agent fingerprint\) per IST day/);
   });
 
   it("the guest-import marker is the one /api/chat/import writes", () => {
