@@ -36,8 +36,9 @@ export const maxDuration = 120;
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/db/prisma";
-import { REAL_EXAM_SQL } from "@/lib/db/exam-scope";
+import { REAL_EXAM_SQL, REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
 import { currentAffairsUrls, pingIndexNow, schoolChapterKey, schoolChapterUpdateUrls, SITE_ORIGIN } from "@/lib/indexnow";
+import { CONTENT_CAP, contentUpdateUrls } from "@/lib/indexnow-content";
 import { SCHOOL_CONTAINER_WHERE } from "@/lib/school/scope";
 import { EMPTY_SCHOOL_SURFACE, readSchoolSurface } from "@/lib/school/surface";
 import { indexNowWindowMs, selectFreshStories, STORY_LOOKBACK_DAYS, type StoryRow } from "@/lib/news-dedupe";
@@ -107,19 +108,72 @@ export async function GET(req: Request) {
         )
       : [];
 
+    // 3 Oct 2026 (fix C16), same window: the written-content kinds that never
+    // pinged — exam topic notes, Hindi notes, guides and tricks written in it
+    // (each writer sets generatedAt to now on a rewrite). Real exams only;
+    // guides and tricks only with content (their pages 404 without it). Four
+    // reads one after another, each best-effort: a failure drops that kind,
+    // never the news set. URLs: src/lib/indexnow-content.ts, capped at
+    // CONTENT_CAP; each read takes one row more so a cut shows as contentOverCap.
+    const noteRows = await prisma.topicTeachingNote
+      .findMany({
+        where: { generatedAt: { gte: since }, topic: { subject: { exam: REAL_EXAM_WHERE } } },
+        select: { topic: { select: { code: true, subject: { select: { exam: { select: { code: true } } } } } } },
+        orderBy: { generatedAt: "asc" },
+        take: CONTENT_CAP + 1,
+      })
+      .catch(() => []);
+    const hindiRows = await prisma.topicNoteTranslation
+      .findMany({
+        where: { locale: "hi", generatedAt: { gte: since }, topic: { subject: { exam: REAL_EXAM_WHERE } } },
+        select: { topic: { select: { code: true, subject: { select: { exam: { select: { code: true } } } } } } },
+        orderBy: { generatedAt: "asc" },
+        take: CONTENT_CAP + 1,
+      })
+      .catch(() => []);
+    const guideRows = await prisma.examGuide
+      .findMany({
+        where: { generatedAt: { gte: since }, content: { not: "" }, exam: REAL_EXAM_WHERE },
+        select: { exam: { select: { code: true } } },
+        orderBy: { generatedAt: "asc" },
+        take: CONTENT_CAP + 1,
+      })
+      .catch(() => []);
+    const tricksRows = await prisma.examTricks
+      .findMany({
+        where: { generatedAt: { gte: since }, content: { not: "" }, exam: REAL_EXAM_WHERE },
+        select: { exam: { select: { code: true } } },
+        orderBy: { generatedAt: "asc" },
+        take: CONTENT_CAP + 1,
+      })
+      .catch(() => []);
+    const content = contentUpdateUrls({
+      guides: guideRows.map((r) => r.exam.code),
+      tricks: tricksRows.map((r) => r.exam.code),
+      notes: noteRows.map((r) => ({ exam: r.topic.subject.exam.code, topic: r.topic.code })),
+      hindi: hindiRows.map((r) => ({ exam: r.topic.subject.exam.code, topic: r.topic.code })),
+    });
+
     const urls = [...newsUrls, ...caUrls, ...schoolUrls];
-    const acceptedChunks = urls.length ? await pingIndexNow(urls) : 0;
-    const totalChunks = Math.ceil(urls.length / CHUNK);
+    const allUrls = [...urls, ...content.urls];
+    const windowHours = Math.round(windowMs / 360_000) / 10;
+    const acceptedChunks = allUrls.length ? await pingIndexNow(allUrls) : 0;
+    const totalChunks = Math.ceil(allUrls.length / CHUNK);
+    // 3 Oct 2026 (fix C16): one log line per run — what was sent. Read by hand
+    // in the runtime log; nothing watches it (no table, no alert).
+    console.log("[indexnow]", JSON.stringify({ scope: "news", since: since.toISOString(), windowHours, urls: allUrls.length, acceptedChunks, totalChunks, sample: allUrls.slice(0, 10) }));
     return Response.json({
       ok: acceptedChunks === totalChunks,
       scope: "news",
       since: since.toISOString(),
-      windowHours: Math.round(windowMs / 360_000) / 10,
+      windowHours,
       created: fresh.length,
-      submitted: urls.length,
+      submitted: allUrls.length,
       submittedNews: newsUrls.length,
       submittedCurrentAffairs: caUrls.length,
       submittedSchool: schoolUrls.length,
+      submittedContent: content.urls.length,
+      contentOverCap: content.overCap,
       nearDuplicates: nearDuplicate.length,
       acceptedChunks,
       totalChunks,

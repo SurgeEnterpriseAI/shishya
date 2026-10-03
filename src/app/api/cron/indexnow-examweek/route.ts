@@ -29,6 +29,9 @@ import { examWeekIndexNowUrls, loadExamWeekExams, loadRealPhaseArticles } from "
 import { gateTwinUrls, loadTwinVerdicts, type ExamTwinRow } from "@/lib/twin-localisation";
 import { GATES_CLOSED, loadExamPageGates } from "@/lib/exam-page-gates";
 
+/** URLs per IndexNow POST (src/lib/indexnow.ts chunks at the same size). */
+const INDEXNOW_CHUNK = 10_000;
+
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET;
   if (!secret) return Response.json({ error: "CRON_SECRET not configured" }, { status: 500 });
@@ -48,6 +51,12 @@ export async function GET(req: Request) {
     const candidates = exams.flatMap((e) => examWeekIndexNowUrls(e, articles.get(e.id) ?? [], gates?.get(e.code) ?? GATES_CLOSED));
     const urls = gateTwinUrls(candidates, new Map(twins.map((t) => [t.code, t.verdicts])));
     const acceptedChunks = urls.length ? await pingIndexNow(urls) : 0;
+    // 3 Oct 2026 (fix C16): one log line per run — what was sent, the same
+    // shape as the news scope's line. This scope has no time window (it sends
+    // the exam-week set as it stands), so since / windowHours are null. Read
+    // by hand in the runtime log; nothing watches it (no table, no alert).
+    const totalChunks = Math.ceil(urls.length / INDEXNOW_CHUNK);
+    console.log("[indexnow]", JSON.stringify({ scope: "examweek", since: null, windowHours: null, urls: urls.length, acceptedChunks, totalChunks, sample: urls.slice(0, 10) }));
     return Response.json({
       ok: true,
       scope: "examweek",
