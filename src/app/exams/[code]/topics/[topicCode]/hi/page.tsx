@@ -20,6 +20,8 @@ import { splitAfterFirstSection } from "@/lib/content-signup";
 // 30 Sep 2026 (sign-up build 3 review): the practice rule for the sign-up
 // line (src/lib/exam-practice-state.ts), cached; a failed read claims none.
 import { examPracticeState } from "@/lib/db/exam-practice";
+// 3 Oct 2026 (fix plan C12): the heading count that tells a cut Hindi note.
+import { noteHeadingCount } from "@/lib/topic-notes";
 
 export const revalidate = 3600;
 
@@ -36,6 +38,8 @@ async function load(code: string, topicCode: string) {
       name: true,
       subject: { select: { name: true } },
       noteTranslations: { where: { locale: "hi" }, select: { content: true, generatedAt: true } },
+      // The English note, only to compare heading counts (C12).
+      teachingNote: { select: { content: true } },
     },
   });
   if (!topic || topic.noteTranslations.length === 0) return null;
@@ -83,6 +87,11 @@ export default async function HindiTopicPage({
   // only where the exam has practice.
   const examHasPractice = (await examPracticeState(exam.code)).hasPractice;
   const enUrl = `https://shishya.in/exams/${exam.code}/topics/${topic.code}`;
+  // 3 Oct 2026 (fix plan C12): 234 of 420 stored Hindi notes have fewer
+  // headings than their English note — the translator stopped at its old
+  // token cap. Such a page says so in one line and links the full English
+  // note; the stored text is not changed here.
+  const hiIncomplete = noteHeadingCount(hi.content) < noteHeadingCount(topic.teachingNote?.content);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -127,6 +136,14 @@ export default async function HindiTopicPage({
             label="अपने ग्रुप में शेयर करें:"
           />
         </div>
+
+        {hiIncomplete && (
+          <p className="mt-6 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-ink-700">
+            <Link href={`/exams/${exam.code}/topics/${topic.code}`} className="font-medium underline hover:text-ink-900">
+              यह हिंदी नोट अधूरा है — पूरा नोट अंग्रेज़ी में पढ़ें
+            </Link>
+          </p>
+        )}
 
         <article className="prose prose-sm sm:prose-base mt-8 max-w-none">
           {/* 29 Sep 2026: invented question and mark counts are not shown (src/lib/note-claims.ts). */}
