@@ -356,18 +356,12 @@ export const EXAM_DEEP_CONTENT: ExamDeepContent[] = [
         source: "https://jeeadv.ac.in/",
         verifiedAt: "2026-05",
       },
-      {
-        title: "JoSAA closing ranks — CSE, popular NITs (2024 Round 6, Home State, General)",
-        rows: [
-          { year: 2024, category: "NIT Trichy CSE", cutoff: "Rank ~1,600" },
-          { year: 2024, category: "NIT Warangal CSE", cutoff: "Rank ~2,300" },
-          { year: 2024, category: "NIT Surathkal CSE", cutoff: "Rank ~3,200" },
-          { year: 2024, category: "IIIT Hyderabad CSE", cutoff: "Rank ~600 (UGEE separate gate)" },
-          { year: 2024, category: "NIT Rourkela CSE", cutoff: "Rank ~6,500" },
-        ],
-        source: "https://josaa.nic.in/",
-        verifiedAt: "2026-05",
-      },
+      // 4 Oct 2026 (hub honesty fixes): the "JoSAA closing ranks — CSE, popular
+      // NITs (2024 Round 6, Home State, General)" table is gone. JoSAA's 2024
+      // archive ends at Round 5; it prints NIT Trichy CSE closing at 1224 (OS)
+      // and 5066 (HS), not "~1,600"; IIIT Hyderabad does not admit through
+      // JoSAA. A table comes back only read from the archive, with its round,
+      // quota and source.
     ],
     paperAnalysis: {
       title: "JEE Main paper analysis (B.E./B.Tech)",
@@ -2079,24 +2073,11 @@ export const EXAM_DEEP_CONTENT: ExamDeepContent[] = [
       verifiedAt: "2026-05",
     },
     cutoffs: [
-      {
-        title: "JoSAA closing ranks — CSE at top IITs (Round 6, Open, 2024)",
-        rows: [
-          { year: 2024, category: "IIT Bombay CSE (4-yr)", cutoff: "Rank ~60 – 67" },
-          { year: 2024, category: "IIT Delhi CSE (4-yr)", cutoff: "Rank ~110 – 117" },
-          { year: 2024, category: "IIT Madras CSE (4-yr)", cutoff: "Rank ~158 – 168" },
-          { year: 2024, category: "IIT Kanpur CSE (4-yr)", cutoff: "Rank ~218 – 235" },
-          { year: 2024, category: "IIT Kharagpur CSE (4-yr)", cutoff: "Rank ~245 – 262" },
-          { year: 2024, category: "IIT Roorkee CSE (4-yr)", cutoff: "Rank ~280 – 305" },
-          { year: 2024, category: "IIT Hyderabad CSE (4-yr)", cutoff: "Rank ~280 – 310" },
-          { year: 2024, category: "IIT BHU CSE", cutoff: "Rank ~350 – 410" },
-          { year: 2024, category: "IIT Guwahati CSE", cutoff: "Rank ~400 – 460" },
-        ],
-        notes:
-          "Closing ranks shown are for Open category, home state quota where applicable. Female-only, OBC, SC/ST closing ranks are much higher (i.e., more accessible).",
-        source: "https://josaa.nic.in/",
-        verifiedAt: "2026-05",
-      },
+      // 4 Oct 2026 (hub honesty fixes): the "JoSAA closing ranks — CSE at top
+      // IITs (Round 6, Open, 2024)" table is gone: JoSAA's 2024 archive ends
+      // at Round 5 and prints single closing ranks (IIT Bombay CSE OPEN 68,
+      // IIT Delhi 116, IIT Madras 159), not "~" ranges. A table comes back
+      // only read from the archive, with its round, quota and source.
       {
         title: "Qualifying cutoffs — JEE Advanced rank list (Open category)",
         rows: [
