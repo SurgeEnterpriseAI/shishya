@@ -1132,7 +1132,9 @@ describe("B. every entry's condition is enforced: what cannot be shown to hold t
     expect(key({ surface: "finder-start", callback: HUB })).toBe("family.fallback");
     expect(key({ surface: "finder-start", callback: "/exams/browse", exam: "Browse", examCode: "browse" })).toBe("family.fallback");
     // A door the table does not know: the general words. A tooltip is never empty.
-    for (const surface of ["link", "save-path", "hub-start-401", "", "no-such-door"]) expect(key({ surface, callback: HUB, ...EXAM }), surface).toBe("family.fallback");
+    // (3 Oct 2026: "hub-start-401" left this list — the 401 doors take door.hub-box or the exam's family entry,
+    // tests/unit/practice-401-doors.test.ts.)
+    for (const surface of ["link", "save-path", "", "no-such-door"]) expect(key({ surface, callback: HUB, ...EXAM }), surface).toBe("family.fallback");
   });
 
   it("a variable is never printed raw; a missing institute has its default; an unknown key gets the general words", () => {

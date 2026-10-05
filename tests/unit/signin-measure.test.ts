@@ -219,7 +219,8 @@ describe("(a) the SIGNUP event: where the account was made from", () => {
 
   it("auth.ts writes those props on the SIGNUP row (tests/unit/auth-welcome-school.test.ts runs it)", () => {
     const auth = read("src/lib/auth.ts");
-    expect(auth).toContain("props: signupEventProps({ school: schoolSignIn, callback: signInCallback, landing: await readFirstLandingCookie() }),");
+    // 3 Oct 2026: + the first landing's utm_content (tests/unit/signup-utm-content.test.ts runs it).
+    expect(auth).toContain("props: signupEventProps({ school: schoolSignIn, callback: signInCallback, landing: await readFirstLandingCookie(), utmContent: attribution?.utmContent }),");
     expect(auth).toContain('import { LANDING_COOKIE, signupEventProps } from "./signin-cta";');
   });
 
@@ -306,14 +307,24 @@ describe("(a) every door is wired to its surface id", () => {
   });
 
   it("the 401 redirects beacon their own surface and name the door on /login", () => {
+    // The topic page's quiz button: still the /login redirect.
+    const topic = read("src/app/exams/[code]/topics/[topicCode]/TopicQuizButton.tsx");
+    expect(topic).toMatch(/if \(res\.status === 401\) \{[\s\S]{0,400}?signinBeacon\("topic-quiz-401"[\s\S]{0,200}?window\.location\.href = loginHrefFor\([^\n]*"topic-quiz-401"\);/);
+    // 3 Oct 2026 (the 401 doors, src/lib/signin-cta.ts): the hub's three practice buttons open the inline
+    // sign-up instead (one "signin-door" shown beacon; the button counts its own click) — and keep the old
+    // redirect, beacon and door id exactly, where the door may not open (SOF / Silverzone / NSTSE and JNVST hubs).
+    // tests/unit/practice-401-doors.test.ts pins the rest.
     for (const [file, surface] of [
       ["src/app/exams/[code]/StartMockButton.tsx", "hub-start-401"],
       ["src/app/exams/[code]/SubjectTestButton.tsx", "subject-test-401"],
-      ["src/app/exams/[code]/topics/[topicCode]/TopicQuizButton.tsx", "topic-quiz-401"],
       ["src/app/exams/[code]/CustomMockBuilder.tsx", "custom-mock-401"],
     ]) {
       const src = read(file);
-      expect(src, file).toMatch(new RegExp(`if \\(res\\.status === 401\\) \\{[\\s\\S]{0,400}?signinBeacon\\("${surface}"[\\s\\S]{0,200}?window\\.location\\.href = loginHrefFor\\([^\\n]*"${surface}"\\);`));
+      expect(src, file).toMatch(
+        new RegExp(
+          `if \\(res\\.status === 401\\) \\{[\\s\\S]{0,400}?if \\(practiceDoorInline\\(examCode\\)\\) \\{\\s*signinDoorShownBeacon\\("${surface}"[\\s\\S]{0,120}?setDoor\\(true\\);[\\s\\S]{0,200}?signinBeacon\\("${surface}"[\\s\\S]{0,200}?window\\.location\\.href = loginHrefFor\\(practiceDoorCallback\\("${surface}", examCode\\), "${surface}"\\);`,
+        ),
+      );
     }
   });
 

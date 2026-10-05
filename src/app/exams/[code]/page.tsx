@@ -1459,7 +1459,16 @@ export default async function ExamPage({
                     {isEnrolled && recent.length > 0 ? t("exam.action.continue.body") : t("exam.action.start.body")}
                   </p>
                 </div>
-                <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
+                {/* 3 Oct 2026 (401 doors review): while a guest's press has
+                    turned the start button into the inline sign-up
+                    (data-signin-door, src/app/exams/[code]/PracticeSignUpDoor.tsx),
+                    this row turns itself around, so the sign-up comes FIRST —
+                    above the tutor button on a phone, to its left from sm —
+                    as the founder's rule in src/components/SignUpButton.tsx
+                    asks. CSS only (:has); nothing else moves, the server HTML
+                    differs by this class string alone, and a browser without
+                    :has keeps today's order. */}
+                <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center has-[[data-signin-door]]:flex-col-reverse sm:has-[[data-signin-door]]:flex-row-reverse">
                   <Link
                     rel="nofollow" href={`/chat?examCode=${exam.code}`}
                     data-tour="exam-ask"
@@ -1470,6 +1479,7 @@ export default async function ExamPage({
                   <span data-tour="exam-start-mock">
                     <StartMockButton locale={locale}
                       examCode={exam.code}
+                      exam={exam.shortName}
                       hasHistory={isEnrolled && recent.length > 0}
                       labels={{
                         adaptive: t("exam.cta.adaptive"),
@@ -1741,6 +1751,8 @@ export default async function ExamPage({
                       subjectCode={s.code}
                       subjectName={s.name}
                       available={s.qcount}
+                      exam={exam.shortName}
+                      locale={locale}
                     />
                   </div>
                 </li>
@@ -1760,7 +1772,12 @@ export default async function ExamPage({
               mock in seconds. Leave the box blank and we&apos;ll target your weakest topics.
             </p>
             <div className="mt-3">
-              <CustomMockBuilder examCode={exam.code} />
+              {/* 3 Oct 2026: the exam's short name and the page's language, for
+                  the inline sign-up a guest's 401 opens (the "401 doors",
+                  src/lib/signin-cta.ts) — as the subject tests and the start
+                  button above get them. No server HTML changes: the door is
+                  rendered only after a guest's press. */}
+              <CustomMockBuilder examCode={exam.code} exam={exam.shortName} locale={locale} />
             </div>
           </section>
         )}

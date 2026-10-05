@@ -373,8 +373,13 @@ describe("sign-in is the main action on practice surfaces; no question after it"
     const src = read("src/app/exams/[code]/StartMockButton.tsx");
     // 30 Sep 2026 (sign-up build 1): the 401 sends the site-wide sign-in beacon
     // (surface "hub-start-401"; it was cta "diagnostic-401") and names its door (from=).
-    expect(src).toMatch(/if \(res\.status === 401\) \{[\s\S]{0,500}?signinBeacon\("hub-start-401"[\s\S]{0,200}?window\.location\.href = loginHrefFor\(/);
-    expect(src).toContain('loginHrefFor(`/exams/${examCode}?start=diagnostic`, "hub-start-401")');
+    // 3 Oct 2026 (the 401 doors): the 401 first opens the inline sign-up in the button's place; its link is the
+    // same /login link back to ?start=diagnostic (src/app/exams/[code]/PracticeSignUpDoor.tsx), and the redirect
+    // stays for the hubs where the door may not open (tests/unit/practice-401-doors.test.ts).
+    expect(src).toMatch(/if \(res\.status === 401\) \{[\s\S]{0,500}?setDoor\(true\);[\s\S]{0,300}?signinBeacon\("hub-start-401"[\s\S]{0,200}?window\.location\.href = loginHrefFor\(/);
+    expect(src).toContain('loginHrefFor(practiceDoorCallback("hub-start-401", examCode), "hub-start-401")');
+    expect(src).toContain('<PracticeSignUpDoor door="hub-start-401" examCode={examCode}');
+    expect(read("src/lib/signin-cta.ts")).toContain('if (door === "hub-start-401") return `/exams/${examCode}?start=diagnostic`;');
     expect(src).not.toContain("window.location.href = `/exams/${examCode}/quiz`");
   });
 

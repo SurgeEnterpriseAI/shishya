@@ -25,9 +25,10 @@
 // 25 Sep 2026: the not-enrolled fallback to /dashboard dropped them, so an
 // email click from a student with no exam to build a set for landed
 // untagged. All three hops now share src/lib/login-return.ts: utm_source /
-// utm_medium / utm_campaign only (the three the tracker records;
-// utm_content was never stored), each [A-Za-z0-9_.-] and at most 64, a bad
-// value dropped.
+// utm_medium / utm_campaign only (the three the tracker records as columns;
+// utm_content, kept in page views' props since 30 Sep 2026 and in the SIGNUP
+// row's props from the doors-utm build of 3 Oct 2026, is not carried on these
+// hops), each [A-Za-z0-9_.-] and at most 64, a bad value dropped.
 //
 // Language (13 Sep 2026): copy comes from getT() — the same locale the
 // mock player's labels use on the next screen — so a hi/te student sees

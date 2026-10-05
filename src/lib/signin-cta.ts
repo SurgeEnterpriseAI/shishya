@@ -26,11 +26,18 @@
 //   mock-gate-signin-click         → surface "mock-gate" / "mock-gate-quiz-end"
 //   build-gate-signin-click        → surface "build-gate-quiz-end"
 //
+// 3 Oct 2026 (sign-ups-to-100 plan, lever 5 — THE 401 DOORS): the three hub
+// practice buttons no longer bounce a guest to /login. See "The 401 doors"
+// below; it changes what "signin-click" counts for those three surfaces from
+// that deploy on (SERIES BREAK, written out there).
+//
 // Pure: no React, no Next, no DB — client islands, src/lib/auth.ts and
 // tests import it. No raw user agent and no personal data is ever put in a
 // beacon: an in-app browser is a short family label.
 
 import { ctaBeacon } from "@/lib/cta-beacon";
+import { schoolContainerClassOf } from "@/lib/school/student-classes";
+import { cleanUtmContent } from "@/lib/utm-content";
 
 export const SIGNIN_CTA = "signin-click";
 export const LOGIN_GOOGLE_CTA = "login-google-click";
@@ -228,6 +235,101 @@ export function signinLinkBeaconProps(
   };
 }
 
+// ── The 401 doors (3 Oct 2026) ──────────────────────────────────────────
+// A guest who presses a practice button on an exam hub — the 5-question
+// diagnostic (StartMockButton), a subject test (SubjectTestButton) or
+// "Generate my mock" (CustomMockBuilder), all in src/app/exams/[code]/ — gets
+// 401 from POST /api/mocks. Until this build the 401 sent them to /login at
+// once. Clickers who hit it made an account within 2 hours 2 times in 10
+// (30 Sep – 3 Oct), against 63-89% on the in-page sign-up buttons.
+// Now the 401 opens the shared "Sign up with Google" button right where they
+// pressed (src/app/exams/[code]/PracticeSignUpDoor.tsx): its reason line is the
+// entry src/lib/signup-place.ts chooses for the door, and under it the age
+// line ("For students 13 and above", the timed bar's own words). The button's
+// link is the same /login link the redirect used — same callback (it brings
+// them back to start that test: ?start=diagnostic starts the diagnostic by
+// itself, #subject-tests and #custom-mock return to the section they pressed
+// in), same from=. These doors stay OUT of the skip-/login test
+// (src/lib/direct-signin-ab.ts), so a tap still passes /login and its own
+// age small print.
+//
+// BEACONS, and the SERIES BREAK for reads that cross the deploy:
+//   • before it, "signin-click" with surface hub-start-401 / subject-test-401
+//     / custom-mock-401 was sent by the 401 itself (via "login"): it counted
+//     PRESSES that hit the 401;
+//   • from it, the 401 sends ONE { cta: "signin-door", action: "shown",
+//     surface, examCode } (SIGNIN_DOOR_CTA) when the button opens — the
+//     presses — and "signin-click" with the same surface is sent by the
+//     button itself (SignInLink), only when it is pressed. Same door ids.
+// The plan's read: share of "signin-door" shown browsers with an account
+// within 2 hours, by door (stop if under 40% after 30 browsers).
+// The GENERAL press and completion reads (the daily readout's hub press and
+// completion lines) must count a "signin-door" shown row as a PRESS, under
+// its surface: before the deploy the same guest made a press (a 401 beacon
+// and a /login view); after it, without that, they would count as pressed
+// only if they also tap the button — hub press would fall and completion
+// rise for the same behaviour. scripts/tmp-s100-funnel-1.ts and
+// scripts/tmp-s100-check-2.ts do so (3 Oct 2026 review).
+//
+// NOT on a kids' exam hub — the SOF (SOF_*), Silverzone (SZF_*) and NSTSE
+// olympiads, which Class 1-12 students sit, and JNVST (Navodaya's Class 6
+// entry test, sat in Class 5; inactive on 3 Oct 2026, so no hub today: listed
+// so that switching it on can never open a door there) — nor on a school
+// class container (a Class 1-7 page never has a hub; this fails closed
+// anyway). There the 401 keeps the old /login redirect and its
+// "signin-click" beacon exactly as before: whether the olympiad hubs offer
+// sign-up at all is the founder's open decision of 7 Oct 2026 (sign-ups
+// plan, founder asks), and this build adds nothing there.
+
+/** The beacon a 401 door sends when its button opens (props.action "shown"). */
+export const SIGNIN_DOOR_CTA = "signin-door";
+
+/** The hub practice buttons whose 401 opens the inline button (door ids above). */
+export const PRACTICE_401_DOORS = ["hub-start-401", "subject-test-401", "custom-mock-401"] as const satisfies readonly SigninSurface[];
+export type Practice401Door = (typeof PRACTICE_401_DOORS)[number];
+
+/** SOF, Silverzone and NSTSE olympiads (the catalogue's codes: SOF_IMO,
+ *  SOF_NSO … SZF_IOM … NSTSE — read 3 Oct 2026). Sat by Class 1-12 students,
+ *  so no new sign-up lever goes on their pages (sign-ups plan, "Not to do"). */
+export function isKidsOlympiadCode(code: string | null | undefined): boolean {
+  return typeof code === "string" && /^(?:SOF_|SZF_|NSTSE(?:_|$))/.test(code);
+}
+
+/** Entry tests sat by children under 13 that are not olympiads (3 Oct 2026
+ *  review): JNVST, Navodaya Vidyalaya's Class 6 entry test (src/lib/
+ *  exam-aliases.ts "navodaya"). Inactive in the catalogue on 3 Oct 2026 (no
+ *  hub). A new one is added here on purpose: tests/unit/practice-401-doors
+ *  .test.ts lists every exam code the repo knows for under-13s. */
+export const UNDER13_ENTRY_EXAM_CODES: readonly string[] = ["JNVST"];
+
+/** A kids' exam: a kids' olympiad (isKidsOlympiadCode) or an under-13 entry
+ *  test (UNDER13_ENTRY_EXAM_CODES). */
+export function isKidsExamCode(code: string | null | undefined): boolean {
+  return isKidsOlympiadCode(code) || (typeof code === "string" && UNDER13_ENTRY_EXAM_CODES.includes(code));
+}
+
+/** True when a hub practice button's 401 may open the inline sign-up button
+ *  for this exam; false → the old /login redirect. Fails closed: no code, a
+ *  school class container (any class) or a kids' exam → false. */
+export function practiceDoorInline(examCode: string | null | undefined): boolean {
+  if (typeof examCode !== "string" || !/^[A-Za-z0-9_-]{1,64}$/.test(examCode)) return false;
+  if (schoolContainerClassOf(examCode) !== null) return false;
+  return !isKidsExamCode(examCode);
+}
+
+/** The page each 401 door's sign-in returns to — the callbacks the /login
+ *  redirect always used (unchanged ids, unchanged reads). */
+export function practiceDoorCallback(door: Practice401Door, examCode: string): string {
+  if (door === "hub-start-401") return `/exams/${examCode}?start=diagnostic`;
+  if (door === "subject-test-401") return `/exams/${examCode}#subject-tests`;
+  return `/exams/${examCode}#custom-mock`;
+}
+
+/** One "the 401 door's button opened" beacon. Best-effort. */
+export function signinDoorShownBeacon(surface: Practice401Door, extra?: Record<string, unknown>): void {
+  ctaBeacon(SIGNIN_DOOR_CTA, { ...extra, action: "shown", surface });
+}
+
 /** What a signed-in arrival on /exams/CODE?start=… does (30 Sep 2026, HUB
  *  START — src/app/exams/[code]/StartMockButton.tsx runs it once, guarded).
  *  "diagnostic" — the 401 path: the student pressed the diagnostic, so it
@@ -277,11 +379,19 @@ export function parseLandingCookie(raw: string | null | undefined): string | nul
 
 /** The SIGNUP event's props: the provider (and school flag, as before),
  *  plus where the account was made from — the callback's family and path —
- *  and the browser's first landing path when the cookie holds one. */
+ *  and the browser's first landing path when the cookie holds one.
+ *  3 Oct 2026: + utmContent — the first attributable landing's utm_content
+ *  (the attribution cookie, src/lib/signup-attribution.ts), cleaned exactly
+ *  as the analytics route cleans a page view's props.utmContent
+ *  (src/lib/utm-content.ts: a slug of at most 64 characters; an email- or
+ *  phone-like value is dropped). It rides in props like the page view's: the
+ *  SIGNUP row has columns for utm_source / utm_medium / utm_campaign only.
+ *  Absent → no key, so every older read sees the same props. */
 export function signupEventProps(p: {
   school: boolean;
   callback: string | null | undefined;
   landing: string | null | undefined;
+  utmContent?: string | null;
 }): Record<string, unknown> {
   const props: Record<string, unknown> = p.school ? { provider: "google", school: true } : { provider: "google" };
   props.callbackFamily = loginCallbackFamily(p.callback);
@@ -289,6 +399,8 @@ export function signupEventProps(p: {
   if (cbPath) props.callbackPath = cbPath;
   const landing = parseLandingCookie(p.landing);
   if (landing) props.landingPath = landing;
+  const utmContent = cleanUtmContent(p.utmContent);
+  if (utmContent) props.utmContent = utmContent;
   return props;
 }
 

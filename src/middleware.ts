@@ -32,6 +32,7 @@ import { SESSION_HINT_COOKIE, SESSION_HINT_MAX_AGE_S, SESSION_HINT_VALUE } from 
 import { isCachePilotTwin } from "@/lib/cache-pilot-routes";
 import { canonicalPath } from "@/lib/url-normalize";
 import { isUnder13SchoolPath } from "@/lib/school/student-classes";
+import { cleanUtmContent } from "@/lib/utm-content";
 
 const COOKIE = "shishya_attrib";
 // NextAuth v4 JWT session cookie (no custom cookie names in src/lib/auth.ts);
@@ -366,6 +367,15 @@ export function middleware(req: NextRequest, event: NextFetchEvent): NextRespons
   const utmSource = sp.get("utm_source") ?? "";
   const utmMedium = sp.get("utm_medium") ?? "";
   const utmCampaign = sp.get("utm_campaign") ?? "";
+  // 3 Oct 2026 (sign-ups-to-100 plan: per-link sources — one YouTube Short,
+  // one coaching centre's link): utm_content rides in the cookie too, so the
+  // SIGNUP row can carry it (src/lib/signup-attribution.ts). Cleaned HERE, with
+  // the analytics route's own rule (src/lib/utm-content.ts: a slug of at most
+  // 64 characters; an email- or phone-like value is dropped): a long raw tag
+  // could push the cookie past the browser's 4 KB limit and lose the whole
+  // trail. It opens no trail by itself and does not change "direct" — the
+  // three tags above decide those, as the tracker does.
+  const utmContent = cleanUtmContent(sp.get("utm_content")) ?? "";
 
   // On the homepage/exam/section pages we ONLY set the cookie if the
   // visitor actually came in with UTM tags OR a useful (external) Referer.
@@ -393,6 +403,7 @@ export function middleware(req: NextRequest, event: NextFetchEvent): NextRespons
     utm_source: utmSource,
     utm_medium: utmMedium,
     utm_campaign: utmCampaign,
+    utm_content: utmContent,
     direct: isDirect,
   });
 

@@ -488,7 +488,12 @@ const DOOR_RETURNS: Readonly<Record<string, RegExp>> = {
   vouch: /^\/community-vouching\/[^/]+$/,
 };
 
-/** Doors with a sentence about one exam: named or not, they sit on a page of it. */
+/** Doors with a sentence about one exam: named or not, they sit on a page of it.
+ *  3 Oct 2026: + the three hub practice buttons' 401 doors (src/lib/signin-cta.ts
+ *  "The 401 doors") — they have no entry of their own (no new words were
+ *  written): the diagnostic's takes door.hub-box, the other two the exam's
+ *  family entry; being exam doors, an olympiad takes family.examOlympiad, and
+ *  /login (from=…-401) shows the same sentence as the button that sent them. */
 const EXAM_DOORS: ReadonlySet<string> = new Set([
   "hub-box",
   "hub-try-one",
@@ -503,6 +508,9 @@ const EXAM_DOORS: ReadonlySet<string> = new Set([
   "challenge-end",
   "finder-start",
   "guest-paper",
+  "hub-start-401",
+  "subject-test-401",
+  "custom-mock-401",
 ]);
 
 /** "door." + a door id whose entry carries the same name (the callers below
@@ -587,6 +595,19 @@ export function signUpPlaceFor(p: SignUpPlaceInput): SignUpPlace {
     case "hub-box":
       // "A five-question starter test opens by itself": only the link that returns to ?start=practice does that.
       return exam && can && at?.query.get("start") === "practice" ? { key: "door.hub-box", vars } : examGeneric();
+    case "hub-start-401":
+      // The guest pressed the five-question diagnostic itself. Its link returns
+      // to ?start=diagnostic, where the hub's guarded auto-start opens that test
+      // for every member (hubAutoStart "diagnostic"): the hub box's own words
+      // hold — for an exam that can serve a mock, as there.
+      return exam && can && at?.query.get("start") === "diagnostic" ? { key: "door.hub-box", vars } : examGeneric();
+    case "subject-test-401":
+    case "custom-mock-401":
+      // A subject test, "Generate my mock": their links return to the section
+      // they were pressed in (#subject-tests, #custom-mock) and nothing starts
+      // by itself. No entry of their own: the exam's family entry (whole timed
+      // mocks with every score kept, for an exam that can serve one).
+      return examGeneric();
     // Each promises whole timed mocks: an exam that can serve one.
     case "hub-try-one":
     case "quiz-end":

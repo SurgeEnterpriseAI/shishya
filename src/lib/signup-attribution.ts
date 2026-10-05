@@ -20,8 +20,19 @@
 // Best-effort: any DB / cookie / parse error is swallowed silently —
 // attribution must never block the auth callback or a page render.
 
+//
+// utm_content (3 Oct 2026, sign-ups-to-100 plan: count per-link sources —
+// one YouTube Short, one coaching centre's link): the middleware now keeps
+// the landing's utm_content in the cookie too, already cleaned
+// (src/lib/utm-content.ts). It is read here into `utmContent` — only beside
+// at least one of the other three tags, as the tracker keeps it — and goes
+// on the SIGNUP row's props (src/lib/auth.ts → signupEventProps). The User
+// columns are unchanged: signupReferrerUrl stays the utm_source / medium /
+// campaign triple, so every read of it sees the same strings as before.
+
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/db/prisma";
+import { cleanUtmContent } from "@/lib/utm-content";
 
 const COOKIE = "shishya_attrib";
 // First-party analytics identity (issued by /api/analytics, httpOnly).
@@ -32,6 +43,8 @@ interface AttribPayload {
   utm_source?: string;
   utm_medium?: string;
   utm_campaign?: string;
+  /** 3 Oct 2026: cleaned by the middleware; cleaned again on read. */
+  utm_content?: string;
   // direct=true means middleware fired but the visitor had no Referer
   // and no UTM (typed URL / bookmark / messenger paste). We still record
   // them as `signupReferrerHost = "direct"` so DB NULL unambiguously
@@ -50,6 +63,9 @@ export interface SignupAttribution {
   utmSource: string | null;
   utmMedium: string | null;
   utmCampaign: string | null;
+  /** utm_content, cleaned (src/lib/utm-content.ts) — only when one of the
+   *  three tags above is there too. Not written to any User column. */
+  utmContent: string | null;
   /** EXTERNAL Referer hostname only (our own host and localhost are
    *  dropped, matching /api/analytics), for the SIGNUP row's refHost. */
   refHost: string | null;
@@ -123,6 +139,7 @@ function toAttribution(parsed: AttribPayload): SignupAttribution | null {
     utmSource: parsed.utm_source || null,
     utmMedium: parsed.utm_medium || null,
     utmCampaign: parsed.utm_campaign || null,
+    utmContent: utmJoined ? cleanUtmContent(parsed.utm_content) : null,
     refHost,
   };
 }

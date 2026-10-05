@@ -40,6 +40,15 @@
 //     (the 401 path: they pressed the diagnostic itself) starts it as before.
 //   • HubSignInLink is the shared in-page sign-in button (SignInLink:
 //     beacon + the skip-/login test).
+//
+// 3 Oct 2026 (sign-ups-to-100 plan lever 5, "401 doors"; src/lib/signin-cta.ts
+// "The 401 doors"): the 401 no longer bounces the guest to /login. It opens
+// the shared "Sign up with Google" button in this button's place
+// (PracticeSignUpDoor: the door's reason line, the age line), with the same
+// /login link and the same ?start=diagnostic return, and sends one
+// "signin-door" shown beacon; the button's own click sends the "signin-click"
+// (surface "hub-start-401") from then on. On a SOF / Silverzone / NSTSE hub
+// the 401 keeps the /login redirect exactly as before.
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -47,7 +56,8 @@ import { fetchSignedIn } from "@/lib/session-hint";
 import { clientUiLocale, type CopyLocale } from "@/lib/ui-locale-copy";
 import { mockStartCopy } from "@/lib/quiz-entry-copy";
 import { SignUpButton } from "@/components/SignUpButton";
-import { hubAutoStart, loginHrefFor, signinBeacon } from "@/lib/signin-cta";
+import { hubAutoStart, loginHrefFor, practiceDoorCallback, practiceDoorInline, signinBeacon, signinDoorShownBeacon } from "@/lib/signin-cta";
+import { PracticeSignUpDoor } from "./PracticeSignUpDoor";
 
 /** The signed-out hub box's sign-up button (16 Sep 2026: it was the one hub
  *  CTA with no CTA_CLICKED; 30 Sep 2026: the shared in-page sign-in —
@@ -112,11 +122,14 @@ const LENGTHS = [
 
 export function StartMockButton({
   examCode,
+  exam,
   hasHistory,
   labels,
   locale,
 }: {
   examCode: string;
+  /** The exam's short name (3 Oct 2026): the 401 door's reason line names it. */
+  exam?: string;
   hasHistory: boolean;
   labels: Labels;
   /** The hub page's locale when it passes one (16 Sep 2026); without it
@@ -130,6 +143,8 @@ export function StartMockButton({
   const searchParams = useSearchParams();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  // 3 Oct 2026: a guest's 401 opened the inline sign-up (the 401 door).
+  const [door, setDoor] = useState(false);
   // Default to 10 questions — the previous instant-15 was the wall.
   const [count, setCount] = useState<number>(10);
   // The two error lines in the student's language (16 Sep 2026). The hub
@@ -161,8 +176,17 @@ export function StartMockButton({
         // Anonymous visitor: keep the intent instead of printing the error.
         // The callback brings them back to THIS hub with ?start=diagnostic,
         // which the effect below turns into the mock they asked for.
+        // 3 Oct 2026: the sign-up opens here, in this button's place (one
+        // "signin-door" shown beacon; the button counts its own click).
+        if (practiceDoorInline(examCode)) {
+          signinDoorShownBeacon("hub-start-401", { examCode, kind });
+          setDoor(true);
+          setBusy(false);
+          return;
+        }
+        // A kids' exam hub (SOF / Silverzone / NSTSE, JNVST): the /login redirect, as before.
         signinBeacon("hub-start-401", { examCode, kind, via: "login" });
-        window.location.href = loginHrefFor(`/exams/${examCode}?start=diagnostic`, "hub-start-401");
+        window.location.href = loginHrefFor(practiceDoorCallback("hub-start-401", examCode), "hub-start-401");
         return;
       }
       const data = await res.json().catch(() => ({}));
@@ -227,6 +251,15 @@ export function StartMockButton({
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, examCode]);
+
+  // The 401 door (3 Oct 2026): the sign-up in the start button's place — the
+  // start can only work after signing up, so nothing louder stands beside it.
+  // 3 Oct 2026 (review): full width on a phone, its own width from sm (block +
+  // sm:w-auto, as HubSignInLink above) — never narrower than the full-width
+  // tutor button in the same row, which the hub page now puts after it.
+  if (door) {
+    return <PracticeSignUpDoor door="hub-start-401" examCode={examCode} exam={exam} locale={locale ?? cookieLocale} align="end" block className="sm:w-auto" />;
+  }
 
   // First-timer (no history): single low-commitment diagnostic.
   if (!hasHistory) {

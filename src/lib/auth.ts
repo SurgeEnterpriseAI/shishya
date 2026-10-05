@@ -11,7 +11,8 @@ import type { SignupAttribution } from "./signup-attribution";
 import { SESSION_HINT_COOKIE, SESSION_HINT_MAX_AGE_S, SESSION_HINT_VALUE } from "./session-hint";
 // Pure and import-free (no prisma, no next): safe at module scope here.
 import { isSchoolSignInCallback, studentModeClassOfExamCode } from "./school/student-classes";
-// Pure (no prisma, no next; its one import is the tiny beacon helper).
+// Pure (no prisma, no next; it imports only pure helpers: the tiny beacon
+// helper, the school class rule and the utm_content cleaner).
 import { LANDING_COOKIE, signupEventProps } from "./signin-cta";
 
 declare module "next-auth" {
@@ -144,7 +145,10 @@ export const authOptions: NextAuthOptions = {
           // it signed up from) — and the browser's first landing path, so a
           // sign-up whose anonymous trail is missing is still placed. Paths
           // only, no query; no new table.
-          props: signupEventProps({ school: schoolSignIn, callback: signInCallback, landing: await readFirstLandingCookie() }),
+          // 3 Oct 2026: + utmContent, the first attributable landing's
+          // utm_content (cleaned; per-link sources such as one YouTube Short or
+          // one coaching centre's link), in props as on a page view.
+          props: signupEventProps({ school: schoolSignIn, callback: signInCallback, landing: await readFirstLandingCookie(), utmContent: attribution?.utmContent }),
           // Same trail on the SIGNUP row itself, so attributionSources()
           // (which groups SIGNUP by utmSource / refHost) stops reading
           // every signup as "(direct)".

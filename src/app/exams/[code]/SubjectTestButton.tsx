@@ -11,10 +11,18 @@
 // (surface "subject-test-401", src/lib/signin-cta.ts; it sent none) and
 // names its door on /login (from=). It stays a /login redirect: the student
 // pressed "start", so /login says why an account is needed.
+// 3 Oct 2026 (sign-ups-to-100 plan lever 5, "401 doors"; src/lib/signin-cta.ts
+// "The 401 doors"): no longer a redirect. The 401 opens the shared "Sign up
+// with Google" button in this button's place (PracticeSignUpDoor: the reason
+// line, the age line), with the same /login link and the same return to
+// #subject-tests, and sends one "signin-door" shown beacon; the button's own
+// click sends the "signin-click" (surface "subject-test-401") from then on.
+// On a SOF / Silverzone / NSTSE hub the 401 keeps the /login redirect.
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { loginHrefFor, signinBeacon } from "@/lib/signin-cta";
+import { loginHrefFor, practiceDoorCallback, practiceDoorInline, signinBeacon, signinDoorShownBeacon } from "@/lib/signin-cta";
+import { PracticeSignUpDoor } from "./PracticeSignUpDoor";
 
 interface Props {
   examCode: string;
@@ -22,12 +30,18 @@ interface Props {
   subjectName: string;
   /** Validated questions available in this subject. */
   available: number;
+  /** The exam's short name (3 Oct 2026): the 401 door's reason line names it. */
+  exam?: string;
+  /** The hub page's language, for the 401 door's words. */
+  locale?: string;
 }
 
-export function SubjectTestButton({ examCode, subjectCode, subjectName, available }: Props) {
+export function SubjectTestButton({ examCode, subjectCode, subjectName, available, exam, locale }: Props) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  // 3 Oct 2026: a guest's 401 opened the inline sign-up (the 401 door).
+  const [door, setDoor] = useState(false);
   // 25 questions when the pool allows; otherwise the biggest test the pool
   // supports (API floor is 10).
   const qCount = Math.max(10, Math.min(25, available));
@@ -45,8 +59,16 @@ export function SubjectTestButton({ examCode, subjectCode, subjectName, availabl
         }),
       });
       if (res.status === 401) {
+        // 3 Oct 2026: the sign-up opens here, in this button's place.
+        if (practiceDoorInline(examCode)) {
+          signinDoorShownBeacon("subject-test-401", { examCode });
+          setDoor(true);
+          setBusy(false);
+          return;
+        }
+        // A kids' exam hub (SOF / Silverzone / NSTSE, JNVST): the /login redirect, as before.
         signinBeacon("subject-test-401", { examCode, via: "login" });
-        window.location.href = loginHrefFor(`/exams/${examCode}#subject-tests`, "subject-test-401");
+        window.location.href = loginHrefFor(practiceDoorCallback("subject-test-401", examCode), "subject-test-401");
         return;
       }
       const data = await res.json().catch(() => ({}));
@@ -61,6 +83,9 @@ export function SubjectTestButton({ examCode, subjectCode, subjectName, availabl
       setBusy(false);
     }
   }
+
+  // The 401 door (3 Oct 2026): the sign-up in the test button's place.
+  if (door) return <PracticeSignUpDoor door="subject-test-401" examCode={examCode} exam={exam} locale={locale} block />;
 
   return (
     <div>

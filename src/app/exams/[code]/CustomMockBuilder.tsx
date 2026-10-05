@@ -17,11 +17,22 @@
 // 30 Sep 2026 (sign-up build 1): the guest's 401 → /login sends the
 // site-wide sign-in beacon (surface "custom-mock-401", src/lib/signin-cta.ts)
 // and names its door on /login (from=).
+//
+// 3 Oct 2026 (sign-ups-to-100 plan lever 5, "401 doors"; src/lib/signin-cta.ts
+// "The 401 doors"): the 401 no longer bounces the guest to /login. It opens
+// the shared "Sign up with Google" button in the Generate button's place
+// (PracticeSignUpDoor: the reason line, the age line), with the same /login
+// link and the same return to #custom-mock, and sends one "signin-door" shown
+// beacon; the button's own click sends the "signin-click" (surface
+// "custom-mock-401") from then on. What they typed and picked is not carried
+// over the sign-in (it was not before either). On a SOF / Silverzone / NSTSE
+// hub the 401 keeps the /login redirect.
 
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { loginHrefFor, signinBeacon } from "@/lib/signin-cta";
+import { loginHrefFor, practiceDoorCallback, practiceDoorInline, signinBeacon, signinDoorShownBeacon } from "@/lib/signin-cta";
+import { PracticeSignUpDoor } from "./PracticeSignUpDoor";
 
 const COUNTS = [10, 25, 50] as const;
 const DIFFS = ["Mixed", "Easy", "Medium", "Hard"] as const;
@@ -42,13 +53,25 @@ function track(cta: string, extra?: Record<string, unknown>) {
   } catch { /* best-effort */ }
 }
 
-export function CustomMockBuilder({ examCode }: { examCode: string }) {
+export function CustomMockBuilder({
+  examCode,
+  exam,
+  locale,
+}: {
+  examCode: string;
+  /** The exam's short name (3 Oct 2026): the 401 door's reason line names it. */
+  exam?: string;
+  /** The hub page's language, for the 401 door's words. */
+  locale?: string;
+}) {
   const router = useRouter();
   const [text, setText] = useState("");
   const [count, setCount] = useState<number>(25);
   const [diff, setDiff] = useState<(typeof DIFFS)[number]>("Mixed");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  // 3 Oct 2026: a guest's 401 opened the inline sign-up (the 401 door).
+  const [door, setDoor] = useState(false);
   // Set when the mock holds fewer questions than asked.
   const [short, setShort] = useState<{ id: string; count: number; requested: number } | null>(null);
 
@@ -74,8 +97,16 @@ export function CustomMockBuilder({ examCode }: { examCode: string }) {
         body: JSON.stringify({ examCode, request }),
       });
       if (res.status === 401) {
+        // 3 Oct 2026: the sign-up opens here, in the Generate button's place.
+        if (practiceDoorInline(examCode)) {
+          signinDoorShownBeacon("custom-mock-401", { examCode });
+          setDoor(true);
+          setBusy(false);
+          return;
+        }
+        // A kids' exam hub (SOF / Silverzone / NSTSE, JNVST): the /login redirect, as before.
         signinBeacon("custom-mock-401", { examCode, via: "login" });
-        window.location.href = loginHrefFor(`/exams/${examCode}#custom-mock`, "custom-mock-401");
+        window.location.href = loginHrefFor(practiceDoorCallback("custom-mock-401", examCode), "custom-mock-401");
         return;
       }
       const data = await res.json().catch(() => ({}));
@@ -148,6 +179,14 @@ export function CustomMockBuilder({ examCode }: { examCode: string }) {
               Pick topics and see how many questions each has →
             </Link>
           </div>
+        </div>
+      ) : door ? (
+        // The 401 door (3 Oct 2026): the sign-up in the Generate button's place.
+        // 3 Oct 2026 (review): as wide as that button was — full width on a
+        // phone, its own width from sm (block + sm:w-auto; the column lets
+        // the door shrink to its own width from sm).
+        <div className="mt-4 flex flex-col sm:items-start">
+          <PracticeSignUpDoor door="custom-mock-401" examCode={examCode} exam={exam} locale={locale} block className="sm:w-auto" />
         </div>
       ) : (
         <button
