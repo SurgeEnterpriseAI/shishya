@@ -1,0 +1,562 @@
+{
+  "about": "Step 2 of the non-exam-value spec (3 Oct 2026): this year's status for the 30 most-landed offered scholarship schemes, read on each awarding body's own page with curl (one request at a time, browser user-agent, Indian home connection). No AI, no aggregator date used as official. Input of scripts/apply-scholarship-cycle-reads-2026-10.ts, which writes only the `cycle` of the rows marked set-cycle or refresh-cycle into src/data/scholarships.ts (dry run by default). Times are IST, from the saved copy of each page.",
+  "readOn": "2026-10-03",
+  "review": "Review fixes, 3 Oct 2026 22:00 IST. (1) Quotes are now visible text only: every saved page was re-parsed with HTML comments, scripts and default-hidden elements (display:none, pop-ups and modals with no live trigger) removed, and five first-read quotes turned out to be hidden text (HDFC CSR, Bidyarthi, LPF home, jsw.in, Sitaram Jindal). Hidden text is kept apart in `hidden` and is never evidence for a date or status. (2) lila-poonawalla-girls was re-read and its note rewritten from visible text. (3) ts-epaas: ePASS's post-matric services page was read. (4) Notes rewritten for gujarat-mysy (two exceptions on the same notice) and csss (the conflicting NSP statements, renewal action first). (5) `rowFixes`: field corrections read on the same official pages, written with the cycles in one logged, undoable edit (the script's --cycles-only or --skip-fix=<id>:<field> leaves them out). Second review, 3 Oct 2026 23:26-23:35 IST (the reviewer's re-reads are saved in step2-rereview/pages; no page was read again for these fixes, which rest on the saved 3 Oct copies): (6) csss's last date is now NSP's home-page 31-10-2026, sourced to https://scholarships.gov.in/, with the scheme card's 30-09-2026 kept in the note — if NSP is in fact closed, a renewal student loses nothing by trying, while 'closed' on an open portal costs the renewal. (7) Siemens and LPF eligibility (and Siemens's amount) are corrected from the same official pages as their cycles, because the step now prints an official 2026-27 status beside them: Siemens income ₹2 lakh, marks 50% (HSC, with SSC 60% and PCM 60% in the note), a note with its conditions; LPF's invented ₹6 lakh income gate is removed (its page names under ₹3.5 lakh 'or lower-middle class homes') and its note names its cities. (8) ts-overseas-bc's name keeps 'overseas scholarship' for search; ePASS's note names who its renewal link covers; Siemens's and ePASS's notes lead with 'open'. (9) The comment above each refreshed cycle says which older comment's date it supersedes. (10) 4 Oct 2026, review states: a cycle may now carry openNow (the official page says this year's applications are open; no last date) or rolling (applications taken at any time). openNow is set on siemens-india-scholarship and ts-epaas only — both pages were re-read at 06:45 IST on 4 Oct and still say so; not on lila-poonawalla-girls, whose pages do not say applications are open. rolling is set on ca-icai-scholarship (now set-cycle, with its usual-window prose corrected) after both ICAI pages were re-read at 06:39 IST on 4 Oct, byte-identical to the 3 Oct copies; not on sitaram-jindal, whose re-read pages do not say so. The Siemens and ePASS notes drop their leading \"open\" clause, which the date line now carries. (11) gj-mysy-fees, a second catalogue row for MYSY with the same dead apply link, is added at rank 31 as a companion of gujarat-mysy: the same reads, the identical cycle and the same applyUrl fix. (12) 4 Oct 2026, review fixes: ts-cm-overseas, a second catalogue row for Telangana's BC overseas scheme (both rows carried the name 'Telangana CM Overseas Scholarship (BC)'), is added at rank 32 as a companion of ts-overseas-bc: the same 3 Oct read of OverseasLinks.do, the identical cycle, the same name, categories and note fixes, the main row's amount text, and an apply link to ePASS in place of a host that does not resolve. ICAI's amount and eligibility note are corrected from the same flyer as its rolling state (parents' income up to ₹5 lakh for the needs-based scholarships, no income condition for the merit award, ₹1,500-₹5,000 a month by level); no matcher income gate is added. ePASS's note names the home page's own link text. Every cycle's checkedOn must now be a day on which its source page was read, and no earlier than readOn (checkReads), so a slipped release cannot move a checkedOn without a read of that page that day.",
+  "selection": {
+    "query": "One read-only SELECT aggregate (scripts/tmp-step2-top30.ts, run through the heavy lock on 3 Oct 2026, then deleted): human PAGE_VIEW rows (client NULL or 'browser', with a userId or anonId) in the 90 days to 3 Oct 2026 on /scholarships/{id}; a landing = the first page view of a person's IST day.",
+    "ranking": "landings, then people, then views; offered schemes only (src/lib/scholarship-schemes.ts OFFERED_SCHEMES). Exactly 30 offered schemes had 2 or more landings; the 31st had 1.",
+    "notOfferedAbove": "match (14, the wizard page), allen-tallentex (10), indian-jain-foundation (9), tata-football-academy (7), ap-jagannanna-vidya-deevena (6), begum-hazrat-mahal (3), fitjee-talent-scholarship (3), ap-jagananna-vidya (2)"
+  },
+  "schemes": [
+    {
+      "rank": 1, "id": "hdfc-badhte-kadam", "landings90": 30, "people90": 29,
+      "decision": "no-change",
+      "why": "No official 2026-27 date can be read, and the row mixes two HDFC programmes. HDFC Bank's own CSR page shows only that Parivartan's education programmes include scholarships, with no programme name, amount or date (its ECSS paragraph is inside an HTML comment, not shown); the ECSS site answers a Cloudflare challenge; the programme site that shows a deadline says it is run by Buddy4Study (an aggregator), so its date is not official and it names no HDFC source for it.",
+      "reads": [
+        { "url": "https://www.hdfcbankparivartan.com/", "result": "host does not resolve (NXDOMAIN)", "readAt": "2026-10-03T21:03:18+05:30" },
+        { "url": "https://v.hdfc.bank.in/csr/index.html", "result": "200", "readAt": "2026-10-03T21:05:07+05:30", "quote": "HDFC Bank Parivartan's education programmes focus on teacher training, scholarships, career guidance and infrastructure support.", "hidden": "(inside an HTML comment, not shown) Under the ECSS program, the students who are unable to bear the cost of education due to personal/family crises ... are provided with monetary assistance of up to INR 75,000 for their studies." },
+        { "url": "https://www.hdfcbankecss.com/index.html", "result": "403 (Cloudflare 'Just a moment...' challenge; not bypassed)", "readAt": "2026-10-03T21:05:17+05:30" },
+        { "url": "https://www.parivartanecss.com/", "result": "200 (aggregator-run; not used as official)", "readAt": "2026-10-03T21:05:30+05:30", "quote": "Deadline 31st October 2026 ... Disclaimer : This website is independently managed and operated by Buddy4Study. HDFC Bank Limited (\"Bank\") is solely a funding partner" }
+      ],
+      "reviewed": false, "eligibilityAmount": "mismatch",
+      "mismatches": [
+        "Name: the row is called Badhte Kadam, but its eligibility (income up to Rs 2.5 lakh, 55% marks, a family crisis) and amount (up to Rs 75,000) are those of HDFC Bank Parivartan's ECSS programme, a different programme, as described on parivartanecss.com (Buddy4Study-run, not official) and in a commented-out paragraph of HDFC's CSR page (not shown). No visible HDFC page names a 'Badhte Kadam' programme.",
+        "Levels: ECSS covers Class 1-12, diploma, ITI, polytechnic, UG and PG (same two sources); the row lists Class 11-12 upwards.",
+        "applyUrl https://www.hdfcbankparivartan.com/ does not resolve."
+      ]
+    },
+    {
+      "rank": 2, "id": "ca-icai-scholarship", "landings90": 21, "people90": 21,
+      "decision": "set-cycle",
+      "why": "ICAI takes scholarship applications at any time of the year (quarterly selection), so there is no 2026-27 last date. 4 Oct 2026 (review state): the cycle record now has a rolling state, so ICAI gets a rolling cycle with no date — the page leads with 'Applications are taken at any time (rolling) — the official page gives no last date (bosactivities.icai.org, checked 3 Oct 2026)'. Both ICAI pages were re-read at 06:39 IST on 4 Oct before the state was written; each file was byte-identical to the 3 Oct copy. The FAQ (last updated 15 May 2026) shows the rule is current: its quarterly table covers applications received in every quarter of the year. The usual-window prose 'Yearly cycle' is corrected from the same pages. 4 Oct 2026 (review fixes): the row's amount and its eligibility note, which named a ₹3 lakh income cap, are corrected from the same flyer: parents' income up to ₹5 lakh a year for the needs-based scholarships, no income condition listed for the merit award, ₹1,500-₹5,000 a month by level. No income gate is added to the matcher (the row has none), because the merit award has no income condition.",
+      "reads": [
+        { "url": "https://bosactivities.icai.org/api/v1.0/downloadflyer?filename=flyerForm_20250828112231.pdf", "result": "200", "readAt": "2026-10-03T21:06:24+05:30", "quote": "Students can apply online anytime for the Scholarship by login at Self Service Portal (SSP) at https://eservices.icai.org" },
+        { "url": "https://icai-call-sahayata.icai.org/assets/pdf/Scholarship-FAQ.pdf", "result": "200", "readAt": "2026-10-03T21:06:03+05:30", "quote": "The Selection/Grant of Scholarship will be done on Quarterly basis" },
+        { "url": "https://icai-call-sahayata.icai.org/assets/pdf/Scholarship-FAQ.pdf", "result": "200 (4 Oct re-read before the rolling state was set, saved as step2-pages-oct04/icai-faq.raw; byte-identical to the 3 Oct copy, md5 165437174e3c79ef3c4be82c3039fb0c)", "readAt": "2026-10-04T06:39:17+05:30", "quote": "Last Updated on: 15th May 2026 ... The Selection/Grant of Scholarship will be done on Quarterly basis as under: ... Date of Receipt of Applications Grant will be provided in the following Months: ... 1st January to 31st March April ... 1st April to 30th June July ... 1st July to 30th September October ... 1st October to 31st December January" },
+        { "url": "https://bosactivities.icai.org/api/v1.0/downloadflyer?filename=flyerForm_20250828112231.pdf", "result": "200 (4 Oct re-read before the rolling state was set, saved as step2-pages-oct04/icai-flyer.raw; byte-identical to the 3 Oct copy, md5 f1410a6e2cdc9ce406f6b195b14dd3d8)", "readAt": "2026-10-04T06:39:21+05:30", "quote": "Students can apply online anytime for the Scholarship by login at Self Service Portal (SSP) at https://eservices.icai.org" },
+        { "url": "https://bosactivities.icai.org/api/v1.0/downloadflyer?filename=flyerForm_20250828112231.pdf", "result": "200 (the same 4 Oct copy, step2-pages-oct04/icai-flyer.raw: the flyer's award and scholarship slabs, read for the amount and eligibility-note fixes)", "readAt": "2026-10-04T06:39:21+05:30", "quote": "MERIT AWARD Award Amount Rs. 5000 per month Eligibility a. Rank holders of Intermediate Examinations upto 10 Rank ... b. Student must register for Final Course c. Student must commence his Articleship Period of Scholarship 24 Months or remaining period of Articleship, whichever is less ... Economically Needy Students Scholarship for Final Course Students - Merit based Amount Rs. 4000 per month Eligibility a. Rank holders of Intermediate Examinations from 11 to 50 Rank ... d. Income of Parents should not exceed Rs. 5,00,000 per annum ... Economically Needy Students Scholarship for Final Course Students Amount Rs. 2500 per month ... Economically Needy Students Scholarship for Foundation Course Students Amount Rs. 1500 per month ... 4 months commencing from the following month of registration for Foundation Course ... Amount Rs. 2500 per month Eligibility a. Students who are registered for Intermediate Course ... a. 8 months commencing from the following month of registration for Intermediate Course b. Additional 3 months if the Student has completed ICITSS within first 8 months of registration for Intermediate Course. ... Additional 3 months if the Student has passed any one Group in Intermediate Examination within 12 months of registration for Intermediate Course. ... Final Students undergoing Articleship shall obtain Income Certificate and recommendation from the Principal under whom he/she is undergoing Articleship. ... Intermediate / Foundation students shall obtain Income Certificate and recommendation from Practicing Chartered Accountant. ... *An announcement regarding the implementation of the revised scheme on the Self-Service Portal will be published shortly." }
+      ],
+      "cycle": {
+        "year": "2026-27",
+        "rolling": true,
+        "sourceUrl": "https://bosactivities.icai.org/api/v1.0/downloadflyer?filename=flyerForm_20250828112231.pdf",
+        "tier": "official",
+        "checkedOn": "2026-10-03",
+        "note": "ICAI's scholarship flyer says students can apply online at any time on its Self Service Portal (eservices.icai.org). Its scholarship FAQ (last updated 15 May 2026) says applications are selected each quarter: those received from 1 Oct to 31 Dec are granted in January."
+      },
+      "rowFixes": [
+        { "field": "deadline", "from": "Yearly cycle", "to": "Any time of the year (ICAI selects applications each quarter)", "sourceUrl": "https://bosactivities.icai.org/api/v1.0/downloadflyer?filename=flyerForm_20250828112231.pdf", "why": "The row's 'Yearly cycle' contradicts ICAI's own flyer ('Students can apply online anytime') and FAQ (applications received in any quarter are selected in the next grant month). The page prints this prose as the 'Usual window' fact beside the new rolling line, so it is corrected from the same reads." },
+        { "field": "eligibility.note", "from": "CA Foundation / Intermediate / Final registered students. Multiple slabs — Merit-cum-Need has income cap ₹3L.", "to": "Students registered with ICAI for the CA Foundation, Intermediate or Final course (Final students must have started articleship). The needs-based scholarships ask that parents' income be no more than ₹5 lakh a year, certified by a practising chartered accountant (Foundation and Intermediate) or the articleship principal (Final). The ₹5,000-a-month merit award, for Intermediate rank holders 1 to 10 who have registered for Final and started articleship, lists no income condition. ICAI's flyer says an announcement on a revised scheme will be published on its Self-Service Portal shortly.", "sourceUrl": "https://bosactivities.icai.org/api/v1.0/downloadflyer?filename=flyerForm_20250828112231.pdf", "why": "The row's note names a ₹3 lakh income cap. ICAI's flyer sets parents' income at no more than Rs 5,00,000 a year for every needs-based scholarship (Foundation, Intermediate, Final, and Final for Intermediate ranks 11-50) and lists no income condition for the merit award (Intermediate ranks 1-10). The page prints this note beside the new rolling line and in its eligibility FAQ answer (FAQPage JSON-LD). The row has no incomeMaxLakhs, so the matcher has no income gate for ICAI, and none is added: a ₹5 lakh gate would turn away the merit-award rank holders, for whom the flyer sets no income condition. The flyer's line on a revised scheme is kept, so a student knows the figures may change." },
+        { "field": "amount", "from": "₹1,500-₹2,500/month based on slab", "to": "₹1,500-₹5,000 a month by level: Foundation ₹1,500 (4 months); Intermediate ₹2,500 (8 months, up to 14); Final, during articleship, ₹2,500, or ₹4,000 for Intermediate ranks 11-50, or a ₹5,000 merit award for ranks 1-10 (up to 24 months)", "sourceUrl": "https://bosactivities.icai.org/api/v1.0/downloadflyer?filename=flyerForm_20250828112231.pdf", "why": "The row's '₹1,500-₹2,500/month' leaves out the Final-course amounts on ICAI's own flyer: Rs 4,000 a month for Intermediate ranks 11-50 and the Rs 5,000-a-month merit award for ranks 1-10. The flyer's periods are 4 months (Foundation), 8 months plus up to 3 + 3 (Intermediate), and 24 months or the rest of articleship, whichever is less (Final)." }
+      ],
+      "reviewed": false, "eligibilityAmount": "corrected-by-rowFixes",
+      "mismatches": [
+        "Amount: ICAI's flyer gives Rs 1,500 a month (Foundation, 4 months), Rs 2,500 (Intermediate; Final), Rs 4,000 (Final, Intermediate ranks 11-50) and Rs 5,000 (merit award, ranks 1-10); the row says Rs 1,500-2,500 a month (corrected by rowFixes).",
+        "Income: parents' income up to Rs 5,00,000 a year for the needs-based scholarships, no income condition for the merit award; the row's note says a Rs 3 lakh cap (corrected by rowFixes: the note states the flyer's conditions; no income gate is added).",
+        "Description: the row's 'Modest monthly stipend over 1-2 years' is not a field this step corrects; the flyer's periods run from 4 to 24 months (not corrected).",
+        "Usual window: the row says 'Yearly cycle'; ICAI says apply any time (corrected by rowFixes)."
+      ]
+    },
+    {
+      "rank": 3, "id": "assam-anundoram", "landings90": 17, "people90": 17,
+      "decision": "set-cycle",
+      "why": "Assam's own service page for the award (Sewa Setu) shows no 2025 or 2026 window; the latest it shows is the 2024 award. The Directorate of Secondary Education's Bidyarthi portal lists the award by name only, with no year or window.",
+      "reads": [
+        { "url": "https://sewasetu.assam.gov.in/site/service-apply/anundoram-borooah-cash-award-scheme-arbas", "result": "200", "readAt": "2026-10-03T21:07:49+05:30", "quote": "1.Anundoram Borooah Cash Award Scheme 2024 – Registration. Last date extended to 30th NOVEMBER 2024." },
+        { "url": "https://bidyarthi.co.in/", "result": "200", "readAt": "2026-10-03T21:08:28+05:30", "quote": "Government of Assam Anundoram Borooah Award", "hidden": "(inside an HTML comment, not shown) Download ARBAS Certificate, 2024 (ARBAS HSLC Certificate) portal is Now available" },
+        { "url": "https://education.assam.gov.in/portlets/anundoram-borooah-award", "result": "200", "readAt": "2026-10-03T21:07:57+05:30", "quote": "from this year onwards laptops and cash award will be provided to those students who secure 'Star marks' in the HSLC and High Madrassa Examinations." },
+        { "url": "https://arbas.assam.gov.in/", "result": "could not connect", "readAt": "2026-10-03T21:07" },
+        { "url": "https://sebaonline.org/ (the row's applyUrl, via site.sebaonline.org)", "result": "200, no mention of the award", "readAt": "2026-10-03T21:07:32+05:30" }
+      ],
+      "cycle": {
+        "year": "2026-27",
+        "sourceUrl": "https://sewasetu.assam.gov.in/site/service-apply/anundoram-borooah-cash-award-scheme-arbas",
+        "tier": "official",
+        "checkedOn": "2026-10-03",
+        "note": "The latest window on Assam's Sewa Setu page for this award is the 2024 one (registration extended to 30 Nov 2024)."
+      },
+      "reviewed": false, "eligibilityAmount": "mismatch",
+      "mismatches": [
+        "Eligibility: the department's page says 'Star marks' in HSLC / High Madrassa (and the State Madrassa and Sanskrit boards' Class 10); the row says 'letter marks in 4+ subjects'.",
+        "Amount: no official page read states a current cash amount; the row's Rs 15,000-20,000 is unconfirmed.",
+        "applyUrl sebaonline.org (the board) says nothing of the award; applications run on Sewa Setu."
+      ]
+    },
+    {
+      "rank": 4, "id": "axis-bank-foundation", "landings90": 15, "people90": 14,
+      "decision": "no-change",
+      "why": "Neither Axis Bank Foundation's site nor Axis Bank's CSR page lists a scholarship; nothing to date.",
+      "reads": [
+        { "url": "https://www.axisbankfoundation.org/programs/education.html", "result": "200, no scholarship", "readAt": "2026-10-03T21:09:03+05:30", "quote": "Over the years, it supported over 80 Non Profit organisations working with various groups and communities in the field of education." },
+        { "url": "https://www.axisbank.com/csr/csr-focus-areas-programs (redirected to https://www.axis.bank.in/csr)", "result": "200, the word 'scholarship' does not occur", "readAt": "2026-10-03T21:09:20+05:30" }
+      ],
+      "reviewed": false, "eligibilityAmount": "not-found",
+      "mismatches": ["The row's scheme (up to Rs 40,000 a year, income under Rs 4 lakh, 60%) is on no Axis Bank Foundation or Axis Bank page read: a candidate for `unlisted` (\"Not found ...\")."]
+    },
+    {
+      "rank": 5, "id": "siemens-india-scholarship", "landings90": 13, "people90": 13,
+      "decision": "set-cycle",
+      "why": "Siemens's own programme page says the 2026-27 applications are open now and gives no last date. 4 Oct 2026 (review state): the cycle carries openNow, so the page leads with 'Open now for 2026-27 — the official page gives no last date (siemens.com, checked 3 Oct 2026)'; the note keeps only what the date line does not say. Confirmed by a re-read at 06:45 IST on 4 Oct.",
+      "reads": [
+        { "url": "https://new.siemens.com/in/en/company/sustainability/scholarship.html (the row's applyUrl)", "result": "404", "readAt": "2026-10-03T21:09:31+05:30" },
+        { "url": "https://www.siemens.com/en-us/company/sustainability/corporate-citizenship-india/scholarship-program/", "result": "200", "readAt": "2026-10-03T21:09:47+05:30", "quote": "Applications to Siemens Scholarship Program 2026-27 are now open. Apply now [links to https://www.ssp-india.co.in/scholarship/apply]" },
+        { "url": "https://www.siemens.com/en-us/company/sustainability/corporate-citizenship-india/scholarship-program/", "result": "200 (same copy; the page's FAQ, an accordion opened by a click)", "readAt": "2026-10-03T21:09:47+05:30", "quote": "When should I apply? The online application tool will be open for a certain period after all admissions for the first year in Government Engineering Colleges is complete." },
+        { "url": "https://www.siemens.com/en-us/company/sustainability/corporate-citizenship-india/scholarship-program/", "result": "200 (same copy; the FAQ's 'Who can apply?', 'reserved for girls' and 'all conditions' answers, accordions opened by a click)", "readAt": "2026-10-03T21:09:47+05:30", "quote": "Eligibility requirements include: First-year students of Government Engineering college (excluding IIT) from the following streams: Mechanical/Production, Electrical, Electronics, Electronics & Telecommunication, Computer Science/Information Technology and Instrumentation Age: Up to 20 years SSC: Minimum 60% aggregate HSC or equivalent result: Minimum 50% aggregate and minimum 60% PCM aggregate Annual family income: Not more than Rs. 2 lakhs Eligibility is limited to one student per family ... Yes. 50% of the scholarships are reserved for girls. ... Yes. Application forms will not be accepted if any of the above eligibility conditions are not met." },
+        { "url": "https://www.siemens.com/en-us/company/sustainability/corporate-citizenship-india/scholarship-program/", "result": "200 (same copy; the visible programme text and 'Highlights of the program' list)", "readAt": "2026-10-03T21:09:47+05:30", "quote": "We support economically disadvantaged engineering students through four-year scholarships ... Annual scholarship comprising reimbursement of tuition fees and educational allowances for books, hostel and additional classes ... mentoring and real-world experience through internships ... Yearly scholarship renewal subject to students clearing all subjects and scoring first class" },
+        { "url": "https://www.siemens.com/en-us/company/sustainability/corporate-citizenship-india/scholarship-program/", "result": "200 (second-review re-read, saved as step2-rereview/pages/siemens.raw: the same 'now open' line, Apply now link and FAQ answers)", "readAt": "2026-10-03T23:27:03+05:30" },
+        { "url": "https://www.ssp-india.co.in/scholarship/apply", "result": "200, a script-only page (no text); the target of Siemens's own 'Apply now' button", "readAt": "2026-10-03T21:09:55+05:30" },
+        { "url": "https://www.siemens.com/en-us/company/sustainability/corporate-citizenship-india/scholarship-program/", "result": "200 (4 Oct confirmation re-read before the openNow flag was set, saved as step2-pages-oct04/siemens.raw; the visible text still has the 'now open' line and the FAQ's 'certain period' answer)", "readAt": "2026-10-04T06:45:47+05:30", "quote": "Applications to Siemens Scholarship Program 2026-27 are now open." }
+      ],
+      "cycle": {
+        "year": "2026-27",
+        "openNow": true,
+        "sourceUrl": "https://www.siemens.com/en-us/company/sustainability/corporate-citizenship-india/scholarship-program/",
+        "tier": "official",
+        "checkedOn": "2026-10-03",
+        "note": "Siemens's FAQ says the online application tool stays open only for a certain period after first-year admissions at government engineering colleges are complete, so do not wait."
+      },
+      "rowFixes": [
+        { "field": "deadline", "from": "Apr-Jul", "to": "After first-year admissions at government engineering colleges are complete (open for a limited period)", "sourceUrl": "https://www.siemens.com/en-us/company/sustainability/corporate-citizenship-india/scholarship-program/", "why": "The row's 'Apr-Jul' is wrong: Siemens says the application tool opens for a certain period after first-year admissions at government engineering colleges are complete, and its 2026-27 applications are open in October. The no-date line repeats this prose as 'the usual window is ...'." },
+        { "field": "applyUrl", "from": "https://new.siemens.com/in/en/company/sustainability/scholarship.html", "to": "https://www.ssp-india.co.in/scholarship/apply", "sourceUrl": "https://www.siemens.com/en-us/company/sustainability/corporate-citizenship-india/scholarship-program/", "why": "The row's apply link answers 404 while applications are open; Siemens's own programme page sends 'Apply now' to ssp-india.co.in/scholarship/apply." },
+        { "field": "eligibility.incomeMaxLakhs", "from": 3, "to": 2, "sourceUrl": "https://www.siemens.com/en-us/company/sustainability/corporate-citizenship-india/scholarship-program/", "why": "Siemens's FAQ ('Who can apply?') says 'Annual family income: Not more than Rs. 2 lakhs'. The row's ₹3 lakh is on no Siemens page and made the matcher offer the scheme to families Siemens excludes, beside a status line that now says applications are open." },
+        { "field": "eligibility.minMarksPct", "from": 75, "to": 50, "sourceUrl": "https://www.siemens.com/en-us/company/sustainability/corporate-citizenship-india/scholarship-program/", "why": "Siemens asks for HSC (Class 12, the qualifying exam) 'Minimum 50% aggregate and minimum 60% PCM aggregate' and SSC 'Minimum 60% aggregate'. The row's 75% told students with 50-74% in Class 12 that they do not qualify. 50 is the qualifying-exam floor; the SSC 60% and PCM 60% conditions are spelled out in the note added below, which the page prints beside this figure." },
+        { "field": "eligibility.note", "from": null, "to": "First-year students at a government engineering college (not an IIT) in mechanical/production, electrical, electronics, electronics and telecommunication, computer science/IT or instrumentation; aged up to 20; at least 60% in SSC (Class 10), and in HSC (Class 12) at least 50% overall with 60% in PCM; one student per family. Half the scholarships are reserved for girls. Every condition must be met.", "sourceUrl": "https://www.siemens.com/en-us/company/sustainability/corporate-citizenship-india/scholarship-program/", "why": "The row had no note, so its page gave none of Siemens's conditions (government engineering college, not an IIT, the six streams, age, SSC and PCM marks, one per family). The note is the FAQ's own answers to 'Who can apply?', 'Are there scholarships reserved for girls?' and 'Do I have to fulfill all conditions to apply?'." },
+        { "field": "amount", "from": "₹50,000-₹1 lakh/year + Siemens internship", "to": "Tuition fees reimbursed + allowances for books, hostel and additional classes, each year of the 4-year course (renewed on clearing all subjects with a first class); plus training, mentoring and internships", "sourceUrl": "https://www.siemens.com/en-us/company/sustainability/corporate-citizenship-india/scholarship-program/", "why": "Siemens's page gives no rupee figure: the scholarship is reimbursement of tuition fees with allowances for books, hostel and additional classes, over four years, renewed each year on clearing all subjects with a first class, with a development programme (training, mentoring, internships). The row's '₹50,000-₹1 lakh/year' is on no Siemens page. Not in the second review's list (it asked for income, marks and the note); made because the same visible page states it and the step now prints an official status beside it. Skip with --skip-fix=siemens-india-scholarship:amount." }
+      ],
+      "reviewed": false, "eligibilityAmount": "corrected-by-rowFixes",
+      "mismatches": [
+        "Eligibility: first-year students of Government Engineering Colleges (not IITs) in named streams, age up to 20, SSC 60%, HSC 50% with 60% in PCM, family income not more than Rs 2 lakh, one student per family, 50% of awards for girls; the row says income Rs 3 lakh and 75% marks (corrected by rowFixes: income 2, marks 50, a note with every condition).",
+        "Amount: Siemens gives reimbursement of tuition fees plus allowances for books, hostel and extra classes (no rupee figure); the row says Rs 50,000-1 lakh a year plus an internship (corrected by rowFixes).",
+        "Awarding body: the row says 'Siemens India Foundation'; the page read is Siemens's corporate-citizenship India programme and does not name a foundation (not corrected; not checked further).",
+        "Usual window: the row says Apr-Jul; Siemens says the tool opens after first-year admissions in Government Engineering Colleges are complete (corrected by rowFixes).",
+        "applyUrl returns 404 (corrected by rowFixes to Siemens's own 'Apply now' target)."
+      ]
+    },
+    {
+      "rank": 6, "id": "lila-poonawalla-girls", "landings90": 13, "people90": 13,
+      "decision": "set-cycle",
+      "why": "Re-read in review with HTML comments and hidden elements removed. What the foundation's home page shows for this year is one button, 'Click Here Scholarships 2026-27', that opens its online application (lpfscholarship.com/LPFOnlineAPP/, a script-only app with no readable text); no page shows a 2026-27 opening or last date. The first read's note ('latest notices are for 2025-26') rested on hidden text and was withdrawn: the 2025-26 notices sit inside HTML comments or in pop-ups whose links are commented out, and a 'Scholarship Application Schedule 2026' block (openings 1 Aug-15 Sep 2026; Pune PG and Science closed 26 Aug 2026) is in a pop-up whose trigger button and auto-open script are both commented out. None of that hidden text is used as this year's status. 4 Oct 2026 (review state): not flagged openNow — no visible page says applications are open (the 2026-27 button opens a script-only app with no readable text), so the page keeps the no-date line.",
+      "reads": [
+        { "url": "https://www.lilapoonawallafoundation.com/", "result": "200 (first read; its quote was hidden text, moved to `hidden`)", "readAt": "2026-10-03T21:10:13+05:30", "hidden": "(inside an HTML comment, not shown) Lila Poonawalla Foundation (LPF) is inviting Scholarship Applications for Bachelor Of Science (3 Years Course) for the academic year 2025–26, starting from July 1, 2025." },
+        { "url": "https://www.lilapoonawallafoundation.com/", "result": "200 (review re-read; the visible text is the same as the 21:10 copy)", "readAt": "2026-10-03T22:00:38+05:30", "quote": "Click Here Scholarships 2026-27 [links to https://lpfscholarship.com/LPFOnlineAPP/]", "hidden": "(a pop-up whose trigger and auto-open script are commented out, not shown) Scholarship Application Schedule 2026 ... B.E. / B.Tech - Pune Application Opens: 17 Aug 2026 ... B.Sc. Nursing - Pune Application Opens: 15 Sep 2026 ... Post Graduation - Pune Closed On: 26 Aug 2026" },
+        { "url": "https://www.lilapoonawallafoundation.com/scholarship/", "result": "200", "readAt": "2026-10-03T21:10:29+05:30", "quote": "The target group is girls of age 17 to 25 years, who belong to poor households (annual family income less than Rs. 3,50,000/-) or lower-middle class homes." },
+        { "url": "https://www.lilapoonawallafoundation.com/scholarship/", "result": "200 (same copy; the undergraduate sections by city and the postgraduate section)", "readAt": "2026-10-03T21:10:29+05:30", "quote": "PUNE The meritorious but economically challenged girls pursuing their Bachelor of Engineering – 4 years, Bachelor of Engineering after Diploma, Bachelor of Pharmacy, Bachelor of Science in Nursing and Bachelor of Science are awarded the scholarship. ... WARDHA, AMRAVATI & NAGPUR (WAN) The meritorious but economically challenged girls pursuing their Bachelor of Engineering – 4 years, Bachelor of Engineering after Diploma, Bachelor of Pharmacy and Bachelor of Science in Nursing are awarded the scholarship. ... HYDERABAD The meritorious but economically challenged girls pursuing their Bachelor of Technology– 4 years and Bachelor of Technology after Diploma are awarded the scholarship. ... BENGALURU ... The postgraduate scholarships are awarded to the girls pursuing their postgraduation studies in Pune City. ... Eligible girls go through rigorous application process and personal interview with selection committee." },
+        { "url": "https://www.lilapoonawallafoundation.com/scholarship/", "result": "200 (second-review re-read, saved as step2-rereview/pages/lpfsch.raw: the same visible text)", "readAt": "2026-10-03T23:34:29+05:30" },
+        { "url": "https://lpfscholarship.com/", "result": "200, a redirect to the application login", "readAt": "2026-10-03T21:10:22+05:30" },
+        { "url": "https://lpfscholarship.com/LPFOnlineAPP/", "result": "200, a script-only app titled 'LPF Online Application' (no text without a browser)", "readAt": "2026-10-03T22:00:42+05:30" }
+      ],
+      "cycle": {
+        "year": "2026-27",
+        "sourceUrl": "https://www.lilapoonawallafoundation.com/",
+        "tier": "official",
+        "checkedOn": "2026-10-03",
+        "note": "The foundation's home page links 'Scholarships 2026-27' to its online application (lpfscholarship.com), but its pages show no 2026-27 opening or last date: check the application site."
+      },
+      "rowFixes": [
+        { "field": "deadline", "from": "Mar-Jul each year", "to": "Jul–Sep (opening dates differ by course and city)", "sourceUrl": "https://www.lilapoonawallafoundation.com/", "why": "The row's 'Mar-Jul' matches nothing the foundation has published. Its own 2025-26 notices (now commented out on its home page) opened B.Sc and PG applications on 1 Jul 2025 and the B.E., B.E.-after-diploma and nursing applications on 10 Aug (Pune) and 17 Aug (Wardha-Nagpur, Amravati) 2025, with B.E. Hyderabad closing on 1 Sep 2025; the hidden 2026 schedule lists openings from 1 Aug to 15 Sep 2026. This is the usual-window prose only, labelled so on the page; no date from these hidden notices is shown." },
+        { "field": "eligibility.incomeMaxLakhs", "from": 6, "to": null, "sourceUrl": "https://www.lilapoonawallafoundation.com/scholarship/", "why": "The foundation's scholarship page sets no hard income ceiling: its target group is girls 'who belong to poor households (annual family income less than Rs. 3,50,000/-) or lower-middle class homes'. The row's ₹6 lakh is on no LPF page, and a ₹3.5 lakh gate (the second review's suggestion) would turn away the lower-middle-class girls the page also names. So the matcher's hard income gate is removed and the new note states the target group, figure included. --skip-fix=lila-poonawalla-girls:eligibility.incomeMaxLakhs keeps the old ₹6 lakh instead." },
+        { "field": "eligibility.note", "from": "Girls pursuing engineering, science, IT, or biotech UG/PG. Pune/Maharashtra preferred but national admissions accepted.", "to": "Undergraduate: girls aged 17 to 25 from poor households (family income under ₹3.5 lakh a year) or lower-middle-class homes, studying in one of the cities the foundation names: Pune (B.E., B.E. after diploma, B.Pharm, B.Sc Nursing, B.Sc), Wardha, Amravati and Nagpur (B.E., B.E. after diploma, B.Pharm, B.Sc Nursing), Hyderabad or Bengaluru (B.Tech, B.Tech after diploma). Postgraduate: girls from similar homes studying in Pune. Selection by application and interview.", "sourceUrl": "https://www.lilapoonawallafoundation.com/scholarship/", "why": "The old note's 'national admissions accepted' and 'IT, or biotech' are on no LPF page: the visible scholarship page awards undergraduate scholarships by city (Pune; Wardha, Amravati & Nagpur; Hyderabad; Bengaluru), each with its own courses, and postgraduate scholarships for study in Pune City, after an application and an interview. The new note is those sections and the target group, nothing else." }
+      ],
+      "reviewed": false, "eligibilityAmount": "mismatch",
+      "mismatches": [
+        "Income: under Rs 3,50,000 a year 'or lower-middle class homes' (UG, on the visible scholarship page); the row says Rs 6 lakh (corrected by rowFixes: the hard gate is removed and the note states the target group).",
+        "Where: the visible scholarship page names Pune, and Wardha, Amravati & Nagpur (WAN), with Hyderabad and Bengaluru sections; the row says 'national admissions accepted' (corrected by rowFixes: the note names the cities and courses).",
+        "Courses and amount: the visible scholarship page names B.E., B.E. after diploma, B.Pharm, B.Sc Nursing and B.Sc (Pune), and postgraduate study in Pune; it states no amount (the 'sole discretion of the LPF Board of Trustees' line is only in hidden pop-ups). The row says STEM UG/PG with tuition plus Rs 15,000-30,000.",
+        "Usual window: the row says Mar-Jul (corrected by rowFixes; see its why for the sources, which are hidden on today's page)."
+      ]
+    },
+    {
+      "rank": 7, "id": "adani-foundation", "landings90": 9, "people90": 11,
+      "decision": "no-change",
+      "why": "The row's apply page is gone and Adani Foundation's education page names no scholarship programme.",
+      "reads": [
+        { "url": "https://www.adanifoundation.org/initiatives/quality-education/scholarships", "result": "redirected to page-not-found", "readAt": "2026-10-03T21:10:45+05:30" },
+        { "url": "https://www.adanifoundation.org/impact-themes/education", "result": "200, no scholarship programme", "readAt": "2026-10-03T21:11:00+05:30", "quote": "Adani Competitive Coaching Centres (ACCCs) prepare students for various scholarships and entrance exams." }
+      ],
+      "reviewed": false, "eligibilityAmount": "not-found",
+      "mismatches": ["The row's scheme (Rs 50,000-1.5 lakh a year, income Rs 8 lakh, 65%, age 25) is on no Adani Foundation page read: a candidate for `unlisted`."]
+    },
+    {
+      "rank": 8, "id": "nsp-post-matric", "landings90": 8, "people90": 8,
+      "decision": "no-change",
+      "why": "Step 1 owns this row: NSP sets a separate 2026-27 window for each state (data/scholarships/nsp-matric-windows-2026-27.json). One national cycle would be wrong, so none is written here.",
+      "reads": [],
+      "reviewed": false, "eligibilityAmount": "not-read", "mismatches": []
+    },
+    {
+      "rank": 9, "id": "ts-epaas", "landings90": 8, "people90": 8,
+      "decision": "refresh-cycle",
+      "why": "Re-read: the visible ePASS home page shows no 2026-27 registration date (every dated notice on it sits inside HTML comments: 2024-25, 30-06-2025 and older). ePASS's post-matric services page, read in review, shows live 2026-27 fresh and renewal registration links and no last date (its 'Last Date ... 31-05-2026' line is commented out). The cycle stays dated-less, with a note that registration is open, and the check day moves from 27 Sep to 3 Oct. 4 Oct 2026 (review state): the cycle carries openNow (the page offers live 2026-27 fresh and renewal registration), so the page leads with 'Open now for 2026-27 — the official page gives no last date (telanganaepass.cgg.gov.in, checked 3 Oct 2026)'; the note keeps the link details. Confirmed by a re-read at 06:45 IST on 4 Oct. 4 Oct 2026 (review fixes): the note names the home page's own link, 'Post Matric Scholarship Services', so a visitor who follows the Source link (the home page) can find the open registration.",
+      "reads": [
+        { "url": "https://telanganaepass.cgg.gov.in/", "result": "200", "readAt": "2026-10-03T21:11:16+05:30", "hidden": "(inside an HTML comment, not shown) Post-Matric Fresh and Renewal Registrations for 2024-25 are open, and the last date for registrations is 30-06-2025" },
+        { "url": "https://telanganaepass.cgg.gov.in/", "result": "200 (review re-read, to get the session cookie the services page needs; the visible text is the same as the 21:11 copy)", "readAt": "2026-10-03T22:00:13+05:30" },
+        { "url": "https://telanganaepass.cgg.gov.in/epassonlinelinks.do", "result": "200 with the home page's session cookie (the reviewer saw a plain request answer 404, so the cycle keeps the home page as its source)", "readAt": "2026-10-03T22:00:17+05:30", "quote": "3.Postmatric Scholarships For Fresh Registration(2026-27) ... Fresh Complete Registrations for All Departments ... 4.Postmatric Scholarships For Renewal Registration(2026-27) Renewal Registrations for ST,BC,EBC,DW,MINORITY", "hidden": "(inside an HTML comment, not shown) Last Date For Fresh and Renewal Registrations is 31-05-2026" },
+        { "url": "https://telanganaepass.cgg.gov.in/epassonlinelinks.do", "result": "200 with the home page's session cookie (4 Oct confirmation re-read before the openNow flag was set, saved as step2-pages-oct04/epass-links.raw; the same 2026-27 links)", "readAt": "2026-10-04T06:45:54+05:30", "quote": "3.Postmatric Scholarships For Fresh Registration(2026-27) ... Fresh Pre-Registrations for All Departments ... Fresh Complete Registrations for All Departments ... 4.Postmatric Scholarships For Renewal Registration(2026-27) Renewal Registrations for ST,BC,EBC,DW,MINORITY ... Renewal Pre-Registrations for All Departments" },
+        { "url": "https://telanganaepass.cgg.gov.in/ (the home page's link to the post-matric page)", "result": "200 (the 3 Oct 22:00 copy, step2-pages/tsepass-r2.raw, and the 4 Oct 06:45 copy, step2-pages-oct04/epass-home.raw: the same visible link)", "readAt": "2026-10-03T22:00:13+05:30", "quote": "Post Matric Scholarship Services [links to /epassonlinelinks.do]" }
+      ],
+      "cycle": {
+        "year": "2026-27",
+        "openNow": true,
+        "sourceUrl": "https://telanganaepass.cgg.gov.in/",
+        "tier": "official",
+        "checkedOn": "2026-10-03",
+        "note": "On ePASS's home page, 'Post Matric Scholarship Services' opens a page with 2026-27 fresh registration links for all departments, and renewal links — pre-registration for all departments, and a renewal registration link for ST, BC, EBC, DW and minority students (SC is not named on it)."
+      },
+      "commentNote": "Supersedes the 26-27 Sep notes above: the post-matric page now shows 2026-27 registration links (still no last date).",
+      "reviewed": false, "eligibilityAmount": "not-read",
+      "mismatches": ["Eligibility and amount were not re-read: ePASS's eligibility pages need a session (they answered 404 to a plain request)."],
+      "note": "The post-matric page says 'Renewal Registrations for ST,BC,EBC,DW,MINORITY'; SC renewals are not named there (SC students have their own fresh-registration steps on the same page)."
+    },
+    {
+      "rank": 10, "id": "qualcomm-innovation-fellowship", "landings90": 8, "people90": 8,
+      "decision": "set-cycle",
+      "why": "Qualcomm's own official rules for QIF India 2026 (fellowships for the 2026-27 academic year) give the registration deadline: 20 Apr 2026, already past.",
+      "reads": [
+        { "url": "https://www.qualcomm.com/research/university-relations/innovation-fellowship/india", "result": "404", "readAt": "2026-10-03T21:11:35+05:30" },
+        { "url": "https://www.qualcomm.com/content/dam/qcomm-martech/dm-assets/documents/QIF_India-2026-official-rules.pdf", "result": "200", "readAt": "2026-10-03T21:11:51+05:30", "quote": "To apply for a Fellowship, each team must submit the registration materials described on the Program website ... by April 20, 2026 (registration will close at 10:00 am India time)." },
+        { "url": "https://www.qualcomm.com/research/university-relations/innovation-fellowship/2026-india", "result": "200, a script-only page (no text)", "readAt": "2026-10-03T21:12:00+05:30" }
+      ],
+      "cycle": {
+        "year": "2026-27",
+        "closesOn": "2026-04-20",
+        "sourceUrl": "https://www.qualcomm.com/content/dam/qcomm-martech/dm-assets/documents/QIF_India-2026-official-rules.pdf",
+        "tier": "official",
+        "checkedOn": "2026-10-03",
+        "note": "QIF India 2026 (fellowships for the 2026-27 academic year): registration closed at 10:00 am IST on 20 Apr 2026."
+      },
+      "reviewed": false, "eligibilityAmount": "mismatch",
+      "mismatches": [
+        "Eligibility: teams of up to two students at 16 named institutes (IITs BHU, Bombay, Delhi, Guwahati, Hyderabad, Kanpur, Kharagpur, Madras, Roorkee, Indore, Gandhinagar, Jodhpur; IISc; IIIT Hyderabad; ISI Kolkata; IIIT Delhi), at least one a Masters, dual-degree or PhD student in EE or CS for all of 2026-27; the row says PhD candidates at IIT/IISc in EE/wireless.",
+        "Amount: INR 10,00,000 per winning team, paid to the institute, for 2026-27 (a renewal of INR 10,00,000 is possible); the row says USD 40,000 a year for 2 years."
+      ]
+    },
+    {
+      "rank": 11, "id": "jsw-foundation", "landings90": 8, "people90": 8,
+      "decision": "no-change",
+      "why": "JSW Foundation's education page mentions only scholarships facilitated through NSDL; jsw.in/foundation shows no scholarship (its one scholarship line, for students in Nagpur, is inside an HTML comment). No national scheme, no date.",
+      "reads": [
+        { "url": "https://www.jsw.in/foundation/", "result": "200, no scholarship in the visible text", "readAt": "2026-10-03T21:12:22+05:30", "hidden": "(inside an HTML comment, not shown) JSW promotes education by offering scholarships to students in Nagpur" },
+        { "url": "https://www.jswfoundation.in/foundation/program-page-education-and-learning", "result": "200", "readAt": "2026-10-03T21:12:45+05:30", "quote": "Facilitating scholarships for the meritorious students through National Securities Depository Limited (NSDL)" }
+      ],
+      "reviewed": false, "eligibilityAmount": "not-found",
+      "mismatches": ["The row's national scheme (income Rs 6 lakh, Rs 25,000-2,00,000 a year) is on no JSW page read: a candidate for `unlisted`."]
+    },
+    {
+      "rank": 12, "id": "ka-vidyasiri", "landings90": 7, "people90": 9,
+      "decision": "refresh-cycle",
+      "why": "Re-check: BCWD's own 2026-27 page now gives 31 Oct 2026 (a second extension). The row's 30 Sep 2026 date is out of date.",
+      "reads": [
+        { "url": "https://bcwd.karnataka.gov.in/163/2026-27-post-matric-scholarship/en", "result": "200", "readAt": "2026-10-03T21:12:55+05:30", "quote": "Online applications are invited from Backward Class students ... for the Post-Matric Scholarship, Nomadic/Semi-Nomadic Post-Matric Eligibility Scholarship, Fee Concession, and Vidyasiri-Food Accommodation & Assistance Scheme for the year 2026-27. ⏳ Last date to apply: 31.10.2026" }
+      ],
+      "cycle": {
+        "year": "2026-27",
+        "closesOn": "2026-10-31",
+        "sourceUrl": "https://bcwd.karnataka.gov.in/163/2026-27-post-matric-scholarship/en",
+        "tier": "official",
+        "checkedOn": "2026-10-03",
+        "note": "Extended last date. BCWD's 2026-27 page now says \"Last date to apply: 31.10.2026\" for Post-Matric Scholarship, Fee Concession and Vidyasiri (a second extension; the 28 Aug 2026 notice had moved it to 30 Sep 2026). Apply on SSP."
+      },
+      "commentNote": "31.10.2026 supersedes the 30/09/2026 cited in the 27 Sep comments above.",
+      "reviewed": false, "eligibilityAmount": "already-reviewed",
+      "mismatches": [],
+      "note": "The row's `reviewed` (27 Sep 2026) is kept as it is; eligibility and amount were not re-read in this run."
+    },
+    {
+      "rank": 13, "id": "indian-oil-merit", "landings90": 6, "people90": 7,
+      "decision": "no-change",
+      "why": "Not read: iocl.com answers with a Sucuri JavaScript bot challenge, which was not bypassed.",
+      "reads": [
+        { "url": "https://iocl.com/scholarships", "result": "307 JavaScript challenge ('You are being redirected...')", "readAt": "2026-10-03T21:13:07+05:30" }
+      ],
+      "reviewed": false, "eligibilityAmount": "not-read", "mismatches": []
+    },
+    {
+      "rank": 14, "id": "sikh-foundation-scholarship", "landings90": 6, "people90": 6,
+      "decision": "no-change",
+      "why": "sikhfoundation.org is the Sikh Foundation International (USA); its site lists no scholarship for students in India.",
+      "reads": [
+        { "url": "https://www.sikhfoundation.org/", "result": "200, no scholarship", "readAt": "2026-10-03T21:13:26+05:30", "quote": "Founded by Dr. Narinder S Kapany in 1967, the Sikh Foundation has been working to promote the heritage and future of Sikhism." }
+      ],
+      "reviewed": false, "eligibilityAmount": "not-found",
+      "mismatches": ["The row's scheme (Rs 25,000-1,50,000, 'DGPC Education Wing') is on no page of the named body: a candidate for `unlisted`."]
+    },
+    {
+      "rank": 15, "id": "gujarat-mysy", "landings90": 6, "people90": 6,
+      "decision": "set-cycle",
+      "why": "MYSY's own portal states the 2026-27 last date (in Gujarati). The same notice block has two exceptions, now in the note: the link for medical and AYUSH courses still in admission (or awaiting results) is closed for now, and the fresh-application link for D2D, CBSE-board and NIOS-board students 'will start soon'.",
+      "reads": [
+        { "url": "https://mysy.guj.nic.in/ (the row's applyUrl)", "result": "host does not resolve (NXDOMAIN)", "readAt": "2026-10-03T21:13" },
+        { "url": "https://mysy.gujarat.gov.in/", "result": "200", "readAt": "2026-10-03T21:13:52+05:30", "quote": "મુખ્યમંત્રી યુવા સ્વાવલંબન યોજના(MYSY) અંતર્ગત શૈક્ષણિક વર્ષ ૨૦૨૬-૨૭માં તમામ અભ્યાસક્રમો માટે Fresh, Renewal અને Delayed માં ઓનલાઇન અરજી કરવાની છેલ્લી તા.૩૦/૧૦/૨૦૨૬ (સાંજે ૬ વાગ્યા સુધી) છે અને હેલ્પ સેન્ટરમાં ડોકયુમેન્ટ વેરિફિકેશન કરવાની છેલ્લી તા.૦૫/૧૧/૨૦૨૬ રહેશે.", "translation": "Under MYSY, in academic year 2026-27, the last date to apply online (Fresh, Renewal and Delayed) for all courses is 30/10/2026 (until 6 pm), and the last date for document verification at the help centre is 05/11/2026." },
+        { "url": "https://mysy.gujarat.gov.in/", "result": "200 (same copy, same notice block)", "readAt": "2026-10-03T21:13:52+05:30", "quote": "મેડિકલ અને આયુષના જે અભ્યાસક્રમોમાં હાલ એડમિશન પ્રક્રિયા ચાલુ છે અથવા તો પરીક્ષાનું પરિણામ આવેલ નથી , તેમના માટે ફ્રેશ/રીન્યુઅલ ની MYSY ઓનલાઈન પોર્ટલની લિંક અત્યારે બંધ કરેલ છે. જે પછીથી શરૂ કરવામાં આવશે.", "translation": "For medical and AYUSH courses where the admission process is still going on or the exam result has not come, the fresh/renewal link of the MYSY online portal is closed for now. It will be started later." },
+        { "url": "https://mysy.gujarat.gov.in/", "result": "200 (same copy, same notice block)", "readAt": "2026-10-03T21:13:52+05:30", "quote": "D2D (Diploma to Degree), CBSE બોર્ડ અને NIOS બોર્ડના વર્ષ ૨૦૨૬-૨૭માં પાસ થયેલ વિદ્યાર્થીઓ માટે ફ્રેશ અરજી કરવાની લિંક ટૂંક સમયમાં શરૂ કરવામાં આવશે.", "translation": "For D2D (Diploma to Degree), CBSE-board and NIOS-board students who passed in 2026-27, the link to apply fresh will be started soon." },
+        { "url": "https://mysy.gujarat.gov.in/Noticeboard/MYSY%20FAQ%2025-26.pdf", "result": "200, Gujarati text did not extract (font encoding)", "readAt": "2026-10-03T21:14:05+05:30" }
+      ],
+      "cycle": {
+        "year": "2026-27",
+        "closesOn": "2026-10-30",
+        "sourceUrl": "https://mysy.gujarat.gov.in/",
+        "tier": "official",
+        "checkedOn": "2026-10-03",
+        "note": "Fresh, renewal and delayed applications close at 6 pm on 30 Oct 2026, and documents must be verified at a MYSY help centre by 5 Nov 2026 (the portal's notice, in Gujarati). Two exceptions on the same notice: for medical and AYUSH courses where admission is still running or results are not out, the link is closed for now and will open later; and the fresh-application link for Diploma-to-Degree, CBSE-board and NIOS-board students will start soon. The portal is at mysy.gujarat.gov.in."
+      },
+      "rowFixes": [
+        { "field": "applyUrl", "from": "https://mysy.guj.nic.in/", "to": "https://mysy.gujarat.gov.in/", "sourceUrl": "https://mysy.gujarat.gov.in/", "why": "The row's apply link does not resolve (NXDOMAIN on 3 Oct 2026); MYSY's portal is mysy.gujarat.gov.in, the page that states the 30 Oct date. Without this the page would show an official date next to a dead Apply button." }
+      ],
+      "reviewed": false, "eligibilityAmount": "not-read",
+      "mismatches": [
+        "applyUrl https://mysy.guj.nic.in/ does not resolve; the portal is https://mysy.gujarat.gov.in/ (corrected by rowFixes).",
+        "Eligibility and amount were not re-read (the FAQ PDF's Gujarati text did not extract)."
+      ]
+    },
+    {
+      "rank": 16, "id": "sitaram-jindal", "landings90": 6, "people90": 4,
+      "decision": "no-change",
+      "why": "The foundation's eligibility page gives no dates at all (only 'Apply Now' links to its portal); the row calls it rolling, which the page does not say. No cycle state fits. 4 Oct 2026 (review state): re-read for a rolling state — neither the scholarship page nor its new portal's landing page says applications are taken at any time (the portal shows only 'Register Now', 'Create an Account' and 'Login'), so no rolling state is written.",
+      "reads": [
+        { "url": "https://www.sitaramjindalfoundation.org/scholarships.php (redirected to scholarships-for-students-in-bangalore.php)", "result": "200", "readAt": "2026-10-03T21:14:29+05:30", "quote": "Launching Our New Scholarship Portal! Apply online easily and quickly through our brand-new platform. Scholarships are just a click away! Apply Now", "hidden": "(inside an HTML comment, not shown) Category 'E' Engineering & Medicine Courses ... Rs. 2300/- Rs. 2000/- ... Rs.3200/- Rs.2800/- ... For All States : Boys@70% Girls@65%" },
+        { "url": "https://www.sitaramjindalfoundation.org/scholarships.php (redirected to scholarships-for-students-in-bangalore.php)", "result": "200 (4 Oct re-read for a rolling state, saved as step2-pages-oct04/sjf-sch.raw; the same visible text)", "readAt": "2026-10-04T06:39:10+05:30", "quote": "Launching Our New Scholarship Portal! Apply online easily and quickly through our brand-new platform. Scholarships are just a click away! Apply Now" },
+        { "url": "https://app.sitaramjindalfoundation.org/Login/SJFWebPage", "result": "200 (4 Oct, the portal the 'Apply Now' button opens, saved as step2-pages-oct04/sjf-portal.raw; no dates and no rolling statement)", "readAt": "2026-10-04T06:39:14+05:30", "quote": "Support your Academic Ambitions with our esteemed Scholarship Program! Register Now Don't have an account Yet? Create an Account Already a user? Login" }
+      ],
+      "reviewed": false, "eligibilityAmount": "not-shown",
+      "mismatches": [
+        "The visible page states no marks, income, amount or dates: it only announces the new portal ('Apply Now'). The marks-and-amount table the first read compared against is inside an HTML comment (not shown), so the first read's marks mismatch and amount match are withdrawn; the row's 60/65/70% marks, Rs 3.5 lakh income and Rs 500-3,200 a month cannot be checked against this page."
+      ]
+    },
+    {
+      "rank": 17, "id": "icsi-scholarship", "landings90": 5, "people90": 5,
+      "decision": "no-change",
+      "why": "Not read: icsi.edu's scholarship page is a script-only app (no text to a plain request) and its EWS guideline PDF is gone (404).",
+      "reads": [
+        { "url": "https://www.icsi.edu/students/services-offered/scholarship/", "result": "200, script-only (no text)", "readAt": "2026-10-03T21:14:56+05:30" },
+        { "url": "https://www.icsi.edu/media/portals/70/EWS.pdf", "result": "404", "readAt": "2026-10-03T21:15:07+05:30" }
+      ],
+      "reviewed": false, "eligibilityAmount": "not-read", "mismatches": []
+    },
+    {
+      "rank": 18, "id": "tcs-iontheme", "landings90": 5, "people90": 5,
+      "decision": "no-change",
+      "why": "TCS iON's site has no scholarship page; the word does not occur on its home page.",
+      "reads": [
+        { "url": "https://www.tcsion.com/", "result": "200, no scholarship", "readAt": "2026-10-03T21:15:15+05:30" }
+      ],
+      "reviewed": false, "eligibilityAmount": "not-found",
+      "mismatches": ["'TCS iON Empowers Scholarship' (Rs 50,000-1,00,000) is on no TCS iON page read: a candidate for `unlisted`."]
+    },
+    {
+      "rank": 19, "id": "ts-overseas-bc", "landings90": 5, "people90": 5,
+      "decision": "set-cycle",
+      "why": "Telangana ePASS's overseas page states the registration last date for Mahatma Jyothiba Phule Overseas Vidya Nidhi (BC and EBC students), the BC Welfare overseas scheme this row describes.",
+      "reads": [
+        { "url": "https://telanganaepass.cgg.gov.in/OverseasLinks.do", "result": "200", "readAt": "2026-10-03T21:15:45+05:30", "quote": "Mahatma Jyothiba Phule Overseas Vidya Nidhi for BC and EBC students ... Last Date For Overseas Scholarship Registrations is 15.10.2026 Students with COE/I-20 and Visa are eligible to apply for overseas(MJPOVN) scholarship registration" }
+      ],
+      "cycle": {
+        "year": "2026-27",
+        "closesOn": "2026-10-15",
+        "sourceUrl": "https://telanganaepass.cgg.gov.in/OverseasLinks.do",
+        "tier": "official",
+        "checkedOn": "2026-10-03",
+        "note": "Registration for Mahatma Jyothiba Phule Overseas Vidya Nidhi (BC and EBC students) on Telangana ePASS; only students who already hold a CoE or I-20 and a visa can register."
+      },
+      "rowFixes": [
+        { "field": "name", "from": "Telangana CM Overseas Scholarship (BC)", "to": "Mahatma Jyothiba Phule Overseas Vidya Nidhi (Telangana BC and EBC overseas scholarship)", "sourceUrl": "https://telanganaepass.cgg.gov.in/OverseasLinks.do", "why": "No scheme of the row's name is on ePASS. The BC Welfare overseas scheme whose 15 Oct 2026 registration date is written here is 'Mahatma Jyothiba Phule Overseas Vidya Nidhi for BC and EBC students'; the 'Minister's Overseas Scholarship Scheme for Minorities' on the same page is a different scheme. Without this the /scholarships 'closing' line would lead with a name the state does not use. The bracket is Shishya's plain description, not part of the official name: it keeps the words people search for ('Telangana BC overseas scholarship') in the title and H1 (second review). SEARCH SURFACE: changes the page title, H1, breadcrumb, JSON-LD names, OG title and image, meta keywords, the site-search entry, list rows and FAQs, /scholarships/context.md, /context.md and /llms-full.txt (the URL /scholarships/ts-overseas-bc stays)." },
+        { "field": "eligibility.categories", "from": ["OBC"], "to": ["OBC", "EWS"], "sourceUrl": "https://telanganaepass.cgg.gov.in/OverseasLinks.do", "why": "ePASS names the scheme 'for BC and EBC students' and publishes separate EBC merit and selection lists; EWS stands in for EBC in this catalogue's category set (as on pm-yasasvi). The row stays a reserved-category row: its /scholarships/for/ list membership does not change." },
+        { "field": "eligibility.note", "from": "BC student admitted to ranked overseas PG", "to": "Telangana BC or EBC student with an admission (CoE or I-20) and a visa for postgraduate study in the USA, UK, Australia, Canada, Singapore, Germany, New Zealand, Japan, France or South Korea. Family income under ₹5 lakh a year, at least 60% in graduation, a GRE/GMAT score and an English-test score (TOEFL, IELTS or PTE), one child per family.", "sourceUrl": "https://telanganaepass.cgg.gov.in/OverseasLinks.do", "why": "The old note named BC students only and a 'ranked' university condition the page does not state; the new note is the MJPOVN section's own visible guidelines (income, countries, one child, 60% in graduation, GRE/GMAT and English-test scores, CoE/I-20 and visa). 'Postgraduate' is kept from the row's existing PG level: the page asks for a graduation score and a GRE/GMAT score but does not print the word." }
+      ],
+      "reviewed": false, "eligibilityAmount": "mismatch",
+      "mismatches": [
+        "Name: the scheme is 'Mahatma Jyothiba Phule Overseas Vidya Nidhi for BC and EBC students'; the row says 'Telangana CM Overseas Scholarship (BC)' (corrected by rowFixes to the official name with a plain description in brackets).",
+        "Eligibility: EBC students are eligible too; 60% in graduation, a GRE/GMAT and an English-test score, a CoE/I-20 and visa, one child per family, ten named countries; the row's note says only 'BC student admitted to ranked overseas PG' (corrected by rowFixes).",
+        "Amount: up to Rs 20 lakh or as per the admission letter, whichever is less, plus a one-way economy ticket and visa charges; the row says up to Rs 20 lakh (incomplete, not wrong).",
+        "Income: less than Rs 5 lakh a year matches the row."
+      ]
+    },
+    {
+      "rank": 20, "id": "feeding-india-stipend", "landings90": 3, "people90": 3,
+      "decision": "no-change",
+      "why": "Feeding India's site has no scholarship or stipend.",
+      "reads": [
+        { "url": "https://feedingindia.org/", "result": "200, no scholarship", "readAt": "2026-10-03T21:16:54+05:30" }
+      ],
+      "reviewed": false, "eligibilityAmount": "not-found",
+      "mismatches": ["The row's 'Feeding India Education Stipend' is on no Feeding India page read: a candidate for `unlisted`."]
+    },
+    {
+      "rank": 21, "id": "tata-pankh-pg", "landings90": 3, "people90": 3,
+      "decision": "no-change",
+      "why": "The row's applyUrl host refused the connection; Tata Trusts' education-grants page names no 'SDTT Scholarship' (the row's 'partly loan' overseas award reads like the J N Tata Endowment, a different body).",
+      "reads": [
+        { "url": "https://www.dorabjitatatrust.org/", "result": "could not connect", "readAt": "2026-10-03T21:17" },
+        { "url": "https://www.tatatrusts.org/our-work/individual-grants-programme/education-grants", "result": "200", "readAt": "2026-10-03T21:17:15+05:30", "quote": "More than 5,800 Indian students have been awarded the J N Tata Endowment's (JNTE) loan scholarship since 1892 ... The Endowment supports only overseas studies – Masters, Ph.D." }
+      ],
+      "reviewed": false, "eligibilityAmount": "not-found",
+      "mismatches": ["Identity unclear; applyUrl unreachable."]
+    },
+    {
+      "rank": 22, "id": "kl-mukhyamantri-kl", "landings90": 3, "people90": 3,
+      "decision": "no-change",
+      "why": "The row's applyUrl host does not resolve, and Kerala's DCE scholarship portal shows no scheme by this name.",
+      "reads": [
+        { "url": "https://cmss.scholarship.gov.in/", "result": "host does not resolve (NXDOMAIN)", "readAt": "2026-10-03T21:17" },
+        { "url": "https://dcescholarship.kerala.gov.in/he_ma/he_maindx.php", "result": "200, no 'CMSPS' or CM's UG/PG scholarship in its notices", "readAt": "2026-10-03T21:17:48+05:30" }
+      ],
+      "reviewed": false, "eligibilityAmount": "not-found",
+      "mismatches": ["applyUrl does not resolve; scheme not found under this name."]
+    },
+    {
+      "rank": 23, "id": "aditya-birla-capital", "landings90": 3, "people90": 3,
+      "decision": "no-change",
+      "why": "The row's scholarship page answers 404.",
+      "reads": [
+        { "url": "https://www.adityabirlacapital.com/abc-scholarship-program", "result": "404", "readAt": "2026-10-03T21:18:03+05:30" }
+      ],
+      "reviewed": false, "eligibilityAmount": "not-found",
+      "mismatches": ["applyUrl 404."]
+    },
+    {
+      "rank": 24, "id": "gmsb-target-olympic", "landings90": 3, "people90": 2,
+      "decision": "no-change",
+      "why": "TOPS selects athletes from the existing pool; there is no application window to record. The ministry's host did not answer.",
+      "reads": [
+        { "url": "https://yas.nic.in/sports/tops", "result": "could not connect", "readAt": "2026-10-03T21:18" },
+        { "url": "https://yas.gov.in/sports/target-olympic-podium-scheme-tops", "result": "404", "readAt": "2026-10-03T21:18:47+05:30" }
+      ],
+      "reviewed": false, "eligibilityAmount": "not-read", "mismatches": []
+    },
+    {
+      "rank": 25, "id": "tn-kalaignar-meritorious", "landings90": 2, "people90": 2,
+      "decision": "no-change",
+      "why": "A web search (used only to look for the body's own page) found no Tamil Nadu scheme by this name, and the row's applyUrl is the state's home page (https://tn.gov.in/, not read): there is no scheme page to read a date from.",
+      "reads": [],
+      "reviewed": false, "eligibilityAmount": "not-found",
+      "mismatches": ["Scheme not found under this name: a candidate for `unlisted`."]
+    },
+    {
+      "rank": 26, "id": "iei-young-engineer", "landings90": 2, "people90": 2,
+      "decision": "no-change",
+      "why": "Not read: ieindia.org is a script-only app (no text to a plain request).",
+      "reads": [
+        { "url": "https://www.ieindia.org/", "result": "200, script-only (no text)", "readAt": "2026-10-03T21:19:12+05:30" }
+      ],
+      "reviewed": false, "eligibilityAmount": "not-read", "mismatches": []
+    },
+    {
+      "rank": 27, "id": "infosys-foundation-rural", "landings90": 2, "people90": 2,
+      "decision": "no-change",
+      "why": "Not read: infosys.com answered 403 (access denied).",
+      "reads": [
+        { "url": "https://www.infosys.com/infosys-foundation/initiatives/aarohan.html", "result": "403", "readAt": "2026-10-03T21:19:32+05:30" }
+      ],
+      "reviewed": false, "eligibilityAmount": "not-read", "mismatches": []
+    },
+    {
+      "rank": 28, "id": "bits-merit-scholarship", "landings90": 2, "people90": 2,
+      "decision": "no-change",
+      "why": "BITS awards these waivers at admission by BITSAT standing; there is no application window to record.",
+      "reads": [
+        { "url": "https://admissions.bits-pilani.ac.in/FD/scholarship.html?02122025", "result": "200", "readAt": "2026-10-03T21:19:56+05:30", "quote": "Starting in AY 2026-27, BITS Pilani will take a landmark step ... introducing tuition-blind admissions for the top 500 BITSAT rankers. Eligible candidates with an annual family income of up to ₹20 lakh will receive a full tuition scholarship for all four years" }
+      ],
+      "reviewed": false, "eligibilityAmount": "mismatch",
+      "mismatches": [
+        "Amount: merit awards (top 2% 100%, next 1% 50% of tuition) and merit-cum-need awards (top 5% 100%, next 2% 50%, next 5% 25%, next 10% 10%), plus full tuition for the top 500 BITSAT rankers with family income up to Rs 20 lakh from 2026-27; the row says 25%-90% waivers.",
+        "Income: the row's 'below Rs 8 lakh' is not on the page."
+      ]
+    },
+    {
+      "rank": 29, "id": "csss", "landings90": 2, "people90": 2,
+      "decision": "refresh-cycle",
+      "why": "Re-read NSP: the scheme card now says the renewal window closed on 30-09-2026; NSP's home-page announcement says CSSS renewals are 'currently open' and close on 31-10-2026 (institute 15-11-2026, L2 30-11-2026), a complete schedule one month later. Both are official statements on the same portal and they conflict (the second review re-read both at 23:28 IST: unchanged). Second review: the two possible errors do not cost the same — if the record says 31 Oct and NSP is in fact closed, a renewal student finds it closed and loses nothing; if it says 'closed' while NSP is open, the student misses the renewal, and renewal students are the only CSSS applicants this year. So the record's last date is now the home page's 31-10-2026 (sourced to https://scholarships.gov.in/, which also states the portal opened for 2026-27 on 1 June 2026), and the card's 30-09-2026 stays in the note. CSSS now appears in closing-soon, and the stale-read guard covers it. A 'conflicting official dates' state in src/lib/scholarship-lists.ts (step 1's file) is still the lead's choice.",
+      "reads": [
+        { "url": "https://scholarships.gov.in/All-Scholarships", "result": "200", "readAt": "2026-10-03T21:20:07+05:30", "quote": "PM-USP – Central Sector Scheme Of Scholarship For College And University Students (CSSS) (Merit Based Scheme) Scheme Open from (for Renewal): 01-06-2026 Student Application Closed on : 30-09-2026" },
+        { "url": "https://scholarships.gov.in/", "result": "200", "readAt": "2026-10-03T21:20:17+05:30", "quote": "Renewal applications for the \"PM-USP – Central Sector Scheme Of Scholarship For College And University Students (CSSS) (Merit Based Scheme)\" ... is currently open in NSP. Closing dates for student application is 31-10-2026 and closing date for institute verification is : 15-11-2026 and closing date for L2 verification is : 30/11/2026 The Portal is open for Academic year 2026-27 from 1'st June 2026 onwards." },
+        { "url": "https://scholarships.gov.in/", "result": "200 (second-review re-read, saved as step2-rereview/pages/nsphome.raw: the same announcement)", "readAt": "2026-10-03T23:28:28+05:30" },
+        { "url": "https://scholarships.gov.in/All-Scholarships", "result": "200 (second-review re-read, saved as step2-rereview/pages/nspall.raw: the same CSSS card)", "readAt": "2026-10-03T23:28:17+05:30" }
+      ],
+      "cycle": {
+        "year": "2026-27",
+        "opensOn": "2026-06-01",
+        "closesOn": "2026-10-31",
+        "sourceUrl": "https://scholarships.gov.in/",
+        "tier": "official",
+        "checkedOn": "2026-10-03",
+        "note": "Renewal applications only — NSP lists no fresh-application window for 2026-27. NSP's home page says CSSS renewals are open, with student applications closing on 31 Oct 2026 (institute verification by 15 Nov 2026); the CSSS card on NSP's scheme list says \"Student Application Closed on: 30-09-2026\", so renew as early as you can."
+      },
+      "commentNote": "The last date is now NSP's home-page 31-10-2026, with the card's 30-09-2026 in the note; this supersedes 'the earlier date is kept as the last date' above.",
+      "reviewed": false, "eligibilityAmount": "already-reviewed",
+      "mismatches": [],
+      "note": "The row's `reviewed` (27 Sep 2026) is kept as it is."
+    },
+    {
+      "rank": 30, "id": "tripura-merit-cm", "landings90": 2, "people90": 2,
+      "decision": "no-change",
+      "why": "Tripura Higher Education's own list of state scholarship schemes (23 Dec 2025) has no 'CM's Merit Scholarship'.",
+      "reads": [
+        { "url": "https://highereducation.tripura.gov.in/sites/default/files/State_Scheme_Deatils_23.12.2025.pdf", "result": "200", "readAt": "2026-10-03T21:20:45+05:30", "quote": "Tripura Govt. Merit-Cum-Means Scholarship scheme 1977 — 1.Marks required 55% for general category and 50% for S.T/S.C students 2.No income bar" }
+      ],
+      "reviewed": false, "eligibilityAmount": "not-found",
+      "mismatches": ["The row's scheme (Rs 10,000-25,000 a year, income Rs 3 lakh, 60%) is not in the state's own list; the nearest, the Merit-cum-Means Scholarship 1977, pays Rs 90-160 a month with no income bar."]
+    },
+    {
+      "rank": 31, "id": "gj-mysy-fees", "landings90": 0, "people90": 0,
+      "companionOf": "gujarat-mysy",
+      "decision": "set-cycle",
+      "why": "4 Oct 2026 (review state): a second catalogue row for the same scheme as gujarat-mysy — 'Gujarat Mukhyamantri Yuva Swavalamban Yojana (Fees)', MYSY's tuition-fee help, with the same dead apply link (mysy.guj.nic.in). It is outside the ranked 30: a read-only SELECT on 4 Oct 2026 with the ranking's rules found no human page view of it in the 90 IST days to 3 Oct (0 views, 0 people, 0 landings; the same query gives gujarat-mysy 7 views, 6 people and 6 landings, as in the ranking). Without this entry, after --apply /scholarships/gujarat-mysy would show MYSY's official 30 Oct 2026 last date while /scholarships/gj-mysy-fees still said 'Shishya has not checked a 2026-27 date' beside a dead Apply button. It gets gujarat-mysy's cycle exactly (checkReads pins that) and the same applyUrl fix, from the same 3 Oct reads of mysy.gujarat.gov.in, in the same logged, undoable edit. Unlisting it instead was not chosen: Scholarship.unlisted has no 'duplicate' kind — a reason that does not open with 'Not a scholarship' or 'Status in doubt' is read as 'not found', whose page is titled 'Not Verified' and hides the row's claims, which would be untrue for MYSY — and an unlisted row leaves every published scheme count.",
+      "reads": [
+        { "url": "https://mysy.guj.nic.in/ (the row's applyUrl, the same dead host as gujarat-mysy's)", "result": "host does not resolve (NXDOMAIN)", "readAt": "2026-10-03T21:13" },
+        { "url": "https://mysy.gujarat.gov.in/", "result": "200", "readAt": "2026-10-03T21:13:52+05:30", "quote": "મુખ્યમંત્રી યુવા સ્વાવલંબન યોજના(MYSY) અંતર્ગત શૈક્ષણિક વર્ષ ૨૦૨૬-૨૭માં તમામ અભ્યાસક્રમો માટે Fresh, Renewal અને Delayed માં ઓનલાઇન અરજી કરવાની છેલ્લી તા.૩૦/૧૦/૨૦૨૬ (સાંજે ૬ વાગ્યા સુધી) છે અને હેલ્પ સેન્ટરમાં ડોકયુમેન્ટ વેરિફિકેશન કરવાની છેલ્લી તા.૦૫/૧૧/૨૦૨૬ રહેશે.", "translation": "Under MYSY, in academic year 2026-27, the last date to apply online (Fresh, Renewal and Delayed) for all courses is 30/10/2026 (until 6 pm), and the last date for document verification at the help centre is 05/11/2026." },
+        { "url": "https://mysy.gujarat.gov.in/", "result": "200 (same copy, same notice block)", "readAt": "2026-10-03T21:13:52+05:30", "quote": "મેડિકલ અને આયુષના જે અભ્યાસક્રમોમાં હાલ એડમિશન પ્રક્રિયા ચાલુ છે અથવા તો પરીક્ષાનું પરિણામ આવેલ નથી , તેમના માટે ફ્રેશ/રીન્યુઅલ ની MYSY ઓનલાઈન પોર્ટલની લિંક અત્યારે બંધ કરેલ છે. જે પછીથી શરૂ કરવામાં આવશે.", "translation": "For medical and AYUSH courses where the admission process is still going on or the exam result has not come, the fresh/renewal link of the MYSY online portal is closed for now. It will be started later." },
+        { "url": "https://mysy.gujarat.gov.in/", "result": "200 (same copy, same notice block)", "readAt": "2026-10-03T21:13:52+05:30", "quote": "D2D (Diploma to Degree), CBSE બોર્ડ અને NIOS બોર્ડના વર્ષ ૨૦૨૬-૨૭માં પાસ થયેલ વિદ્યાર્થીઓ માટે ફ્રેશ અરજી કરવાની લિંક ટૂંક સમયમાં શરૂ કરવામાં આવશે.", "translation": "For D2D (Diploma to Degree), CBSE-board and NIOS-board students who passed in 2026-27, the link to apply fresh will be started soon." },
+        { "url": "https://mysy.gujarat.gov.in/Noticeboard/MYSY%20FAQ%2025-26.pdf", "result": "200, Gujarati text did not extract (font encoding)", "readAt": "2026-10-03T21:14:05+05:30" }
+      ],
+      "cycle": {
+        "year": "2026-27",
+        "closesOn": "2026-10-30",
+        "sourceUrl": "https://mysy.gujarat.gov.in/",
+        "tier": "official",
+        "checkedOn": "2026-10-03",
+        "note": "Fresh, renewal and delayed applications close at 6 pm on 30 Oct 2026, and documents must be verified at a MYSY help centre by 5 Nov 2026 (the portal's notice, in Gujarati). Two exceptions on the same notice: for medical and AYUSH courses where admission is still running or results are not out, the link is closed for now and will open later; and the fresh-application link for Diploma-to-Degree, CBSE-board and NIOS-board students will start soon. The portal is at mysy.gujarat.gov.in."
+      },
+      "rowFixes": [
+        { "field": "applyUrl", "from": "https://mysy.guj.nic.in/", "to": "https://mysy.gujarat.gov.in/", "sourceUrl": "https://mysy.gujarat.gov.in/", "why": "The row's apply link does not resolve (NXDOMAIN on 3 Oct 2026, the same host as gujarat-mysy's); MYSY's portal is mysy.gujarat.gov.in, the page that states the 30 Oct date." }
+      ],
+      "reviewed": false, "eligibilityAmount": "not-read",
+      "mismatches": [
+        "applyUrl https://mysy.guj.nic.in/ does not resolve; the portal is https://mysy.gujarat.gov.in/ (corrected by rowFixes).",
+        "Duplicate: the same scheme as gujarat-mysy (MYSY); merging the two rows needs a 'duplicate' state the catalogue does not have (not done here).",
+        "Eligibility and amount were not re-read (the FAQ PDF's Gujarati text did not extract)."
+      ]
+    },
+    {
+      "rank": 32, "id": "ts-cm-overseas", "landings90": 0, "people90": 0,
+      "companionOf": "ts-overseas-bc",
+      "decision": "set-cycle",
+      "why": "4 Oct 2026 (review fixes): a second catalogue row for the same scheme as ts-overseas-bc. Both rows were named 'Telangana CM Overseas Scholarship (BC)', and both are Telangana BC Welfare's overseas scheme for postgraduate study, up to ₹20 lakh, twice a year, with a ₹5 lakh income limit. It is outside the ranked 30: a read-only SELECT on 4 Oct 2026 with the ranking's rules found no human page view of it in the 90 IST days to 3 Oct (0 views, 0 people, 0 landings; the same query gives ts-overseas-bc 5 views, 5 people and 5 landings, as in the ranking). It is linked from the Related scholarships blocks of ts-overseas-bc and ts-epaas. Without this entry, after --apply /scholarships/ts-overseas-bc would show the official 15 Oct 2026 registration date under the scheme's official name, while /scholarships/ts-cm-overseas kept the name the release corrects, said 'Shishya has not checked a 2026-27 date', and sent students to a dead Apply link (www.bcwelfare.telangana.gov.in does not resolve). It gets ts-overseas-bc's cycle exactly (checkReads pins that), the same name, categories and note fixes, ts-overseas-bc's amount text, and an apply link to the ePASS portal that runs the registration, all from the same 3 Oct read of OverseasLinks.do, in the same logged, undoable edit. Unlisting was not chosen, for the reason given on gj-mysy-fees.",
+      "reads": [
+        { "url": "https://www.bcwelfare.telangana.gov.in/ (the row's applyUrl)", "result": "host does not resolve (NXDOMAIN; curl exit 6)", "readAt": "2026-10-04T07:49:36+05:30" },
+        { "url": "https://telanganaepass.cgg.gov.in/OverseasLinks.do", "result": "200", "readAt": "2026-10-03T21:15:45+05:30", "quote": "Mahatma Jyothiba Phule Overseas Vidya Nidhi for BC and EBC students ... Last Date For Overseas Scholarship Registrations is 15.10.2026 Students with COE/I-20 and Visa are eligible to apply for overseas(MJPOVN) scholarship registration" }
+      ],
+      "cycle": {
+        "year": "2026-27",
+        "closesOn": "2026-10-15",
+        "sourceUrl": "https://telanganaepass.cgg.gov.in/OverseasLinks.do",
+        "tier": "official",
+        "checkedOn": "2026-10-03",
+        "note": "Registration for Mahatma Jyothiba Phule Overseas Vidya Nidhi (BC and EBC students) on Telangana ePASS; only students who already hold a CoE or I-20 and a visa can register."
+      },
+      "rowFixes": [
+        { "field": "name", "from": "Telangana CM Overseas Scholarship (BC)", "to": "Mahatma Jyothiba Phule Overseas Vidya Nidhi (Telangana BC and EBC overseas scholarship)", "sourceUrl": "https://telanganaepass.cgg.gov.in/OverseasLinks.do", "why": "No scheme of the row's name is on ePASS: the BC Welfare overseas scheme is 'Mahatma Jyothiba Phule Overseas Vidya Nidhi for BC and EBC students', and the 'Minister's Overseas Scholarship Scheme for Minorities' on the same page is a different scheme. The row gets the same name as ts-overseas-bc, the row for the same scheme, so the two pages name it alike (the bracket is Shishya's plain description, as there). SEARCH SURFACE: changes this page's title, H1, breadcrumb, JSON-LD names, OG title and image, meta keywords, the site-search entry, list rows and FAQs, /scholarships/context.md and /llms-full.txt (the URL /scholarships/ts-cm-overseas stays)." },
+        { "field": "applyUrl", "from": "https://www.bcwelfare.telangana.gov.in/", "to": "https://telanganaepass.cgg.gov.in/", "sourceUrl": "https://telanganaepass.cgg.gov.in/OverseasLinks.do", "why": "The row's apply link does not resolve (NXDOMAIN on 4 Oct 2026; curl exit 6). Registration for this scheme runs on Telangana ePASS: its OverseasLinks.do page carries the MJPOVN Registration link and the 15 Oct 2026 last date. ts-overseas-bc's apply link is ePASS's home page, and this row now uses the same. Without this the page would show an official date next to a dead Apply button." },
+        { "field": "eligibility.categories", "from": ["OBC"], "to": ["OBC", "EWS"], "sourceUrl": "https://telanganaepass.cgg.gov.in/OverseasLinks.do", "why": "As on ts-overseas-bc: ePASS names the scheme 'for BC and EBC students' and publishes separate EBC merit and selection lists; EWS stands in for EBC in this catalogue's category set. The row stays a reserved-category row." },
+        { "field": "eligibility.note", "from": "Telangana domicile + OBC (BC) category. Admitted to ranked overseas PG program. Below 35 years.", "to": "Telangana BC or EBC student with an admission (CoE or I-20) and a visa for postgraduate study in the USA, UK, Australia, Canada, Singapore, Germany, New Zealand, Japan, France or South Korea. Family income under ₹5 lakh a year, at least 60% in graduation, a GRE/GMAT score and an English-test score (TOEFL, IELTS or PTE), one child per family.", "sourceUrl": "https://telanganaepass.cgg.gov.in/OverseasLinks.do", "why": "The same note as ts-overseas-bc: the MJPOVN section's own visible guidelines. The old note's 'ranked' programme and 'Below 35 years' are not on the page, and it named BC students only." },
+        { "field": "amount", "from": "Up to ₹20 lakh (one-time)", "to": "Up to ₹20 lakh", "sourceUrl": "https://telanganaepass.cgg.gov.in/OverseasLinks.do", "why": "The page says 'Upto 20 lakhs or as per admission letter which ever is less', plus a one-way economy ticket and visa charges; 'one-time' is not on it. The row gets ts-overseas-bc's amount text, so the two pages state the same amount (the reads call that text incomplete, not wrong)." }
+      ],
+      "reviewed": false, "eligibilityAmount": "mismatch",
+      "mismatches": [
+        "Name, categories and note: as on ts-overseas-bc (corrected by rowFixes, to the same values).",
+        "applyUrl https://www.bcwelfare.telangana.gov.in/ does not resolve (corrected by rowFixes to the ePASS portal, as on ts-overseas-bc).",
+        "Amount: the page says up to Rs 20 lakh or as per the admission letter, whichever is less, plus a one-way economy ticket and visa charges; the row's 'one-time' is not on it (corrected by rowFixes to ts-overseas-bc's 'Up to ₹20 lakh', which is incomplete, not wrong).",
+        "Description: 'counterpart of the MWD overseas scheme but for OBC/BC students. Highly competitive shortlist.' is not a field this step corrects (not corrected).",
+        "Duplicate: the same scheme as ts-overseas-bc; merging the two rows needs a 'duplicate' state the catalogue does not have (not done here)."
+      ]
+    }
+  ]
+}
