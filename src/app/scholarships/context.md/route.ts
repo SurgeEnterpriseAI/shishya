@@ -7,6 +7,9 @@
 // 26 Sep 2026 (G4): plus the list pages (/scholarships/for/{filter},
 // /scholarships/closing-soon) with their computed counts and index state,
 // and the 2026-27 last dates read on official portals (src/lib/scholarship-lists.ts).
+// 6 Oct 2026 (scholarships release): plus what every other scheme's page
+// shows for 2026-27 (open now, rolling, closed, no date yet, discontinued,
+// NSP's per-state dates or the usual window), counted here with lastDateOf.
 
 import { istDay } from "@/lib/exam-week";
 // 26 Sep 2026 (repair): the schemes, never the one outside aggregator
@@ -21,7 +24,8 @@ import {
   lastDateOf,
   schemesForFilter,
 } from "@/lib/scholarship-lists";
-import { SITE, contextMarkdownHeaders, scholarshipsContextMarkdown, type ScholarshipListsContext } from "@/lib/section-context";
+import { nspLevelForScholarship } from "@/lib/nsp-windows";
+import { SITE, contextMarkdownHeaders, scholarshipsContextMarkdown, type ScholarshipListsContext, type ScholarshipOthers } from "@/lib/section-context";
 
 export const revalidate = 3600;
 
@@ -40,7 +44,27 @@ function listsContext(today: string): ScholarshipListsContext {
       ? [{ id: s.id, name: s.name, closesOn: d.closesOn, tier: d.cycle.tier, host: hostOf(d.cycle.sourceUrl), checkedOn: d.cycle.checkedOn, note: d.cycle.note ?? null }]
       : [];
   }).sort((a, b) => (a.closesOn < b.closesOn ? -1 : a.closesOn > b.closesOn ? 1 : a.name.localeCompare(b.name)));
-  return { lists, dated };
+  // 6 Oct 2026: every scheme outside the dated block, by what its page shows.
+  const datedIds = new Set(dated.map((d) => d.id));
+  const others: ScholarshipOthers = { nspByState: 0, openNow: 0, openWhenChecked: 0, rolling: 0, closed: 0, noDate: 0, discontinued: 0, usualOnly: 0 };
+  for (const s of SCHOLARSHIP_SCHEMES) {
+    if (datedIds.has(s.id)) continue;
+    // The two NSP pages lead with NSP's per-state dates (cycleLeadLine -> nspLeadLine).
+    if (!s.closed && nspLevelForScholarship(s.id)) {
+      others.nspByState++;
+      continue;
+    }
+    const d = lastDateOf(s, today);
+    if (d.kind === "open-now") {
+      if (d.fresh) others.openNow++;
+      else others.openWhenChecked++;
+    } else if (d.kind === "rolling") others.rolling++;
+    else if (d.kind === "passed") others.closed++;
+    else if (d.kind === "no-date") others.noDate++;
+    else if (d.kind === "discontinued") others.discontinued++;
+    else if (d.kind === "usual") others.usualOnly++;
+  }
+  return { lists, dated, others };
 }
 
 export async function GET() {

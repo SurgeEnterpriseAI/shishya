@@ -30,6 +30,8 @@ import { STATES, stateCodeFromSlug } from "@/lib/state-info";
 import { COLLEGES, findCollege, formatNirfRanks, NIRF_SOURCE_YEAR } from "@/lib/colleges-data";
 import { findCollegeDetail, findBranch } from "@/data/college-details";
 import { SCHOLARSHIPS } from "@/data/scholarships";
+import { cycleStatusFacts, istToday } from "@/lib/scholarship-lists";
+import { NSP_WINDOWS, NSP_WINDOWS_YEAR, nspLevelForScholarship, nspLevelSummary, nspListedStateCodes, nspOpenWindows, type NspLevel } from "@/lib/nsp-windows";
 import { CAREER_CATEGORIES, findCareer } from "@/data/careers";
 import { TEST_PREP, findCountry, findUniversity } from "@/lib/worldwide-data";
 import { ncertSubjectsForClass, ncertTopicCode } from "@/lib/school/spine";
@@ -334,6 +336,39 @@ function schoolFacts(index: SearchIndex, doc: SearchDoc, path: string) {
   return out;
 }
 
+/**
+ * NSP's per-state windows for the two NSP pages (3 Oct 2026, non-exam value
+ * step 1): official tier, read on NSP on the file's checkedOn. Only the
+ * windows open on `today` (IST) are listed, soonest last date first, each as
+ * NSP printed the scheme; plus the next last date and the counts.
+ */
+export function nspWindowFacts(level: NspLevel, today: string, pageUrl: string) {
+  const sum = nspLevelSummary(level, today);
+  const statesListed = nspListedStateCodes(level).map((c) => STATES[c]?.name ?? c);
+  return {
+    tier: "official",
+    source: `NSP, scholarships.gov.in → Schemes On NSP → Centrally Sponsored Schemes, read on ${NSP_WINDOWS.checkedOn}`,
+    sourceUrl: NSP_WINDOWS.sourceUrl,
+    checkedOn: NSP_WINDOWS.checkedOn,
+    rule: `On NSP, each of the ${statesListed.length} states and UTs in statesListed sets its own ${NSP_WINDOWS_YEAR} last date for each scheme — never give one national date. Quote the student's state's row with "as read on NSP on ${NSP_WINDOWS.checkedOn}" and send them to the table on the page. NSP can extend dates; tell them to check the portal before the day. A state not in statesListed runs these schemes on its own state portal: do not send that student to NSP for a date.`,
+    page: `${pageUrl}#nsp-last-dates`,
+    openNow: nspOpenWindows(level, today).map((r) => ({ state: r.stateName ?? "state not read", scheme: r.scheme, lastDate: r.closesOn })),
+    nextLastDate: sum.nextLastDate
+      ? { date: sum.nextLastDate.date, states: [...new Set(sum.nextLastDate.rows.map((r) => r.stateName ?? "state not read"))] }
+      : null,
+    counts: {
+      rows: sum.rows,
+      openToday: sum.open,
+      closedOrPastLastDate: sum.closed,
+      opensLater: sum.opensLater,
+      notYetOpenedOnNsp: sum.notYetOpened,
+      noLastDateOnNsp: sum.noDate,
+      noLongerOnNspList: sum.notListed,
+    },
+    statesListed,
+  };
+}
+
 function collegeList(filter: (c: (typeof COLLEGES)[number]) => boolean) {
   return COLLEGES.filter(filter)
     .slice(0, 25)
@@ -432,6 +467,8 @@ export function pageFacts(index: SearchIndex, input: { url?: unknown }, locale: 
     case "scholarship": {
       const s = SCHOLARSHIPS.find((x) => x.id === segs[1]);
       if (!s) break;
+      // 3 Oct 2026: the two NSP pages carry NSP's official per-state windows.
+      const nspLevel = !s.closed && !s.unlisted ? nspLevelForScholarship(s.id) : null;
       return {
         kind: "scholarship",
         url: `${SITE}${path}`,
@@ -449,7 +486,14 @@ export function pageFacts(index: SearchIndex, input: { url?: unknown }, locale: 
           note: s.eligibility.note ?? null,
         },
         amount: `${s.amount} (as listed — confirm on the official portal)`,
-        deadline: `${s.deadline} (as listed — confirm on the official portal)`,
+        deadline: nspLevel
+          ? `${s.deadline} (as listed — the usual window; the official ${NSP_WINDOWS_YEAR} last dates are per state, in nspStateWindows — confirm on the official portal)`
+          : `${s.deadline} (as listed — confirm on the official portal)`,
+        ...(nspLevel ? { nspStateWindows: nspWindowFacts(nspLevel, istToday(), `${SITE}${path}`) } : {}),
+        // 4 Oct 2026: this year's status as the page prints it (an official
+        // last date, open now with no last date, rolling, or not checked) —
+        // not for the NSP pages (per-state windows above) or an unlisted row.
+        ...(!nspLevel && !s.unlisted ? { thisYear: cycleStatusFacts(s, istToday()) } : {}),
         applyUrl: s.applyUrl,
         officialSite: s.officialSite ?? null,
         about: s.description,

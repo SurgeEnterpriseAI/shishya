@@ -50,12 +50,38 @@
 // (ScholarshipFilter.level) now dates, sorts, counts and answers from that
 // level's window.
 //
+// 4 Oct 2026 (non-exam-value step 2 review): two more states of a cycle with
+// no last date, each set only from a visible line on the awarding body's own
+// page (data/scholarships/cycle-reads-2026-10.json):
+//   • ScholarshipCycle.openNow — the page says this year's applications are
+//     open now. The lead line said "No 2026-27 date on the official portal
+//     yet" and the list cell "Not on the portal yet", which read as "not open
+//     yet" for Siemens and Telangana ePASS. It now says "Open now for 2026-27
+//     — the official page gives no last date (host, checked day)", and only
+//     while the check is at most OPEN_NOW_FRESH_DAYS old: after that it says
+//     the scheme was open when checked and to confirm it still is;
+//   • ScholarshipCycle.rolling — the page says applications are taken at any
+//     time (ICAI). Printed as a rolling scheme with no last date.
+// The scheme page's FAQ answer (and its FAQPage JSON-LD) reuses the lead line;
+// a list's lead and FAQ name these rows only when the list has some, so the
+// other lists' text is unchanged; the ask tool's page facts carry the same
+// status (cycleStatusFacts). Also: the usual window is lowercased where it
+// sits mid-sentence ("the usual window is after first-year admissions …"),
+// except a month or an acronym ("Aug–Oct", "NSP …").
+// 4 Oct 2026 (review fixes): a list's lead and FAQ said "the rest show their
+// usual window" for every row without a date ahead, although a row that
+// closed, has no date yet or was open when last checked shows that status in
+// its cell. They now say "the 2026-27 status Shishya last read" when the list
+// has such rows (restKinds); a list whose other rows all show their usual
+// window reads as before.
+//
 // Pure: no DB, no Next imports, no clock unless the caller passes `now`
-// (tests/unit/scholarship-lists.test.ts).
+// (tests/unit/scholarship-lists.test.ts, tests/unit/scholarship-cycle-states.test.ts).
 
 import type { MetadataRoute } from "next";
 import type { Scholarship, ScholarshipCycle, ScholarshipLevel } from "@/data/scholarships";
 import { SCHOLARSHIP_SCHEMES } from "@/lib/scholarship-schemes";
+import { NSP_WINDOWS, NSP_WINDOWS_YEAR, nspLevelForScholarship, nspListedStateCodes, type NspLevel } from "@/lib/nsp-windows";
 
 /** A list page is indexable only with at least this many schemes. */
 export const SCHOLARSHIP_LIST_MIN = 5;
@@ -65,6 +91,9 @@ export const LIST_OVERLAP_MAX = 0.6;
 export const CLOSING_SOON_DAYS = 30;
 /** …and is indexable only with at least this many schemes in the window. */
 export const CLOSING_SOON_MIN = 5;
+/** An "open now" read (ScholarshipCycle.openNow) is printed as open now for
+ *  this many IST days after its check day; later, as open when checked. */
+export const OPEN_NOW_FRESH_DAYS = 14;
 
 const IST_OFFSET_MS = 330 * 60_000;
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
@@ -132,12 +161,21 @@ export type LastDate =
   | { kind: "upcoming"; closesOn: string; opensOn?: string; cycle: ScholarshipCycle }
   | { kind: "passed"; closesOn: string; cycle: ScholarshipCycle }
   | { kind: "no-date"; cycle: ScholarshipCycle }
+  /** The official page said applications are open now, with no last date;
+   *  `fresh` while the check is at most OPEN_NOW_FRESH_DAYS old on `today`. */
+  | { kind: "open-now"; cycle: ScholarshipCycle; fresh: boolean }
+  /** The official page says applications are taken at any time. */
+  | { kind: "rolling"; cycle: ScholarshipCycle }
   | { kind: "usual"; deadline: string }
   | { kind: "discontinued"; note: string; sourceUrl: string; checkedOn: string };
 
 /** The 2026-27 window that applies to `level` (27 Sep 2026 fixer): the
  *  cycle's own window for that level (levelWindows — same year, source, tier
- *  and check day), else the main cycle. No level → the main cycle. */
+ *  and check day), else the main cycle. No level → the main cycle.
+ *  A level window does not carry the main cycle's openNow or rolling flag: it
+ *  is its own read, with its own dates or none (4 Oct 2026). The step 2
+ *  script never writes levelWindows, and tests/unit/scholarship-cycle-states
+ *  .test.ts pins that no catalogue row has a flag and levelWindows together. */
 export function cycleFor(s: Pick<Scholarship, "cycle">, level?: ScholarshipLevel): ScholarshipCycle | undefined {
   const c = s.cycle;
   if (!c || !level) return c;
@@ -152,7 +190,13 @@ export function lastDateOf(s: Pick<Scholarship, "cycle" | "deadline" | "closed">
   if (s.closed) return { kind: "discontinued", ...s.closed };
   const c = cycleFor(s, level);
   if (!c) return { kind: "usual", deadline: s.deadline };
-  if (!c.closesOn) return { kind: "no-date", cycle: c };
+  if (!c.closesOn) {
+    // 4 Oct 2026: a last date always wins over these flags (the evidence
+    // check refuses a cycle with both); rolling before open-now.
+    if (c.rolling) return { kind: "rolling", cycle: c };
+    if (c.openNow) return { kind: "open-now", cycle: c, fresh: addDays(c.checkedOn, OPEN_NOW_FRESH_DAYS) >= today };
+    return { kind: "no-date", cycle: c };
+  }
   if (c.closesOn < today) return { kind: "passed", closesOn: c.closesOn, cycle: c };
   return { kind: "upcoming", closesOn: c.closesOn, opensOn: c.opensOn, cycle: c };
 }
@@ -162,9 +206,39 @@ function provenance(c: ScholarshipCycle): string {
   return `(${c.tier} — ${hostOf(c.sourceUrl)}, checked ${formatIsoDay(c.checkedOn)})`;
 }
 
+/** "22 states and UTs" — the states and UTs with a row of this level still
+ *  on NSP's list (src/lib/nsp-windows.ts nspListedStateCodes). */
+function nspStatesPhrase(level: NspLevel): string {
+  const n = nspListedStateCodes(level).length;
+  return `${n} ${n === 1 ? "state or UT" : "states and UTs"}`;
+}
+
+/** The two NSP pages (3 Oct 2026, non-exam value step 1): NSP gives each
+ *  listed state or UT its own 2026-27 window per scheme, read on NSP and
+ *  printed by state below the lead line (src/lib/nsp-windows.ts,
+ *  src/components/NspWindowsTable.tsx). The old line, "Shishya has not
+ *  checked a 2026-27 date", was untrue. NSP lists only some states (22 for
+ *  post-matric and 21 for pre-matric on 3 Oct 2026), so the line names the
+ *  count and says the others use their own portals — a student from a state
+ *  not on the list must not be sent to NSP for a date. The day and the count
+ *  come from the file, so a re-read moves them. */
+export function nspLeadLine(level: NspLevel): string {
+  return `On NSP, each of the ${nspStatesPhrase(level)} listed below sets its own ${NSP_WINDOWS_YEAR} last date for each scheme (read on NSP on ${formatIsoDay(NSP_WINDOWS.checkedOn)}). Other states run these schemes on their own portals.`;
+}
+
+/** The same fact for the page's FAQ answer (also its FAQPage JSON-LD, which
+ *  assistants quote on its own), where "below" would be wrong — the FAQ
+ *  comes after the table. */
+export function nspFaqLine(level: NspLevel): string {
+  return `On NSP, each of the ${nspStatesPhrase(level)} listed on this page sets its own ${NSP_WINDOWS_YEAR} last date for each scheme (read on NSP on ${formatIsoDay(NSP_WINDOWS.checkedOn)}). Other states run these schemes on their own portals. NSP can extend dates, so check the portal before the day.`;
+}
+
 /** The sentence a scholarship page leads with. Never states a date that was
- *  not read on the official portal; the usual window is called that. */
-export function cycleLeadLine(s: Pick<Scholarship, "cycle" | "deadline" | "closed">, today: string): string {
+ *  not read on the official portal; the usual window is called that. The two
+ *  NSP rows (nsp-post-matric, nsp-pre-matric) lead with nspLeadLine. */
+export function cycleLeadLine(s: Pick<Scholarship, "cycle" | "deadline" | "closed"> & { id?: string }, today: string): string {
+  const nspLevel = s.closed ? null : nspLevelForScholarship(s.id);
+  if (nspLevel) return nspLeadLine(nspLevel);
   const d = lastDateOf(s, today);
   const note = s.cycle?.note ? ` ${s.cycle.note}` : "";
   switch (d.kind) {
@@ -177,15 +251,35 @@ export function cycleLeadLine(s: Pick<Scholarship, "cycle" | "deadline" | "close
     case "passed":
       return `${d.cycle.year}: applications closed on ${formatIsoDay(d.closesOn)} ${provenance(d.cycle)}.${note}`;
     case "no-date":
-      return `No ${d.cycle.year} date on the official portal yet (${hostOf(d.cycle.sourceUrl)}, checked ${formatIsoDay(d.cycle.checkedOn)}) — the usual window is ${usualWindow(s.deadline)}.${note}`;
+      return `No ${d.cycle.year} date on the official portal yet (${hostOf(d.cycle.sourceUrl)}, checked ${formatIsoDay(d.cycle.checkedOn)}) — the usual window is ${usualWindowInSentence(s.deadline)}.${note}`;
+    case "open-now":
+      return d.fresh
+        ? `Open now for ${d.cycle.year} — the official page gives no last date (${hostOf(d.cycle.sourceUrl)}, checked ${formatIsoDay(d.cycle.checkedOn)}).${note}`
+        : `Open for ${d.cycle.year} when Shishya last checked — the official page gave no last date (${hostOf(d.cycle.sourceUrl)}, checked ${formatIsoDay(d.cycle.checkedOn)}); confirm on the portal that it is still open.${note}`;
+    case "rolling":
+      return `Applications are taken at any time (rolling) — the official page gives no last date (${hostOf(d.cycle.sourceUrl)}, checked ${formatIsoDay(d.cycle.checkedOn)}).${note}`;
     case "usual":
-      return `Shishya has not checked a 2026-27 date for this scheme yet — the usual window is ${usualWindow(d.deadline)}. Confirm the date on the official portal before applying.`;
+      return `Shishya has not checked a 2026-27 date for this scheme yet — the usual window is ${usualWindowInSentence(d.deadline)}. Confirm the date on the official portal before applying.`;
   }
 }
 
-/** The data's deadline prose without a leading "Usually", for "the usual window is …". */
+/** The data's deadline prose without a leading "Usually", for "Usual window: …". */
 function usualWindow(deadline: string): string {
   return deadline.replace(/^usually\s+/i, "").trim();
+}
+
+const MONTH_WORD = /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec|January|February|March|April|June|July|August|September|October|November|December)$/;
+
+/** The usual window where it sits mid-sentence ("the usual window is …"):
+ *  a plain capitalised first word is lowercased ("After first-year
+ *  admissions …" → "after first-year admissions …", "Yearly cycle" →
+ *  "yearly cycle"); a month ("Aug–Oct", "July–Aug"), an acronym ("NSP …",
+ *  "CSIR NET …") or a mixed-case word stays as written (4 Oct 2026). */
+export function usualWindowInSentence(deadline: string): string {
+  const w = usualWindow(deadline);
+  const first = /^[^\s,(—–:;]+/.exec(w)?.[0] ?? "";
+  if (!/^[A-Z][a-z]+(?:-[a-z]+)*$/.test(first) || MONTH_WORD.test(first)) return w;
+  return w.charAt(0).toLowerCase() + w.slice(1);
 }
 
 /** The short last-date cell of a list table, with the window's qualifier
@@ -204,10 +298,46 @@ export function lastDateCell(
       return { text: `Closed ${formatIsoDay(d.closesOn)} (${d.cycle.tier})`, tier: d.cycle.tier, note: d.cycle.note ?? null };
     case "no-date":
       return { text: `Not on the portal yet (checked ${formatIsoDay(d.cycle.checkedOn)})`, tier: d.cycle.tier, note: d.cycle.note ?? null };
+    case "open-now":
+      return {
+        text: d.fresh ? `Open now, no last date given (checked ${formatIsoDay(d.cycle.checkedOn)})` : `Open when checked on ${formatIsoDay(d.cycle.checkedOn)}, no last date given`,
+        tier: d.cycle.tier,
+        note: d.cycle.note ?? null,
+      };
+    case "rolling":
+      return { text: `Rolling: apply any time, no last date (checked ${formatIsoDay(d.cycle.checkedOn)})`, tier: d.cycle.tier, note: d.cycle.note ?? null };
     case "usual":
       return { text: `Usual window: ${usualWindow(d.deadline)}`, tier: null, note: null };
     case "discontinued":
       return { text: "Discontinued", tier: null, note: null };
+  }
+}
+
+/** This year's status of one scheme as facts for the ask tool's page_facts
+ *  (4 Oct 2026): the page's own lead line plus its parts — never a date that
+ *  was not read on the official page. `status` names the state:
+ *  last-date-ahead, closed, open-now (no last date), open-when-checked (an
+ *  open-now read older than OPEN_NOW_FRESH_DAYS), rolling, no-date-yet,
+ *  not-checked (usual window only) or discontinued. */
+export function cycleStatusFacts(s: Pick<Scholarship, "cycle" | "deadline" | "closed"> & { id?: string }, today: string): Record<string, unknown> {
+  const d = lastDateOf(s, today);
+  const line = cycleLeadLine(s, today);
+  const read = (c: ScholarshipCycle) => ({ tier: c.tier, sourceUrl: c.sourceUrl, checkedOn: c.checkedOn, note: c.note ?? null });
+  switch (d.kind) {
+    case "upcoming":
+      return { status: "last-date-ahead", lastDate: d.closesOn, opensOn: d.opensOn ?? null, ...read(d.cycle), line };
+    case "passed":
+      return { status: "closed", lastDate: d.closesOn, ...read(d.cycle), line };
+    case "open-now":
+      return { status: d.fresh ? "open-now" : "open-when-checked", lastDate: null, ...read(d.cycle), line };
+    case "rolling":
+      return { status: "rolling", lastDate: null, ...read(d.cycle), line };
+    case "no-date":
+      return { status: "no-date-yet", lastDate: null, ...read(d.cycle), line };
+    case "usual":
+      return { status: "not-checked", lastDate: null, line };
+    case "discontinued":
+      return { status: "discontinued", sourceUrl: d.sourceUrl, checkedOn: d.checkedOn, line };
   }
 }
 
@@ -362,11 +492,70 @@ export function filterLeadLine(filter: ScholarshipFilter, list: readonly Scholar
   ].filter(Boolean);
   const n = list.length;
   const head = `${n} ${n === 1 ? "scholarship" : "scholarships"} for ${filter.audience} on Shishya${parts.length ? `: ${parts.join(" and ")}` : ""}.`;
-  const datedLine =
-    dated > 0
-      ? ` ${dated} ${dated === 1 ? "has" : "have"} a 2026-27 last date still ahead, read on the official portal; the rest show their usual window.`
-      : " None has a 2026-27 last date still ahead that Shishya has read on an official portal yet; each row shows its usual window.";
+  // 4 Oct 2026: rows whose official page says open now (no last date) or
+  // rolling are named for what they are — only in a list that has some, so
+  // every other list's line is unchanged.
+  const { open, rolling } = openAndRolling(list, today, filter.level);
+  const openPart = [
+    open.length ? `${open.length} ${open.length === 1 ? "is" : "are"} open now on the official page with no last date given` : "",
+    rolling.length ? `${rolling.length} ${rolling.length === 1 ? "takes" : "take"} applications at any time` : "",
+  ]
+    .filter(Boolean)
+    .join(", and ");
+  // 4 Oct 2026 (review fixes): what the other rows' cells show — their usual
+  // window, or a status read on the official page (closed, no date yet, open
+  // when last checked). Unchanged words when every other row shows its window.
+  const shows = restShows(restKinds(list, today, filter.level));
+  const datedLine = openPart
+    ? dated > 0
+      ? ` ${dated} ${dated === 1 ? "has" : "have"} a 2026-27 last date still ahead, read on the official portal; ${openPart}; the rest show ${shows("their")}.`
+      : ` None has a 2026-27 last date still ahead that Shishya has read on an official portal yet; ${openPart}; the other rows show ${shows("their")}.`
+    : dated > 0
+      ? ` ${dated} ${dated === 1 ? "has" : "have"} a 2026-27 last date still ahead, read on the official portal; the rest show ${shows("their")}.`
+      : ` None has a 2026-27 last date still ahead that Shishya has read on an official portal yet; each row shows ${shows("its")}.`;
   return head + datedLine;
+}
+
+/** A list's rows that are neither dated ahead nor named as open now or
+ *  rolling, by what their cell shows (4 Oct 2026, review fixes): `usual` —
+ *  the usual window (no cycle read); `read` — a 2026-27 status read on the
+ *  official page: closed, no date yet, open when last checked (an open-now
+ *  read older than OPEN_NOW_FRESH_DAYS) or discontinued. */
+function restKinds(list: readonly Scholarship[], today: string, level?: ScholarshipLevel): { usual: number; read: number } {
+  let usual = 0;
+  let read = 0;
+  for (const s of list) {
+    const d = lastDateOf(s, today, level);
+    if (d.kind === "usual") usual++;
+    else if (d.kind === "passed" || d.kind === "no-date" || d.kind === "discontinued" || (d.kind === "open-now" && !d.fresh)) read++;
+  }
+  return { usual, read };
+}
+
+/** The words for what those rows show: "{whose} usual window" (the words
+ *  before 4 Oct 2026) when none shows a read status; "the 2026-27 status
+ *  Shishya last read" when none shows a usual window; both otherwise.
+ *  `whose`: "their" / "its" (list lead), "the" / "the scheme's" (list FAQ). */
+function restShows(k: { usual: number; read: number }): (whose: string) => string {
+  return (whose) => {
+    const own = `${whose} usual window`;
+    if (k.read === 0) return own;
+    if (k.usual === 0) return "the 2026-27 status Shishya last read";
+    return `the 2026-27 status Shishya last read, or ${own}`;
+  };
+}
+
+/** A list's rows whose official page says open now (a fresh read, no last
+ *  date) and those that take applications at any time (4 Oct 2026). */
+function openAndRolling(list: readonly Scholarship[], today: string, level?: ScholarshipLevel): { open: { s: Scholarship; c: ScholarshipCycle }[]; rolling: { s: Scholarship; c: ScholarshipCycle }[] } {
+  const open: { s: Scholarship; c: ScholarshipCycle }[] = [];
+  const rolling: { s: Scholarship; c: ScholarshipCycle }[] = [];
+  for (const s of list) {
+    const d = lastDateOf(s, today, level);
+    if (d.kind === "open-now" && d.fresh) open.push({ s, c: d.cycle });
+    else if (d.kind === "rolling") rolling.push({ s, c: d.cycle });
+  }
+  return { open, rolling };
 }
 
 export interface FaqItem {
@@ -380,10 +569,31 @@ export function filterFaq(filter: ScholarshipFilter, list: readonly Scholarship[
     .map((s) => ({ s, d: lastDateOf(s, today, filter.level) }))
     .filter((x): x is { s: Scholarship; d: Extract<LastDate, { kind: "upcoming" }> } => x.d.kind === "upcoming");
   const q = `When do scholarships for ${filter.audience} close in 2026-27?`;
+  // 4 Oct 2026: open-now and rolling rows are named (with the page's host and
+  // check day) only in a list that has some; other lists' answers are unchanged.
+  const { open, rolling } = openAndRolling(list, today, filter.level);
+  const named = (xs: { s: Scholarship; c: ScholarshipCycle }[]) =>
+    xs.slice(0, 5).map((x) => `${x.s.name} (${hostOf(x.c.sourceUrl)}, checked ${formatIsoDay(x.c.checkedOn)})`).join("; ") + (xs.length > 5 ? `; and ${xs.length - 5} more in the table` : "");
+  const openLine =
+    (open.length ? ` Open now on the official page, with no last date given: ${named(open)}.` : "") +
+    (rolling.length ? ` Taking applications at any time (rolling): ${named(rolling)}.` : "");
+  // 4 Oct 2026 (review fixes): see filterLeadLine — "the usual window" only
+  // where every other row's cell shows it.
+  const shows = restShows(restKinds(list, today, filter.level));
   if (dated.length === 0) {
+    if (openLine) {
+      const other = list.length - open.length - rolling.length;
+      return {
+        q,
+        a:
+          `None of the ${list.length} schemes listed here has a 2026-27 last date still ahead that Shishya has read on an official portal yet.` +
+          openLine +
+          (other > 0 ? ` For the other ${other}, the table shows ${shows("the")} — confirm the date on the official link before applying.` : " Confirm on the official link before applying."),
+      };
+    }
     return {
       q,
-      a: `None of the ${list.length} schemes listed here has a 2026-27 last date still ahead that Shishya has read on an official portal yet. Each row shows the scheme's usual window; confirm the date on the official link before applying.`,
+      a: `None of the ${list.length} schemes listed here has a 2026-27 last date still ahead that Shishya has read on an official portal yet. Each row shows ${shows("the scheme's")}; confirm the date on the official link before applying.`,
     };
   }
   const shown = dated.slice(0, 5).map((x) => `${x.s.name} — ${formatIsoDay(x.d.closesOn)} (${x.d.cycle.tier}, ${hostOf(x.d.cycle.sourceUrl)})`);
@@ -394,13 +604,14 @@ export function filterFaq(filter: ScholarshipFilter, list: readonly Scholarship[
     .filter((x) => x.d.cycle.note)
     .map((x) => ` ${x.s.name}: ${x.d.cycle.note!.trim().replace(/([^.])$/, "$1.")}`)
     .join("");
-  const rest = list.length - dated.length;
+  const rest = list.length - dated.length - open.length - rolling.length;
   return {
     q,
     a:
       `${dated.length} of the ${list.length} schemes listed here ${dated.length === 1 ? "has" : "have"} a 2026-27 last date still ahead, read on the official portal: ${shown.join("; ")}${dated.length > 5 ? `; and ${dated.length - 5} more in the table` : ""}.` +
       notes +
-      (rest > 0 ? ` For the other ${rest}, the table shows the usual window — confirm on the official link before applying.` : ""),
+      openLine +
+      (rest > 0 ? ` For the other ${rest}, the table shows ${shows("the")} — confirm on the official link before applying.` : ""),
   };
 }
 
@@ -446,11 +657,12 @@ export function scholarshipFaq(s: Scholarship, today: string): FaqItem[] {
     .trim();
   if (elig) out.push({ q: `Who is eligible for ${s.name}?`, a: elig });
   out.push({ q: `How much does ${s.name} pay?`, a: s.amount });
+  const nspLevel = nspLevelForScholarship(s.id);
   out.push({
     q: `How do I apply for ${s.name}?`,
     a: s.closed
       ? `It no longer takes new applicants. ${s.closed.note}`
-      : `Apply on the awarding body's official portal: ${s.applyUrl} — Shishya does not collect applications. ${cycleLeadLine(s, today)}`,
+      : `Apply on the awarding body's official portal: ${s.applyUrl} — Shishya does not collect applications. ${nspLevel ? nspFaqLine(nspLevel) : cycleLeadLine(s, today)}`,
   });
   return out;
 }

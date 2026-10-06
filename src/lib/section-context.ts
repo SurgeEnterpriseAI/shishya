@@ -278,6 +278,35 @@ export interface ScholarshipListsContext {
   /** Schemes with a 2026-27 last date still ahead, read on the official portal. */
   /** note: the cycle's own qualifier ("Renewal applications only …") — 27 Sep 2026 fixer. */
   dated: readonly { id: string; name: string; closesOn: string; tier: string; host: string; checkedOn: string; note?: string | null }[];
+  /** 6 Oct 2026 (scholarships release): what every scheme outside `dated`
+   *  shows for 2026-27, counted by the route with lastDateOf
+   *  (src/lib/scholarship-lists.ts). The line under the dated block said
+   *  "no 2026-27 date checked yet; its page gives the usual window" for all
+   *  of them, though some pages show open now, rolling, closed, no date yet,
+   *  discontinued or NSP's per-state dates. Optional: without it the old
+   *  line is printed. */
+  others?: ScholarshipOthers;
+}
+
+/** The schemes outside the dated block, by what their page shows for
+ *  2026-27 (6 Oct 2026). Each count comes from the data on the day. */
+export interface ScholarshipOthers {
+  /** NSP's two pages: each listed state's 2026-27 last date, read on NSP. */
+  nspByState: number;
+  /** The official page says applications are open now and gives no last date (a fresh check). */
+  openNow: number;
+  /** The same read, older than the freshness window: open when Shishya last checked. */
+  openWhenChecked: number;
+  /** The official page says applications are taken at any time. */
+  rolling: number;
+  /** The 2026-27 last date read on the official page has passed. */
+  closed: number;
+  /** Checked: no 2026-27 date on the official portal yet. */
+  noDate: number;
+  /** Not open to new applicants. */
+  discontinued: number;
+  /** No 2026-27 read: the page gives the usual window. */
+  usualOnly: number;
 }
 export interface CareerLite {
   slug: string;
@@ -410,6 +439,28 @@ export function scholarshipLine(s: ScholarshipLite, site: string = SITE): string
   return `- ${s.name} — ${s.awardingBody} — ${levels} — ${scope} — ${site}/scholarships/${s.id} — official: ${s.officialSite ?? s.applyUrl}`;
 }
 
+/** The line under the dated block (6 Oct 2026): the schemes not in it, by
+ *  what their page shows for 2026-27, each state named only when its count
+ *  is above 0, in the words the pages use (src/lib/scholarship-lists.ts
+ *  cycleLeadLine). "" when there is no other scheme. */
+export function scholarshipOthersLine(o: ScholarshipOthers, datedCount: number): string {
+  const part = (k: number, one: string, many: string) => (k > 0 ? `${k} ${k === 1 ? one : many}` : "");
+  const total = o.nspByState + o.openNow + o.openWhenChecked + o.rolling + o.closed + o.noDate + o.discontinued + o.usualOnly;
+  if (total === 0) return "";
+  const parts = [
+    part(o.nspByState, "NSP page lists the 2026-27 last date of each state on NSP's list, read on NSP", "NSP pages list the 2026-27 last date of each state on NSP's list, read on NSP"),
+    part(o.openNow, "is open now on the official page, with no last date given", "are open now on the official page, with no last date given"),
+    part(o.openWhenChecked, "was open when Shishya last checked, with no last date given", "were open when Shishya last checked, with no last date given"),
+    part(o.rolling, "takes applications at any time (rolling)", "take applications at any time (rolling)"),
+    part(o.closed, "closed for 2026-27 (the official last date has passed)", "closed for 2026-27 (the official last date has passed)"),
+    part(o.noDate, "has no 2026-27 date on the official portal yet", "have no 2026-27 date on the official portal yet"),
+    part(o.discontinued, "is discontinued (no new applications)", "are discontinued (no new applications)"),
+    part(o.usualOnly, "has no 2026-27 date checked yet: its page gives the usual window", "have no 2026-27 date checked yet: their page gives the usual window"),
+  ].filter(Boolean);
+  const head = `${datedCount === 0 ? "All" : "The other"} ${total} ${total === 1 ? "scheme" : "schemes"}`;
+  return `- ${head}, by what each page shows: ${parts.join("; ")}. Confirm on the official link.`;
+}
+
 export function scholarshipsContextMarkdown(
   list: readonly ScholarshipLite[],
   asOf: string,
@@ -434,9 +485,13 @@ export function scholarshipsContextMarkdown(
     for (const l of extra.lists) L.push(`- ${l.label}: ${site}${l.path} (${l.count} ${l.count === 1 ? "scheme" : "schemes"}${l.indexable ? "" : "; not indexed yet"})`);
     L.push("");
     L.push(`## 2026-27 last dates read on the official portal (${extra.dated.length})`);
-    if (extra.dated.length === 0) L.push("- None still ahead. Every other scheme's page shows its usual window, named as such.");
+    if (extra.dated.length === 0) L.push(extra.others ? "- None still ahead." : "- None still ahead. Every other scheme's page shows its usual window, named as such.");
     for (const d of extra.dated) L.push(`- ${d.name} — closes ${d.closesOn} (${d.tier}, ${d.host}, checked ${d.checkedOn})${d.note ? ` — ${d.note}` : ""} — ${site}/scholarships/${d.id}`);
-    L.push("- Every other scheme: no 2026-27 date checked yet; its page gives the usual window. Confirm on the official link.");
+    // 6 Oct 2026: with the route's counts, the line says what each other page shows.
+    const othersLine = extra.others
+      ? scholarshipOthersLine(extra.others, extra.dated.length)
+      : "- Every other scheme: no 2026-27 date checked yet; its page gives the usual window. Confirm on the official link.";
+    if (othersLine) L.push(othersLine);
     L.push("");
   }
   L.push(`## Every scholarship (${list.length}) — name — provider — levels — scope — Shishya page — official link`);

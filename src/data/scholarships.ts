@@ -116,6 +116,16 @@ export interface ScholarshipCycle {
   /** Anything the date alone would misstate (renewal-only windows,
    *  conflicting dates on the same portal). Shown beside the date. */
   note?: string;
+  /** 4 Oct 2026 (non-exam-value step 2 review): the official page says this
+   *  year's applications are open now and gives no last date — so never with
+   *  closesOn. Printed "Open now for 2026-27 — the official page gives no last
+   *  date (host, checked day)" while the check is recent, then as open when
+   *  checked (src/lib/scholarship-lists.ts OPEN_NOW_FRESH_DAYS). Set only from
+   *  a quoted, visible line on the awarding body's own page. */
+  openNow?: true;
+  /** 4 Oct 2026: the official page says applications are taken at any time
+   *  (a rolling scheme), so there is no last date — never with closesOn. */
+  rolling?: true;
   /** 27 Sep 2026 (fixer): a different 2026-27 window the same source gives
    *  for some of the row's levels (UP's portal: Class 11–12 closed on 21 Sep
    *  while the after-Class-12 window runs to 31 Oct). A list scoped to one of

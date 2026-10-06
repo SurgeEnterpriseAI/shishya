@@ -45,6 +45,15 @@
 // description, exams) — nothing there could be vouched for. Static params
 // come from SCHOLARSHIP_SCHEMES, which no longer holds these rows, so they
 // render on demand.
+// 3 Oct 2026 (non-exam value step 1): nsp-post-matric and nsp-pre-matric
+// print NSP's 2026-27 windows by state (src/components/NspWindowsTable.tsx,
+// data read on NSP — src/lib/nsp-windows.ts) right under the next steps and
+// outside the SoftWall; their lead line says each of the N states and UTs
+// on NSP's list sets its own last date per scheme and that other states use
+// their own portals (it said "Shishya has not checked a 2026-27 date", which
+// was untrue); the footer's portal examples are only states not on NSP's list;
+// the title names "last dates by state"; the WebPage dateModified, the lead
+// line's day and its Source link are the NSP file's checkedOn and URL.
 
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
@@ -57,7 +66,9 @@ import { SCHOLARSHIP_SCHEMES, isAggregatorListing, unlistedKind, type UnlistedKi
 import { loadLiveExams } from "@/lib/live-exam-codes";
 import { relatedScholarships } from "@/lib/section-related";
 import { clipDescription } from "@/lib/section-seo";
-import { cycleLeadLine, hostOf, isOpenScheme, istToday, lastDateOf, scholarshipFaq } from "@/lib/scholarship-lists";
+import { cycleLeadLine, hostOf, isListedScheme, isOpenScheme, istToday, lastDateOf, scholarshipFaq } from "@/lib/scholarship-lists";
+import { NSP_WINDOWS, nspFooterPortals, nspLevelForScholarship, nspPageTitle } from "@/lib/nsp-windows";
+import { NspWindowsTable } from "@/components/NspWindowsTable";
 import { LandingActions } from "@/components/LandingActions";
 import { SignupInline } from "@/components/SignupInline";
 import { scholarshipActions } from "@/lib/landing-actions";
@@ -102,7 +113,13 @@ export async function generateMetadata({
   }
   const year = new Date().getUTCFullYear();
   const open = isOpenScheme(s);
-  const title = open ? `${s.name} ${year} — Eligibility, Amount, Apply | Shishya` : `${s.name} — Discontinued, No New Applications | Shishya`;
+  // 3 Oct 2026: the two NSP pages print NSP's last dates by state — their title says so.
+  const nspLevel = nspLevelForScholarship(s.id);
+  const title = !open
+    ? `${s.name} — Discontinued, No New Applications | Shishya`
+    : nspLevel
+      ? `${nspPageTitle(nspLevel)} | Shishya`
+      : `${s.name} ${year} — Eligibility, Amount, Apply | Shishya`;
   return {
     title,
     // The date line leads the description only when it is a date still ahead,
@@ -159,8 +176,12 @@ export default async function ScholarshipDetailPage({
   const today = istToday();
   const leadLine = cycleLeadLine(s, today);
   const faq = scholarshipFaq(s, today);
-  const checkedOn = s.closed?.checkedOn ?? s.cycle?.checkedOn ?? null;
-  const dateSource = s.closed?.sourceUrl ?? s.cycle?.sourceUrl ?? null;
+  // 3 Oct 2026: on the two NSP pages the dates are NSP's per-state windows.
+  const nspLevel = !s.closed && !unlisted ? nspLevelForScholarship(s.id) : null;
+  // Footer examples: listed state rows whose state is not on NSP's list for this level.
+  const nspPortals = nspLevel ? nspFooterPortals(nspLevel, SCHOLARSHIPS, isListedScheme) : [];
+  const checkedOn = s.closed?.checkedOn ?? s.cycle?.checkedOn ?? (nspLevel ? NSP_WINDOWS.checkedOn : null);
+  const dateSource = s.closed?.sourceUrl ?? s.cycle?.sourceUrl ?? (nspLevel ? NSP_WINDOWS.sourceUrl : null);
 
   // MonetaryGrant (26 Sep 2026): what the grant is and who funds it. The
   // amount is the data's own prose ("₹12,000/year for 4 years", "Full
@@ -265,6 +286,8 @@ export default async function ScholarshipDetailPage({
         <SignupInline surface="scholarship" />
         {/* 27 Sep 2026: next steps + the free sign-up offer right under the answer (src/lib/landing-actions.ts — landing pages without them lost 71-93% of search visitors after one page). 30 Sep 2026 (sign-up build 3): links only now — the sign-up line is the SignupInline mounted above (src/lib/content-signup.ts). */}
         <LandingActions actions={scholarshipActions(s.name, "en")} locale="en" surface="scholarship" />
+        {/* 3 Oct 2026 (non-exam value step 1): NSP's 2026-27 windows by state — the page's answer, outside the SoftWall; data only, nothing account-related on any row. */}
+        {nspLevel && <NspWindowsTable level={nspLevel} today={today} portals={nspPortals} />}
         {/* 27 Sep 2026: sign-up wall EXPERIMENT (src/lib/soft-wall.ts) — half of signed-out visitors see a few lines, the rest blurred behind a free sign-in card; crawlers always get this full HTML. */}
         <SoftWall>
 
