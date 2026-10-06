@@ -1,0 +1,254 @@
+{
+ "script": "fix-tracker-dates-2026-10-06",
+ "kind": "apply",
+ "startedAt": "2026-10-06T04:59:57.622Z",
+ "status": "applied",
+ "only": "olympiad",
+ "entries": [
+  {
+   "type": "update",
+   "group": "olympiad",
+   "exam": "NSEP",
+   "rowId": "cmt5vpblc01kj13qejq0lflbp",
+   "before": {
+    "label": "NSEP 2026-27 exam",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "ai-generated:claude",
+    "notes": "Sunday, 8:30 AM to 10:30 AM (2 hours); pen-and-paper mode at registered centres",
+    "confidence": "official",
+    "url": "https://www.pw.live/olympiad/exams/nsep",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "NSEP 2026-27 exam",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "official-research:2026-10-06",
+    "notes": "Sunday 22 Nov 2026, 8:30–10:30 am (IAPT's NSE 2026 schedule; HBCSE's Science Olympiad 2026-27 page gives the same date and time for NSEP).",
+    "confidence": "official",
+    "url": "https://iapt.org.in/?id=2423",
+    "archivedAt": null
+   },
+   "why": "IAPT (the conducting body) and HBCSE both print NSEP on Sunday 22 Nov 2026; the row cited pw.live (tier reported).",
+   "evidenceUrl": "https://iapt.org.in/?id=2423",
+   "evidenceReadAt": "2026-10-06T09:29:50+05:30"
+  },
+  {
+   "type": "update",
+   "group": "olympiad",
+   "exam": "NSEC",
+   "rowId": "cmt5vpcsd01lr13qe9hluhht2",
+   "before": {
+    "label": "NSEC 2026-27 Exam",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "ai-generated:claude",
+    "notes": "Sunday, 11:30 AM to 1:30 PM; 60 MCQs, 216 marks, OMR-based",
+    "confidence": "official",
+    "url": "https://www.pw.live/olympiad/exams/nsec",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "NSEC 2026-27 Exam",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "official-research:2026-10-06",
+    "notes": "Sunday 22 Nov 2026, 11:30 am–1:30 pm (IAPT's NSE 2026 schedule; HBCSE's Science Olympiad 2026-27 page gives the same date and time for NSEC).",
+    "confidence": "official",
+    "url": "https://iapt.org.in/?id=2423",
+    "archivedAt": null
+   },
+   "why": "IAPT (the conducting body) and HBCSE both print NSEC on Sunday 22 Nov 2026; the row cited pw.live (tier reported).",
+   "evidenceUrl": "https://iapt.org.in/?id=2423",
+   "evidenceReadAt": "2026-10-06T09:29:50+05:30"
+  },
+  {
+   "type": "update",
+   "group": "olympiad",
+   "exam": "NSEB",
+   "rowId": "cmt5vor7b01id13qe77sfhuon",
+   "before": {
+    "label": "NSEB 2026 exam (Stage 1)",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "ai-generated:claude",
+    "notes": "Sunday, 2:30 PM – 4:30 PM; OMR-based offline exam",
+    "confidence": "official",
+    "url": "https://www.pw.live/olympiad/exams/nseb",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "NSEB 2026 exam (Stage 1)",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "official-research:2026-10-06",
+    "notes": "Sunday 22 Nov 2026, 2:30–4:30 pm (IAPT's NSE 2026 schedule; HBCSE's Science Olympiad 2026-27 page gives the same date and time for NSEB).",
+    "confidence": "official",
+    "url": "https://iapt.org.in/?id=2423",
+    "archivedAt": null
+   },
+   "why": "IAPT (the conducting body) and HBCSE both print NSEB on Sunday 22 Nov 2026; the row cited pw.live (tier reported).",
+   "evidenceUrl": "https://iapt.org.in/?id=2423",
+   "evidenceReadAt": "2026-10-06T09:29:50+05:30"
+  },
+  {
+   "type": "archive",
+   "group": "olympiad",
+   "exam": "NSEP",
+   "rowId": "cmt5vpbp601kv13qedhfccb8m",
+   "before": {
+    "label": "INPhO 2027 (Stage 2) exam (expected)",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "ai-generated:claude",
+    "notes": "For NSEP qualifiers; conducted by HBCSE, usually held in first week of February",
+    "confidence": "expected",
+    "url": null,
+    "archivedAt": null
+   },
+   "after": {
+    "label": "INPhO 2027 (Stage 2) exam (expected)",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "ai-generated:claude:suppressed",
+    "notes": "For NSEP qualifiers; conducted by HBCSE, usually held in first week of February",
+    "confidence": "expected",
+    "url": null,
+    "archivedAt": "2026-10-06T04:59:54.381Z"
+   },
+   "why": "Estimate \"INPhO 2027 (Stage 2) exam (expected)\" 7 Feb 2027; HBCSE states INPhO on 31 Jan 2027.",
+   "evidenceUrl": "https://olympiads.hbcse.tifr.res.in/science-olympiad-2026-2027/",
+   "evidenceReadAt": "2026-10-06T09:29:10+05:30"
+  },
+  {
+   "type": "create",
+   "group": "olympiad",
+   "exam": "NSEP",
+   "rowId": "cmuw7mcwg0002xpxsmuob4dk4",
+   "before": null,
+   "after": {
+    "label": "INPhO 2027 — Stage II, for NSEP qualifiers",
+    "kind": "OTHER",
+    "isExamDay": false,
+    "source": "official-research:2026-10-06",
+    "notes": "Indian National Physics Olympiad (stage II): Sunday 31 Jan 2027, 09:00–12:00 (HBCSE, Science Olympiad 2026-27). The list of students selected for the INOs will be published by 15 Jan 2027 on the IAPT website (iapt.org.in); selected students must then register on the HBCSE website to get their INO admit cards.",
+    "confidence": "official",
+    "url": "https://olympiads.hbcse.tifr.res.in/science-olympiad-2026-2027/",
+    "archivedAt": null
+   },
+   "why": "The date HBCSE states, replacing the archived 7 Feb estimate.",
+   "evidenceUrl": "https://olympiads.hbcse.tifr.res.in/science-olympiad-2026-2027/",
+   "evidenceReadAt": "2026-10-06T09:29:10+05:30"
+  },
+  {
+   "type": "archive",
+   "group": "olympiad",
+   "exam": "NSEB",
+   "rowId": "cmt5vora501il13qeer0mr9y0",
+   "before": {
+    "label": "INBO 2027 exam (Stage 2, expected)",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "ai-generated:claude",
+    "notes": "Indian National Biology Olympiad for NSEB qualifiers; typically held in late January/early February",
+    "confidence": "expected",
+    "url": null,
+    "archivedAt": null
+   },
+   "after": {
+    "label": "INBO 2027 exam (Stage 2, expected)",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "ai-generated:claude:suppressed",
+    "notes": "Indian National Biology Olympiad for NSEB qualifiers; typically held in late January/early February",
+    "confidence": "expected",
+    "url": null,
+    "archivedAt": "2026-10-06T04:59:54.381Z"
+   },
+   "why": "Estimate \"INBO 2027 exam (Stage 2, expected)\" 1 Feb 2027; HBCSE states INBO on 31 Jan 2027.",
+   "evidenceUrl": "https://olympiads.hbcse.tifr.res.in/science-olympiad-2026-2027/",
+   "evidenceReadAt": "2026-10-06T09:29:10+05:30"
+  },
+  {
+   "type": "create",
+   "group": "olympiad",
+   "exam": "NSEB",
+   "rowId": "cmuw7md3s0004xpxsezhpkfpz",
+   "before": null,
+   "after": {
+    "label": "INBO 2027 — Stage II, for NSEB qualifiers",
+    "kind": "OTHER",
+    "isExamDay": false,
+    "source": "official-research:2026-10-06",
+    "notes": "Indian National Biology Olympiad (stage II): Sunday 31 Jan 2027, 13:30–15:30 (HBCSE, Science Olympiad 2026-27). The list of students selected for the INOs will be published by 15 Jan 2027 on the IAPT website (iapt.org.in); selected students must then register on the HBCSE website to get their INO admit cards.",
+    "confidence": "official",
+    "url": "https://olympiads.hbcse.tifr.res.in/science-olympiad-2026-2027/",
+    "archivedAt": null
+   },
+   "why": "The date HBCSE states, replacing the archived 1 Feb estimate.",
+   "evidenceUrl": "https://olympiads.hbcse.tifr.res.in/science-olympiad-2026-2027/",
+   "evidenceReadAt": "2026-10-06T09:29:10+05:30"
+  },
+  {
+   "type": "create",
+   "group": "olympiad",
+   "exam": "NSEC",
+   "rowId": "cmuw7md7e0006xpxse3ihe97w",
+   "before": null,
+   "after": {
+    "label": "INChO 2027 — Stage II, for NSEC qualifiers",
+    "kind": "OTHER",
+    "isExamDay": false,
+    "source": "official-research:2026-10-06",
+    "notes": "Indian National Chemistry Olympiad (stage II): Saturday 30 Jan 2027, 13:30–16:30 (HBCSE, Science Olympiad 2026-27). The list of students selected for the INOs will be published by 15 Jan 2027 on the IAPT website (iapt.org.in); selected students must then register on the HBCSE website to get their INO admit cards.",
+    "confidence": "official",
+    "url": "https://olympiads.hbcse.tifr.res.in/science-olympiad-2026-2027/",
+    "archivedAt": null
+   },
+   "why": "HBCSE states INChO on 30 Jan 2027; the NSEC hub had no stage-II date (its 15 Jan \"INChO 2027 Registration (expected)\" estimate is left as it is).",
+   "evidenceUrl": "https://olympiads.hbcse.tifr.res.in/science-olympiad-2026-2027/",
+   "evidenceReadAt": "2026-10-06T09:29:10+05:30"
+  },
+  {
+   "type": "create",
+   "group": "olympiad",
+   "exam": "IOQM",
+   "rowId": "cmuw7mdb10008xpxsm5t539wp",
+   "before": null,
+   "after": {
+    "label": "RMO 2026 — second stage, for IOQM 2026 qualifiers",
+    "kind": "OTHER",
+    "isExamDay": false,
+    "source": "official-research:2026-10-06",
+    "notes": "Regional Mathematical Olympiad: Sunday 15 Nov 2026, 13:00–16:00 (3 hours, 6 proof questions) — HBCSE, Mathematical Olympiad 2026-27. Who qualifies from IOQM 2026 is set by HBCSE's RMO selection criteria.",
+    "confidence": "official",
+    "url": "https://olympiads.hbcse.tifr.res.in/mathematical-olympiad-2026-2027/",
+    "archivedAt": null
+   },
+   "why": "HBCSE states RMO on 15 Nov 2026; the IOQM hub had no RMO date and there is no RMO hub.",
+   "evidenceUrl": "https://olympiads.hbcse.tifr.res.in/mathematical-olympiad-2026-2027/",
+   "evidenceReadAt": "2026-10-06T09:29:35+05:30"
+  },
+  {
+   "type": "create",
+   "group": "olympiad",
+   "exam": "IOQM",
+   "rowId": "cmuw7mdem000axpxslat6mdtq",
+   "before": null,
+   "after": {
+    "label": "INMO — third stage of the 2026-27 cycle, for RMO 2026 qualifiers",
+    "kind": "OTHER",
+    "isExamDay": false,
+    "source": "official-research:2026-10-06",
+    "notes": "Indian National Mathematical Olympiad: Sunday 17 Jan 2027, 12:00–16:30 (4.5 hours, 6 proof questions). HBCSE's Mathematical Olympiad 2026-27 page: \"Date of INMO 2026: January 17, 2027\".",
+    "confidence": "official",
+    "url": "https://olympiads.hbcse.tifr.res.in/mathematical-olympiad-2026-2027/",
+    "archivedAt": null
+   },
+   "why": "HBCSE states INMO on 17 Jan 2027; the IOQM hub had no INMO date and there is no INMO hub.",
+   "evidenceUrl": "https://olympiads.hbcse.tifr.res.in/mathematical-olympiad-2026-2027/",
+   "evidenceReadAt": "2026-10-06T09:29:35+05:30"
+  }
+ ]
+}

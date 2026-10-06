@@ -1,0 +1,700 @@
+{
+ "script": "fix-tracker-dates-2026-10-06",
+ "kind": "apply",
+ "startedAt": "2026-10-06T04:59:35.931Z",
+ "status": "applied",
+ "only": "gate",
+ "entries": [
+  {
+   "type": "update",
+   "group": "gate",
+   "exam": "GATE_CE",
+   "rowId": "cmuiy483p002wsf5ybu2nipho",
+   "before": {
+    "label": "GATE 2027 application rectification window (14–21 Oct 2026)",
+    "kind": "CORRECTION_WINDOW",
+    "isExamDay": false,
+    "source": "official-research:2026-09-27",
+    "notes": null,
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "GATE 2027 application rectification window (14–21 Oct)",
+    "kind": "CORRECTION_WINDOW",
+    "isExamDay": false,
+    "source": "official-research:2026-10-06",
+    "notes": "IIT Madras, GATE 2027 important dates (read 6 Oct 2026): application rectification opens Wednesday 14 Oct and closes Wednesday 21 Oct 2026.",
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": null
+   },
+   "why": "Date unchanged (IIT Madras: 14–21 Oct 2026). The label named 2026, which made the hub title read \"2026\" for the GATE 2027 cycle; the label now names 2027 only.",
+   "evidenceUrl": "https://gate2027.iitm.ac.in/important_dates",
+   "evidenceReadAt": "2026-10-06T09:28:00+05:30"
+  },
+  {
+   "type": "archive",
+   "group": "gate",
+   "exam": "GATE_CE",
+   "rowId": "cmuiy4819002ssf5yubddg87s",
+   "before": {
+    "label": "GATE 2027 regular registration closes (without late fee)",
+    "kind": "APPLICATION_END",
+    "isExamDay": false,
+    "source": "official-research:2026-09-27",
+    "notes": null,
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "GATE 2027 regular registration closes (without late fee)",
+    "kind": "APPLICATION_END",
+    "isExamDay": false,
+    "source": "ai-generated:claude:suppressed",
+    "notes": null,
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": "2026-10-06T04:59:32.190Z"
+   },
+   "why": "Superseded: IIT Madras now strikes 27 Sep through — regular registration (without late fee) was extended to Monday 5 Oct 2026.",
+   "evidenceUrl": "https://gate2027.iitm.ac.in/important_dates",
+   "evidenceReadAt": "2026-10-06T09:28:00+05:30"
+  },
+  {
+   "type": "update",
+   "group": "gate",
+   "exam": "GATE_CE",
+   "rowId": "cmuiy482h002usf5yd6vs3jpw",
+   "before": {
+    "label": "GATE 2027 extended registration closes (with late fee)",
+    "kind": "APPLICATION_END",
+    "isExamDay": false,
+    "source": "official-research:2026-09-27",
+    "notes": null,
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "GATE 2027 regular registration closes (without late fee)",
+    "kind": "APPLICATION_END",
+    "isExamDay": false,
+    "source": "official-research:2026-10-06",
+    "notes": "IIT Madras, GATE 2027 important dates (read 6 Oct 2026): regular online registration (without late fee) closes Monday 5 Oct 2026 — extended from 21 Sep and then 27 Sep, both struck through on the page. Registration with the late fee is open until Monday 12 Oct 2026.",
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": null
+   },
+   "why": "5 Oct is now the REGULAR close (without late fee); IIT Madras strikes 5 Oct through as the late-fee close, which moved to 12 Oct. The row said the late-fee window closed on 5 Oct.",
+   "evidenceUrl": "https://gate2027.iitm.ac.in/important_dates",
+   "evidenceReadAt": "2026-10-06T09:28:00+05:30"
+  },
+  {
+   "type": "create",
+   "group": "gate",
+   "exam": "GATE_CE",
+   "rowId": "cmuw7lw4n0002z6yy3gs3zlrc",
+   "before": null,
+   "after": {
+    "label": "GATE 2027 extended registration closes (with late fee)",
+    "kind": "APPLICATION_END",
+    "isExamDay": false,
+    "source": "official-research:2026-10-06",
+    "notes": "IIT Madras, GATE 2027 important dates (read 6 Oct 2026): extended online registration (with late fee) closes Monday 12 Oct 2026 — extended from 30 Sep and then 5 Oct, both struck through on the page. The application rectification window is 14–21 Oct 2026.",
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": null
+   },
+   "why": "The late-fee close IIT Madras states: Monday 12 Oct 2026.",
+   "evidenceUrl": "https://gate2027.iitm.ac.in/important_dates",
+   "evidenceReadAt": "2026-10-06T09:28:00+05:30"
+  },
+  {
+   "type": "archive",
+   "group": "gate",
+   "exam": "GATE_CSE",
+   "rowId": "cmuiy2hpk000k4eeyfpohz13u",
+   "before": {
+    "label": "GATE 2027 regular registration closes (without late fee)",
+    "kind": "APPLICATION_END",
+    "isExamDay": false,
+    "source": "official-calendar:2026-27",
+    "notes": "IIT Madras, GATE 2027 important dates (extended from 21 Sep 2026).",
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "GATE 2027 regular registration closes (without late fee)",
+    "kind": "APPLICATION_END",
+    "isExamDay": false,
+    "source": "ai-generated:claude:suppressed",
+    "notes": "IIT Madras, GATE 2027 important dates (extended from 21 Sep 2026).",
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": "2026-10-06T04:59:32.190Z"
+   },
+   "why": "Superseded: IIT Madras now strikes 27 Sep through — regular registration (without late fee) was extended to Monday 5 Oct 2026.",
+   "evidenceUrl": "https://gate2027.iitm.ac.in/important_dates",
+   "evidenceReadAt": "2026-10-06T09:28:00+05:30"
+  },
+  {
+   "type": "update",
+   "group": "gate",
+   "exam": "GATE_CSE",
+   "rowId": "cmuiy2hqq000m4eeyx5c24dig",
+   "before": {
+    "label": "GATE 2027 extended registration closes (with late fee)",
+    "kind": "APPLICATION_END",
+    "isExamDay": false,
+    "source": "official-calendar:2026-27",
+    "notes": "IIT Madras, GATE 2027 important dates (extended from 30 Sep 2026).",
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "GATE 2027 regular registration closes (without late fee)",
+    "kind": "APPLICATION_END",
+    "isExamDay": false,
+    "source": "official-research:2026-10-06",
+    "notes": "IIT Madras, GATE 2027 important dates (read 6 Oct 2026): regular online registration (without late fee) closes Monday 5 Oct 2026 — extended from 21 Sep and then 27 Sep, both struck through on the page. Registration with the late fee is open until Monday 12 Oct 2026.",
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": null
+   },
+   "why": "5 Oct is now the REGULAR close (without late fee); IIT Madras strikes 5 Oct through as the late-fee close, which moved to 12 Oct. The row said the late-fee window closed on 5 Oct.",
+   "evidenceUrl": "https://gate2027.iitm.ac.in/important_dates",
+   "evidenceReadAt": "2026-10-06T09:28:00+05:30"
+  },
+  {
+   "type": "create",
+   "group": "gate",
+   "exam": "GATE_CSE",
+   "rowId": "cmuw7lwes0004z6yybymm1g5u",
+   "before": null,
+   "after": {
+    "label": "GATE 2027 extended registration closes (with late fee)",
+    "kind": "APPLICATION_END",
+    "isExamDay": false,
+    "source": "official-research:2026-10-06",
+    "notes": "IIT Madras, GATE 2027 important dates (read 6 Oct 2026): extended online registration (with late fee) closes Monday 12 Oct 2026 — extended from 30 Sep and then 5 Oct, both struck through on the page. The application rectification window is 14–21 Oct 2026.",
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": null
+   },
+   "why": "The late-fee close IIT Madras states: Monday 12 Oct 2026.",
+   "evidenceUrl": "https://gate2027.iitm.ac.in/important_dates",
+   "evidenceReadAt": "2026-10-06T09:28:00+05:30"
+  },
+  {
+   "type": "archive",
+   "group": "gate",
+   "exam": "GATE_CSE",
+   "rowId": "cmuiy2hvn000u4eeyjzngfcyk",
+   "before": {
+    "label": "GATE 2027 exams begin",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "official-calendar:2026-27",
+    "notes": "IIT Madras: GATE 2027 exams on 6, 7, 13, 14, 20 and 21 Feb 2027 (forenoon and afternoon sessions). The paper-wise schedule — which day CS is held — will be notified later on the GATE 2027 website.",
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "GATE 2027 exams begin",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "ai-generated:claude:suppressed",
+    "notes": "IIT Madras: GATE 2027 exams on 6, 7, 13, 14, 20 and 21 Feb 2027 (forenoon and afternoon sessions). The paper-wise schedule — which day CS is held — will be notified later on the GATE 2027 website.",
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": "2026-10-06T04:59:32.190Z"
+   },
+   "why": "IIT Madras gives 6 Feb 2027 only as the first day of the GATE 2027 exam window (6, 7, 13, 14, 20 and 21 Feb) for all papers; it has not said which day the CS paper is held. As an EXAM row on the CS hub it made the title read \"GATE CSE 2027 — Exam Date 6 Feb 2027\". Archived and suppressed, so a refresh cannot write a CS exam day on 6 Feb again; the window moves to the OTHER row created below.",
+   "evidenceUrl": "https://gate2027.iitm.ac.in/important_dates",
+   "evidenceReadAt": "2026-10-06T10:13:59+05:30"
+  },
+  {
+   "type": "archive",
+   "group": "gate",
+   "exam": "GATE_CSE",
+   "rowId": "cmuiy2hwv000w4eey9haco1ep",
+   "before": {
+    "label": "GATE 2027 exams end",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "official-calendar:2026-27",
+    "notes": "IIT Madras: last GATE 2027 exam day. The paper-wise schedule will be notified later on the GATE 2027 website.",
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "GATE 2027 exams end",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "ai-generated:claude:suppressed",
+    "notes": "IIT Madras: last GATE 2027 exam day. The paper-wise schedule will be notified later on the GATE 2027 website.",
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": "2026-10-06T04:59:32.190Z"
+   },
+   "why": "21 Feb 2027 is the last day of the same window, not the CS paper's date; after 6 Feb it would lead the title as \"Exam Date 21 Feb 2027\". Archived and suppressed; the OTHER row below names the whole window.",
+   "evidenceUrl": "https://gate2027.iitm.ac.in/important_dates",
+   "evidenceReadAt": "2026-10-06T10:13:59+05:30"
+  },
+  {
+   "type": "create",
+   "group": "gate",
+   "exam": "GATE_CSE",
+   "rowId": "cmuw7lwnk0006z6yy75egf7ff",
+   "before": null,
+   "after": {
+    "label": "GATE 2027 exams on 6, 7, 13, 14, 20 and 21 Feb 2027 — the CS paper's own date is not announced yet",
+    "kind": "OTHER",
+    "isExamDay": false,
+    "source": "official-research:2026-10-06",
+    "notes": "IIT Madras, GATE 2027 important dates (re-read 6 Oct 2026): the GATE 2027 examinations are on Saturday 6, Sunday 7, Saturday 13, Sunday 14, Saturday 20 and Sunday 21 Feb 2027. Which of these days the CS paper is held on is not given on the important-dates page or the GATE 2027 home page yet. All dates are liable to change.",
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": null
+   },
+   "why": "The window IIT Madras states, as one OTHER row (the row the five paper hubs carry): it lists on the tracker and calendar and never stands in for the CS paper's exam date.",
+   "evidenceUrl": "https://gate2027.iitm.ac.in/important_dates",
+   "evidenceReadAt": "2026-10-06T10:13:59+05:30"
+  },
+  {
+   "type": "update",
+   "group": "gate",
+   "exam": "GATE_DA",
+   "rowId": "cmuiy48g3003dsf5yamp210oq",
+   "before": {
+    "label": "GATE 2027 application rectification window (14–21 Oct 2026)",
+    "kind": "CORRECTION_WINDOW",
+    "isExamDay": false,
+    "source": "official-research:2026-09-27",
+    "notes": null,
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "GATE 2027 application rectification window (14–21 Oct)",
+    "kind": "CORRECTION_WINDOW",
+    "isExamDay": false,
+    "source": "official-research:2026-10-06",
+    "notes": "IIT Madras, GATE 2027 important dates (read 6 Oct 2026): application rectification opens Wednesday 14 Oct and closes Wednesday 21 Oct 2026.",
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": null
+   },
+   "why": "Date unchanged (IIT Madras: 14–21 Oct 2026). The label named 2026, which made the hub title read \"2026\" for the GATE 2027 cycle; the label now names 2027 only.",
+   "evidenceUrl": "https://gate2027.iitm.ac.in/important_dates",
+   "evidenceReadAt": "2026-10-06T09:28:00+05:30"
+  },
+  {
+   "type": "archive",
+   "group": "gate",
+   "exam": "GATE_DA",
+   "rowId": "cmuiy48dl0039sf5y5ge7dkia",
+   "before": {
+    "label": "GATE 2027 regular registration closes (without late fee)",
+    "kind": "APPLICATION_END",
+    "isExamDay": false,
+    "source": "official-research:2026-09-27",
+    "notes": null,
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "GATE 2027 regular registration closes (without late fee)",
+    "kind": "APPLICATION_END",
+    "isExamDay": false,
+    "source": "ai-generated:claude:suppressed",
+    "notes": null,
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": "2026-10-06T04:59:32.190Z"
+   },
+   "why": "Superseded: IIT Madras now strikes 27 Sep through — regular registration (without late fee) was extended to Monday 5 Oct 2026.",
+   "evidenceUrl": "https://gate2027.iitm.ac.in/important_dates",
+   "evidenceReadAt": "2026-10-06T09:28:00+05:30"
+  },
+  {
+   "type": "update",
+   "group": "gate",
+   "exam": "GATE_DA",
+   "rowId": "cmuiy48eu003bsf5yqs3b59am",
+   "before": {
+    "label": "GATE 2027 extended registration closes (with late fee)",
+    "kind": "APPLICATION_END",
+    "isExamDay": false,
+    "source": "official-research:2026-09-27",
+    "notes": null,
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "GATE 2027 regular registration closes (without late fee)",
+    "kind": "APPLICATION_END",
+    "isExamDay": false,
+    "source": "official-research:2026-10-06",
+    "notes": "IIT Madras, GATE 2027 important dates (read 6 Oct 2026): regular online registration (without late fee) closes Monday 5 Oct 2026 — extended from 21 Sep and then 27 Sep, both struck through on the page. Registration with the late fee is open until Monday 12 Oct 2026.",
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": null
+   },
+   "why": "5 Oct is now the REGULAR close (without late fee); IIT Madras strikes 5 Oct through as the late-fee close, which moved to 12 Oct. The row said the late-fee window closed on 5 Oct.",
+   "evidenceUrl": "https://gate2027.iitm.ac.in/important_dates",
+   "evidenceReadAt": "2026-10-06T09:28:00+05:30"
+  },
+  {
+   "type": "create",
+   "group": "gate",
+   "exam": "GATE_DA",
+   "rowId": "cmuw7lwyp0008z6yyd2gwea95",
+   "before": null,
+   "after": {
+    "label": "GATE 2027 extended registration closes (with late fee)",
+    "kind": "APPLICATION_END",
+    "isExamDay": false,
+    "source": "official-research:2026-10-06",
+    "notes": "IIT Madras, GATE 2027 important dates (read 6 Oct 2026): extended online registration (with late fee) closes Monday 12 Oct 2026 — extended from 30 Sep and then 5 Oct, both struck through on the page. The application rectification window is 14–21 Oct 2026.",
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": null
+   },
+   "why": "The late-fee close IIT Madras states: Monday 12 Oct 2026.",
+   "evidenceUrl": "https://gate2027.iitm.ac.in/important_dates",
+   "evidenceReadAt": "2026-10-06T09:28:00+05:30"
+  },
+  {
+   "type": "update",
+   "group": "gate",
+   "exam": "GATE_ECE",
+   "rowId": "cmuiy47rf002fsf5y5lcgabmp",
+   "before": {
+    "label": "GATE 2027 application rectification window (14–21 Oct 2026)",
+    "kind": "CORRECTION_WINDOW",
+    "isExamDay": false,
+    "source": "official-research:2026-09-27",
+    "notes": null,
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "GATE 2027 application rectification window (14–21 Oct)",
+    "kind": "CORRECTION_WINDOW",
+    "isExamDay": false,
+    "source": "official-research:2026-10-06",
+    "notes": "IIT Madras, GATE 2027 important dates (read 6 Oct 2026): application rectification opens Wednesday 14 Oct and closes Wednesday 21 Oct 2026.",
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": null
+   },
+   "why": "Date unchanged (IIT Madras: 14–21 Oct 2026). The label named 2026, which made the hub title read \"2026\" for the GATE 2027 cycle; the label now names 2027 only.",
+   "evidenceUrl": "https://gate2027.iitm.ac.in/important_dates",
+   "evidenceReadAt": "2026-10-06T09:28:00+05:30"
+  },
+  {
+   "type": "archive",
+   "group": "gate",
+   "exam": "GATE_ECE",
+   "rowId": "cmuiy47ox002bsf5yt4gwhr5m",
+   "before": {
+    "label": "GATE 2027 regular registration closes (without late fee)",
+    "kind": "APPLICATION_END",
+    "isExamDay": false,
+    "source": "official-research:2026-09-27",
+    "notes": null,
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "GATE 2027 regular registration closes (without late fee)",
+    "kind": "APPLICATION_END",
+    "isExamDay": false,
+    "source": "ai-generated:claude:suppressed",
+    "notes": null,
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": "2026-10-06T04:59:32.190Z"
+   },
+   "why": "Superseded: IIT Madras now strikes 27 Sep through — regular registration (without late fee) was extended to Monday 5 Oct 2026.",
+   "evidenceUrl": "https://gate2027.iitm.ac.in/important_dates",
+   "evidenceReadAt": "2026-10-06T09:28:00+05:30"
+  },
+  {
+   "type": "update",
+   "group": "gate",
+   "exam": "GATE_ECE",
+   "rowId": "cmuiy47q6002dsf5yystodw4y",
+   "before": {
+    "label": "GATE 2027 extended registration closes (with late fee)",
+    "kind": "APPLICATION_END",
+    "isExamDay": false,
+    "source": "official-research:2026-09-27",
+    "notes": null,
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "GATE 2027 regular registration closes (without late fee)",
+    "kind": "APPLICATION_END",
+    "isExamDay": false,
+    "source": "official-research:2026-10-06",
+    "notes": "IIT Madras, GATE 2027 important dates (read 6 Oct 2026): regular online registration (without late fee) closes Monday 5 Oct 2026 — extended from 21 Sep and then 27 Sep, both struck through on the page. Registration with the late fee is open until Monday 12 Oct 2026.",
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": null
+   },
+   "why": "5 Oct is now the REGULAR close (without late fee); IIT Madras strikes 5 Oct through as the late-fee close, which moved to 12 Oct. The row said the late-fee window closed on 5 Oct.",
+   "evidenceUrl": "https://gate2027.iitm.ac.in/important_dates",
+   "evidenceReadAt": "2026-10-06T09:28:00+05:30"
+  },
+  {
+   "type": "create",
+   "group": "gate",
+   "exam": "GATE_ECE",
+   "rowId": "cmuw7lx9s000az6yyn31qd30e",
+   "before": null,
+   "after": {
+    "label": "GATE 2027 extended registration closes (with late fee)",
+    "kind": "APPLICATION_END",
+    "isExamDay": false,
+    "source": "official-research:2026-10-06",
+    "notes": "IIT Madras, GATE 2027 important dates (read 6 Oct 2026): extended online registration (with late fee) closes Monday 12 Oct 2026 — extended from 30 Sep and then 5 Oct, both struck through on the page. The application rectification window is 14–21 Oct 2026.",
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": null
+   },
+   "why": "The late-fee close IIT Madras states: Monday 12 Oct 2026.",
+   "evidenceUrl": "https://gate2027.iitm.ac.in/important_dates",
+   "evidenceReadAt": "2026-10-06T09:28:00+05:30"
+  },
+  {
+   "type": "update",
+   "group": "gate",
+   "exam": "GATE_EE",
+   "rowId": "cmuiy47ep001ysf5y6j1omguy",
+   "before": {
+    "label": "GATE 2027 application rectification window (14–21 Oct 2026)",
+    "kind": "CORRECTION_WINDOW",
+    "isExamDay": false,
+    "source": "official-research:2026-09-27",
+    "notes": null,
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "GATE 2027 application rectification window (14–21 Oct)",
+    "kind": "CORRECTION_WINDOW",
+    "isExamDay": false,
+    "source": "official-research:2026-10-06",
+    "notes": "IIT Madras, GATE 2027 important dates (read 6 Oct 2026): application rectification opens Wednesday 14 Oct and closes Wednesday 21 Oct 2026.",
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": null
+   },
+   "why": "Date unchanged (IIT Madras: 14–21 Oct 2026). The label named 2026, which made the hub title read \"2026\" for the GATE 2027 cycle; the label now names 2027 only.",
+   "evidenceUrl": "https://gate2027.iitm.ac.in/important_dates",
+   "evidenceReadAt": "2026-10-06T09:28:00+05:30"
+  },
+  {
+   "type": "archive",
+   "group": "gate",
+   "exam": "GATE_EE",
+   "rowId": "cmuiy47c3001usf5y8gvs0olu",
+   "before": {
+    "label": "GATE 2027 regular registration closes (without late fee)",
+    "kind": "APPLICATION_END",
+    "isExamDay": false,
+    "source": "official-research:2026-09-27",
+    "notes": null,
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "GATE 2027 regular registration closes (without late fee)",
+    "kind": "APPLICATION_END",
+    "isExamDay": false,
+    "source": "ai-generated:claude:suppressed",
+    "notes": null,
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": "2026-10-06T04:59:32.190Z"
+   },
+   "why": "Superseded: IIT Madras now strikes 27 Sep through — regular registration (without late fee) was extended to Monday 5 Oct 2026.",
+   "evidenceUrl": "https://gate2027.iitm.ac.in/important_dates",
+   "evidenceReadAt": "2026-10-06T09:28:00+05:30"
+  },
+  {
+   "type": "update",
+   "group": "gate",
+   "exam": "GATE_EE",
+   "rowId": "cmuiy47de001wsf5y9yacpzi9",
+   "before": {
+    "label": "GATE 2027 extended registration closes (with late fee)",
+    "kind": "APPLICATION_END",
+    "isExamDay": false,
+    "source": "official-research:2026-09-27",
+    "notes": null,
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "GATE 2027 regular registration closes (without late fee)",
+    "kind": "APPLICATION_END",
+    "isExamDay": false,
+    "source": "official-research:2026-10-06",
+    "notes": "IIT Madras, GATE 2027 important dates (read 6 Oct 2026): regular online registration (without late fee) closes Monday 5 Oct 2026 — extended from 21 Sep and then 27 Sep, both struck through on the page. Registration with the late fee is open until Monday 12 Oct 2026.",
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": null
+   },
+   "why": "5 Oct is now the REGULAR close (without late fee); IIT Madras strikes 5 Oct through as the late-fee close, which moved to 12 Oct. The row said the late-fee window closed on 5 Oct.",
+   "evidenceUrl": "https://gate2027.iitm.ac.in/important_dates",
+   "evidenceReadAt": "2026-10-06T09:28:00+05:30"
+  },
+  {
+   "type": "create",
+   "group": "gate",
+   "exam": "GATE_EE",
+   "rowId": "cmuw7lxkt000cz6yyhg22sswk",
+   "before": null,
+   "after": {
+    "label": "GATE 2027 extended registration closes (with late fee)",
+    "kind": "APPLICATION_END",
+    "isExamDay": false,
+    "source": "official-research:2026-10-06",
+    "notes": "IIT Madras, GATE 2027 important dates (read 6 Oct 2026): extended online registration (with late fee) closes Monday 12 Oct 2026 — extended from 30 Sep and then 5 Oct, both struck through on the page. The application rectification window is 14–21 Oct 2026.",
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": null
+   },
+   "why": "The late-fee close IIT Madras states: Monday 12 Oct 2026.",
+   "evidenceUrl": "https://gate2027.iitm.ac.in/important_dates",
+   "evidenceReadAt": "2026-10-06T09:28:00+05:30"
+  },
+  {
+   "type": "update",
+   "group": "gate",
+   "exam": "GATE_ME",
+   "rowId": "cmuiy4722001hsf5y42krsh5b",
+   "before": {
+    "label": "GATE 2027 application rectification window (14–21 Oct 2026)",
+    "kind": "CORRECTION_WINDOW",
+    "isExamDay": false,
+    "source": "official-research:2026-09-27",
+    "notes": null,
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "GATE 2027 application rectification window (14–21 Oct)",
+    "kind": "CORRECTION_WINDOW",
+    "isExamDay": false,
+    "source": "official-research:2026-10-06",
+    "notes": "IIT Madras, GATE 2027 important dates (read 6 Oct 2026): application rectification opens Wednesday 14 Oct and closes Wednesday 21 Oct 2026.",
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": null
+   },
+   "why": "Date unchanged (IIT Madras: 14–21 Oct 2026). The label named 2026, which made the hub title read \"2026\" for the GATE 2027 cycle; the label now names 2027 only.",
+   "evidenceUrl": "https://gate2027.iitm.ac.in/important_dates",
+   "evidenceReadAt": "2026-10-06T09:28:00+05:30"
+  },
+  {
+   "type": "archive",
+   "group": "gate",
+   "exam": "GATE_ME",
+   "rowId": "cmuiy46zk001dsf5y1juw8h0b",
+   "before": {
+    "label": "GATE 2027 regular registration closes (without late fee)",
+    "kind": "APPLICATION_END",
+    "isExamDay": false,
+    "source": "official-research:2026-09-27",
+    "notes": null,
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "GATE 2027 regular registration closes (without late fee)",
+    "kind": "APPLICATION_END",
+    "isExamDay": false,
+    "source": "ai-generated:claude:suppressed",
+    "notes": null,
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": "2026-10-06T04:59:32.190Z"
+   },
+   "why": "Superseded: IIT Madras now strikes 27 Sep through — regular registration (without late fee) was extended to Monday 5 Oct 2026.",
+   "evidenceUrl": "https://gate2027.iitm.ac.in/important_dates",
+   "evidenceReadAt": "2026-10-06T09:28:00+05:30"
+  },
+  {
+   "type": "update",
+   "group": "gate",
+   "exam": "GATE_ME",
+   "rowId": "cmuiy470r001fsf5yqlo43h8b",
+   "before": {
+    "label": "GATE 2027 extended registration closes (with late fee)",
+    "kind": "APPLICATION_END",
+    "isExamDay": false,
+    "source": "official-research:2026-09-27",
+    "notes": null,
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "GATE 2027 regular registration closes (without late fee)",
+    "kind": "APPLICATION_END",
+    "isExamDay": false,
+    "source": "official-research:2026-10-06",
+    "notes": "IIT Madras, GATE 2027 important dates (read 6 Oct 2026): regular online registration (without late fee) closes Monday 5 Oct 2026 — extended from 21 Sep and then 27 Sep, both struck through on the page. Registration with the late fee is open until Monday 12 Oct 2026.",
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": null
+   },
+   "why": "5 Oct is now the REGULAR close (without late fee); IIT Madras strikes 5 Oct through as the late-fee close, which moved to 12 Oct. The row said the late-fee window closed on 5 Oct.",
+   "evidenceUrl": "https://gate2027.iitm.ac.in/important_dates",
+   "evidenceReadAt": "2026-10-06T09:28:00+05:30"
+  },
+  {
+   "type": "create",
+   "group": "gate",
+   "exam": "GATE_ME",
+   "rowId": "cmuw7lxw0000ez6yyebr5vht3",
+   "before": null,
+   "after": {
+    "label": "GATE 2027 extended registration closes (with late fee)",
+    "kind": "APPLICATION_END",
+    "isExamDay": false,
+    "source": "official-research:2026-10-06",
+    "notes": "IIT Madras, GATE 2027 important dates (read 6 Oct 2026): extended online registration (with late fee) closes Monday 12 Oct 2026 — extended from 30 Sep and then 5 Oct, both struck through on the page. The application rectification window is 14–21 Oct 2026.",
+    "confidence": "official",
+    "url": "https://gate2027.iitm.ac.in/important_dates",
+    "archivedAt": null
+   },
+   "why": "The late-fee close IIT Madras states: Monday 12 Oct 2026.",
+   "evidenceUrl": "https://gate2027.iitm.ac.in/important_dates",
+   "evidenceReadAt": "2026-10-06T09:28:00+05:30"
+  }
+ ]
+}

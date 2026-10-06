@@ -1,0 +1,386 @@
+{
+ "script": "fix-tracker-dates-2026-10-06",
+ "kind": "apply",
+ "startedAt": "2026-10-06T05:00:10.183Z",
+ "status": "applied",
+ "only": "cite",
+ "entries": [
+  {
+   "type": "update",
+   "group": "cite",
+   "exam": "UP_UPSSSC_PET",
+   "rowId": "cmutulhcy004p105df9acijv3",
+   "before": {
+    "label": "PET 2026 exam - Day 1",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "ai-generated:claude",
+    "notes": "Two shifts: 10 AM-12 PM and 3-5 PM; revised from Oct 23-25 · no key published for this stage",
+    "confidence": "official",
+    "url": "https://testbook.com/news/upsssc-pet-exam-date-2026-out/",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "PET 2026 exam - Day 1",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "official-research:2026-10-06",
+    "notes": "Two shifts each day: 10:00–12:00 and 15:00–17:00. UPSSSC notice 1423 of 25 Sep 2026 (listed under that date in upsssc.gov.in's news) moved the written exam from 23, 24 and 25 Oct to 25 Oct, 30 Oct and 1 Nov 2026; the admit card will be announced on upsssc.gov.in.",
+    "confidence": "official",
+    "url": "https://upsssc.gov.in/ViewPdf.aspx?NJbKyTiDxAqQnRYKCqojRTHwngIdnR5KGQXPSU/8zc0=",
+    "archivedAt": null
+   },
+   "why": "The body's own document states this date (re-read 6 Oct 2026); the row cited an aggregator (tier reported).",
+   "evidenceUrl": "https://upsssc.gov.in/ViewPdf.aspx?NJbKyTiDxAqQnRYKCqojRTHwngIdnR5KGQXPSU/8zc0=",
+   "evidenceReadAt": "2026-10-06T09:33:35+05:30"
+  },
+  {
+   "type": "update",
+   "group": "cite",
+   "exam": "UP_UPSSSC_PET",
+   "rowId": "cmutulhd0004r105dmlstlibt",
+   "before": {
+    "label": "PET 2026 exam - Day 2",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "ai-generated:claude",
+    "notes": "Two shifts: 10 AM-12 PM and 3-5 PM · no key published for this stage",
+    "confidence": "official",
+    "url": "https://testbook.com/news/upsssc-pet-exam-date-2026-out/",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "PET 2026 exam - Day 2",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "official-research:2026-10-06",
+    "notes": "Two shifts each day: 10:00–12:00 and 15:00–17:00. UPSSSC notice 1423 of 25 Sep 2026 (listed under that date in upsssc.gov.in's news) moved the written exam from 23, 24 and 25 Oct to 25 Oct, 30 Oct and 1 Nov 2026; the admit card will be announced on upsssc.gov.in.",
+    "confidence": "official",
+    "url": "https://upsssc.gov.in/ViewPdf.aspx?NJbKyTiDxAqQnRYKCqojRTHwngIdnR5KGQXPSU/8zc0=",
+    "archivedAt": null
+   },
+   "why": "The body's own document states this date (re-read 6 Oct 2026); the row cited an aggregator (tier reported).",
+   "evidenceUrl": "https://upsssc.gov.in/ViewPdf.aspx?NJbKyTiDxAqQnRYKCqojRTHwngIdnR5KGQXPSU/8zc0=",
+   "evidenceReadAt": "2026-10-06T09:33:35+05:30"
+  },
+  {
+   "type": "update",
+   "group": "cite",
+   "exam": "UP_UPSSSC_PET",
+   "rowId": "cmutulhd3004t105dtl7jh2tr",
+   "before": {
+    "label": "PET 2026 exam - Day 3",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "ai-generated:claude",
+    "notes": "Two shifts: 10 AM-12 PM and 3-5 PM · no key published for this stage",
+    "confidence": "official",
+    "url": "https://testbook.com/news/upsssc-pet-exam-date-2026-out/",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "PET 2026 exam - Day 3",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "official-research:2026-10-06",
+    "notes": "Two shifts each day: 10:00–12:00 and 15:00–17:00. UPSSSC notice 1423 of 25 Sep 2026 (listed under that date in upsssc.gov.in's news) moved the written exam from 23, 24 and 25 Oct to 25 Oct, 30 Oct and 1 Nov 2026; the admit card will be announced on upsssc.gov.in.",
+    "confidence": "official",
+    "url": "https://upsssc.gov.in/ViewPdf.aspx?NJbKyTiDxAqQnRYKCqojRTHwngIdnR5KGQXPSU/8zc0=",
+    "archivedAt": null
+   },
+   "why": "The body's own document states this date (re-read 6 Oct 2026); the row cited an aggregator (tier reported).",
+   "evidenceUrl": "https://upsssc.gov.in/ViewPdf.aspx?NJbKyTiDxAqQnRYKCqojRTHwngIdnR5KGQXPSU/8zc0=",
+   "evidenceReadAt": "2026-10-06T09:33:35+05:30"
+  },
+  {
+   "type": "update",
+   "group": "cite",
+   "exam": "AS_APSC_CCE",
+   "rowId": "cmucpbrxb003x8t7v07bf1wyg",
+   "before": {
+    "label": "Mains exam (Day 1)",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "ai-generated:claude",
+    "notes": "Conducted in Guwahati in two shifts each day; continues till 11 October · no key published for this stage",
+    "confidence": "official",
+    "url": "https://jobassam.in/apsc-cce-exam/",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "CCE (Main) 2025 — Day 1",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "official-research:2026-10-06",
+    "notes": "CCE (Main) 2025 at the Guwahati centre: Paper-1 Essay 9:00–12:00, Paper-2 General Studies-I 13:30–16:30 (APSC notification 8PSC/E-10/2026-2027 of 5 Sep 2026).",
+    "confidence": "official",
+    "url": "https://apsc.nic.in/notif_2026/CCE_Mains_2025_Schedule_01_2026.pdf",
+    "archivedAt": null
+   },
+   "why": "The body's own document states this date (re-read 6 Oct 2026); the row cited an aggregator (tier reported).",
+   "evidenceUrl": "https://apsc.nic.in/notif_2026/CCE_Mains_2025_Schedule_01_2026.pdf",
+   "evidenceReadAt": "2026-10-06T09:32:32+05:30"
+  },
+  {
+   "type": "update",
+   "group": "cite",
+   "exam": "AS_APSC_CCE",
+   "rowId": "cmucpbrxe003z8t7v6k9lu3d8",
+   "before": {
+    "label": "Mains exam (Day 2)",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "ai-generated:claude",
+    "notes": "Day 2 of Mains examination · no key published for this stage",
+    "confidence": "official",
+    "url": "https://www.adda247.com/exams/assam/apsc-cce-mains-exam-date-2026-out-at-apsc.gov.in-check-exam-dates-apply-online/",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "CCE (Main) 2025 — Day 2",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "official-research:2026-10-06",
+    "notes": "CCE (Main) 2025 at the Guwahati centre: Paper-3 General Studies-II 9:00–12:00, Paper-4 General Studies-III 13:30–16:30 (APSC notification 8PSC/E-10/2026-2027 of 5 Sep 2026).",
+    "confidence": "official",
+    "url": "https://apsc.nic.in/notif_2026/CCE_Mains_2025_Schedule_01_2026.pdf",
+    "archivedAt": null
+   },
+   "why": "The body's own document states this date (re-read 6 Oct 2026); the row cited an aggregator (tier reported).",
+   "evidenceUrl": "https://apsc.nic.in/notif_2026/CCE_Mains_2025_Schedule_01_2026.pdf",
+   "evidenceReadAt": "2026-10-06T09:32:32+05:30"
+  },
+  {
+   "type": "update",
+   "group": "cite",
+   "exam": "AS_APSC_CCE",
+   "rowId": "cmucpbrxi00418t7viwckqgpr",
+   "before": {
+    "label": "Mains exam (Day 3)",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "ai-generated:claude",
+    "notes": "Final day of Mains examination · no key published for this stage",
+    "confidence": "official",
+    "url": "https://testbook.com/apsc-cce",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "CCE (Main) 2025 — Day 3",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "official-research:2026-10-06",
+    "notes": "CCE (Main) 2025 at the Guwahati centre: Paper-5 General Studies-IV 9:00–12:00, Paper-6 General Studies-V 13:30–16:30 (APSC notification 8PSC/E-10/2026-2027 of 5 Sep 2026).",
+    "confidence": "official",
+    "url": "https://apsc.nic.in/notif_2026/CCE_Mains_2025_Schedule_01_2026.pdf",
+    "archivedAt": null
+   },
+   "why": "The body's own document states this date (re-read 6 Oct 2026); the row cited an aggregator (tier reported).",
+   "evidenceUrl": "https://apsc.nic.in/notif_2026/CCE_Mains_2025_Schedule_01_2026.pdf",
+   "evidenceReadAt": "2026-10-06T09:32:32+05:30"
+  },
+  {
+   "type": "update",
+   "group": "cite",
+   "exam": "GJ_GPSC_CLASS12",
+   "rowId": "cmt5w2fpa032n13qe8wybulzg",
+   "before": {
+    "label": "Mains Examination",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "ai-generated:claude",
+    "notes": "Mains exam scheduled from 5th to 11th October 2026",
+    "confidence": "official",
+    "url": "https://testbook.com/amp/gpsc-class-1-2",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "Mains Examination",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "official-research:2026-10-06",
+    "notes": "Mains for Advt. 5/2026-27 (Gujarat Administrative Service Class-1, Gujarat Civil Service Class-1 and 2, Municipal Chief Officer Class-2; 213 posts): 5 to 11 Oct 2026 (GPSC exam schedule).",
+    "confidence": "official",
+    "url": "https://gpsc.gujarat.gov.in/Documents/ES-04072026.pdf",
+    "archivedAt": null
+   },
+   "why": "The body's own document states this date (re-read 6 Oct 2026); the row cited an aggregator (tier reported).",
+   "evidenceUrl": "https://gpsc.gujarat.gov.in/Documents/ES-04072026.pdf",
+   "evidenceReadAt": "2026-10-06T09:33:04+05:30"
+  },
+  {
+   "type": "update",
+   "group": "cite",
+   "exam": "JK_JKSSB",
+   "rowId": "cmt5hfjhj005xd24wm6a2refk",
+   "before": {
+    "label": "Accounts Assistant (Finance Dept) – OMR exam",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "ai-generated:claude",
+    "notes": null,
+    "confidence": "official",
+    "url": "https://www.freejobalert.com/articles/jkssb-exam-calendar-2026-3061215",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "Accounts Assistant (Finance Dept) – OMR exam",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "ai-generated:claude",
+    "notes": "JKSSB notice of 31 Jul 2026 (Annexure A, row 15): Accounts Assistant, Finance Department (Notification 10 of 2025, item 271) — OMR-based written exam on Sunday 15 Nov 2026. Admit cards seven days before the exam. JKSSB's notice of 17 Sep 2026 reschedules Health & Medical Education posts only.",
+    "confidence": "official",
+    "url": "https://jkssb.nic.in/Pdf/notice1_31072026.pdf",
+    "archivedAt": null
+   },
+   "why": "The body's own document states this date (re-read 6 Oct 2026); the row cited an aggregator (tier reported).",
+   "evidenceUrl": "https://jkssb.nic.in/Pdf/notice1_31072026.pdf",
+   "evidenceReadAt": "2026-10-06T09:34:15+05:30"
+  },
+  {
+   "type": "update",
+   "group": "cite",
+   "exam": "JK_JKSSB",
+   "rowId": "cmtbjuqj500658gkt7lna0x9j",
+   "before": {
+    "label": "Sub-Inspector & Constable (Home Dept) Exam (expected)",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "ai-generated:claude",
+    "notes": "Exams for various Home Department posts will run from Nov 29 to Dec 30, 2026",
+    "confidence": "official",
+    "url": "https://www.freejobalert.com/articles/jkssb-sub-inspector-and-constable-exam-date-2026-3061206",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "Sub-Inspector (Home Department) — OMR written exam",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "ai-generated:claude",
+    "notes": "JKSSB advance notice of 1 Aug 2026 (Home Department posts, Annexure A): Sub-Inspector (Notification 02 of 2024, item 07) — OMR-based written exam on 29 Nov 2026. Admit cards seven days before the exam.",
+    "confidence": "official",
+    "url": "https://jkssb.nic.in/Pdf/notice_01082026.pdf",
+    "archivedAt": null
+   },
+   "why": "The body's own document states this date (re-read 6 Oct 2026); the row cited an aggregator (tier reported).",
+   "evidenceUrl": "https://jkssb.nic.in/Pdf/notice_01082026.pdf",
+   "evidenceReadAt": "2026-10-06T09:34:31+05:30"
+  },
+  {
+   "type": "update",
+   "group": "cite",
+   "exam": "JK_JKSSB",
+   "rowId": "cmt5hfjk30061d24wopm43vcx",
+   "before": {
+    "label": "Constable (Executive) – OMR written exam",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "ai-generated:claude",
+    "notes": "Under Notification 12 of 2025",
+    "confidence": "official",
+    "url": "https://www.freejobalert.com/articles/jkssb-sub-inspector-and-constable-exam-date-2026-3061206",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "Constable (Executive) – OMR written exam",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "ai-generated:claude",
+    "notes": "JKSSB advance notice of 1 Aug 2026 (Home Department posts, Annexure A): Constable (Executive) (Notification 12 of 2025, items 273-274) — OMR-based written exam on 13 Dec 2026. Admit cards seven days before the exam.",
+    "confidence": "official",
+    "url": "https://jkssb.nic.in/Pdf/notice_01082026.pdf",
+    "archivedAt": null
+   },
+   "why": "The body's own document states this date (re-read 6 Oct 2026); the row cited an aggregator (tier reported).",
+   "evidenceUrl": "https://jkssb.nic.in/Pdf/notice_01082026.pdf",
+   "evidenceReadAt": "2026-10-06T09:34:31+05:30"
+  },
+  {
+   "type": "update",
+   "group": "cite",
+   "exam": "JK_JKSSB",
+   "rowId": "cmt5hfjlc0063d24web5242y6",
+   "before": {
+    "label": "Constable (Armed/IRP/SDRF) – OMR written exam",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "ai-generated:claude",
+    "notes": "Under Notification 14 of 2025",
+    "confidence": "official",
+    "url": "https://www.freejobalert.com/articles/jkssb-sub-inspector-and-constable-exam-date-2026-3061206",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "Constable (Armed/IRP/SDRF) – OMR written exam",
+    "kind": "EXAM",
+    "isExamDay": true,
+    "source": "ai-generated:claude",
+    "notes": "JKSSB advance notice of 1 Aug 2026 (Home Department posts, Annexure A): Constable (Armed/IRP/SDRF) (Notification 14 of 2025, items 323-324) — OMR-based written exam on 20 Dec 2026. Admit cards seven days before the exam.",
+    "confidence": "official",
+    "url": "https://jkssb.nic.in/Pdf/notice_01082026.pdf",
+    "archivedAt": null
+   },
+   "why": "The body's own document states this date (re-read 6 Oct 2026); the row cited an aggregator (tier reported).",
+   "evidenceUrl": "https://jkssb.nic.in/Pdf/notice_01082026.pdf",
+   "evidenceReadAt": "2026-10-06T09:34:31+05:30"
+  },
+  {
+   "type": "update",
+   "group": "cite",
+   "exam": "MP_MPESB",
+   "rowId": "cmuo4rc1w0021itz3tcx0p18p",
+   "before": {
+    "label": "MP Police Constable application period",
+    "kind": "APPLICATION_END",
+    "isExamDay": false,
+    "source": "ai-generated:claude",
+    "notes": "Applications open from September 22 to October 6, 2026 for 7,500 Constable GD posts; correction window until October 11",
+    "confidence": "official",
+    "url": "https://www.careerindia.com/news/mp-police-constable-recruitment-2026-apply-for-7-500-posts-066003.html",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "MP Police Constable application period",
+    "kind": "APPLICATION_END",
+    "isExamDay": false,
+    "source": "ai-generated:claude",
+    "notes": "ESB rulebook, revised page 1 (15 Sep 2026): online applications 22 Sep–6 Oct 2026, corrections until 11 Oct; probable exam date: from 19 Nov 2026, two shifts (10:00–12:00, 15:00–17:00).",
+    "confidence": "official",
+    "url": "https://esb.mp.gov.in/Rulebooks/RB_2026/PCRT_2026_Rulebook_Revised_Page_01_15092026.pdf",
+    "archivedAt": null
+   },
+   "why": "The body's own document states this date (re-read 6 Oct 2026); the row cited an aggregator (tier reported).",
+   "evidenceUrl": "https://esb.mp.gov.in/Rulebooks/RB_2026/PCRT_2026_Rulebook_Revised_Page_01_15092026.pdf",
+   "evidenceReadAt": "2026-10-06T09:35:17+05:30"
+  },
+  {
+   "type": "update",
+   "group": "cite",
+   "exam": "MP_MPESB",
+   "rowId": "cmueuecvj001qbbkgee7zwp1v",
+   "before": {
+    "label": "Police Constable (GD) — Correction window end",
+    "kind": "CORRECTION_WINDOW",
+    "isExamDay": false,
+    "source": "ai-generated:claude",
+    "notes": null,
+    "confidence": "official",
+    "url": "https://www.careerindia.com/news/mp-police-constable-recruitment-2026-apply-for-7-500-posts-066003.html",
+    "archivedAt": null
+   },
+   "after": {
+    "label": "Police Constable (GD) — Correction window end",
+    "kind": "CORRECTION_WINDOW",
+    "isExamDay": false,
+    "source": "ai-generated:claude",
+    "notes": "ESB rulebook, revised page 1 (15 Sep 2026): online applications 22 Sep–6 Oct 2026, corrections until 11 Oct; probable exam date: from 19 Nov 2026, two shifts (10:00–12:00, 15:00–17:00).",
+    "confidence": "official",
+    "url": "https://esb.mp.gov.in/Rulebooks/RB_2026/PCRT_2026_Rulebook_Revised_Page_01_15092026.pdf",
+    "archivedAt": null
+   },
+   "why": "The body's own document states this date (re-read 6 Oct 2026); the row cited an aggregator (tier reported).",
+   "evidenceUrl": "https://esb.mp.gov.in/Rulebooks/RB_2026/PCRT_2026_Rulebook_Revised_Page_01_15092026.pdf",
+   "evidenceReadAt": "2026-10-06T09:35:17+05:30"
+  }
+ ]
+}
