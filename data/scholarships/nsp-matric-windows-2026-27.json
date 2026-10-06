@@ -1,534 +1,745 @@
 {
- "note": "NSP 2026-27 pre-matric and post-matric windows for SC, ST and OBC/EBC/DNT students, one per state/UT scheme, as NSP's 'Schemes On NSP' → 'Centrally Sponsored Schemes' list printed them on 27 Sep 2026 ('Scheme Open from' / 'Student Application Open till'). null = the card showed no date. States not listed run these schemes on their own portals. NSP listed no Ministry of Minority Affairs scheme for 2026-27.",
+ "note": "NSP 2026-27 pre-matric and post-matric windows for SC, ST and OBC/EBC/DNT students, one per state/UT scheme, as NSP's 'Schemes On NSP' → 'Centrally Sponsored Schemes' list printed them on 6 Oct 2026 (fetched from readUrl, the list sourceUrl shows). opensOn = 'Scheme Open from'; closesOn = 'Student Application Open till' or 'Closed on'; printed = the student chip as NSP printed it; nspGroup = NSP's state heading; null = the card showed no date. A row with notListedSince was on an earlier read and is not on NSP's list now (kept, never deleted). States not listed run these schemes on their own portals. This list had no scheme for minority-community students.",
  "sourceUrl": "https://scholarships.gov.in/All-Scholarships",
+ "readUrl": "https://scholarships.gov.in/centralsOrsponsoredOrstate?central_sponsored_state=sponserscheme",
  "view": "Schemes On NSP: Centrally Sponsored Schemes",
  "tier": "official",
- "checkedOn": "2026-09-27",
+ "checkedOn": "2026-10-06",
  "windows": [
   {
    "scheme": "PM YASASVI Post Matric Scholarship Scheme For OBC Students - Andaman And Nicobar",
    "opensOn": "2026-07-03",
-   "closesOn": "2026-10-31"
+   "closesOn": "2026-10-31",
+   "printed": "Student Application Open till : 31-10-2026",
+   "nspGroup": "UT of Andaman and Nicobar Islands"
   },
   {
    "scheme": "Centrally Sponsored Prematric Scholarship Scheme For ST Students(Class Ix,X)-Andaman And Nicobar",
    "opensOn": "2026-08-03",
-   "closesOn": "2026-12-31"
+   "closesOn": "2026-12-31",
+   "printed": "Student Application Open till : 31-12-2026",
+   "nspGroup": "UT of Andaman and Nicobar Islands"
   },
   {
    "scheme": "Centrally Sponsored Post Matric Scholarship Scheme For ST Students-Andaman And Nicobar",
    "opensOn": "2026-08-03",
-   "closesOn": "2026-12-31"
+   "closesOn": "2026-12-31",
+   "printed": "Student Application Open till : 31-12-2026",
+   "nspGroup": "UT of Andaman and Nicobar Islands"
   },
   {
    "scheme": "Dr Ambedkar Post Matric Scholarship For Economically Backward Class Students-Andaman And Nicobar",
    "opensOn": null,
-   "closesOn": null
+   "closesOn": null,
+   "printed": "Student Application : NOT YET OPENED",
+   "nspGroup": "UT of Andaman and Nicobar Islands"
   },
   {
    "scheme": "PM YASASVI Pre Matric Scholarship Scheme For OBC Students (Class Ix And X)-Andaman And Nicobar",
    "opensOn": "2026-07-03",
-   "closesOn": "2026-10-31"
+   "closesOn": "2026-10-31",
+   "printed": "Student Application Open till : 31-10-2026",
+   "nspGroup": "UT of Andaman and Nicobar Islands"
   },
   {
    "scheme": "Umbrella Scheme For Education Of ST Children -Post Matric Scholarship (PMS) For ST Students Arunachal Pradesh",
    "opensOn": "2026-08-07",
-   "closesOn": "2026-10-16"
+   "closesOn": "2026-10-16",
+   "printed": "Student Application Open till : 16-10-2026",
+   "nspGroup": "State of Arunachal Pradesh"
   },
   {
    "scheme": "Umbrella Scheme For Education Of ST Students-Pre Matric Scholarship (Class Ix & X) For ST Students Arunachal Pradesh",
    "opensOn": "2026-08-21",
-   "closesOn": "2026-09-30"
+   "closesOn": "2026-09-30",
+   "printed": "Student Application Closed on : 30-09-2026",
+   "nspGroup": "State of Arunachal Pradesh"
   },
   {
    "scheme": "Pre Matric Scholarship To ST Students (Class Ix And X) - Assam",
    "opensOn": "2026-07-06",
-   "closesOn": "2026-10-06"
+   "closesOn": "2026-10-06",
+   "printed": "Student Application Open till : 06-10-2026",
+   "nspGroup": "State of Assam"
   },
   {
    "scheme": "Pre-Matric Scholarship For SC Students Of Parents Or Guardians Engaged In Unclean Occupation(Class 1-10))-Assam",
    "opensOn": "2026-06-01",
-   "closesOn": "2026-09-30"
+   "closesOn": "2026-10-15",
+   "printed": "Student Application Open till : 15-10-2026",
+   "nspGroup": "State of Assam"
   },
   {
    "scheme": "Post Matric Scholarship To OBC Students - Assam",
    "opensOn": "2026-06-01",
-   "closesOn": "2026-09-30"
+   "closesOn": "2026-09-30",
+   "printed": "Student Application Closed on : 30-09-2026",
+   "nspGroup": "State of Assam"
   },
   {
    "scheme": "Pre-Matric Scholarship For SC Students (Class Ix And X) - Assam",
    "opensOn": "2026-06-01",
-   "closesOn": "2026-09-30"
+   "closesOn": "2026-10-15",
+   "printed": "Student Application Open till : 15-10-2026",
+   "nspGroup": "State of Assam"
   },
   {
    "scheme": "Pre Matric Scholarship To OBC Students (Class 9 And Class 10) -Assam",
    "opensOn": "2026-06-01",
-   "closesOn": "2026-09-30"
+   "closesOn": "2026-09-30",
+   "printed": "Student Application Closed on : 30-09-2026",
+   "nspGroup": "State of Assam"
   },
   {
    "scheme": "Post Matric Scholarship To ST Students - Assam",
    "opensOn": "2026-07-06",
-   "closesOn": "2026-10-06"
+   "closesOn": "2026-10-06",
+   "printed": "Student Application Open till : 06-10-2026",
+   "nspGroup": "State of Assam"
   },
   {
    "scheme": "Post Matric Scholarship For SC Students - Assam",
    "opensOn": "2026-06-01",
-   "closesOn": "2026-09-30"
+   "closesOn": "2026-10-15",
+   "printed": "Student Application Open till : 15-10-2026",
+   "nspGroup": "State of Assam"
   },
   {
    "scheme": "Post Matric Scholarship Scheme For Transgender Students-Chandigarh",
    "opensOn": "2026-06-08",
-   "closesOn": "2026-11-30"
+   "closesOn": "2026-11-30",
+   "printed": "Student Application Open till : 30-11-2026",
+   "nspGroup": "UT of Chandigarh"
   },
   {
    "scheme": "Centrally Sponsored Post Matric Scholarship Scheme For SC - Chandigarh",
    "opensOn": "2026-06-01",
-   "closesOn": "2026-11-30"
+   "closesOn": "2026-11-30",
+   "printed": "Student Application Open till : 30-11-2026",
+   "nspGroup": "UT of Chandigarh"
   },
   {
    "scheme": "PM YASASVI Post Matric Scholarship Scheme For OBC,EBC And DNT Students-Chandigarh",
    "opensOn": "2026-06-01",
-   "closesOn": "2026-11-30"
+   "closesOn": "2026-11-30",
+   "printed": "Student Application Open till : 30-11-2026",
+   "nspGroup": "UT of Chandigarh"
   },
   {
    "scheme": "PM YASASVI Pre Matric Scholarship Scheme For OBC,EBC,DNT Students (Class Ix And X)-Chandigarh",
    "opensOn": "2026-06-01",
-   "closesOn": "2026-11-30"
+   "closesOn": "2026-11-30",
+   "printed": "Student Application Open till : 30-11-2026",
+   "nspGroup": "UT of Chandigarh"
   },
   {
    "scheme": "Pre-Matric Scholarship Scheme For SC Students Of Class Ix And X-Chandigarh",
    "opensOn": "2026-06-01",
-   "closesOn": "2026-11-30"
+   "closesOn": "2026-11-30",
+   "printed": "Student Application Open till : 30-11-2026",
+   "nspGroup": "UT of Chandigarh"
   },
   {
    "scheme": "Pre-Matric Scholarship For SC Students Studying In Classes Ix And X -Delhi",
    "opensOn": "2026-08-21",
-   "closesOn": "2027-02-15"
+   "closesOn": "2027-02-15",
+   "printed": "Student Application Open till : 15-02-2027",
+   "nspGroup": "State of Delhi"
   },
   {
    "scheme": "PM YASASVI Post Matric Scholarship Scheme For OBC EBC And DNT - Delhi",
    "opensOn": "2026-08-21",
-   "closesOn": "2027-02-15"
+   "closesOn": "2027-02-15",
+   "printed": "Student Application Open till : 15-02-2027",
+   "nspGroup": "State of Delhi"
   },
   {
    "scheme": "PM YASASVI Pre Matric Scholarship Scheme For OBC EBC And DNT - Delhi",
    "opensOn": "2026-08-21",
-   "closesOn": "2027-02-15"
+   "closesOn": "2027-02-15",
+   "printed": "Student Application Open till : 15-02-2027",
+   "nspGroup": "State of Delhi"
   },
   {
    "scheme": "Post Matric Scholarship For SC Students - Delhi",
    "opensOn": "2026-08-21",
-   "closesOn": "2027-02-15"
+   "closesOn": "2027-02-15",
+   "printed": "Student Application Open till : 15-02-2027",
+   "nspGroup": "State of Delhi"
   },
   {
    "scheme": "Pre-Matric Scholarship To The Children Of Those Engaged In Occupations Involving Cleaning And Prone To Health Hazards - Goa",
    "opensOn": null,
-   "closesOn": null
+   "closesOn": null,
+   "printed": "Student Application : NOT YET OPENED",
+   "nspGroup": "State of Goa"
   },
   {
    "scheme": "Centrally Sponsored Scheme Of Post Matric Scholarship For ST Students-Goa",
    "opensOn": "2026-07-01",
-   "closesOn": "2026-11-30"
+   "closesOn": "2026-11-30",
+   "printed": "Student Application Open till : 30-11-2026",
+   "nspGroup": "State of Goa"
   },
   {
    "scheme": "Centrally Sponsored Scheme Of Pre Matric Scholarship For Needy ST Students (Class Ix & X) -Goa",
    "opensOn": "2026-07-01",
-   "closesOn": "2026-10-31"
+   "closesOn": "2026-10-31",
+   "printed": "Student Application Open till : 31-10-2026",
+   "nspGroup": "State of Goa"
   },
   {
    "scheme": "Prematric Scholarship For SC Students Studying In Classes Ix And X -Goa",
    "opensOn": "2026-08-03",
-   "closesOn": "2026-11-30"
+   "closesOn": "2026-11-30",
+   "printed": "Student Application Open till : 30-11-2026",
+   "nspGroup": "State of Goa"
   },
   {
    "scheme": "Post Matric Scholarship For SC - Goa",
    "opensOn": "2026-08-03",
-   "closesOn": "2026-11-30"
+   "closesOn": "2026-11-30",
+   "printed": "Student Application Open till : 30-11-2026",
+   "nspGroup": "State of Goa"
   },
   {
    "scheme": "PM YASASVI Post Matric Scholarship Scheme For OBC EBC And DNT - Haryana",
    "opensOn": "2026-09-09",
-   "closesOn": "2027-01-31"
+   "closesOn": "2027-01-31",
+   "printed": "Student Application Open till : 31-01-2027",
+   "nspGroup": "State of Haryana"
   },
   {
    "scheme": "Post Matric Scholarship For SC Students - Haryana",
    "opensOn": "2026-09-09",
-   "closesOn": "2027-01-31"
-  },
-  {
-   "scheme": "PM YASASVI Post Matric Scholarship For OBC,EBC And DNT Students-Himachal Pradesh",
-   "opensOn": "2026-06-04",
-   "closesOn": "2026-10-31"
+   "closesOn": "2027-01-31",
+   "printed": "Student Application Open till : 31-01-2027",
+   "nspGroup": "State of Haryana"
   },
   {
    "scheme": "PM YASASVI Pre Matric Scholarship Scheme For OBC ,EBC And DNT Students (Class Ix And X)-Himachal Pradesh",
    "opensOn": "2026-06-04",
-   "closesOn": "2026-10-31"
+   "closesOn": "2026-10-31",
+   "printed": "Student Application Open till : 31-10-2026",
+   "nspGroup": "State of Himachal Pradesh"
   },
   {
    "scheme": "Centrally Sponsored Post Matric Scholarship Scheme For SC Students-Himachal Pradesh",
    "opensOn": "2026-06-04",
-   "closesOn": "2026-10-31"
+   "closesOn": "2026-10-31",
+   "printed": "Student Application Open till : 31-10-2026",
+   "nspGroup": "State of Himachal Pradesh"
+  },
+  {
+   "scheme": "PM YASASVI Post Matric Scholarship For OBC,EBC And DNT Students-Himachal Pradesh",
+   "opensOn": "2026-06-04",
+   "closesOn": "2026-10-31",
+   "printed": "Student Application Open till : 31-10-2026",
+   "nspGroup": "State of Himachal Pradesh"
   },
   {
    "scheme": "Centrally Sponsored Post Matric Scholarship Scheme For ST Students-Himachal Pradesh",
    "opensOn": "2026-06-04",
-   "closesOn": "2026-10-31"
+   "closesOn": "2026-10-31",
+   "printed": "Student Application Open till : 31-10-2026",
+   "nspGroup": "State of Himachal Pradesh"
   },
   {
    "scheme": "Centrally Sponsored Pre Matric Scholarship Scheme For SC Students-Himachal Pradesh",
    "opensOn": "2026-06-04",
-   "closesOn": "2026-10-31"
+   "closesOn": "2026-10-31",
+   "printed": "Student Application Open till : 31-10-2026",
+   "nspGroup": "State of Himachal Pradesh"
   },
   {
    "scheme": "Centrally Sponsored Pre Matric Scholarship Scheme For ST Students-Himachal Pradesh",
    "opensOn": "2026-06-04",
-   "closesOn": "2026-10-31"
+   "closesOn": "2026-10-31",
+   "printed": "Student Application Open till : 31-10-2026",
+   "nspGroup": "State of Himachal Pradesh"
   },
   {
    "scheme": "Pre-Matric Scholarship For SC Students Of Parents Or Guardians Engaged In Unclean Occupation(Class 1-10)-Himachal Pradesh",
    "opensOn": "2026-06-04",
-   "closesOn": "2026-10-31"
+   "closesOn": "2026-10-31",
+   "printed": "Student Application Open till : 31-10-2026",
+   "nspGroup": "State of Himachal Pradesh"
   },
   {
    "scheme": "Centrally Sponsored Scheme Of Pre Matric Scholarship For SC Students (Class Ix & X) -Jammu And Kashmir",
    "opensOn": "2026-07-10",
-   "closesOn": "2026-12-31"
+   "closesOn": "2026-12-31",
+   "printed": "Student Application Open till : 31-12-2026",
+   "nspGroup": "UT of Jammu and Kashmir"
   },
   {
    "scheme": "Post Matric Scholarship To ST Students -Jammu And Kashmir",
    "opensOn": "2026-07-22",
-   "closesOn": "2026-10-15"
+   "closesOn": "2026-10-15",
+   "printed": "Student Application Open till : 15-10-2026",
+   "nspGroup": "UT of Jammu and Kashmir"
   },
   {
    "scheme": "PM YASASVI Post Matric Scholarship Scheme For OBC EBC And DNT - Jammu And Kashmir",
    "opensOn": "2026-07-22",
-   "closesOn": "2026-10-31"
+   "closesOn": "2026-10-31",
+   "printed": "Student Application Open till : 31-10-2026",
+   "nspGroup": "UT of Jammu and Kashmir"
   },
   {
    "scheme": "PM YASASVI Pre Matric Scholarship Scheme For OBC EBC And DNT - Jammu And Kashmir",
    "opensOn": "2026-07-22",
-   "closesOn": "2026-10-31"
+   "closesOn": "2026-10-31",
+   "printed": "Student Application Open till : 31-10-2026",
+   "nspGroup": "UT of Jammu and Kashmir"
   },
   {
    "scheme": "Centrally Sponsored Scheme Of Post Matric Scholarship For SC Students-Jammu And Kashmir",
    "opensOn": "2026-07-10",
-   "closesOn": "2026-12-31"
+   "closesOn": "2026-12-31",
+   "printed": "Student Application Open till : 31-12-2026",
+   "nspGroup": "UT of Jammu and Kashmir"
   },
   {
    "scheme": "Umbrella Scheme For Education Of ST Students - Pre Matric Scholarship (Class Ix & X) For ST Students-Jammu And Kashmir",
    "opensOn": "2026-07-22",
-   "closesOn": "2026-10-15"
+   "closesOn": "2026-10-15",
+   "printed": "Student Application Open till : 15-10-2026",
+   "nspGroup": "UT of Jammu and Kashmir"
   },
   {
    "scheme": "Centrally Sponsored Scheme Of Post Matric Scholarship For ST Students-Ladakh",
    "opensOn": "2026-09-03",
-   "closesOn": "2026-10-10"
+   "closesOn": "2026-10-10",
+   "printed": "Student Application Open till : 10-10-2026",
+   "nspGroup": "UT of Ladakh"
   },
   {
    "scheme": "Centrally Sponsored Scheme Of Pre-Matric Scholarship For ST Students(Classes Ix And X)-Ladakh",
    "opensOn": "2026-09-03",
-   "closesOn": "2026-10-10"
+   "closesOn": "2026-10-10",
+   "printed": "Student Application Open till : 10-10-2026",
+   "nspGroup": "UT of Ladakh"
   },
   {
    "scheme": "PM YASASVI Post Matric Scholarship Scheme For OBC EBC And DNT - Maharashtra",
    "opensOn": "2026-07-17",
-   "closesOn": "2026-11-30"
+   "closesOn": "2026-11-30",
+   "printed": "Student Application Open till : 30-11-2026",
+   "nspGroup": "State of Maharashtra"
   },
   {
    "scheme": "PM YASASVI Pre Matric Scholarship Scheme For OBC EBC And DNT - Maharashtra",
    "opensOn": "2026-07-17",
-   "closesOn": "2026-11-30"
+   "closesOn": "2026-11-30",
+   "printed": "Student Application Open till : 30-11-2026",
+   "nspGroup": "State of Maharashtra"
   },
   {
    "scheme": "PM YASASVI Pre Matric Scholarship Scheme For OBC Students (Class Ix And X) Manipur",
    "opensOn": "2026-06-02",
-   "closesOn": "2026-09-30"
+   "closesOn": "2026-10-31",
+   "printed": "Student Application Open till : 31-10-2026",
+   "nspGroup": "State of Manipur"
   },
   {
    "scheme": "PM YASASVI Post Matric Scholarship For OBC Students Manipur",
    "opensOn": "2026-06-02",
-   "closesOn": "2026-09-30"
+   "closesOn": "2026-10-31",
+   "printed": "Student Application Open till : 31-10-2026",
+   "nspGroup": "State of Manipur"
   },
   {
    "scheme": "Centrally Sponsored Pre Matric Scholarship For SC Students Studying In Class Ix And X -Manipur",
    "opensOn": "2026-06-02",
-   "closesOn": "2026-09-30"
+   "closesOn": "2026-10-31",
+   "printed": "Student Application Open till : 31-10-2026",
+   "nspGroup": "State of Manipur"
   },
   {
    "scheme": "Pre-Matric Scholarship For ST Students (For Class Ix And X)-Manipur",
    "opensOn": "2026-08-01",
-   "closesOn": "2026-10-30"
+   "closesOn": "2026-10-30",
+   "printed": "Student Application Open till : 30-10-2026",
+   "nspGroup": "State of Manipur"
   },
   {
    "scheme": "Post Matric Scholarship For ST Students-Manipur",
    "opensOn": "2026-08-01",
-   "closesOn": "2026-10-30"
+   "closesOn": "2026-10-30",
+   "printed": "Student Application Open till : 30-10-2026",
+   "nspGroup": "State of Manipur"
   },
   {
    "scheme": "Centrally Sponsored Post Matric Scholarship For SC Students- Manipur",
    "opensOn": "2026-06-02",
-   "closesOn": "2026-09-30"
+   "closesOn": "2026-10-31",
+   "printed": "Student Application Open till : 31-10-2026",
+   "nspGroup": "State of Manipur"
   },
   {
    "scheme": "Umbrella Scheme For Education Of ST Studets - Pre Matric Scholarship (Class Ix & X) For ST Students-Meghalaya",
    "opensOn": "2026-07-03",
-   "closesOn": "2026-11-30"
+   "closesOn": "2026-11-30",
+   "printed": "Student Application Open till : 30-11-2026",
+   "nspGroup": "State of Meghalaya"
   },
   {
    "scheme": "Centrally Sponsored Scheme Of Post Matric Scholarship For SC Students-Meghalaya",
    "opensOn": "2026-06-15",
-   "closesOn": "2026-10-30"
+   "closesOn": "2026-10-30",
+   "printed": "Student Application Open till : 30-10-2026",
+   "nspGroup": "State of Meghalaya"
   },
   {
    "scheme": "Centrally Sponsored Scheme Of Pre Matric Scholarship For SC Students (Class Ix & X) -Meghalaya",
    "opensOn": "2026-06-15",
-   "closesOn": "2026-10-30"
+   "closesOn": "2026-10-30",
+   "printed": "Student Application Open till : 30-10-2026",
+   "nspGroup": "State of Meghalaya"
   },
   {
    "scheme": "Umbrella Scheme For Education Of ST Childern - Post Matric Scholarship (PMS) For ST Students-Meghalaya",
    "opensOn": "2026-07-03",
-   "closesOn": "2026-11-30"
+   "closesOn": "2026-11-30",
+   "printed": "Student Application Open till : 30-11-2026",
+   "nspGroup": "State of Meghalaya"
   },
   {
    "scheme": "Pre Matric Scholarship To ST Students (Class Ix And X) - Mizoram",
    "opensOn": "2026-07-01",
-   "closesOn": "2026-09-30"
+   "closesOn": "2026-10-17",
+   "printed": "Student Application Open till : 17-10-2026",
+   "nspGroup": "State of Mizoram"
   },
   {
    "scheme": "Post Matric Scholarship To ST Students - Mizoram",
    "opensOn": "2026-07-01",
-   "closesOn": "2026-09-30"
+   "closesOn": "2026-10-17",
+   "printed": "Student Application Open till : 17-10-2026",
+   "nspGroup": "State of Mizoram"
   },
   {
    "scheme": "Pre Matric Scholarship Scheme For ST Students-Nagaland",
    "opensOn": null,
-   "closesOn": null
+   "closesOn": null,
+   "printed": "Student Application : NOT YET OPENED",
+   "nspGroup": "State of Nagaland"
   },
   {
    "scheme": "Post Matric Scholarship Scheme For ST Students - Nagaland",
    "opensOn": "2026-07-01",
-   "closesOn": "2026-09-30"
+   "closesOn": "2026-09-30",
+   "printed": "Student Application Closed on : 30-09-2026",
+   "nspGroup": "State of Nagaland"
   },
   {
    "scheme": "Centrally Sponsored Scheme Of Pre Matric Scholarship For SC Students (Class Ix & X) -Puducherry",
    "opensOn": "2026-06-23",
-   "closesOn": "2026-09-30"
+   "closesOn": "2026-10-31",
+   "printed": "Student Application Open till : 31-10-2026",
+   "nspGroup": "UT of Puducherry"
   },
   {
    "scheme": "Centrally Sponsored Scheme Of Post Matric Scholarship To OBC Studetnts -Puducherry",
    "opensOn": "2026-07-15",
-   "closesOn": "2026-09-30"
+   "closesOn": "2026-10-30",
+   "printed": "Student Application Open till : 30-10-2026",
+   "nspGroup": "UT of Puducherry"
   },
   {
    "scheme": "Centrally Sponsored Scheme Of Post Matric Scholarship For SC Students-Puducherry",
    "opensOn": "2026-06-23",
-   "closesOn": "2026-09-30"
+   "closesOn": "2026-10-31",
+   "printed": "Student Application Open till : 31-10-2026",
+   "nspGroup": "UT of Puducherry"
   },
   {
    "scheme": "Centrally Sponsored Scheme Of Post Matric Scholarship For ST Students-Puducherry",
    "opensOn": "2026-06-23",
-   "closesOn": "2026-09-30"
+   "closesOn": "2026-10-31",
+   "printed": "Student Application Open till : 31-10-2026",
+   "nspGroup": "UT of Puducherry"
   },
   {
    "scheme": "Centrally Sponsored Scheme Of Pre Matric Scholarship To OBC Studetnts(Class I To Class V) - Puducherry",
    "opensOn": "2026-07-15",
-   "closesOn": "2026-09-30"
+   "closesOn": "2026-10-30",
+   "printed": "Student Application Open till : 30-10-2026",
+   "nspGroup": "UT of Puducherry"
   },
   {
    "scheme": "Centrally Sponsored Scheme Of Pre Matric Scholarship For Needy ST Students (Class Ix & X) -Puducherry",
    "opensOn": "2026-06-23",
-   "closesOn": "2026-09-30"
+   "closesOn": "2026-09-30",
+   "printed": "Student Application Closed on : 30-09-2026",
+   "nspGroup": "UT of Puducherry"
   },
   {
    "scheme": "PM YASASVI Post Matric Scholarship Scheme For OBC EBC And DNT - Punjab",
    "opensOn": "2026-07-15",
-   "closesOn": "2026-11-20"
+   "closesOn": "2026-11-20",
+   "printed": "Student Application Open till : 20-11-2026",
+   "nspGroup": "State of Punjab"
   },
   {
    "scheme": "Centrally Sponsored Post Matric Scheme For SC Students-Punjab",
    "opensOn": "2026-07-01",
-   "closesOn": "2026-11-15"
+   "closesOn": "2026-11-15",
+   "printed": "Student Application Open till : 15-11-2026",
+   "nspGroup": "State of Punjab"
   },
   {
    "scheme": "Pre-Matric Scholarship To The Children Of Those Engaged In Occupations Involving Cleaning And Prone To Health Hazards - Punjab",
    "opensOn": "2026-06-01",
-   "closesOn": null
+   "closesOn": "2026-10-27",
+   "printed": "Student Application Open till : 27-10-2026",
+   "nspGroup": "State of Punjab"
   },
   {
    "scheme": "Centrally Sponsored Scheme Of Pre Matric Scholarship For SC Students (Class Ix & X)-Punjab",
    "opensOn": "2026-06-01",
-   "closesOn": null
+   "closesOn": "2026-10-27",
+   "printed": "Student Application Open till : 27-10-2026",
+   "nspGroup": "State of Punjab"
   },
   {
    "scheme": "PM YASASVI Pre Matric Scholarship Scheme For OBC EBC DNT-Punjab",
    "opensOn": "2026-06-01",
-   "closesOn": null
+   "closesOn": "2026-10-27",
+   "printed": "Student Application Open till : 27-10-2026",
+   "nspGroup": "State of Punjab"
   },
   {
    "scheme": "Post Matric Scholarship Scheme For ST Students-Sikkim",
    "opensOn": "2026-06-01",
-   "closesOn": "2026-09-30"
+   "closesOn": "2026-10-31",
+   "printed": "Student Application Open till : 31-10-2026",
+   "nspGroup": "State of Sikkim"
   },
   {
    "scheme": "Pre Matric Scholarship For SC Students Studying In Class Ix And X-Sikkim",
    "opensOn": "2026-06-01",
-   "closesOn": "2026-09-30"
+   "closesOn": "2026-10-31",
+   "printed": "Student Application Open till : 31-10-2026",
+   "nspGroup": "State of Sikkim"
   },
   {
    "scheme": "PM YASASVI Post Matric Scholarship For OBC,EBC And DNT Students-Sikkim",
    "opensOn": "2026-06-01",
-   "closesOn": "2026-09-30"
+   "closesOn": "2026-10-31",
+   "printed": "Student Application Open till : 31-10-2026",
+   "nspGroup": "State of Sikkim"
   },
   {
    "scheme": "Pre-Matric Scholarships For Children Of Parents Or Guardians Engaged In Unclean Occupation(Class 1-10)-Sikkim",
    "opensOn": "2026-06-01",
-   "closesOn": "2026-09-30"
+   "closesOn": "2026-10-31",
+   "printed": "Student Application Open till : 31-10-2026",
+   "nspGroup": "State of Sikkim"
   },
   {
    "scheme": "Pre-Matric Scholarships For ST Students Class Ix And Class X-Sikkim",
    "opensOn": "2026-06-01",
-   "closesOn": "2026-09-30"
+   "closesOn": "2026-10-31",
+   "printed": "Student Application Open till : 31-10-2026",
+   "nspGroup": "State of Sikkim"
   },
   {
    "scheme": "Centrally Sponsored Post Matric Scholarship For SC Students - Sikkim",
    "opensOn": "2026-06-01",
-   "closesOn": "2026-09-30"
+   "closesOn": "2026-10-31",
+   "printed": "Student Application Open till : 31-10-2026",
+   "nspGroup": "State of Sikkim"
   },
   {
    "scheme": "PM YASASVI Pre-Matric Scholarships For OBC,EBC,DNT Students-Sikkim",
    "opensOn": "2026-06-01",
-   "closesOn": "2026-09-30"
+   "closesOn": "2026-10-31",
+   "printed": "Student Application Open till : 31-10-2026",
+   "nspGroup": "State of Sikkim"
   },
   {
    "scheme": "Pre Matric Scholarship To SC Students-Dnhdd",
    "opensOn": "2026-07-29",
-   "closesOn": "2026-10-31"
+   "closesOn": "2026-10-31",
+   "printed": "Student Application Open till : 31-10-2026",
+   "nspGroup": "UT of The Dadra Nagar Haveli and Daman and Diu"
   },
   {
    "scheme": "PM YASASVI Pre Matric Scholarship Scheme For OBC Students (Class Ix And X)-Dnhdd",
    "opensOn": "2026-07-29",
-   "closesOn": "2026-10-31"
+   "closesOn": "2026-10-31",
+   "printed": "Student Application Open till : 31-10-2026",
+   "nspGroup": "UT of The Dadra Nagar Haveli and Daman and Diu"
   },
   {
    "scheme": "Pre Matric Scholarship To ST Students-Dnhdd",
    "opensOn": "2026-07-29",
-   "closesOn": "2026-10-31"
+   "closesOn": "2026-10-31",
+   "printed": "Student Application Open till : 31-10-2026",
+   "nspGroup": "UT of The Dadra Nagar Haveli and Daman and Diu"
   },
   {
    "scheme": "PM YASASVI Pre Matric Scholarship Scheme For EBC Students (Class Ix And X)-Dnhdd",
    "opensOn": "2026-07-29",
-   "closesOn": "2026-10-31"
+   "closesOn": "2026-10-31",
+   "printed": "Student Application Open till : 31-10-2026",
+   "nspGroup": "UT of The Dadra Nagar Haveli and Daman and Diu"
   },
   {
    "scheme": "Post Matric Scholarship To SC Students -Dnhdd",
    "opensOn": "2026-07-29",
-   "closesOn": "2026-10-31"
+   "closesOn": "2026-10-31",
+   "printed": "Student Application Open till : 31-10-2026",
+   "nspGroup": "UT of The Dadra Nagar Haveli and Daman and Diu"
   },
   {
    "scheme": "Post Matric Scholarship To ST Students-Dnhdd",
    "opensOn": "2026-07-29",
-   "closesOn": "2026-10-31"
+   "closesOn": "2026-10-31",
+   "printed": "Student Application Open till : 31-10-2026",
+   "nspGroup": "UT of The Dadra Nagar Haveli and Daman and Diu"
   },
   {
    "scheme": "PM YASASVI Post Matric Scholarship Scheme For OBC Students-Dnhdd",
    "opensOn": "2026-07-29",
-   "closesOn": "2026-10-31"
+   "closesOn": "2026-10-31",
+   "printed": "Student Application Open till : 31-10-2026",
+   "nspGroup": "UT of The Dadra Nagar Haveli and Daman and Diu"
   },
   {
    "scheme": "PM YASASVI Post Matric Scholarship Scheme For EBC Students -Dnhdd",
    "opensOn": "2026-07-29",
-   "closesOn": "2026-10-31"
+   "closesOn": "2026-10-31",
+   "printed": "Student Application Open till : 31-10-2026",
+   "nspGroup": "UT of The Dadra Nagar Haveli and Daman and Diu"
   },
   {
    "scheme": "Dr.Ambedkar Post Matric Scholarship For Economically Backward Classes (EBC) -Tripura",
    "opensOn": null,
-   "closesOn": null
+   "closesOn": null,
+   "printed": "Student Application : NOT YET OPENED",
+   "nspGroup": "State of Tripura"
   },
   {
    "scheme": "Umbrella Scheme For Education Of ST Students - Pre Matric Scholarship (Class Ix & X) For ST Students-Tripura",
    "opensOn": "2026-06-01",
-   "closesOn": null
+   "closesOn": "2026-09-15",
+   "printed": "Student Application Closed on : 15-09-2026",
+   "nspGroup": "State of Tripura"
   },
   {
    "scheme": "Pre Matric SC (Class Ix And X)-Tripura",
    "opensOn": "2026-06-02",
-   "closesOn": "2027-01-10"
+   "closesOn": "2027-01-10",
+   "printed": "Student Application Open till : 10-01-2027",
+   "nspGroup": "State of Tripura"
   },
   {
    "scheme": "Pre Matric SC Cleaning And Health Hazard -Tripura",
    "opensOn": "2026-06-02",
-   "closesOn": "2027-01-10"
+   "closesOn": "2027-01-10",
+   "printed": "Student Application Open till : 10-01-2027",
+   "nspGroup": "State of Tripura"
   },
   {
    "scheme": "Centrally Sponsored Scheme Of Pre Matric Scholarship For OBC Students - Tripura",
    "opensOn": "2026-06-08",
-   "closesOn": "2026-09-30"
+   "closesOn": "2026-12-31",
+   "printed": "Student Application Open till : 31-12-2026",
+   "nspGroup": "State of Tripura"
   },
   {
    "scheme": "Umbrella Scheme For Education Of ST Childern - Post Matric Scholarship (PMS) For ST Students-Tripura",
    "opensOn": "2026-08-15",
-   "closesOn": "2026-10-31"
+   "closesOn": "2026-10-31",
+   "printed": "Student Application Open till : 31-10-2026",
+   "nspGroup": "State of Tripura"
   },
   {
    "scheme": "Postmatric Scholarship For OBC Students - Tripura",
    "opensOn": "2026-06-09",
-   "closesOn": "2026-09-30"
+   "closesOn": "2026-12-31",
+   "printed": "Student Application Open till : 31-12-2026",
+   "nspGroup": "State of Tripura"
   },
   {
    "scheme": "Post Matric Scholarship For SC Students Tripura",
    "opensOn": "2026-06-02",
-   "closesOn": "2027-01-10"
+   "closesOn": "2027-01-10",
+   "printed": "Student Application Open till : 10-01-2027",
+   "nspGroup": "State of Tripura"
   },
   {
    "scheme": "Post-Matric Scholarship For SC Students-Uttarakhand",
    "opensOn": "2026-06-02",
-   "closesOn": "2026-09-30"
+   "closesOn": "2026-11-30",
+   "printed": "Student Application Open till : 30-11-2026",
+   "nspGroup": "State of Uttarakhand"
   },
   {
    "scheme": "Post-Matric Scholarship For ST Students-Uttarakhand",
    "opensOn": "2026-06-02",
-   "closesOn": "2026-09-30"
+   "closesOn": "2026-11-30",
+   "printed": "Student Application Open till : 30-11-2026",
+   "nspGroup": "State of Uttarakhand"
   },
   {
    "scheme": "Pre-Matric Scholarship For SC Students (Center Sector)-Uttarakhand",
    "opensOn": "2026-06-02",
-   "closesOn": "2026-09-30"
+   "closesOn": "2026-11-30",
+   "printed": "Student Application Open till : 30-11-2026",
+   "nspGroup": "State of Uttarakhand"
   },
   {
    "scheme": "Pre-Matric Scholarship For ST Students (Center Sector)-Uttarakhand",
    "opensOn": "2026-06-02",
-   "closesOn": "2026-09-30"
+   "closesOn": "2026-11-30",
+   "printed": "Student Application Open till : 30-11-2026",
+   "nspGroup": "State of Uttarakhand"
   },
   {
    "scheme": "Post-Matric Scholarship For OBC Students-Uttarakhand",
    "opensOn": "2026-06-02",
-   "closesOn": "2026-09-30"
+   "closesOn": "2026-11-30",
+   "printed": "Student Application Open till : 30-11-2026",
+   "nspGroup": "State of Uttarakhand"
   },
   {
    "scheme": "Post Matric Scholarship For EBC Students-Uttarakhand",
    "opensOn": "2026-06-02",
-   "closesOn": "2026-09-30"
+   "closesOn": "2026-11-30",
+   "printed": "Student Application Open till : 30-11-2026",
+   "nspGroup": "State of Uttarakhand"
   },
   {
    "scheme": "PM YASASVI Pre Matric Scholarship Scheme For OBC EBC And DNT -Uttarakhand",
    "opensOn": "2026-06-02",
-   "closesOn": "2026-09-30"
+   "closesOn": "2026-11-30",
+   "printed": "Student Application Open till : 30-11-2026",
+   "nspGroup": "State of Uttarakhand"
   },
   {
    "scheme": "Centrally Sponsored Pre Matric Scholarship Scheme For SC (Class 9 & 10)- West Bengal",
    "opensOn": null,
-   "closesOn": null
+   "closesOn": null,
+   "printed": "Student Application : NOT YET OPENED",
+   "nspGroup": "State of West Bengal"
   },
   {
    "scheme": "Centrally Sponsored Pre Matric Scholarship Scheme To The Children Of Those Engaged In Occupations Involving Cleaning And Health Hazard-West Bengal",
    "opensOn": null,
-   "closesOn": null
+   "closesOn": null,
+   "printed": "Student Application : NOT YET OPENED",
+   "nspGroup": "State of West Bengal"
   },
   {
    "scheme": "Centrally Sponsored Post Matric Scholarsip Scheme For SC -West Bengal",
    "opensOn": null,
-   "closesOn": null
+   "closesOn": null,
+   "printed": "Student Application : NOT YET OPENED",
+   "nspGroup": "State of West Bengal"
   }
  ]
 }
