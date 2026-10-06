@@ -4,7 +4,7 @@
 // CurrentAffair rows for that IST date (raw SQL — no client typegen dep).
 
 import Link from "next/link";
-import { Fragment } from "react";
+import { Fragment, cache } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
@@ -16,6 +16,7 @@ import { currentAffairsActions } from "@/lib/landing-actions";
 import { SoftWall } from "@/components/SoftWall";
 import { SignupInline } from "@/components/SignupInline";
 import { dateSpan } from "@/lib/current-affairs-dates";
+import { PIB_ALL_RELEASES_URL, isPibBackfillDay } from "@/lib/current-affairs-pib";
 
 export const revalidate = 3600;
 
@@ -38,7 +39,8 @@ function prettyDate(d: string): string {
   return dt.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
 }
 
-async function load(date: string): Promise<Row[]> {
+// cache(): the metadata and the page read the day's rows once per request.
+const load = cache(async (date: string): Promise<Row[]> => {
   return prisma
     .$queryRawUnsafe<Row[]>(
       `SELECT id, title, summary, category, "examTags", "whyItMatters", source, "generatedAt"
@@ -46,7 +48,7 @@ async function load(date: string): Promise<Row[]> {
       date,
     )
     .catch(() => [] as Row[]);
-}
+});
 
 export async function generateMetadata({
   params,
@@ -56,8 +58,17 @@ export async function generateMetadata({
   const { date } = await params;
   if (!DATE_RE.test(date)) return { title: "Current affairs — Shishya" };
   const pretty = prettyDate(date);
-  const title = `Current Affairs ${pretty} — Daily GK for UPSC, SSC, Banking, Railways | Shishya`;
-  const description = `Today's current affairs (${pretty}) for Indian government exams: national, international, economy, science, schemes & appointments — free, exam-ready summaries.`;
+  // 6 Oct 2026 (B2): a day filled later from PIB's own list of that day's
+  // releases (scripts/backfill-current-affairs-pib.ts) holds PIB's headlines
+  // and links, not Shishya's summaries: its title and description say so.
+  const rows = await load(date);
+  const pib = isPibBackfillDay(rows);
+  const title = pib
+    ? `Current Affairs ${pretty}: PIB Press Release Headlines | Shishya`
+    : `Current Affairs ${pretty} — Daily GK for UPSC, SSC, Banking, Railways | Shishya`;
+  const description = pib
+    ? `Headlines of ${rows.length} press releases PIB posted on ${pretty} (its Delhi list of the day), as PIB gives them, each linked to the official release. Shishya has not summarised them.`
+    : `Today's current affairs (${pretty}) for Indian government exams: national, international, economy, science, schemes & appointments — free, exam-ready summaries.`;
   const url = `https://shishya.in/current-affairs/${date}`;
   return {
     title,
@@ -95,10 +106,14 @@ export default async function CurrentAffairsDatePage({ params }: { params: Promi
   // 14:00 IST) while every day was written about 06:31 IST. No time read → both
   // fields are left out, never a typed time.
   const written = dateSpan(rows.map((r) => r.generatedAt));
+  const pib = isPibBackfillDay(rows);
   const articleLd = {
     "@context": "https://schema.org",
     "@type": "Article",
-    headline: `Current Affairs ${pretty} — daily GK digest for Indian government exams`,
+    headline: pib
+      ? `Current Affairs ${pretty}: headlines of press releases PIB posted that day`
+      : `Current Affairs ${pretty} — daily GK digest for Indian government exams`,
+    ...(pib ? { isBasedOn: PIB_ALL_RELEASES_URL } : {}),
     ...(written
       ? { datePublished: written.earliest.toISOString(), dateModified: written.latest.toISOString() }
       : {}),
@@ -132,10 +147,19 @@ export default async function CurrentAffairsDatePage({ params }: { params: Promi
         <h1 className="mt-1 text-2xl font-bold text-ink-900 sm:text-3xl">
           Current affairs — {pretty}
         </h1>
-        <p className="mt-2 max-w-3xl text-sm text-ink-700">
-          The day&apos;s most exam-relevant current affairs for UPSC, SSC, banking, railways and
-          state exams — free, factual, revision-ready. {rows.length} updates.
-        </p>
+        {pib ? (
+          <p className="mt-2 max-w-3xl text-sm text-ink-700">
+            Shishya&apos;s daily digest stored nothing for this day. This page lists the headlines of{" "}
+            {rows.length} press releases the Press Information Bureau (PIB) posted on{" "}
+            {pretty}, as PIB gives them, each linked to the release. Shishya has not summarised
+            them.
+          </p>
+        ) : (
+          <p className="mt-2 max-w-3xl text-sm text-ink-700">
+            The day&apos;s most exam-relevant current affairs for UPSC, SSC, banking, railways and
+            state exams — free, factual, revision-ready. {rows.length} updates.
+          </p>
+        )}
         {/* 27 Sep 2026: next steps + the free sign-up offer right under the answer (src/lib/landing-actions.ts — landing pages without them lost 71-93% of search visitors after one page). 30 Sep 2026 (sign-up build 3): links only now — the sign-up line is the SignupInline after the first category below (src/lib/content-signup.ts). */}
         <LandingActions actions={currentAffairsActions(pretty, "en")} locale="en" surface="ca-daily" />
         {/* 27 Sep 2026: sign-up wall EXPERIMENT (src/lib/soft-wall.ts) — half of signed-out visitors see a few lines, the rest blurred behind a free sign-in card; crawlers always get this full HTML. */}

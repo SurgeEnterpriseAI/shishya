@@ -16,6 +16,7 @@ import { LandingActions } from "@/components/LandingActions";
 import { currentAffairsActions } from "@/lib/landing-actions";
 import { SoftWall } from "@/components/SoftWall";
 import { SignupInline } from "@/components/SignupInline";
+import { PIB_CATEGORY } from "@/lib/current-affairs-pib";
 
 export const revalidate = 3600;
 
@@ -61,7 +62,7 @@ export default async function CapsulePage({
   const from = new Date(Date.UTC(y, m - 1, 1));
   const to = new Date(Date.UTC(m === 12 ? y + 1 : y, m === 12 ? 0 : m, 1));
 
-  const items = await prisma.$queryRaw<
+  const rows = await prisma.$queryRaw<
     { date: Date; title: string; summary: string; category: string; whyItMatters: string | null }[]
   >`
     SELECT date, title, summary, category, "whyItMatters"
@@ -69,7 +70,16 @@ export default async function CapsulePage({
     WHERE date >= ${from} AND date < ${to}
     ORDER BY date ASC, category ASC`;
 
-  if (items.length === 0) notFound();
+  if (rows.length === 0) notFound();
+
+  // 6 Oct 2026 (B2): a day filled later from PIB's own list of that day's
+  // releases (scripts/backfill-current-affairs-pib.ts, category "PIB
+  // releases") holds every PIB headline of the day, not exam-relevant
+  // summaries: it is linked below, not counted or printed in the capsule. The
+  // line names no number of empty days: a day with no row at all is neither
+  // a PIB day nor a digest day (4 and 6 Sep 2026 had none on 6 Oct).
+  const items = rows.filter((it) => it.category !== PIB_CATEGORY);
+  const pibDays = [...new Set(rows.filter((it) => it.category === PIB_CATEGORY).map((it) => it.date.toISOString().slice(0, 10)))];
 
   const byDate = new Map<string, typeof items>();
   for (const it of items) {
@@ -95,8 +105,15 @@ export default async function CapsulePage({
               Current Affairs — {label}
             </h1>
             <p className="mt-1 text-sm text-ink-600 print:text-ink-800">
-              {items.length} exam-relevant items · UPSC, SSC, banking, railways &amp; state exams
-              · free from shishya.in
+              {items.length > 0 ? (
+                <>
+                  {items.length} exam-relevant items · UPSC, SSC, banking, railways &amp; state exams
+                  · free from shishya.in
+                </>
+              ) : (
+                // Every row of the month is a PIB backfill row: no count of "exam-relevant items".
+                <>No day of Shishya&apos;s daily digest this month · free from shishya.in</>
+              )}
             </p>
           </div>
           <CapsuleActions month={month} label={label} />
@@ -142,6 +159,23 @@ export default async function CapsulePage({
           {di === 0 && <SignupInline surface="ca-capsule" revealOffscreen />}
           </Fragment>
         ))}
+
+        {pibDays.length > 0 && (
+          <p className="mt-8 text-sm text-ink-700">
+            On these days of {label}, Shishya&apos;s daily digest stored nothing. Each of these pages
+            lists the headlines of press releases the Press Information Bureau (PIB) posted that
+            day, linked to the releases, not summarised:{" "}
+            {pibDays.map((d, i) => (
+              <Fragment key={d}>
+                {i > 0 && ", "}
+                <Link href={`/current-affairs/${d}`} className="font-medium text-saffron-700 hover:underline">
+                  {new Date(d + "T00:00:00Z").toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "UTC" })}
+                </Link>
+              </Fragment>
+            ))}
+            .
+          </p>
+        )}
 
         {/* 26 Sep 2026: the site's one-line description (src/lib/site-description.ts
             SITE_CLAUSE) — it said "end-to-end free government exam preparation

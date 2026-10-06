@@ -140,8 +140,9 @@ describe(".github/workflows/refresh-portal.yml: a manual button, not a second sc
 });
 
 // 3 Oct 2026 (fix C15): IndexNow runs daily, and current affairs gets two
-// more same-day chances (the route itself skips a day already written or
-// already paid for — tests/unit/current-affairs-catch-up.test.ts).
+// more same-day chances (since 6 Oct the route skips a day already written
+// and makes at most one paid call per slot, under a per-date lock —
+// tests/unit/current-affairs-catch-up.test.ts).
 describe("vercel.json: IndexNow daily, current affairs three times a day", () => {
   it("the IndexNow news scope runs every day at 02:00 UTC, so its window is 30 hours", () => {
     expect(schedulesOf("/api/cron/indexnow")).toEqual(["0 2 * * *"]);
