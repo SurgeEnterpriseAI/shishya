@@ -210,9 +210,14 @@ describe("this year's date — official only when read on the portal", () => {
     const csss = SCHOLARSHIPS.find((s) => s.id === "csss")!;
     const line = cycleLeadLine(csss, TODAY);
     // 27 Sep 2026 review: the NSP card was re-read (same dates), so the check day moved.
-    expect(line).toContain("applications close 30 Sep 2026 (official — scholarships.gov.in, checked 27 Sep 2026)");
+    // 3 Oct 2026 (non-exam-value step 2): re-read again — NSP's home page says
+    // CSSS renewals are open to 31-10-2026, the scheme card "Closed on
+    // 30-09-2026". The last date is the home page's (a renewal student loses
+    // nothing by trying; "closed" on an open portal costs the renewal), and
+    // the card's date stays in the note.
+    expect(line).toContain("applications close 31 Oct 2026 (official — scholarships.gov.in, checked 3 Oct 2026)");
     expect(line).toContain("Renewal applications only");
-    expect(line).toContain("31 Oct 2026");
+    expect(line).toContain("Student Application Closed on: 30-09-2026");
   });
 
   it("27 Sep 2026 (fixer): list cells and list FAQs carry the window's note; a level-scoped list dates from that level's own window", () => {
@@ -249,14 +254,21 @@ describe("this year's date — official only when read on the portal", () => {
     expect(a).toContain(": renew — 5 Oct 2026 (official, scholarships.gov.in). renew: Renewal applications only; fresh not open.");
   });
 
-  it("every cycle in the catalogue was read on an official host, is 2026-27, and is internally consistent", () => {
+  it("every cycle in the catalogue was read on the awarding body's own host, is 2026-27, and is internally consistent", () => {
     const dated = SCHOLARSHIPS.filter((s) => s.cycle);
     expect(dated.length).toBeGreaterThan(0);
     for (const s of dated) {
       const c = s.cycle!;
       expect(c.year, s.id).toBe("2026-27");
       expect(c.tier, s.id).toBe("official");
-      expect(new URL(c.sourceUrl).hostname, s.id).toMatch(/(\.gov\.in|\.nic\.in)$/);
+      // 3 Oct 2026 (non-exam-value step 2): a private awarding body's own site
+      // (siemens.com, qualcomm.com, lilapoonawallafoundation.com, icai.org) is official
+      // for its own scheme; an aggregator never is (spec: "not an aggregator
+      // host list"). Government schemes stay on .gov.in / .nic.in hosts.
+      const host = new URL(c.sourceUrl).hostname.replace(/^www\./, "");
+      expect(host, s.id).not.toMatch(/(^|\.)(buddy4study\.com|vidyasaarathi\.co\.in|vidyalakshmi\.co\.in|parivartanecss\.com|scholarships\.net\.in|leverageedu\.com|collegedekho\.com|shiksha\.com|careers360\.com|jagranjosh\.com)$/);
+      if (s.type === "CENTRAL" || s.type === "STATE") expect(host, s.id).toMatch(/(\.gov\.in|\.nic\.in)$/);
+      expect(c.checkedOn <= istToday(), s.id).toBe(true);
       expect(c.checkedOn, s.id).toMatch(/^\d{4}-\d{2}-\d{2}$/);
       for (const d of [c.opensOn, c.closesOn]) if (d) expect(d, s.id).toMatch(/^2026-\d{2}-\d{2}$/);
       if (c.opensOn && c.closesOn) expect(c.opensOn <= c.closesOn, s.id).toBe(true);
@@ -297,10 +309,17 @@ describe("closing soon", () => {
     // 27 Sep 2026 review: CSSS, NMMSS, the J&K special scheme and Vidyasiri
     // were re-read on their awarding bodies' own pages and carry `reviewed`
     // — all five are reviewed, so the list is indexable (until 30 Sep passes).
-    expect(list.map((s) => s.id).sort()).toEqual(["csss", "ka-vidyasiri", "nmmss", "pm-special-jk", "pm-yasasvi"]);
+    // 3 Oct 2026 (non-exam-value step 2): BCWD extended Vidyasiri to 31 Oct
+    // and CSSS's last date is NSP's home-page 31 Oct (both out of this 26 Sep
+    // window); Telangana's BC/EBC overseas registration (15 Oct, official, not
+    // reviewed) came in on both of the scheme's rows (ts-overseas-bc and its
+    // companion ts-cm-overseas, 4 Oct 2026) — computed from today's data the
+    // 26 Sep list has five rows, the floor, but two are not reviewed, so it
+    // is not indexable.
+    expect(list.map((s) => s.id).sort()).toEqual(["nmmss", "pm-special-jk", "pm-yasasvi", "ts-cm-overseas", "ts-overseas-bc"]);
     expect(list.length).toBe(CLOSING_SOON_MIN);
-    expect(list.filter(isReviewedScheme).map((s) => s.id).sort()).toEqual(["csss", "ka-vidyasiri", "nmmss", "pm-special-jk", "pm-yasasvi"]);
-    expect(isClosingSoonIndexable(list)).toBe(true);
+    expect(list.filter(isReviewedScheme).map((s) => s.id).sort()).toEqual(["nmmss", "pm-special-jk", "pm-yasasvi"]);
+    expect(isClosingSoonIndexable(list)).toBe(false);
     // Nothing is "closing soon" by its usual window.
     expect(closingSoon(TODAY, 30, [scheme({ id: "u", deadline: "Sep–Oct" })])).toEqual([]);
   });
@@ -312,9 +331,17 @@ describe("closing soon", () => {
     // One unreviewed row is enough to hold the page back.
     expect(isClosingSoonIndexable([...rows.slice(1), scheme({ id: "unchecked" })])).toBe(false);
     // Today's real list would clear it once its rows are re-checked.
+    // 3 Oct 2026 (non-exam-value step 2): with the re-read dates the 26 Sep
+    // list has five rows (both Telangana overseas rows among them, 4 Oct
+    // 2026), so it would clear the floor once every row is re-checked; so
+    // would the 3 Oct list (twelve rows, both MYSY rows and both Telangana
+    // overseas rows among them).
     const real = closingSoon(TODAY, CLOSING_SOON_DAYS, ALL_REVIEWED);
-    expect(real.length).toBeGreaterThanOrEqual(CLOSING_SOON_MIN);
+    expect(real.length).toBe(CLOSING_SOON_MIN);
     expect(isClosingSoonIndexable(real)).toBe(true);
+    const real3Oct = closingSoon("2026-10-03", CLOSING_SOON_DAYS, ALL_REVIEWED);
+    expect(real3Oct.length).toBeGreaterThanOrEqual(CLOSING_SOON_MIN);
+    expect(isClosingSoonIndexable(real3Oct)).toBe(true);
   });
 
   it("IST day and calendar helpers", () => {
@@ -358,7 +385,10 @@ describe("sitemap entries (for src/lib/sitemap-sections.ts)", () => {
     expect(entries.map((e) => e.url)).toEqual(expected);
     // 27 Sep 2026: closing-soon reached the floor (5) with 1 reviewed row — it was not in the sitemap.
     // 27 Sep 2026 review: all five rows are now reviewed, so it is (lastModified = the review day).
-    expect(entries.map((e) => e.url)).toContain("https://shishya.in/scholarships/closing-soon");
+    // 3 Oct 2026 (non-exam-value step 2): with the re-read dates the 26 Sep
+    // list has five rows, two of them not reviewed (both Telangana overseas
+    // rows), so it is not.
+    expect(entries.map((e) => e.url)).not.toContain("https://shishya.in/scholarships/closing-soon");
   });
 });
 

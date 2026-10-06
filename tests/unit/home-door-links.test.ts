@@ -128,9 +128,14 @@ describe("home door links — each renders only while its page clears its own fl
     // 27 Sep 2026 review: the other four (CSSS, NMMSS, the J&K special
     // scheme, Vidyasiri) were re-read on their awarding bodies' own pages —
     // all five are reviewed, so the door shows (until 30 Sep passes).
+    // 3 Oct 2026 (non-exam-value step 2): BCWD extended Vidyasiri to 31 Oct
+    // and CSSS's last date is NSP's home-page 31 Oct (both out of the 26 Sep
+    // window); Telangana's BC/EBC overseas registration (15 Oct, official,
+    // not reviewed) came in on both of the scheme's rows (4 Oct 2026): five
+    // rows, three reviewed — at the floor but not all reviewed, no door.
     expect(closingSoon("2026-09-26").length).toBe(CLOSING_SOON_MIN);
-    expect(closingSoon("2026-09-26").filter(isReviewedScheme).length).toBe(CLOSING_SOON_MIN);
-    expect(closingSoonHref("2026-09-26")).toBe(CLOSING_SOON_HREF);
+    expect(closingSoon("2026-09-26").filter(isReviewedScheme).length).toBe(CLOSING_SOON_MIN - 2);
+    expect(closingSoonHref("2026-09-26")).toBeNull();
   });
 
   it("CBSE board exam chips = the hubs that clear BOARD_EXAM_MIN_LINKS, as /schooling/cbse/class-N/board-exam", () => {

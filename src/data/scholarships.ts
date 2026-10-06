@@ -251,14 +251,18 @@ export const SCHOLARSHIPS: Scholarship[] = [
     // 27 Sep 2026 review: card and announcement re-read on scholarships.gov.in —
     // unchanged (institute verification: 15-10-2026 on the card, 15-11-2026 in
     // the announcement).
+    // 3 Oct 2026 (non-exam-value step 2): this year's status re-read on the awarding body's own
+    // page; the quoted line and read time are in data/scholarships/cycle-reads-2026-10.json. The
+    // last date is now NSP's home-page 31-10-2026, with the card's 30-09-2026 in the note; this
+    // supersedes 'the earlier date is kept as the last date' above.
     cycle: {
       year: "2026-27",
       opensOn: "2026-06-01",
-      closesOn: "2026-09-30",
-      sourceUrl: NSP_SCHEMES_URL,
+      closesOn: "2026-10-31",
+      sourceUrl: "https://scholarships.gov.in/",
       tier: "official",
-      checkedOn: WAVE3_CHECKED,
-      note: "Renewal applications only — NSP lists no fresh-application window for 2026-27 yet. The scheme card on NSP says 30 Sep 2026; NSP's announcement on the same portal says 31 Oct 2026.",
+      checkedOn: "2026-10-03",
+      note: "Renewal applications only — NSP lists no fresh-application window for 2026-27. NSP's home page says CSSS renewals are open, with student applications closing on 31 Oct 2026 (institute verification by 15 Nov 2026); the CSSS card on NSP's scheme list says \"Student Application Closed on: 30-09-2026\", so renew as early as you can.",
     },
     reviewed: { on: WAVE3_CHECKED, sourceUrl: "https://scholarships.gov.in/public/schemeGuidelines/CSSS_GUIDLINES_07022024_updated.pdf" },
   },
@@ -575,7 +579,11 @@ export const SCHOLARSHIPS: Scholarship[] = [
     // (30-06-2025) — no 2026-27 date yet. Recorded as checked, with no date.
     // 27 Sep 2026 (wave 3): re-read — still no 2026-27 registration date on
     // the portal (a 31 Oct 2026 last date is not stated there).
-    cycle: { year: "2026-27", sourceUrl: "https://telanganaepass.cgg.gov.in/", tier: "official", checkedOn: WAVE3_CHECKED },
+    // 3 Oct 2026 (non-exam-value step 2): this year's status re-read on the awarding body's own
+    // page; the quoted line and read time are in data/scholarships/cycle-reads-2026-10.json.
+    // Supersedes the 26-27 Sep notes above: the post-matric page now shows 2026-27 registration
+    // links (still no last date).
+    cycle: { year: "2026-27", openNow: true, sourceUrl: "https://telanganaepass.cgg.gov.in/", tier: "official", checkedOn: "2026-10-03", note: "On ePASS's home page, 'Post Matric Scholarship Services' opens a page with 2026-27 fresh registration links for all departments, and renewal links — pre-registration for all departments, and a renewal registration link for ST, BC, EBC, DW and minority students (SC is not named on it)." },
   },
   {
     id: "ap-jagananna-vidya",
@@ -644,13 +652,16 @@ export const SCHOLARSHIPS: Scholarship[] = [
     // 27 Sep 2026 review: SSP timed out on the re-check, so the date is now
     // sourced to BCWD's own 2026-27 page ("Last date to apply: 30.09.2026")
     // and its 28.08.2026 extension notice.
+    // 3 Oct 2026 (non-exam-value step 2): this year's status re-read on the awarding body's own
+    // page; the quoted line and read time are in data/scholarships/cycle-reads-2026-10.json.
+    // 31.10.2026 supersedes the 30/09/2026 cited in the 27 Sep comments above.
     cycle: {
       year: "2026-27",
-      closesOn: "2026-09-30",
+      closesOn: "2026-10-31",
       sourceUrl: "https://bcwd.karnataka.gov.in/163/2026-27-post-matric-scholarship/en",
       tier: "official",
-      checkedOn: WAVE3_CHECKED,
-      note: "Extended last date. BCWD notice No. BCWD-17017/17/2026-BCWD_SCHLR-BCWD (28 Aug 2026) extends online applications for 2026-27 Post-Matric Scholarship, Fee Concession and Vidyasiri to 30 Sep 2026. Apply on SSP.",
+      checkedOn: "2026-10-03",
+      note: "Extended last date. BCWD's 2026-27 page now says \"Last date to apply: 31.10.2026\" for Post-Matric Scholarship, Fee Concession and Vidyasiri (a second extension; the 28 Aug 2026 notice had moved it to 30 Sep 2026). Apply on SSP.",
     },
     reviewed: { on: WAVE3_CHECKED, sourceUrl: "https://bcwd.karnataka.gov.in/44/vidyasiri/kn" },
   },
@@ -1295,15 +1306,24 @@ export const SCHOLARSHIPS: Scholarship[] = [
     eligibility: {
       gender: "F",
       categories: ["GEN", "OBC", "SC", "ST", "EWS", "MIN"],
-      incomeMaxLakhs: 6,
-      note: "Girls pursuing engineering, science, IT, or biotech UG/PG. Pune/Maharashtra preferred but national admissions accepted.",
+      note: "Undergraduate: girls aged 17 to 25 from poor households (family income under ₹3.5 lakh a year) or lower-middle-class homes, studying in one of the cities the foundation names: Pune (B.E., B.E. after diploma, B.Pharm, B.Sc Nursing, B.Sc), Wardha, Amravati and Nagpur (B.E., B.E. after diploma, B.Pharm, B.Sc Nursing), Hyderabad or Bengaluru (B.Tech, B.Tech after diploma). Postgraduate: girls from similar homes studying in Pune. Selection by application and interview.",
     },
     amount: "Tuition fees + ₹15,000-₹30,000/year stipend",
     applyUrl: "https://lilapoonawallafoundation.com/",
     description:
       "Pune-based Lila Poonawalla Foundation pays tuition + a yearly stipend for girls in STEM UG/PG. Selection by interview + academic record.",
-    deadline: "Mar-Jul each year",
+    deadline: "Jul–Sep (opening dates differ by course and city)",
     tags: ["girls", "stem", "engineering", "private foundation", "poonawalla"],
+    // 3 Oct 2026 (non-exam-value step 2): this year's status read on the awarding body's own page;
+    // the quoted line and read time are in data/scholarships/cycle-reads-2026-10.json. Also
+    // corrected from the same reads: deadline, eligibility.incomeMaxLakhs, eligibility.note.
+    cycle: {
+      year: "2026-27",
+      sourceUrl: "https://www.lilapoonawallafoundation.com/",
+      tier: "official",
+      checkedOn: "2026-10-03",
+      note: "The foundation's home page links 'Scholarships 2026-27' to its online application (lpfscholarship.com), but its pages show no 2026-27 opening or last date: check the application site.",
+    },
   },
 
   {
@@ -1326,22 +1346,34 @@ export const SCHOLARSHIPS: Scholarship[] = [
 
   {
     id: "ts-cm-overseas",
-    name: "Telangana CM Overseas Scholarship (BC)",
+    name: "Mahatma Jyothiba Phule Overseas Vidya Nidhi (Telangana BC and EBC overseas scholarship)",
     awardingBody: "Telangana BC Welfare Department",
     type: "STATE",
     state: "TS",
     levels: ["PG"],
     eligibility: {
-      categories: ["OBC"],
+      categories: ["OBC", "EWS"],
       incomeMaxLakhs: 5,
-      note: "Telangana domicile + OBC (BC) category. Admitted to ranked overseas PG program. Below 35 years.",
+      note: "Telangana BC or EBC student with an admission (CoE or I-20) and a visa for postgraduate study in the USA, UK, Australia, Canada, Singapore, Germany, New Zealand, Japan, France or South Korea. Family income under ₹5 lakh a year, at least 60% in graduation, a GRE/GMAT score and an English-test score (TOEFL, IELTS or PTE), one child per family.",
     },
-    amount: "Up to ₹20 lakh (one-time)",
-    applyUrl: "https://www.bcwelfare.telangana.gov.in/",
+    amount: "Up to ₹20 lakh",
+    applyUrl: "https://telanganaepass.cgg.gov.in/",
     description:
       "Telangana BC Welfare's overseas scheme — counterpart of the MWD overseas scheme but for OBC/BC students. Highly competitive shortlist.",
     deadline: "Twice yearly",
     tags: ["telangana", "ts", "overseas", "obc", "abroad"],
+    // 3 Oct 2026 (non-exam-value step 2): this year's status read on the awarding body's own page;
+    // the quoted line and read time are in data/scholarships/cycle-reads-2026-10.json. Also
+    // corrected from the same reads: name, applyUrl, eligibility.categories, eligibility.note,
+    // amount.
+    cycle: {
+      year: "2026-27",
+      closesOn: "2026-10-15",
+      sourceUrl: "https://telanganaepass.cgg.gov.in/OverseasLinks.do",
+      tier: "official",
+      checkedOn: "2026-10-03",
+      note: "Registration for Mahatma Jyothiba Phule Overseas Vidya Nidhi (BC and EBC students) on Telangana ePASS; only students who already hold a CoE or I-20 and a visa can register.",
+    },
   },
 
   {
@@ -1433,10 +1465,21 @@ export const SCHOLARSHIPS: Scholarship[] = [
       note: "Gujarat domicile. 80%+ in Class 12 (state board) or top 5 percentile (CBSE/ICSE). Pursuing UG in Gujarat.",
     },
     amount: "50% tuition reimbursement (up to ₹2L) + book grant + hostel allowance",
-    applyUrl: "https://mysy.guj.nic.in/",
+    applyUrl: "https://mysy.gujarat.gov.in/",
     description: "Gujarat's flagship UG fee-reimbursement for high-scoring Class 12 students from middle-income families. Renewable yearly subject to SGPA.",
     deadline: "Jul-Nov each year",
     tags: ["gujarat", "gj", "mysy", "merit"],
+    // 3 Oct 2026 (non-exam-value step 2): this year's status read on the awarding body's own page;
+    // the quoted line and read time are in data/scholarships/cycle-reads-2026-10.json. Also
+    // corrected from the same reads: applyUrl.
+    cycle: {
+      year: "2026-27",
+      closesOn: "2026-10-30",
+      sourceUrl: "https://mysy.gujarat.gov.in/",
+      tier: "official",
+      checkedOn: "2026-10-03",
+      note: "Fresh, renewal and delayed applications close at 6 pm on 30 Oct 2026, and documents must be verified at a MYSY help centre by 5 Nov 2026 (the portal's notice, in Gujarati). Two exceptions on the same notice: for medical and AYUSH courses where admission is still running or results are not out, the link is closed for now and will open later; and the fresh-application link for Diploma-to-Degree, CBSE-board and NIOS-board students will start soon. The portal is at mysy.gujarat.gov.in.",
+    },
   },
   {
     id: "goa-cm-merit",
@@ -1472,6 +1515,15 @@ export const SCHOLARSHIPS: Scholarship[] = [
     description: "Assam's incentive for high-scoring Class 10 students. Some cycles include a laptop in the award.",
     deadline: "Post Class 10 results",
     tags: ["assam", "as", "borooah"],
+    // 3 Oct 2026 (non-exam-value step 2): this year's status read on the awarding body's own page;
+    // the quoted line and read time are in data/scholarships/cycle-reads-2026-10.json.
+    cycle: {
+      year: "2026-27",
+      sourceUrl: "https://sewasetu.assam.gov.in/site/service-apply/anundoram-borooah-cash-award-scheme-arbas",
+      tier: "official",
+      checkedOn: "2026-10-03",
+      note: "The latest window on Assam's Sewa Setu page for this award is the 2024 one (registration extended to 30 Nov 2024).",
+    },
   },
   {
     id: "tripura-merit-cm",
@@ -2543,13 +2595,24 @@ export const SCHOLARSHIPS: Scholarship[] = [
     state: null,
     levels: ["UG", "PG"],
     eligibility: {
-      note: "CA Foundation / Intermediate / Final registered students. Multiple slabs — Merit-cum-Need has income cap ₹3L.",
+      note: "Students registered with ICAI for the CA Foundation, Intermediate or Final course (Final students must have started articleship). The needs-based scholarships ask that parents' income be no more than ₹5 lakh a year, certified by a practising chartered accountant (Foundation and Intermediate) or the articleship principal (Final). The ₹5,000-a-month merit award, for Intermediate rank holders 1 to 10 who have registered for Final and started articleship, lists no income condition. ICAI's flyer says an announcement on a revised scheme will be published on its Self-Service Portal shortly.",
     },
-    amount: "₹1,500-₹2,500/month based on slab",
+    amount: "₹1,500-₹5,000 a month by level: Foundation ₹1,500 (4 months); Intermediate ₹2,500 (8 months, up to 14); Final, during articleship, ₹2,500, or ₹4,000 for Intermediate ranks 11-50, or a ₹5,000 merit award for ranks 1-10 (up to 24 months)",
     applyUrl: "https://www.icai.org/",
     description: "ICAI's published scholarship for CA aspirants. Covers Foundation through Final. Modest monthly stipend over 1-2 years.",
-    deadline: "Yearly cycle",
+    deadline: "Any time of the year (ICAI selects applications each quarter)",
     tags: ["ca", "icai", "professional"],
+    // 3 Oct 2026 (non-exam-value step 2): this year's status read on the awarding body's own page;
+    // the quoted line and read time are in data/scholarships/cycle-reads-2026-10.json. Also
+    // corrected from the same reads: deadline, eligibility.note, amount.
+    cycle: {
+      year: "2026-27",
+      rolling: true,
+      sourceUrl: "https://bosactivities.icai.org/api/v1.0/downloadflyer?filename=flyerForm_20250828112231.pdf",
+      tier: "official",
+      checkedOn: "2026-10-03",
+      note: "ICAI's scholarship flyer says students can apply online at any time on its Self Service Portal (eservices.icai.org). Its scholarship FAQ (last updated 15 May 2026) says applications are selected each quarter: those received from 1 Oct to 31 Dec are granted in January.",
+    },
   },
   {
     id: "icsi-scholarship",
@@ -2588,14 +2651,22 @@ export const SCHOLARSHIPS: Scholarship[] = [
   { id: "mp-laptop-vidya-yojana", name: "MP Vidya Vikas Laptop Yojana", awardingBody: "Govt of MP", type: "STATE", state: "MP", levels: ["CLASS_11_12"], eligibility: { minMarksPct: 75, note: "Class 12 toppers from MP Board" }, amount: "₹25,000 for laptop", applyUrl: "https://shikshaportal.mp.gov.in/", description: "MP laptop scheme for state-board Class 12 high scorers.", deadline: "Post Class 12 results", tags: ["madhya pradesh", "mp", "laptop", "merit"] },
   { id: "tn-kalaignar-meritorious", name: "Tamil Nadu Kalaignar Meritorious", awardingBody: "TN Government", type: "STATE", state: "TN", levels: ["UG"], eligibility: { categories: ["SC", "ST", "OBC"], incomeMaxLakhs: 2, minMarksPct: 75 }, amount: "Tuition + book grant", applyUrl: "https://tn.gov.in/", description: "TN state scholarship for SC/ST/OBC meritorious students.", deadline: "Aug-Oct", tags: ["tamil nadu", "tn"] },
   { id: "kl-mukhyamantri-kl", name: "Kerala CMSPS — CM's Scholarship", awardingBody: "Govt of Kerala", type: "STATE", state: "KL", levels: ["UG", "PG"], eligibility: { categories: ["GEN", "OBC", "EWS"], incomeMaxLakhs: 4, minMarksPct: 60 }, amount: "₹12,000-₹40,000/year", applyUrl: "https://cmss.scholarship.gov.in/", description: "Kerala CM's UG/PG scholarship for general + EWS students.", deadline: "Sep-Nov", tags: ["kerala", "kl"] },
-  { id: "ts-overseas-bc", name: "Telangana CM Overseas Scholarship (BC)", awardingBody: "Telangana BC Welfare Dept", type: "STATE", state: "TS", levels: ["PG"], eligibility: { categories: ["OBC"], incomeMaxLakhs: 5, note: "BC student admitted to ranked overseas PG" }, amount: "Up to ₹20 lakh", applyUrl: "https://telanganaepass.cgg.gov.in/", description: "TS BC welfare's overseas scholarship for PG abroad.", deadline: "Twice yearly", tags: ["telangana", "ts", "obc", "overseas"] },
+  { id: "ts-overseas-bc", name: "Mahatma Jyothiba Phule Overseas Vidya Nidhi (Telangana BC and EBC overseas scholarship)", awardingBody: "Telangana BC Welfare Dept", type: "STATE", state: "TS", levels: ["PG"], eligibility: { categories: ["OBC", "EWS"], incomeMaxLakhs: 5, note: "Telangana BC or EBC student with an admission (CoE or I-20) and a visa for postgraduate study in the USA, UK, Australia, Canada, Singapore, Germany, New Zealand, Japan, France or South Korea. Family income under ₹5 lakh a year, at least 60% in graduation, a GRE/GMAT score and an English-test score (TOEFL, IELTS or PTE), one child per family." }, amount: "Up to ₹20 lakh", applyUrl: "https://telanganaepass.cgg.gov.in/", description: "TS BC welfare's overseas scholarship for PG abroad.", deadline: "Twice yearly", tags: ["telangana", "ts", "obc", "overseas"],
+    // 3 Oct 2026 (non-exam-value step 2): this year's status read on the awarding body's own page;
+    // the quoted line and read time are in data/scholarships/cycle-reads-2026-10.json. Also
+    // corrected from the same reads: name, eligibility.categories, eligibility.note.
+    cycle: { year: "2026-27", closesOn: "2026-10-15", sourceUrl: "https://telanganaepass.cgg.gov.in/OverseasLinks.do", tier: "official", checkedOn: "2026-10-03", note: "Registration for Mahatma Jyothiba Phule Overseas Vidya Nidhi (BC and EBC students) on Telangana ePASS; only students who already hold a CoE or I-20 and a visa can register." } },
   // 27 Sep 2026 (wave 3 review): this row could not be verified on any official
   // page (see its `unlisted` reason) — kept so its URL still answers, out of
   // every list, and handed to the main session to noindex or retire.
   { id: "ka-cipriani", name: "Karnataka CIET / Vidyasiri Continuance", awardingBody: "Karnataka SC/ST Welfare", type: "STATE", state: "KA", levels: ["UG", "PG"], eligibility: { categories: ["SC", "ST"], incomeMaxLakhs: 2.5 }, amount: "Tuition + stipend ₹2,500-₹15,000/month", applyUrl: "https://ssp.karnataka.gov.in/", description: "Karnataka SC/ST UG/PG fee + stipend scheme.", deadline: "Sep-Nov", tags: ["karnataka", "ka", "sc", "st"], unlisted: "Not found (27 Sep 2026): Karnataka's SSP scheme list has no \"CIET\" or \"Vidyasiri Continuance\" scheme for SC/ST students — Vidyasiri is a Backward Classes Welfare scheme, and SC/ST post-matric schemes are listed under their own names." },
   { id: "bihar-mukhyamantri-cycle", name: "Bihar Mukhyamantri Balika Cycle Yojana", awardingBody: "Govt of Bihar", type: "STATE", state: "BR", levels: ["CLASS_9_10"], eligibility: { gender: "F", note: "Bihar girls in Class 9-10 of govt schools" }, amount: "₹2,500 for bicycle", applyUrl: "https://educationbihar.gov.in/", description: "Bihar girls' bicycle scheme for school transport.", deadline: "Yearly cycle", tags: ["bihar", "br", "girls", "school"], unlisted: "Not a scholarship: money towards a bicycle (27 Sep 2026 repair)." },
   { id: "bihar-mukhyamantri-poshak", name: "Bihar Mukhyamantri Poshak Yojana", awardingBody: "Govt of Bihar", type: "STATE", state: "BR", levels: ["CLASS_9_10", "CLASS_11_12"], eligibility: { categories: ["SC", "ST", "OBC"], note: "Bihar Class 1-12 students; uniform support" }, amount: "₹400-₹1500/year for uniforms", applyUrl: "https://educationbihar.gov.in/", description: "Bihar uniform support scheme.", deadline: "Yearly", tags: ["bihar", "br", "uniform"], unlisted: "Not a scholarship: school-uniform support (27 Sep 2026 repair)." },
-  { id: "gj-mysy-fees", name: "Gujarat Mukhyamantri Yuva Swavalamban Yojana (Fees)", awardingBody: "Govt of Gujarat", type: "STATE", state: "GJ", levels: ["UG"], eligibility: { minMarksPct: 80, incomeMaxLakhs: 6, note: "Gujarat domicile UG students in eligible courses" }, amount: "50% tuition fee waiver", applyUrl: "https://mysy.guj.nic.in/", description: "Gujarat 50% tuition support for top Class 12 performers.", deadline: "Aug-Oct", tags: ["gujarat", "gj", "mysy", "merit"] },
+  { id: "gj-mysy-fees", name: "Gujarat Mukhyamantri Yuva Swavalamban Yojana (Fees)", awardingBody: "Govt of Gujarat", type: "STATE", state: "GJ", levels: ["UG"], eligibility: { minMarksPct: 80, incomeMaxLakhs: 6, note: "Gujarat domicile UG students in eligible courses" }, amount: "50% tuition fee waiver", applyUrl: "https://mysy.gujarat.gov.in/", description: "Gujarat 50% tuition support for top Class 12 performers.", deadline: "Aug-Oct", tags: ["gujarat", "gj", "mysy", "merit"],
+    // 3 Oct 2026 (non-exam-value step 2): this year's status read on the awarding body's own page;
+    // the quoted line and read time are in data/scholarships/cycle-reads-2026-10.json. Also
+    // corrected from the same reads: applyUrl.
+    cycle: { year: "2026-27", closesOn: "2026-10-30", sourceUrl: "https://mysy.gujarat.gov.in/", tier: "official", checkedOn: "2026-10-03", note: "Fresh, renewal and delayed applications close at 6 pm on 30 Oct 2026, and documents must be verified at a MYSY help centre by 5 Nov 2026 (the portal's notice, in Gujarati). Two exceptions on the same notice: for medical and AYUSH courses where admission is still running or results are not out, the link is closed for now and will open later; and the fresh-application link for Diploma-to-Degree, CBSE-board and NIOS-board students will start soon. The portal is at mysy.gujarat.gov.in." } },
   { id: "up-savitribai-girls", name: "UP Savitribai Phule Balika Shiksha", awardingBody: "Govt of UP", type: "STATE", state: "UP", levels: ["CLASS_9_10", "CLASS_11_12"], eligibility: { gender: "F", note: "UP Class 9-12 girls in govt schools" }, amount: "₹2000/year + book + dress", applyUrl: "https://scholarship.up.gov.in/", description: "UP girls' Class 9-12 retention scholarship.", deadline: "Yearly", tags: ["uttar pradesh", "up", "girls"] },
   { id: "mh-ekatma-yojana", name: "Maharashtra Mukhyamantri Vishesh Sahayata", awardingBody: "Govt of Maharashtra Social Justice", type: "STATE", state: "MH", levels: ["UG", "PG"], eligibility: { categories: ["SC", "ST", "OBC", "MIN"], incomeMaxLakhs: 2.5 }, amount: "Fee reimbursement + maintenance", applyUrl: "https://mahadbt.maharashtra.gov.in/", description: "Maharashtra welfare dept UG/PG scholarship.", deadline: "Sep-Nov", tags: ["maharashtra", "mh"] },
   { id: "mh-rajashree-shahu-girls", name: "Maharashtra Rajashree Shahu Maharaj Merit Scholarship", awardingBody: "Govt of Maharashtra", type: "STATE", state: "MH", levels: ["UG"], eligibility: { gender: "F", incomeMaxLakhs: 8, minMarksPct: 60, note: "Maharashtra girl UG students" }, amount: "₹3000-₹10000/year", applyUrl: "https://mahadbt.maharashtra.gov.in/", description: "MH girls' UG merit scholarship.", deadline: "Aug-Oct", tags: ["maharashtra", "mh", "girls"] },
@@ -2632,7 +2703,12 @@ export const SCHOLARSHIPS: Scholarship[] = [
   { id: "dst-mansamandap-innovate", name: "DST Manak (Awards for Innovation)", awardingBody: "DST", type: "MERIT", state: null, levels: ["CLASS_9_10", "CLASS_11_12"], eligibility: { note: "Class 6-12 students with innovation project" }, amount: "Up to ₹50,000 + national exhibition entry", applyUrl: "https://www.inspireawards-dst.gov.in/", description: "DST INSPIRE-MANAK extended for innovation projects.", deadline: "Yearly", tags: ["dst", "manak", "innovation"] },
   { id: "ratan-tata-trust-merit", name: "Ratan Tata Trust Scholarship (Higher Studies)", awardingBody: "Ratan Tata Trust", type: "PRIVATE", state: null, levels: ["UG", "PG"], eligibility: { incomeMaxLakhs: 4 }, amount: "₹30,000-₹2 lakh/year", applyUrl: "https://www.tatatrusts.org/", description: "RTT individual + institutional grants.", deadline: "Yearly", tags: ["tata", "ratan tata", "private"] },
   { id: "indrani-balan-foundation", name: "Indrani Balan Foundation Scholarship", awardingBody: "Indrani Balan Foundation", type: "PRIVATE", state: null, levels: ["UG", "PG"], eligibility: { incomeMaxLakhs: 4, gender: "F" }, amount: "₹30,000-₹1 lakh/year", applyUrl: "https://www.indranibalanfoundation.org/", description: "Women in STEM + arts; merit + need.", deadline: "Yearly", tags: ["women", "private", "stem"] },
-  { id: "siemens-india-scholarship", name: "Siemens Scholarship Program", awardingBody: "Siemens India Foundation", type: "PRIVATE", state: null, levels: ["UG"], eligibility: { incomeMaxLakhs: 3, minMarksPct: 75 }, amount: "₹50,000-₹1 lakh/year + Siemens internship", applyUrl: "https://new.siemens.com/in/en/company/sustainability/scholarship.html", description: "Engineering UG support + Siemens internship pipeline.", deadline: "Apr-Jul", tags: ["siemens", "engineering", "private"] },
+  { id: "siemens-india-scholarship", name: "Siemens Scholarship Program", awardingBody: "Siemens India Foundation", type: "PRIVATE", state: null, levels: ["UG"], eligibility: { incomeMaxLakhs: 2, minMarksPct: 50, note: "First-year students at a government engineering college (not an IIT) in mechanical/production, electrical, electronics, electronics and telecommunication, computer science/IT or instrumentation; aged up to 20; at least 60% in SSC (Class 10), and in HSC (Class 12) at least 50% overall with 60% in PCM; one student per family. Half the scholarships are reserved for girls. Every condition must be met." }, amount: "Tuition fees reimbursed + allowances for books, hostel and additional classes, each year of the 4-year course (renewed on clearing all subjects with a first class); plus training, mentoring and internships", applyUrl: "https://www.ssp-india.co.in/scholarship/apply", description: "Engineering UG support + Siemens internship pipeline.", deadline: "After first-year admissions at government engineering colleges are complete (open for a limited period)", tags: ["siemens", "engineering", "private"],
+    // 3 Oct 2026 (non-exam-value step 2): this year's status read on the awarding body's own page;
+    // the quoted line and read time are in data/scholarships/cycle-reads-2026-10.json. Also
+    // corrected from the same reads: deadline, applyUrl, eligibility.incomeMaxLakhs,
+    // eligibility.minMarksPct, eligibility.note, amount.
+    cycle: { year: "2026-27", openNow: true, sourceUrl: "https://www.siemens.com/en-us/company/sustainability/corporate-citizenship-india/scholarship-program/", tier: "official", checkedOn: "2026-10-03", note: "Siemens's FAQ says the online application tool stays open only for a certain period after first-year admissions at government engineering colleges are complete, so do not wait." } },
   { id: "schlumberger-faculty-future", name: "Schlumberger Faculty for the Future", awardingBody: "Schlumberger Foundation", type: "PRIVATE", state: null, levels: ["PG", "PHD"], eligibility: { gender: "F", note: "Women in STEM PhD/PG abroad. Strong career-return-to-India commitment preferred." }, amount: "Up to USD 50k/year", applyUrl: "https://www.facultyforthefuture.com/", description: "Foreign PG/PhD scholarship for women in STEM.", deadline: "Sep-Nov", tags: ["women", "stem", "phd", "overseas", "private"] },
   { id: "tata-trusts-overseas-phd", name: "Tata Trusts Overseas PhD Scholarship", awardingBody: "Sir Dorabji Tata Trust", type: "PRIVATE", state: null, levels: ["PHD"], eligibility: { incomeMaxLakhs: 10, note: "Top universities' overseas PhD admits" }, amount: "Up to ₹10 lakh (partial loan, partial grant)", applyUrl: "https://www.dorabjitatatrust.org/", description: "Tata Trusts overseas PhD support.", deadline: "Annual", tags: ["tata", "overseas", "phd"] },
   { id: "lr-pasrich-foundation", name: "LR Pasrich Foundation Scholarship", awardingBody: "LR Pasrich Foundation", type: "PRIVATE", state: null, levels: ["UG", "PG"], eligibility: { incomeMaxLakhs: 5, note: "Indian student in UG/PG at recognised institution" }, amount: "₹50,000-₹2 lakh/year", applyUrl: "https://www.lrpasrich.com/", description: "Private foundation general scholarship.", deadline: "Yearly", tags: ["private", "foundation"] },
@@ -2687,7 +2763,10 @@ export const SCHOLARSHIPS: Scholarship[] = [
   { id: "ibm-skills-build-women", name: "IBM SkillsBuild Women in Tech", awardingBody: "IBM India", type: "PRIVATE", state: null, levels: ["UG", "PG"], eligibility: { gender: "F", note: "Indian women pursuing tech UG/PG" }, amount: "Free certifications + ₹50,000/year stipend + IBM mentorship", applyUrl: "https://www.ibm.com/training/skillsbuild", description: "IBM SkillsBuild women's programme.", deadline: "Yearly cohorts", tags: ["women", "tech", "IBM"] },
   { id: "google-stem-cs", name: "Google CS Research Mentorship", awardingBody: "Google Research India", type: "PRIVATE", state: null, levels: ["UG", "PG"], eligibility: { note: "Indian student pursuing CS/AI; from underrepresented groups" }, amount: "$1,000 + Google Research mentorship + community", applyUrl: "https://research.google/programs-and-events/", description: "Google's CS research mentorship for underrepresented groups.", deadline: "Yearly", tags: ["google", "cs", "research", "mentorship"] },
   { id: "amazon-future-engineer", name: "Amazon Future Engineer", awardingBody: "Amazon India", type: "PRIVATE", state: null, levels: ["UG"], eligibility: { incomeMaxLakhs: 5, note: "BTech CS at AICTE-accredited college" }, amount: "₹40,000/year + Amazon internship + mentorship", applyUrl: "https://www.amazonfutureengineer.in/", description: "Amazon's CS UG scholarship + internship pipeline.", deadline: "Yearly", tags: ["amazon", "cs", "internship"] },
-  { id: "qualcomm-innovation-fellowship", name: "Qualcomm Innovation Fellowship India", awardingBody: "Qualcomm India", type: "RESEARCH", state: null, levels: ["PG", "PHD"], eligibility: { note: "PhD candidates at IIT/IISc working on EE/wireless research" }, amount: "USD 40,000/year for 2 years + Qualcomm mentor", applyUrl: "https://www.qualcomm.com/research/university-relations", description: "Qualcomm research fellowship for top IIT/IISc PhDs.", deadline: "Yearly", tags: ["qualcomm", "phd", "research", "wireless"] },
+  { id: "qualcomm-innovation-fellowship", name: "Qualcomm Innovation Fellowship India", awardingBody: "Qualcomm India", type: "RESEARCH", state: null, levels: ["PG", "PHD"], eligibility: { note: "PhD candidates at IIT/IISc working on EE/wireless research" }, amount: "USD 40,000/year for 2 years + Qualcomm mentor", applyUrl: "https://www.qualcomm.com/research/university-relations", description: "Qualcomm research fellowship for top IIT/IISc PhDs.", deadline: "Yearly", tags: ["qualcomm", "phd", "research", "wireless"],
+    // 3 Oct 2026 (non-exam-value step 2): this year's status read on the awarding body's own page;
+    // the quoted line and read time are in data/scholarships/cycle-reads-2026-10.json.
+    cycle: { year: "2026-27", closesOn: "2026-04-20", sourceUrl: "https://www.qualcomm.com/content/dam/qcomm-martech/dm-assets/documents/QIF_India-2026-official-rules.pdf", tier: "official", checkedOn: "2026-10-03", note: "QIF India 2026 (fellowships for the 2026-27 academic year): registration closed at 10:00 am IST on 20 Apr 2026." } },
   { id: "sap-young-thinkers", name: "SAP Young Thinkers Scholarship", awardingBody: "SAP India", type: "PRIVATE", state: null, levels: ["UG"], eligibility: { note: "BTech with SAP technologies focus" }, amount: "Free SAP certifications + ₹50,000 cash + internship", applyUrl: "https://www.sap.com/india/", description: "SAP's ERP-tech UG talent programme.", deadline: "Yearly", tags: ["sap", "tech", "ERP"] },
 
   // ─── Community-specific (additional) ────────────────────────────────
