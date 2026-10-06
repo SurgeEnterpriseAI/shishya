@@ -14,7 +14,9 @@
 //      translation, fresh questions, the free-text mock, the essay evaluator,
 //      /ask (JSON and stream) — answers the fixed line and never the provider
 //      text; a validation 400 is unchanged; a non-outage failure never says
-//      "unavailable";
+//      "unavailable"; (6 Oct 2026: fresh questions no longer call the model —
+//      the set is picked from the checked bank — so its check is "no model
+//      call, no 503, no row")
 //   3. one analytics row per failure, never for Class 1-7, no anon id on a
 //      school row, and the admin click count leaves the rows out;
 //   4. the copy: no "busy", "updating", "hiccup", "few minutes", "moment";
@@ -122,6 +124,8 @@ vi.mock("@/lib/db/prisma", () => {
       user: { findUnique: vi.fn(async () => ({ id: "u1", preferredLang: "EN" })) },
       mock: {
         findUnique: vi.fn(async () => ({ id: "m1", questionIds: ["q1", "q2"], exam: exam() })),
+        // 6 Oct 2026: the fresh route first looks for the student's unfinished fresh set.
+        findFirst: vi.fn(async () => null),
         count: vi.fn(async () => 0),
         create: vi.fn(async () => ({ id: "m-new", title: "t" })),
       },
@@ -130,7 +134,11 @@ vi.mock("@/lib/db/prisma", () => {
         findMany: vi.fn(async () => []),
       },
       exam: { findUnique: vi.fn(async () => ({ id: "e1", code: "SSC_CGL", name: "SSC Combined Graduate Level", shortName: "SSC CGL", category: "SSC" })) },
-      topic: { findFirst: vi.fn(async () => ({ id: "t1", name: "Percentage", children: [] })) },
+      topic: {
+        findFirst: vi.fn(async () => ({ id: "t1", name: "Percentage", children: [] })),
+        // 6 Oct 2026: the fresh route reads the exam's topics (its scope tiers).
+        findMany: vi.fn(async () => []),
+      },
       subject: { findFirst: vi.fn(async () => null) },
       $queryRaw: vi.fn(async (strings: TemplateStringsArray) => {
         state.rawSql.push(Array.from(strings).join("?"));
@@ -399,23 +407,19 @@ describe("results-page translation", () => {
 describe("fresh questions", () => {
   const body = { examCode: "SSC_CGL", topicCode: "T0", count: 10 };
 
-  it("a credit error reaches the route's clean branch: 503, the fixed line, the code, one row", async () => {
+  // 6 Oct 2026: a fresh set is picked from the exam's answer-checked
+  // questions (src/lib/fresh-set.ts); the route makes no model call, so an
+  // empty credit can no longer reach it. The mocked bank here holds no
+  // checked question, so the honest answer is "too few", never a 503.
+  it("makes no model call: with the credit gone the press still answers from the bank — no 503, no unavailable row", async () => {
     const r = await read(await freshPOST(post("/api/mocks/fresh", body)));
-    expect(r.status).toBe(503);
-    expect(r.body).toEqual({ code: "ai-unavailable", error: AI_UNAVAILABLE_COPY.fresh });
+    expect(r.status).toBe(200);
+    expect(r.body.result).toBe("too-few");
     expect(r.text).not.toMatch(PROVIDER);
-    expect(r.text).not.toMatch(/few minutes|moment/i);
-    expect(unavailableRows()).toHaveLength(1);
-    expect(unavailableRows()[0]).toMatchObject({ userId: "u1", props: { feature: "fresh", reason: "credit", alt: "bank-test" } });
-  });
-
-  it("a reply with nothing usable is not an outage: the plain line, no 'unavailable', no row", async () => {
-    state.modelError = null;
-    state.modelReply = { content: [{ type: "text", text: "sorry" }], usage: { input_tokens: 1, output_tokens: 1 } };
-    const r = await read(await freshPOST(post("/api/mocks/fresh", body)));
-    expect(r).toMatchObject({ status: 400, body: { error: AI_UNAVAILABLE_COPY.freshFailed } });
-    expect(r.text).not.toMatch(/unavailable right now|moment/i);
+    expect(r.text).not.toMatch(/unavailable|few minutes|moment/i);
     expect(unavailableRows()).toHaveLength(0);
+    const { anthropic } = await import("@/lib/ai/client");
+    expect(vi.mocked(anthropic.messages.create)).not.toHaveBeenCalled();
   });
 
   it("a validation 400 is unchanged", async () => {

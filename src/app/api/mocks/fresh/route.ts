@@ -1,191 +1,274 @@
-// POST /api/mocks/fresh — Depth Lever 3: on-demand question generation.
+// POST /api/mocks/fresh — "Get 10 fresh questions" on the results page.
 //
-// Body: { examCode: string, topicCode: string, count?: number }
+// Body: { examCode: string, topicCode: string, count?: number (5–15), attemptId?: string }
 //
-// Generates a fresh batch of questions LIVE via Claude (no web search,
-// ~5-8s), tuned to the user's level (HARD if they're a strong performer
-// on this exam, else MEDIUM), persists them to the question pool, builds
-// a playable mock, and returns its id. The client redirects to
-// /mocks/[id].
-//
-// This makes depth effectively infinite + personalised — a serious
-// aspirant who burns through the fixed pool can always summon more at
-// the right difficulty. Generated questions are cached back into the
-// pool (validated:false) so they help future users and the "Report
-// question" + AI-key-dispute safety nets catch any errors.
-//
-// RATE LIMIT: max FRESH_LIMIT_PER_DAY on-demand generations per user per
-// rolling 24h — bounds Claude cost. Returns 429 over the cap.
-//
-// 2 Oct 2026 (honest words, no provider text): the generator swallowed every
-// error, so an empty Anthropic credit reached the student as "Try again in a
-// moment" (the outages ran 5 to 11 hours) and the "unavailable for a few
-// minutes" branch below never ran. Now the generator rethrows an
-// AI-unavailable failure and the catch classifies first: AI unavailable →
-// 503 { code: "ai-unavailable", error: <the fixed line> } and one analytics
-// row; any other failure → a plain "could not be made" line. The daily count
-// is of mocks built, so a failed request uses none of the 10.
-// Helper: src/lib/ai/unavailable-reply.ts. Lines: src/lib/ai-unavailable-copy.ts.
+// 6 Oct 2026 — the set is picked, not written. Until today this route asked
+// the AI for `count` new questions on the attempt's weakest topic at the
+// moment of the press, saved them validated:false and built a CHALLENGE mock
+// on them. Since 26 Sep 2026 (ebd0a9c) a mock serves only answer-checked
+// questions (src/lib/served-paper.ts), so each set served 0 questions and
+// opened on "This mock is being rebuilt" — 105 sets for 34 students, US$4.39
+// of model spend, none played (RCA, 6 Oct 2026). The site's promise that
+// mocks serve only answer-checked questions stays; so now:
+//   • no model call, no new question: the set is up to `count` of the exam's
+//     questions that are servable (the served-paper rule) AND passed the
+//     answer check (the firewall's record, the rule of
+//     src/lib/exam-answer-check.ts, computed below as "answerChecked"), in
+//     the language of the attempt's paper, that this student has never seen
+//     in any attempt — the pressed topic first, then the attempt's other
+//     weak topics, then the topic's subject, then the whole exam
+//     (src/lib/fresh-set.ts pickFreshSet, pure);
+//   • it is an ordinary owned mock (type CHALLENGE, generatedBy
+//     FRESH_GENERATED_BY): /mocks/[id] serves it and fixes its paper when the
+//     attempt starts (src/app/mocks/[id]/page.tsx creates the attempt with
+//     paperSkeleton(servedPaperIds(...))), exactly like any other mock;
+//   • with fewer than FRESH_SET_MIN (5) left, no mock is made: 200
+//     { result: "too-few", practised, total, exam, links } and the card says
+//     how many of the exam's answer-checked questions the student has
+//     practised, with links to the topic quizzes and previous-year papers;
+//   • one set at a time per exam (review fix, 6 Oct 2026): /mocks/[id]
+//     creates the attempt as soon as the student lands, so "reuse an
+//     unstarted set" almost never applied and a press, back, press made a
+//     new set each time (and put the first set's 10 in "seen"). Now, before
+//     anything is picked, the student's latest fresh set on this exam that no
+//     attempt has submitted — not started, in progress or discarded — comes
+//     back (reused: true) and /mocks/[id] resumes or starts it; a new set is
+//     made only after the last one is submitted. The lookup is repeated
+//     under a per-student, per-exam transaction lock just before the create,
+//     so two presses at once (two tabs, a retry) make one set. That bounds
+//     the sets, so the old daily cap (it bounded model spend) is gone.
+// Signed out → 401 as before (the results page itself needs a sign-in). A
+// school container is an unknown exam here (realExamKey), so Class 1-12
+// school attempts never reach a set. The AI generator this route used
+// (src/lib/ai/on-demand-questions.ts) had no other caller and is removed.
+// Tests: tests/unit/fresh-set-core.test.ts, tests/unit/fresh-checked-set.test.ts.
 
 import { z } from "zod";
+import type { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { realExamKey } from "@/lib/db/exam-scope";
 import { bad, notFound, ok, parseBody, serverError, unauth } from "@/lib/http";
-import { generateFreshQuestions } from "@/lib/ai/on-demand-questions";
-import { AI_UNAVAILABLE_COPY } from "@/lib/ai-unavailable-copy";
-import { aiUnavailableReason, aiUnavailableReply, isOwnBadRequest, recordAiUnavailable, requestIdentity } from "@/lib/ai/unavailable-reply";
+import { WITHDRAWN_TAG } from "@/lib/question-withdrawn";
+import { canServePaper, persistedPaperIds, servedPaperIds } from "@/lib/served-paper";
+import {
+  FRESH_GENERATED_BY,
+  FRESH_SET_SIZE,
+  freshSetLinks,
+  freshTiers,
+  paperLanguage,
+  pickFreshSet,
+  weakTopicIdsOf,
+  type FreshCandidate,
+} from "@/lib/fresh-set";
 
 const Body = z.object({
   examCode: z.string(),
   topicCode: z.string(),
   count: z.number().int().min(5).max(15).optional(),
+  attemptId: z.string().min(1).max(64).optional(),
 });
 
-const FRESH_LIMIT_PER_DAY = 10;
-const GENERATED_BY = "ai:on-demand";
+/** An attempt in one of these finishes a fresh set; until then a press returns that set. */
+const FINISHED_STATUSES: ("SUBMITTED" | "AUTO_SUBMITTED")[] = ["SUBMITTED", "AUTO_SUBMITTED"];
+
+/** The most questions of the attempt's paper read to tell its language. */
+const PAPER_LANGUAGE_TAKE = 300;
+
+type Db = Pick<Prisma.TransactionClient, "mock" | "question">;
+
+/**
+ * The student's latest fresh set on this exam that no attempt has submitted,
+ * when /mocks/[id] can still serve it: one in progress resumes on the paper
+ * it started with; one not started (or discarded) starts on the served list,
+ * so that list must still be long enough to start. Null otherwise.
+ */
+async function openFreshSet(db: Db, userId: string, examId: string) {
+  const open = await db.mock.findFirst({
+    where: {
+      userId,
+      examId,
+      generatedBy: FRESH_GENERATED_BY,
+      attempts: { none: { status: { in: FINISHED_STATUSES } } },
+    },
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      title: true,
+      questionIds: true,
+      attempts: { where: { status: "IN_PROGRESS" }, select: { id: true }, take: 1 },
+    },
+  });
+  if (!open) return null;
+  if ((open.attempts?.length ?? 0) > 0) return { id: open.id, title: open.title, questionCount: open.questionIds.length };
+  const rows = await db.question.findMany({
+    where: { id: { in: open.questionIds } },
+    select: { id: true, validated: true, tags: true },
+  });
+  const served = servedPaperIds(open, new Map(rows.map((r) => [r.id, r])));
+  return canServePaper(served) ? { id: open.id, title: open.title, questionCount: served.length } : null;
+}
+
+type PoolRow = FreshCandidate & { pyqYear: number | null };
 
 export async function POST(req: Request) {
-  // Known to the catch (the analytics row of an AI-unavailable failure).
-  let who: string | null = null;
   try {
     const session = await auth();
     if (!session?.user?.id) return unauth();
     const userId = session.user.id;
-    who = userId;
-    const body = await parseBody(req, Body);
-    const count = body.count ?? 10;
+
+    let body: z.infer<typeof Body>;
+    try {
+      body = await parseBody(req, Body);
+    } catch (e) {
+      // parseBody throws only its own "Invalid JSON body" / "Invalid body: …".
+      return bad(e instanceof Error ? e.message : "Invalid body");
+    }
+    const size = body.count ?? FRESH_SET_SIZE;
 
     const exam = await prisma.exam.findUnique({
       where: realExamKey({ code: body.examCode }),
-      select: { id: true, name: true, shortName: true },
+      select: { id: true, code: true, name: true, shortName: true },
     });
     if (!exam) return notFound("exam");
 
-    const topic = await prisma.topic.findFirst({
-      where: { code: body.topicCode, subject: { examId: exam.id } },
-      select: { id: true, name: true },
-    });
-    if (!topic) return notFound("topic");
+    // A set the student has not finished comes back before anything is picked.
+    const open = await openFreshSet(prisma, userId, exam.id);
+    if (open) return ok({ result: "ok", mock: { ...open, reused: true } });
 
-    // ── Rate limit ────────────────────────────────────────────────
-    const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const usedToday = await prisma.mock.count({
-      where: { userId, generatedBy: GENERATED_BY, createdAt: { gte: since } },
+    // The scope the button had: its topic (the attempt's weakest), then the
+    // attempt's other weak topics, then the topic's subject, then the exam.
+    const topics = await prisma.topic.findMany({
+      where: { subject: { examId: exam.id } },
+      select: { id: true, code: true, name: true, subjectId: true, parentId: true },
     });
-    if (usedToday >= FRESH_LIMIT_PER_DAY) {
-      return Response.json(
-        {
-          error: `You've generated ${FRESH_LIMIT_PER_DAY} fresh sets today — come back tomorrow, or practise from the existing pool.`,
-        },
-        { status: 429 },
-      );
+    const pressed = topics.find((t) => t.code === body.topicCode) ?? null;
+    let weak: string[] = [];
+    // The set's language: the attempt's paper's (EN when unknown) — 7 exams
+    // hold native-medium rows beside the English ones.
+    let language = "EN";
+    if (body.attemptId) {
+      const attempt = await prisma.attempt.findUnique({
+        where: { id: body.attemptId },
+        select: { userId: true, topicScores: true, answers: true, mock: { select: { examId: true, questionIds: true } } },
+      });
+      // Only the student's own attempt on this exam steers the pick.
+      if (attempt && attempt.userId === userId && attempt.mock?.examId === exam.id) {
+        weak = weakTopicIdsOf(attempt.topicScores);
+        const paper = persistedPaperIds(attempt.answers) ?? attempt.mock.questionIds ?? [];
+        if (paper.length > 0) {
+          const langs = await prisma.question.findMany({
+            where: { id: { in: paper.slice(0, PAPER_LANGUAGE_TAKE) } },
+            select: { language: true },
+          });
+          language = paperLanguage(langs.map((r) => r.language));
+        }
+      }
+    }
+    const tiers = freshTiers(topics, pressed?.id ?? null, weak);
+
+    // The exam's servable questions in that language (the served-paper rule),
+    // each with the answer check's own record: answerChecked is the rule of
+    // src/lib/exam-answer-check.ts (the hub FAQ's count), computed here so
+    // metadata (≈0.8 kB a row) is never read. pickFreshSet keeps only
+    // servable rows with answerChecked true, so M and N count only those.
+    // LIMIT: the largest exam held 760 servable questions on 6 Oct 2026.
+    const pool = await prisma.$queryRaw<PoolRow[]>`
+      SELECT q.id, q."topicId", q.difficulty::text AS difficulty, q.body, q."answerKey", q.validated, q.tags,
+             q."pyqYear", q.language::text AS language,
+             (COALESCE(q."validatedBy", '') LIKE 'factory:%' AND COALESCE(q.metadata ? 'factoryVerify', FALSE)) AS "answerChecked"
+        FROM "Question" q
+       WHERE q."examId" = ${exam.id} AND q.validated = TRUE AND NOT (${WITHDRAWN_TAG} = ANY(q.tags))
+         AND q.language::text = ${language}
+       ORDER BY q.id
+       LIMIT 5000`;
+
+    // Seen = every question of every attempt this student ever opened (the
+    // mock's list and the rows saved on the attempt), on this exam's questions.
+    const seenRows = await prisma.$queryRaw<{ qid: string | null }[]>`
+      SELECT DISTINCT s.qid
+        FROM (
+          SELECT unnest(m."questionIds") AS qid
+            FROM "Attempt" a JOIN "Mock" m ON m.id = a."mockId"
+           WHERE a."userId" = ${userId}
+          UNION
+          SELECT r->>'questionId' AS qid
+            FROM "Attempt" a
+            CROSS JOIN LATERAL jsonb_array_elements(
+              CASE WHEN jsonb_typeof(a.answers::jsonb) = 'array' THEN a.answers::jsonb ELSE '[]'::jsonb END
+            ) AS r
+           WHERE a."userId" = ${userId}
+        ) s
+        JOIN "Question" q ON q.id = s.qid
+       WHERE q."examId" = ${exam.id}`;
+    const seen = new Set<string>();
+    for (const r of seenRows) if (typeof r?.qid === "string" && r.qid) seen.add(r.qid);
+
+    const pick = pickFreshSet({ pool, seen, tiers, salt: userId, size, language });
+
+    if (!pick.ok) {
+      return ok({
+        result: "too-few",
+        practised: pick.practised,
+        total: pick.total,
+        available: pick.available,
+        exam: { code: exam.code, shortName: exam.shortName },
+        links: freshSetLinks(exam.code, pool.some((q) => q.pyqYear != null)),
+      });
     }
 
-    // ── Difficulty from skill ─────────────────────────────────────
-    const recent = await prisma.attempt.findMany({
-      where: {
-        userId,
-        mock: { examId: exam.id },
-        status: { in: ["SUBMITTED", "AUTO_SUBMITTED"] },
-        scorePct: { not: null },
-      },
-      orderBy: { finishedAt: "desc" },
-      take: 2,
-      select: { scorePct: true },
-    });
-    const strong =
-      recent.length >= 2 &&
-      recent.reduce((s, a) => s + (a.scorePct ?? 0), 0) / recent.length > 70;
-    const difficulty: "MEDIUM" | "HARD" = strong ? "HARD" : "MEDIUM";
+    const n = pick.ids.length;
+    const fromTopic = pressed ? pick.perTier[0] ?? 0 : 0;
+    const scopeName = pressed?.name ?? exam.shortName;
+    const title =
+      pressed && fromTopic === n
+        ? `Fresh practice — ${pressed.name} (${n} Qs)`
+        : pressed
+          ? `Fresh practice — ${pressed.name} and more ${exam.shortName} (${n} Qs)`
+          : `Fresh practice — ${exam.shortName} (${n} Qs)`;
+    const rationale =
+      pressed && fromTopic === n
+        ? `${n} answer-checked ${exam.shortName} questions on ${pressed.name} that you have not seen before.`
+        : pressed && fromTopic > 0
+          ? `${n} answer-checked ${exam.shortName} questions you have not seen before: ${fromTopic} on ${pressed.name}, the rest from your other weak areas and the wider exam.`
+          : `${n} answer-checked ${exam.shortName} questions you have not seen before, from your weak areas and the wider exam.`;
 
-    // ── Generate ──────────────────────────────────────────────────
-    const fresh = await generateFreshQuestions({
-      examShortName: exam.shortName,
-      examName: exam.name,
-      topicName: topic.name,
-      difficulty,
-      count,
-    });
-    if (fresh.length === 0) {
-      // The model answered, but with nothing usable — not an outage, so the
-      // line does not say "unavailable" (2 Oct 2026).
-      return bad(AI_UNAVAILABLE_COPY.freshFailed);
-    }
-
-    // ── Persist questions, then build the mock ────────────────────
-    const created = await prisma.$transaction(
-      fresh.map((q) =>
-        prisma.question.create({
-          data: {
-            examId: exam.id,
-            topicId: topic.id,
-            type: "MCQ",
-            source: "AI_GENERATED",
-            validated: false,
-            body: q.body,
-            options: [
-              { key: "A", text: q.options.A },
-              { key: "B", text: q.options.B },
-              { key: "C", text: q.options.C },
-              { key: "D", text: q.options.D },
-            ],
-            answerKey: q.answerKey,
-            solution: q.solution,
-            difficulty: q.difficulty,
-            language: "EN",
+    // Under a per-student, per-exam lock: a set made meanwhile (another tab,
+    // a retry) is returned instead of a second one.
+    const made = await prisma.$transaction(async (tx) => {
+      // The lock's own value is void; only the outer 1 is read back.
+      await tx.$queryRaw`SELECT 1 AS ok FROM (SELECT pg_advisory_xact_lock(hashtext(${`fresh-set:${userId}:${exam.id}`}))) AS l`;
+      const again = await openFreshSet(tx, userId, exam.id);
+      if (again) return { ...again, reused: true };
+      const mock = await tx.mock.create({
+        data: {
+          userId,
+          examId: exam.id,
+          // CHALLENGE, as every fresh set has been (the week analysis counts this type).
+          type: "CHALLENGE",
+          title,
+          config: {
+            requestType: "FRESH_CHECKED",
+            rationale,
+            topicCode: body.topicCode,
+            scope: scopeName,
+            language,
+            questionCount: n,
+            durationMin: Math.max(10, Math.round(n * 1.5)),
+            fromTopic,
+            perTier: pick.perTier,
+            pool: { total: pick.total, practised: pick.practised },
           },
-          select: { id: true },
-        }),
-      ),
-    );
-
-    const mock = await prisma.mock.create({
-      data: {
-        userId,
-        examId: exam.id,
-        type: "CHALLENGE",
-        title: `Fresh ${difficulty === "HARD" ? "challenge" : "practice"} — ${topic.name}`,
-        config: {
-          rationale: `On-demand ${difficulty.toLowerCase()} set on ${topic.name}, generated for your level.`,
-          questionCount: created.length,
-          durationMin: Math.max(10, Math.round(created.length * 1.5)),
-          requestType: "ON_DEMAND",
-          topicCode: body.topicCode,
-          difficulty,
+          questionIds: pick.ids,
+          generatedBy: FRESH_GENERATED_BY,
         },
-        questionIds: created.map((c) => c.id),
-        generatedBy: GENERATED_BY,
-      },
+        select: { id: true, title: true },
+      });
+      return { id: mock.id, title: mock.title, questionCount: n, reused: false };
     });
 
-    return ok({
-      mock: {
-        id: mock.id,
-        title: mock.title,
-        questionCount: created.length,
-        difficulty,
-        remainingToday: FRESH_LIMIT_PER_DAY - usedToday - 1,
-      },
-    });
-  } catch (err: any) {
-    // 2 Oct 2026: classify BEFORE the status check — the empty-balance error
-    // is a 400 too. This exam is a real exam (realExamKey above), never a
-    // school class.
-    const reason = aiUnavailableReason(err);
-    if (reason) {
-      console.error("[mocks/fresh] AI unavailable:", reason, err?.status ?? "", String(err?.message ?? "").slice(0, 200));
-      recordAiUnavailable({ feature: "fresh", reason, userId: who, ...requestIdentity(req), alt: "bank-test" });
-      return aiUnavailableReply("fresh");
-    }
-    // Any other model-provider error (the Anthropic SDK's APIError carries
-    // `headers` / `error`): never its text, and not "unavailable" either.
-    if (err?.headers !== undefined || err?.error?.type !== undefined) {
-      console.error("[mocks/fresh] model provider error:", err?.status, err?.message);
-      return Response.json({ error: AI_UNAVAILABLE_COPY.freshFailed }, { status: 502 });
-    }
-    // Only our own validation errors carry a message for the student.
-    if (isOwnBadRequest(err)) return bad(err.message);
+    return ok({ result: "ok", mock: made });
+  } catch (err) {
     return serverError(err);
   }
 }
