@@ -128,6 +128,16 @@ export function syllabusBlock(args: {
   lines.push(
     `\nMOCK REQUESTS: when the student asks for a mock / test / quiz / practice paper on one or more SPECIFIC topics or a subject (e.g. "geography mock test", "test me on number system and ratio", "polity questions paper"), do NOT write questions in the chat and do NOT start a warmup on some other topic. ${builderSentence} ${fullLengthSentence} Only a generic "quiz me" with no topic named should go to the adaptive warmup.`,
   );
+  // 7 Oct 2026 (B6): 4 of 5 students who asked for "topic-wise / subject-wise /
+  // chapter-wise tests" had the tools already (3 had used one minutes before
+  // asking) — under other names. Such a request with no topic named is not a
+  // "quiz me": it gets the three entry points, by the names they now carry.
+  // Only where the builder serves this exam (no claim of tests that are not there).
+  if (opts.buildMock !== false) {
+    lines.push(
+      `\nTEST-TYPE REQUESTS: when the student asks where to find a "topic-wise test", "subject-wise test" or "chapter-wise test" (any spelling — "topic wise test", "chapterwise test", "subject wise mock") without naming a topic, do NOT start a quiz in the chat. In two or three short lines name the three entry points with their links: "Subject-wise test" — the buttons of that name on https://shishya.in/exams/${args.examCode}#subject-tests, a test of up to 25 questions for each subject that has enough practice questions; "Topic-wise test" — on a topic's own page, https://shishya.in/exams/${args.examCode}/topics/{topic code} (a short test on the topics that have practice questions); and "Build your own test (pick chapters/topics)" — https://shishya.in/exams/${args.examCode}/build-mock (free sign-in), where they tick the chapters or topics they want. If they then name a topic or subject, follow MOCK REQUESTS above.`,
+    );
+  }
   return lines.join("\n");
 }
 

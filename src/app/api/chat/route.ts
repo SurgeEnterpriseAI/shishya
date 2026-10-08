@@ -826,6 +826,12 @@ async function handleChat(req: Request, turn: TurnRow): Promise<Response> {
             error: friendly,
             next: schoolFocus?.path ?? backPath,
             ...(code ? { code, more: practice.trim() } : {}),
+            // 7 Oct 2026 (B6 review): a guest turn a sign-up can carry into the
+            // new account (src/lib/guest-question-carry.ts) — the log row below
+            // will name this browser's shishya_anon cookie and hold no reply.
+            // Without it (no cookie yet: a seeded first turn can beat the
+            // analytics beacon that sets it) the chat makes no such promise.
+            ...(code && !userId && anonId && !schoolCtx && !full && !anonLogged ? { carry: true } : {}),
           })}\n\n`,
         );
         // A failed guest turn is logged too, with no reply (24 Sep 2026) —

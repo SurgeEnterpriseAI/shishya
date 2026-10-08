@@ -167,6 +167,24 @@ describe("the promise is made only when the failed mark landed", () => {
     const f = errorFrame(await (await post({ general: true, message: "What is GDP?" })).text());
     expect(f.code).toBe(TUTOR_UNAVAILABLE_CODE.guest);
     expect(state.raw).toEqual([]);
+    // 7 Oct 2026 (B6 review): no shishya_anon cookie — the log row names no browser, so a sign-up could never carry it.
+    expect(f.carry).toBeUndefined();
+  });
+
+  it("a guest turn with this browser's cookie and no reply says carry: a sign-up can take it into the account (B6)", async () => {
+    state.session = null;
+    const res = await POST(
+      new Request("http://localhost/api/chat", {
+        method: "POST",
+        headers: { "content-type": "application/json", "user-agent": UA, cookie: "shishya_anon=anon-1" },
+        body: JSON.stringify({ general: true, message: "What is GDP?" }),
+      }),
+    );
+    const f = errorFrame(await res.text());
+    expect(f).toMatchObject({ code: TUTOR_UNAVAILABLE_CODE.guest, carry: true });
+    // A member's failure never carries the flag (its row is marked instead).
+    state.session = { user: { id: "u1" } };
+    expect(errorFrame(await (await post({ general: true, message: "What is GDP?" })).text()).carry).toBeUndefined();
   });
 });
 

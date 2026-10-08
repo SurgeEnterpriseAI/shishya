@@ -81,6 +81,18 @@
 // answered" at its top, above everything else, with a link to that
 // conversation. A Recent chats line whose conversation holds one reads "new
 // answer", in green.
+//
+// First answer (8 Oct 2026 — src/lib/chat-first-answer.ts, founder: sign-ups
+// from guests after their first question): while a guest's FIRST answered
+// turn is the latest turn, the save card's place holds the first-answer card
+// (src/app/chat/FirstAnswerOffer.tsx) — a reason tied to what they asked (the
+// guest quiz's score, the exam's tests, or saved chats), the shared button
+// under door id "chat-first-answer" (its link names the door in the callback,
+// so the SIGNUP row carries it), brought into view when it comes up, and one
+// "signin-door" shown row once it is on screen. The save card comes back from
+// the second answer on (guestOffer "save"): one invitation a screen. Never in
+// a school chat, after the under-13 line or on a kids' exam chat (the save
+// card stays as it was there).
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -89,6 +101,16 @@ import { TalkToTeacher } from "@/components/TalkToTeacher";
 import { SCHOOL_CAP_CODE, SCHOOL_TUTOR_CAP_COPY, SCHOOL_TUTOR_DAILY_CAP } from "@/lib/school/tutor-cap";
 import { UNDER13_CLOSED } from "@/lib/under13";
 import { markSeedFired, seedFingerprint, stripSeedParam, wasSeedFiredRecently } from "@/lib/chat-seed-once";
+import {
+  dropGuestQuestionCarry,
+  guestQuestionDoor,
+  keepGuestQuestionCarry,
+  postGuestQuestionCarry,
+  questionCarryDecision,
+  readGuestQuestionCarry,
+  type KeptQuestionCarry,
+} from "@/lib/guest-question-carry";
+import { GuestQuestionDoor } from "./GuestQuestionDoor";
 import {
   GUEST_CHAT_MAX_TURNS,
   carryDecision,
@@ -123,6 +145,7 @@ import {
   GUEST_RESTORED_NOTE,
   TUTOR_UNAVAILABLE_CODE,
   dropGuestUnanswered,
+  guestQuestionCarriedNote,
   isTutorUnavailableCode,
   keepGuestUnanswered,
   lateAnswerNote,
@@ -133,6 +156,8 @@ import {
 } from "@/lib/tutor-unavailable";
 import { SignUpButton } from "@/components/SignUpButton";
 import { signUpLabel } from "@/lib/signup-cta-copy";
+import { firstAnswerHref, firstQuestionOf, guestChatOffer } from "@/lib/chat-first-answer";
+import { FirstAnswerOffer } from "./FirstAnswerOffer";
 import type { PickupAnsweredView } from "@/lib/pickup";
 
 // AI unavailable (1 Oct 2026, src/lib/tutor-unavailable.ts): an error event
@@ -145,6 +170,20 @@ import type { PickupAnsweredView } from "@/lib/pickup";
 // "saved in this browser" only when the browser actually kept it. A reply
 // the late-answer run stored carries "Answered later — our AI tutor was
 // unavailable when you asked." (a replayed one too).
+// 7 Oct 2026 (B6, src/lib/guest-question-carry.ts): when the browser kept a
+// guest's question (no part of the reply had streamed, and the route said
+// `carry: true` — its log row names this browser), the notice is followed by
+// the sign-up door (GuestQuestionDoor: "Sign up free and we'll
+// answer this question here as soon as the tutor is back." over the shared
+// white button, door id "chat-unanswered") — never in a school chat, never
+// once the under-13 line closed it, never on a kids' exam chat, and not while
+// the save card is up (that card's press carries the question too: any /login
+// press while the door is up keeps it for 30 minutes). The banner's button
+// steps aside while the door is up (one invitation a screen). Signed in, this
+// chat posts the kept question once (after the guest chat's import, into that
+// conversation when it is the same scope) and shows it as "Not answered —
+// Retry" with "Your question is saved to your account …"; the late-answer run
+// answers it here.
 
 /** localStorage, or null when the browser blocks it. */
 function localStore(): StorageLike | null {
@@ -400,6 +439,8 @@ export function ChatInterface({
   const [toolStatus, setToolStatus] = useState<string | null>(null);
   const [creatingDiag, setCreatingDiag] = useState(false);
   const [importedNote, setImportedNote] = useState<string | null>(null);
+  // 7 Oct 2026 (B6): a guest's unanswered question the sign-up carried is on screen.
+  const [carriedNote, setCarriedNote] = useState(false);
   // School chat (26 Sep 2026): the daily cap. Reached on load, or when a
   // turn's done event carries the cap code — the composer closes and the
   // line stays; a reload asks the server again.
@@ -477,6 +518,22 @@ export function ChatInterface({
   function keepGuestChatForSignIn() {
     if (!guestSignInHref || school || under13Ref.current) return;
     keepGuestChat(examCode ?? null, messagesRef.current);
+    keepQuestionForSignUp();
+  }
+
+  // 7 Oct 2026 (B6): the guest's question the AI could not answer, while its
+  // sign-up door is open (null otherwise). Any sign-in press on the page then
+  // keeps it for the account (src/lib/guest-question-carry.ts).
+  const [questionDoor, setQuestionDoor] = useState<string | null>(null);
+  const questionDoorRef = useRef<string | null>(null);
+  questionDoorRef.current = questionDoor;
+  // Set by send() once any of the reply streamed: the door stays shut then
+  // (the server carries only a guest turn that got no reply at all).
+  const streamedRef = useRef(false);
+  function keepQuestionForSignUp() {
+    const q = questionDoorRef.current;
+    if (!q || !guestSignInHref || school || under13Ref.current) return;
+    keepGuestQuestionCarry({ text: q, examCode: examCode ?? null, topicCode: topicFocus?.code ?? null });
   }
 
   // 30 Sep 2026: every sign-in link on the guest chat's page keeps it — the
@@ -512,6 +569,7 @@ export function ChatInterface({
   }, []);
   useEffect(() => {
     if (under13) dropGuestUnanswered(localStore());
+    if (under13) dropGuestQuestionCarry();
   }, [under13]);
   // 1 Oct 2026 review: a member's general or exam chat lets go of any guest's
   // kept question in this browser — on a shared device (a cyber-café PC) it
@@ -530,6 +588,18 @@ export function ChatInterface({
     if (code === TUTOR_UNAVAILABLE_CODE.guest && guestSignInHref && !school && !under13Ref.current) {
       saved = keepGuestUnanswered(localStore(), { text: question, examCode: examCode ?? null }, Date.now());
     }
+    // 7 Oct 2026 (B6): the sign-up door under the notice (see the header).
+    const door = guestQuestionDoor({
+      code,
+      carriable: p?.carry === true,
+      kept: saved,
+      streamed: streamedRef.current,
+      guest: !!guestSignInHref,
+      school: !!school,
+      under13: under13Ref.current,
+      examCode: examCode ?? null,
+    });
+    setQuestionDoor(door ? question.trim() : null);
     const more = typeof p?.more === "string" && p.more.trim() ? ` ${p.more.trim()}` : "";
     return `${tutorUnavailableText(tutorUnavailableState(code, saved), uiLang())}${more}`;
   }
@@ -544,6 +614,16 @@ export function ChatInterface({
     // guest chat waits for its own page, as it does for a seeded chat.
     if (guestSignInHref || school || resume || importTriedRef.current) return;
     importTriedRef.current = true;
+    // 7 Oct 2026 (B6): a guest's unanswered question kept at sign-up, for this
+    // chat's scope (never over a seed) — saved as this account's question once
+    // the guest chat (if any) is imported, at the end of that conversation.
+    const question = readGuestQuestionCarry();
+    const qAction = questionCarryDecision(question, {
+      childPath: false,
+      chatScope: { examCode: examCode ?? null, seeded: !!(initialSeed && initialSeed.trim()) },
+    });
+    if (qAction === "drop") dropGuestQuestionCarry();
+    const carried = qAction === "post" && question && question !== "expired" ? question : null;
     const kept = readKeptGuestChat();
     // Another chat (other exam, or general) keeps the key for its own page;
     // a seeded chat starts its own turn right away — don't race it.
@@ -551,8 +631,11 @@ export function ChatInterface({
       childPath: false,
       chatScope: { examCode: examCode ?? null, seeded: !!(initialSeed && initialSeed.trim()) },
     });
-    if (action === "drop") return dropKeptGuestChat();
-    if (!kept || kept === "expired" || action === "none") return;
+    if (action === "drop") {
+      dropKeptGuestChat();
+      return carryQuestion(carried, null);
+    }
+    if (!kept || kept === "expired" || action === "none") return carryQuestion(carried, null);
     const show = (sid: string, turns: { role: string; content: string }[]) => {
       if (!sentRef.current) {
         setMessages(
@@ -573,9 +656,11 @@ export function ChatInterface({
       dropKeptGuestChat();
       show(kept.importedSessionId, kept.turns);
       beacon({ cta: "chat-guest-restored", surface: "chat", examCode, pairs: Math.floor(kept.turns.length / 2) });
+      carryQuestion(carried, { sessionId: kept.importedSessionId, turns: kept.turns });
       return;
     }
     void postGuestChatImport({ ...kept, turns: kept.turns.slice(-GUEST_CHAT_MAX_TURNS) }).then((r) => {
+      carryQuestion(carried, r.status === "imported" ? { sessionId: r.sessionId, turns: r.turns } : null);
       if (r.status === "retry") return; // the key stays for a later visit
       dropKeptGuestChat();
       if (r.status !== "imported") return;
@@ -584,6 +669,42 @@ export function ChatInterface({
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  /** Post the question a guest's sign-up carried (B6, src/lib/guest-question-carry.ts)
+   *  and show it as this account's saved, unanswered question — "Not answered —
+   *  Retry" (the row's own turnId, so Retry re-sends that very row), under the
+   *  imported turns when it went into that conversation. */
+  function carryQuestion(c: KeptQuestionCarry | null, into: { sessionId: string; turns: { role: string; content: string }[] } | null) {
+    if (!c) return;
+    void postGuestQuestionCarry(c, into?.sessionId ?? null).then((r) => {
+      if (r.status === "retry") return; // the key stays for a later visit
+      dropGuestQuestionCarry();
+      if (r.status !== "saved") {
+        // Review (same day): not saved after all (no guest log for this
+        // browser, the day's cap, …) — the door's promise cannot be kept, so
+        // the question is not lost: it goes back in the box, unsent, with the
+        // line that says so (GUEST_RESTORED_NOTE).
+        if (!sentRef.current) {
+          setInput((cur) => (cur.trim() ? cur : c.text));
+          setGuestRestored(true);
+        }
+        return;
+      }
+      const appended = !!into && r.sessionId === into.sessionId;
+      beacon({ cta: "chat-question-carried", surface: "chat", examCode, appended });
+      if (sentRef.current) return;
+      const before: Message[] = appended
+        ? into!.turns.map((t, i) => ({ id: `g-${i}`, role: t.role === "assistant" ? ("assistant" as const) : ("user" as const), content: t.content }))
+        : [];
+      setMessages([
+        ...before,
+        { id: "carried-u", role: "user", content: r.text, ...(r.turnId ? { turnId: r.turnId } : {}) },
+        { id: "carried-a", role: "assistant", content: "", failed: true },
+      ]);
+      setSessionId(r.sessionId);
+      setCarriedNote(true);
+    });
+  }
 
   // When the user lands here from a topic page (e.g. clicked "Open Shishya
   // tutor" on Number System), auto-fire the seed prompt so the tutor starts
@@ -698,6 +819,9 @@ export function ChatInterface({
     setImportedNote(null);
     setSeedHeld(false);
     setGuestRestored(false);
+    setCarriedNote(false);
+    setQuestionDoor(null);
+    streamedRef.current = false;
     // Snapshot prior turns BEFORE we append the new message. Sent in the
     // request body so anonymous (signed-out) chats — which aren't stored
     // server-side — still get multi-turn context. Signed-in chats ignore
@@ -779,6 +903,7 @@ export function ChatInterface({
               if (parsed?.sessionId) setSessionId(parsed.sessionId);
             } catch {}
           } else if (event === "delta") {
+            streamedRef.current = true;
             try {
               const parsed = JSON.parse(data);
               setToolStatus(null);
@@ -916,6 +1041,23 @@ export function ChatInterface({
   // appears. Once one reply has finished it stays away (no blink while a
   // later reply streams).
   const guestHasReply = messages.some((m, i) => m.role === "assistant" && m.content && !m.failed && !(busy && i === messages.length - 1));
+  // 7 Oct 2026 (B6): the unanswered question's sign-up door — under the notice,
+  // never while answering, and not while the save card is up (its press
+  // carries the question too). The banner's button steps aside meanwhile.
+  const questionDoorUp =
+    !!questionDoor && !!guestSignInHref && !school && !under13 && !busy && !messages.some((m) => m.role === "assistant" && m.content && !m.failed);
+  // 8 Oct 2026: the one guest invitation in the message pane — the first-answer
+  // card while the first answered turn is the latest, the save card after
+  // that, none while answering (src/lib/chat-first-answer.ts).
+  const guestOffer = guestChatOffer({
+    guest: !!guestSignInHref,
+    school: !!school,
+    under13,
+    busy,
+    questionDoorUp,
+    examCode: examCode ?? null,
+    messages,
+  });
 
   return (
     <>
@@ -932,7 +1074,7 @@ export function ChatInterface({
     {guestBanner && guestSignInHref && !school && !under13 && (
       <div className="mt-2 rounded-md bg-saffron-50 px-3 py-2 ring-1 ring-saffron-200">
         <p data-su-reason className="text-xs text-ink-600">{guestBanner.text}</p>
-        {!guestHasReply && (
+        {!guestHasReply && !questionDoorUp && (
           <SignUpButton
             href={`${guestSignInHref}&from=chat-banner`}
             surface="chat-banner"
@@ -1154,14 +1296,37 @@ export function ChatInterface({
         {importedNote && (
           <p className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">✓ {importedNote}</p>
         )}
+        {carriedNote && (
+          <p className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">✓ {guestQuestionCarriedNote(navLang)}</p>
+        )}
+
+        {/* 8 Oct 2026: the first answer's sign-up card, in the save card's
+            place while the guest's first answered turn is the latest (see the
+            header and src/lib/chat-first-answer.ts) — a reason tied to what
+            they asked, door id "chat-first-answer", brought into view. */}
+        {guestOffer === "first-answer" && guestSignInHref && (
+          <FirstAnswerOffer
+            href={firstAnswerHref(guestSignInHref)}
+            locale={navLang}
+            exam={examShortName}
+            examCode={examCode}
+            firstQuestion={firstQuestionOf(messages)}
+            pane={scrollRef}
+            onSignInClick={keepGuestChatForSignIn}
+          />
+        )}
 
         {/* Guest save card — once the tutor has answered; the callback brings
             them straight back to this chat (general chats to /chat?general=1),
             where the conversation is saved (16 Sep 2026 — it used to be lost).
             30 Sep 2026 (sign-up build 2): after the FIRST completed reply (was
             the second), and a full-width button instead of a text-xs link —
-            1 tap in two weeks. No timer, no counter, never over the chat. */}
-        {guestSignInHref && !school && !under13 && !busy && messages.some((m) => m.role === "assistant" && m.content && !m.failed) && (
+            1 tap in two weeks. No timer, no counter, never over the chat.
+            8 Oct 2026: from the SECOND answer on (guestOffer "save"); while
+            the first answered turn is the latest, the first-answer card above
+            stands here instead — except on a kids' exam chat, where this card
+            stays as it was. */}
+        {guestSignInHref && !school && !under13 && !busy && guestOffer === "save" && (
           <div className="rounded-md border border-saffron-200 bg-saffron-50/60 p-3">
             {/* 2 Oct 2026 (founder, standing: "Sign up with Google"): the card
                 says what it is for in a line (the words the old button
@@ -1244,6 +1409,16 @@ export function ChatInterface({
           <div className="rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-800">
             {error}
           </div>
+        )}
+        {/* 7 Oct 2026 (B6): sign up and the unanswered question is answered here (see the header). */}
+        {questionDoorUp && (
+          <GuestQuestionDoor
+            href={`${guestSignInHref}&from=chat-unanswered`}
+            locale={navLang}
+            exam={examShortName}
+            examCode={examCode}
+            onSignInClick={keepQuestionForSignUp}
+          />
         )}
       </div>
 

@@ -132,6 +132,12 @@ export const SIGNIN_SURFACES = [
   // /find-your-exam, the bottom card under a guest's results ("Pick your #1
   // and start today"): it told a guest to sign in and had no sign-in button.
   "finder-start",
+  // 7 Oct 2026 (B6): the guest tutor's "AI unavailable" notice — sign up and
+  // the question is answered in the new account (src/lib/guest-question-carry.ts).
+  "chat-unanswered",
+  // 8 Oct 2026: the guest tutor's card under its FIRST answer (the save
+  // card's place while that answer is the latest — src/lib/chat-first-answer.ts).
+  "chat-first-answer",
   // Any other link to /login (the click listener's fallback).
   "link",
 ] as const;
@@ -325,9 +331,98 @@ export function practiceDoorCallback(door: Practice401Door, examCode: string): s
   return `/exams/${examCode}#custom-mock`;
 }
 
-/** One "the 401 door's button opened" beacon. Best-effort. */
-export function signinDoorShownBeacon(surface: Practice401Door, extra?: Record<string, unknown>): void {
+/** One "the door's button opened" beacon (a 401 door, or one of the tutor's
+ *  doors below). Best-effort. */
+export function signinDoorShownBeacon(surface: Practice401Door | ChatDoor, extra?: Record<string, unknown>): void {
   ctaBeacon(SIGNIN_DOOR_CTA, { ...extra, action: "shown", surface });
+}
+
+/** True when a "signin-door" shown row stands for a PRESS (8 Oct 2026). A 401
+ *  door's row is sent when the student pressed a practice button and the API
+ *  said 401 — a press (the general reads count it as one, see above). The
+ *  tutor's doors (chat-unanswered, chat-first-answer) send theirs when the
+ *  card comes up on screen — an IMPRESSION: a read that counts shown rows as
+ *  presses must take only the doors this says yes to. */
+export function doorShownIsPress(surface: unknown): boolean {
+  return typeof surface === "string" && (PRACTICE_401_DOORS as readonly string[]).includes(surface);
+}
+
+// ── The tutor's unanswered-question door (7 Oct 2026, B6) ──────────────
+// A guest's tutor question failed because the AI was unavailable: the notice
+// offers the shared "Sign up with Google" button, and the question is saved
+// to the new account and answered there later (src/lib/guest-question-carry.ts,
+// src/app/chat/GuestQuestionDoor.tsx). Counted like the 401 doors: ONE
+// { cta: "signin-door", action: "shown", surface: "chat-unanswered", examCode,
+// impression: true } (an impression, not a press — doorShownIsPress)
+// when it opens, and "signin-click" with the same surface when the button is
+// pressed (SignInLink). Not in the skip-/login test.
+
+/** The door id of the tutor's unanswered-question notice. */
+export const CHAT_QUESTION_DOOR = "chat-unanswered" as const satisfies SigninSurface;
+
+/** True when a guest chat on this exam may show the door. The general chat
+ *  (null) may; an exam chat as the 401 doors (practiceDoorInline): never a
+ *  school class container, a kids' olympiad or an under-13 entry test. */
+export function chatQuestionDoorAllowed(examCode: string | null | undefined): boolean {
+  if (examCode == null) return true;
+  return practiceDoorInline(examCode);
+}
+
+// ── The tutor's first-answer card (8 Oct 2026) ──────────────────────────
+// A guest's FIRST answered tutor turn: the save card's place holds a card with
+// a reason tied to what they asked (src/lib/chat-first-answer.ts,
+// src/app/chat/FirstAnswerOffer.tsx). Counted like the door above: ONE
+// { cta: "signin-door", action: "shown", surface: "chat-first-answer",
+// examCode, variant, impression: true } once half the card is on screen, and
+// "signin-click" with the same surface on a press (SignInLink). Same kids'-exam
+// rule as the door above (chatQuestionDoorAllowed). Not in the skip-/login test.
+
+/** The door id of the tutor's first-answer card. */
+export const CHAT_FIRST_ANSWER_DOOR = "chat-first-answer" as const satisfies SigninSurface;
+
+/** The tutor's doors: their "shown" row is an impression (doorShownIsPress). */
+export type ChatDoor = typeof CHAT_QUESTION_DOOR | typeof CHAT_FIRST_ANSWER_DOOR;
+
+// ── The door, carried to the SIGNUP row (8 Oct 2026) ────────────────────
+// 7 of the 16 tutor askers who made an account in 30 days had no sign-in
+// press on record before it (a beacon lost to the navigation, an ad blocker),
+// and the SIGNUP row's callbackPath is a path only ("/chat" for every chat
+// door). A door that tags its link with loginHrefWithDoor puts its id in the
+// CALLBACK itself (…/chat?examCode=X&door=chat-first-answer), which NextAuth
+// keeps in its callback-url cookie until the account is made; the SIGNUP
+// event then carries props.door (signupEventProps). The chat page ignores the
+// parameter. Only a known door id is ever kept (no free text rides in it).
+
+/** The callback's query parameter that names the door. */
+export const CALLBACK_DOOR_PARAM = "door";
+
+/** A /login link whose CALLBACK names the door (`door=…`) and whose own
+ *  ?from= is the door too. Anything that is not a /login link comes back unchanged. */
+export function loginHrefWithDoor(loginHref: string, door: SigninSurface): string {
+  let u: URL;
+  let cb: URL;
+  try {
+    u = new URL(loginHref, "https://shishya.in");
+    if (u.pathname !== "/login") return loginHref;
+    cb = new URL(callbackOfLoginHref(loginHref), "https://shishya.in");
+  } catch {
+    return loginHref;
+  }
+  cb.searchParams.set(CALLBACK_DOOR_PARAM, door);
+  u.searchParams.set("callbackUrl", `${cb.pathname}${cb.search}${cb.hash}`);
+  u.searchParams.set("from", door);
+  return `${u.pathname}${u.search}`;
+}
+
+/** The door a same-site callback names (loginHrefWithDoor), or null. */
+export function callbackDoor(callback: string | null | undefined): SigninSurface | null {
+  if (typeof callback !== "string" || !callback || !sitePathOnly(callback)) return null;
+  try {
+    const v = new URL(callback, "https://shishya.in").searchParams.get(CALLBACK_DOOR_PARAM);
+    return isSigninSurface(v) && v !== "link" ? v : null;
+  } catch {
+    return null;
+  }
 }
 
 /** What a signed-in arrival on /exams/CODE?start=… does (30 Sep 2026, HUB
@@ -386,7 +481,9 @@ export function parseLandingCookie(raw: string | null | undefined): string | nul
  *  (src/lib/utm-content.ts: a slug of at most 64 characters; an email- or
  *  phone-like value is dropped). It rides in props like the page view's: the
  *  SIGNUP row has columns for utm_source / utm_medium / utm_campaign only.
- *  Absent → no key, so every older read sees the same props. */
+ *  Absent → no key, so every older read sees the same props.
+ *  8 Oct 2026: + door — the sign-in door its callback names (callbackDoor;
+ *  only a door that tags its link, so far "chat-first-answer"). Absent → no key. */
 export function signupEventProps(p: {
   school: boolean;
   callback: string | null | undefined;
@@ -401,6 +498,10 @@ export function signupEventProps(p: {
   if (landing) props.landingPath = landing;
   const utmContent = cleanUtmContent(p.utmContent);
   if (utmContent) props.utmContent = utmContent;
+  // 8 Oct 2026: the door the sign-in started from, when its link named it in
+  // the callback (loginHrefWithDoor — the tutor's first-answer card). Absent → no key.
+  const door = callbackDoor(p.callback);
+  if (door) props.door = door;
   return props;
 }
 

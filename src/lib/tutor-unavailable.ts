@@ -26,6 +26,14 @@
 //     nothing, as src/lib/guest-chat-carry.ts);
 //   • any other failure keeps the old "Something went wrong on our side" line
 //     and promises nothing.
+// 7 Oct 2026 (B6): a guest's "saved in this browser" was a dead end. When the
+// browser kept the question, the notice now also offers the standing sign-up
+// door (src/app/chat/GuestQuestionDoor.tsx — GUEST_QUESTION_DOOR_REASON over
+// the white "Sign up with Google" button), and a sign-up started there carries
+// the question into the new account as a saved, failed member question, which
+// the late-answer run answers (src/lib/guest-question-carry.ts; the chat then
+// says GUEST_QUESTION_CARRIED_NOTE). Never in a school chat, never after the
+// under-13 line, never on a kids' exam chat.
 // Raw errors never reach the student.
 //
 // Pure — no DOM, no SDK. The SDK-error classifier is src/lib/ai/tutor-failure.ts.
@@ -131,6 +139,38 @@ export const GUEST_UNANSWERED_KEY = "shishya_guest_unanswered";
 export const GUEST_UNANSWERED_TTL_MS = 6 * 3600_000;
 /** = /api/chat's message limit. */
 const MAX_TEXT = 2000;
+
+/**
+ * The reason line above the guest's sign-up door (7 Oct 2026, B6 — hi / te:
+ * founder review). True only because the door shows only when this browser
+ * kept the question and the sign-up carries it into the account as a failed
+ * member question the late-answer run answers (src/lib/guest-question-carry.ts).
+ */
+export const GUEST_QUESTION_DOOR_REASON: Readonly<Record<TutorUiLang, string>> = {
+  en: "Sign up free and we'll answer this question here as soon as the tutor is back.",
+  hi: "मुफ़्त साइन अप करें — ट्यूटर के लौटते ही हम इस सवाल का जवाब यहीं देंगे।",
+  te: "ఉచితంగా సైన్ అప్ చేయండి — ట్యూటర్ తిరిగి రాగానే ఈ ప్రశ్నకు ఇక్కడే సమాధానం ఇస్తాం.",
+};
+
+export function guestQuestionDoorReason(uiLang: string | null | undefined): string {
+  return GUEST_QUESTION_DOOR_REASON[lang(uiLang)];
+}
+
+/**
+ * Signed in after the door: the carried question is in the chat as "Not
+ * answered — Retry" (B6 — hi / te: founder review; "Retry" is the button's own
+ * word in each language, ChatInterface TURN_COPY.retry). No email is promised:
+ * the door promised none.
+ */
+export const GUEST_QUESTION_CARRIED_NOTE: Readonly<Record<TutorUiLang, string>> = {
+  en: "Your question is saved to your account. We'll answer it here as soon as our AI tutor is back — or press Retry to try now.",
+  hi: "आपका सवाल आपके अकाउंट में सेव है। हमारा AI ट्यूटर लौटते ही हम यहीं जवाब देंगे — या अभी आज़माने के लिए “फिर से भेजें” दबाएँ।",
+  te: "మీ ప్రశ్న మీ అకౌంట్‌లో సేవ్ అయింది. మా AI ట్యూటర్ తిరిగి రాగానే ఇక్కడే సమాధానం ఇస్తాం — లేదా ఇప్పుడే ప్రయత్నించడానికి “మళ్లీ పంపండి” నొక్కండి.",
+};
+
+export function guestQuestionCarriedNote(uiLang: string | null | undefined): string {
+  return GUEST_QUESTION_CARRIED_NOTE[lang(uiLang)];
+}
 
 /** Shown when a kept question is put back in the box. */
 export const GUEST_RESTORED_NOTE: Readonly<Record<TutorUiLang, string>> = {

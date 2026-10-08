@@ -18,11 +18,15 @@
 // #subject-tests, and sends one "signin-door" shown beacon; the button's own
 // click sends the "signin-click" (surface "subject-test-401") from then on.
 // On a SOF / Silverzone / NSTSE hub the 401 keeps the /login redirect.
+// 7 Oct 2026 (B6): the button says "Subject-wise test" — what students type
+// when they ask the tutor for one (4 of 5 who asked had this button already;
+// it read "25-question English test →"). The subject and the size stay.
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { loginHrefFor, practiceDoorCallback, practiceDoorInline, signinBeacon, signinDoorShownBeacon } from "@/lib/signin-cta";
 import { PracticeSignUpDoor } from "./PracticeSignUpDoor";
+import { subjectTestLabel } from "@/lib/test-type-names";
 
 interface Props {
   examCode: string;
@@ -95,7 +99,7 @@ export function SubjectTestButton({ examCode, subjectCode, subjectName, availabl
         disabled={busy}
         className="inline-flex w-full items-center justify-center rounded-md bg-saffron-500 px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-saffron-600 disabled:cursor-wait disabled:opacity-70"
       >
-        {busy ? "Building your test…" : `${qCount}-question ${subjectName} test →`}
+        {busy ? "Building your test…" : subjectTestLabel(subjectName, qCount)}
       </button>
       {err && <p className="mt-1 text-xs text-rose-700">{err}</p>}
     </div>

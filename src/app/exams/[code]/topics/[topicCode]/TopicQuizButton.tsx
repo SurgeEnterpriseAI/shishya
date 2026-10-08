@@ -16,6 +16,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { loginHrefFor, signinBeacon } from "@/lib/signin-cta";
+import { topicTestHeading } from "@/lib/test-type-names";
 
 interface Props {
   examCode: string;
@@ -65,7 +66,8 @@ export function TopicQuizButton({ examCode, topicCode, topicName, examShort }: P
     <div className="mt-5 rounded-lg border border-saffron-300 bg-gradient-to-r from-saffron-50 to-amber-50 p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-sm font-bold text-ink-900">Test yourself on {topicName}</p>
+          {/* 7 Oct 2026 (B6): named as students ask for it ("Test yourself on …" until then). */}
+          <p className="text-sm font-bold text-ink-900">{topicTestHeading(topicName)}</p>
           <p className="mt-0.5 text-xs text-ink-600">
             5 quick {examShort} questions with instant scoring — see where you stand in ~3 minutes.
           </p>

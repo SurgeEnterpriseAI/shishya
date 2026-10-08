@@ -5,7 +5,10 @@
 //   1. a guest's tutor chat, kept when the guest pressed sign-in on the chat
 //      (src/lib/guest-chat-carry.ts), is imported once on whichever page the
 //      browser lands after signing in — the chat page does its own import,
-//      so it is skipped there;
+//      so it is skipped there. 7 Oct 2026 (B6): so is a guest's unanswered
+//      question kept at sign-up (src/lib/guest-question-carry.ts) — saved as
+//      the account's question, at the end of that imported chat when there is
+//      one; the strip's chat line then links the saved conversation;
 //   2. the one-time "Your Shishya is ready" strip: only when createUser left
 //      its cookie (src/lib/welcome-strip.ts), only where a paper is not in
 //      progress or about to open, and only if GET /api/me/welcome says so.
@@ -28,6 +31,13 @@ import {
   postGuestChatImport,
   readKeptGuestChat,
 } from "@/lib/guest-chat-carry";
+import {
+  carriedQuestionHref,
+  dropGuestQuestionCarry,
+  postGuestQuestionCarry,
+  questionCarryDecision,
+  readGuestQuestionCarry,
+} from "@/lib/guest-question-carry";
 import { WELCOME_CTA, cookieHasWelcome, welcomeCookieClearString, welcomeStripAllowedHere, type WelcomeData } from "@/lib/welcome-strip";
 
 const WelcomeStripPanel = dynamic(() => import("./WelcomeStripPanel").then((m) => m.WelcomeStripPanel), { ssr: false });
@@ -62,17 +72,44 @@ export function WelcomeStrip() {
       carryStarted = true;
       const kept = readKeptGuestChat();
       const action = carryDecision(kept, { childPath: false, chatScope: null });
-      if (action === "drop") dropKeptGuestChat();
-      else if (action === "import" && kept && kept !== "expired") {
+      // 7 Oct 2026 (B6): a guest's unanswered question kept at sign-up
+      // (src/lib/guest-question-carry.ts) — after the chat's import, and at
+      // the end of that chat when the import saved one of the same scope.
+      const question = readGuestQuestionCarry();
+      const qAction = questionCarryDecision(question, { childPath: false, chatScope: null });
+      if (qAction === "drop") dropGuestQuestionCarry();
+      const carried = qAction === "post" && question && question !== "expired" ? question : null;
+      const carryQuestion = (into: { sessionId: string; examCode: string | null } | null) => {
+        if (!carried) return;
+        const target = into && (into.examCode ?? null) === (carried.examCode ?? null) ? into.sessionId : null;
+        void postGuestQuestionCarry(carried, target).then((q) => {
+          if (q.status === "retry") return; // the key stays for a later page
+          dropGuestQuestionCarry();
+          if (q.status !== "saved") return;
+          ctaBeacon("chat-question-carried", { surface: "page", examCode: carried.examCode, appended: q.sessionId === target });
+          // The chat page's restore of an imported chat would show it without
+          // the question: the stored conversation is the one to open.
+          if (q.sessionId === target) dropKeptGuestChat();
+          if (alive) setChatHref(carriedQuestionHref(carried.examCode, q.sessionId));
+        });
+      };
+      if (action === "drop") {
+        dropKeptGuestChat();
+        carryQuestion(null);
+      } else if (action === "import" && kept && kept !== "expired") {
         void postGuestChatImport(kept).then((r) => {
           if (r.status === "imported") {
             markGuestChatImported(kept, r.sessionId, r.turns);
             ctaBeacon("chat-guest-imported", { surface: "page", examCode: kept.examCode, pairs: Math.floor(r.turns.length / 2) });
             if (alive) setChatHref(guestChatHref(kept.examCode));
-          } else if (r.status === "done") {
-            dropKeptGuestChat();
+            carryQuestion({ sessionId: r.sessionId, examCode: kept.examCode });
+          } else {
+            if (r.status === "done") dropKeptGuestChat();
+            carryQuestion(null);
           }
         });
+      } else {
+        carryQuestion(null);
       }
     }
 

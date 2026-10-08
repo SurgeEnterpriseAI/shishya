@@ -485,6 +485,10 @@ const DOOR_RETURNS: Readonly<Record<string, RegExp>> = {
   "live-test": /^\/live-test$/,
   "chat-banner": /^\/chat$/,
   "chat-save": /^\/chat$/,
+  // 7 Oct 2026 (B6): the tutor's unanswered-question door takes the save card's entries (below).
+  "chat-unanswered": /^\/chat$/,
+  // 8 Oct 2026: the tutor's first-answer card — the save card's entries too (below).
+  "chat-first-answer": /^\/chat$/,
   vouch: /^\/community-vouching\/[^/]+$/,
 };
 
@@ -656,7 +660,15 @@ export function signUpPlaceFor(p: SignUpPlaceInput): SignUpPlace {
       return paper ? { key: "door.live-test", vars: { exam: paper } } : { key: "door.live-test.unnamed" };
     }
     case "chat-banner":
-    case "chat-save": {
+    case "chat-save":
+    // 7 Oct 2026 (B6): no entry of its own (no new words in the table): the
+    // save card's — "the chats you have from then on are saved", which a
+    // sign-up there makes true. The door's own line says the rest.
+    case "chat-unanswered":
+    // 8 Oct 2026: the first-answer card stands in the save card's place and
+    // takes its entries (no new words in the table); its own reason line is
+    // src/lib/chat-first-answer.ts.
+    case "chat-first-answer": {
       if (!here) return FALLBACK;
       if (exam && olympiad) return OLYMPIAD;
       if (p.surface === "chat-banner") return exam ? { key: can ? "door.chat-banner.exam.practice" : "door.chat-banner.exam", vars } : { key: "door.chat-banner.general" };

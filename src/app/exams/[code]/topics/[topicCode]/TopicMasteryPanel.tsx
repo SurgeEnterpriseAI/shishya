@@ -5,13 +5,15 @@
 //   • auto-stamps "read" when a signed-in student opens the notes
 //   • shows their mastery meter for THIS topic (from real test data)
 //   • "Mark topic done" (explicit completion — endowed progress)
-//   • "Test me (10 Qs)" → topic mock → weakness map updates → the meter
-//     moves — the loop closes.
+//   • "Topic-wise test (10 Qs)" → topic mock → weakness map updates → the
+//     meter moves — the loop closes. (7 Oct 2026, B6: it read "Test me (10
+//     Qs)"; students ask for a "topic-wise test" in those words.)
 // Renders nothing for signed-out visitors (page stays clean + cached).
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { fetchSignedIn } from "@/lib/session-hint";
+import { TOPIC_TEST_AGAIN_LABEL, TOPIC_TEST_LABEL } from "@/lib/test-type-names";
 
 export function TopicMasteryPanel({
   examCode,
@@ -145,7 +147,7 @@ export function TopicMasteryPanel({
           disabled={busy !== ""}
           className="inline-flex items-center rounded-lg bg-saffron-500 px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-saffron-600 disabled:cursor-wait disabled:opacity-70"
         >
-          {busy === "test" ? "Building…" : mastered ? "Retest me (10 Qs) →" : "Test me (10 Qs) →"}
+          {busy === "test" ? "Building…" : mastered ? TOPIC_TEST_AGAIN_LABEL : TOPIC_TEST_LABEL}
         </button>
         <button
           type="button"

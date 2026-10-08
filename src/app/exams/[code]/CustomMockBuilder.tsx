@@ -33,6 +33,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { loginHrefFor, practiceDoorCallback, practiceDoorInline, signinBeacon, signinDoorShownBeacon } from "@/lib/signin-cta";
 import { PracticeSignUpDoor } from "./PracticeSignUpDoor";
+import { BUILD_YOUR_OWN_TEST_LABEL } from "@/lib/test-type-names";
 
 const COUNTS = [10, 25, 50] as const;
 const DIFFS = ["Mixed", "Easy", "Medium", "Hard"] as const;
@@ -176,7 +177,8 @@ export function CustomMockBuilder({
               Start the {short.count}-question mock →
             </Link>
             <Link href={`/exams/${examCode}/build-mock`} prefetch={false} className="text-xs font-medium text-saffron-700 hover:underline">
-              Pick topics and see how many questions each has →
+              {/* 7 Oct 2026 (B6): the builder's name as students ask for it. */}
+              {BUILD_YOUR_OWN_TEST_LABEL}
             </Link>
           </div>
         </div>

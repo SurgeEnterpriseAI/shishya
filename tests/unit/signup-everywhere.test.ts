@@ -412,6 +412,10 @@ describe("C. a visible reason at every button, on every device", () => {
     expect([...own.keys()].sort()).toEqual(
       [
         "src/app/chat/ChatInterface.tsx",
+        // 7 Oct 2026 (B6): the tutor's unanswered-question door — "Sign up free and we'll answer this question here …".
+        "src/app/chat/GuestQuestionDoor.tsx",
+        // 8 Oct 2026: the tutor's first-answer card — its reason line tied to what the guest asked.
+        "src/app/chat/FirstAnswerOffer.tsx",
         "src/app/coach/page.tsx",
         "src/app/community-vouching/[domain]/page.tsx",
         "src/app/discussions/[id]/page.tsx",
@@ -778,7 +782,8 @@ describe("F. minors: no newly converted placement can show on a Class 1-7 page o
     // One invitation on a screen: the banner's button steps aside once the save card is up.
     // … once a reply has FINISHED (the one streaming now does not count), which is when the card comes up.
     expect(chat).toContain("const guestHasReply = messages.some((m, i) => m.role === \"assistant\" && m.content && !m.failed && !(busy && i === messages.length - 1));");
-    expect(chat).toMatch(/\{!guestHasReply && \(\s*<SignUpButton\s+href=\{`\$\{guestSignInHref\}&from=chat-banner`\}/);
+    // 7 Oct 2026 (B6): … and while the unanswered-question door is up.
+    expect(chat).toMatch(/\{!guestHasReply && !questionDoorUp && \(\s*<SignUpButton\s+href=\{`\$\{guestSignInHref\}&from=chat-banner`\}/);
     // Its click keeps the chat for the new account like every /login link on the page (the capture listener).
     expect(chat).toContain("if (a && isLoginLink(a.getAttribute(\"href\"), location.origin)) keepGuestChatForSignIn();");
   });
