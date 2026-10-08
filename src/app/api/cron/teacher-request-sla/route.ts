@@ -14,6 +14,10 @@
 //
 // Runs every 2 hours (SLA precision of ±2h on a 24h promise is fine).
 // Cap 8 answers per run to bound Anthropic spend on any backlog spike.
+// 7 Oct 2026: an answer a student is owed, so the background spend guard
+// never holds it (src/lib/ai/spend-guard.ts); but an empty AI balance ends
+// the run at its first failed call instead of trying all 8 (the rest are
+// retried next run, 2 hours later).
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,8 +25,9 @@ export const maxDuration = 300;
 
 import { prisma } from "@/lib/db/prisma";
 import { runAsk } from "@/lib/ask-engine";
-import { sendTeacherRequestEmail } from "@/lib/email";
+import { sendTeacherRequestSlaSummary, type SlaAnswered } from "@/lib/teacher-request-sla-summary";
 import { emailTeacherRequestAnswer } from "@/lib/teacher-request-notify";
+import { classifyTutorFailure } from "@/lib/ai/tutor-failure";
 
 const SLA_HOURS = 24;
 const MAX_PER_RUN = 8;
@@ -67,7 +72,7 @@ export async function GET(req: Request) {
 
   if (stale.length === 0) return Response.json({ ok: true, answered: 0 });
 
-  const answered: { id: string; q: string }[] = [];
+  const answered: SlaAnswered[] = [];
   for (const r of stale) {
     // Strip the internal tap-log wrapper; what remains is the student's
     // actual ask (contextLabel), e.g. "…about APPSC Group II — is my
@@ -108,37 +113,26 @@ export async function GET(req: Request) {
         .catch(() => {});
       // Deliver it to the student by email too, not just the in-app card.
       await emailTeacherRequestAnswer(r.id).catch(() => {});
-      answered.push({ id: r.id, q: question.slice(0, 90) });
+      answered.push({ id: r.id, examCode: r.examCode, ask: cleaned.length >= 8 ? cleaned : "", reopen: r.isReopen });
     } catch (e) {
       console.error("teacher-request-sla: AI answer failed for", r.id, e);
       // Leave escalatedAt NULL so the next run retries this request.
+      if (classifyTutorFailure(e) === "credit") break;
     }
   }
 
   // One summary email — every AI-answered request still gets chased by
   // a human; the AI answer buys time, it doesn't close the human loop.
+  // 7 Oct 2026 (inbox fix B5): its own summary template
+  // (src/lib/teacher-request-sla-summary.ts). The new-request template made
+  // it arrive as "New teacher request (from sla)" from "Student (guest)".
+  // Awaited: the run is over, and a cut-off invocation must not drop it.
   if (answered.length) {
     const notifyTo =
       process.env.TEACHER_REQUEST_NOTIFY_EMAIL ??
       (process.env.ADMIN_EMAILS ?? "").split(",").map((s) => s.trim()).filter(Boolean)[0] ??
       null;
-    if (notifyTo) {
-      void sendTeacherRequestEmail({
-        to: notifyTo,
-        surface: "sla",
-        examCode: null,
-        topicCode: null,
-        studentName: null,
-        contactEmail: null,
-        contactPhone: null,
-        message:
-          `🤖 24h SLA: the AI tutor auto-answered ${answered.length} waiting request(s). ` +
-          `Each student now has a written answer on their follow-up card — please follow up personally:\n\n` +
-          answered.map((a) => `• ${a.id} — ${a.q}`).join("\n") +
-          `\n\nWork the queue: https://shishya.in/admin/teacher-requests`,
-        signedIn: false,
-      }).catch(() => {});
-    }
+    if (notifyTo) await sendTeacherRequestSlaSummary(notifyTo, answered);
   }
 
   return Response.json({ ok: true, answered: answered.length, of: stale.length });

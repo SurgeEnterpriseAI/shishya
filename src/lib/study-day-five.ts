@@ -22,7 +22,7 @@
 
 import { prisma } from "@/lib/db/prisma";
 import { NOT_SCHOOL_WHERE } from "@/lib/db/exam-scope";
-import { realEnrollmentExistsSql } from "@/lib/db/enrollment";
+import { notRemovedExamWhere, realEnrollmentExistsSql } from "@/lib/db/enrollment";
 import { practiceExamCodes } from "@/lib/db/exam-practice";
 import { istDay, istDayStartUtc } from "@/lib/study-day";
 import { seenCutoff } from "@/lib/seen-questions";
@@ -120,8 +120,11 @@ export async function pickDailyFive(userId: string): Promise<DailyFivePick | nul
   // 26 Sep 2026: real exams only — a school chapter practice (Class 8-12
   // student mode) writes WeaknessMap rows on its container, and a Daily-5
   // built on one would be an exam mock on a school class.
+  // 7 Oct 2026 (B5): and not an exam the student removed from their list —
+  // its scores stay, but a Daily 5 on it would start a mock there and put
+  // it straight back (src/lib/db/enrollment.ts removeEnrollment).
   const weakness = await prisma.weaknessMap.findMany({
-    where: { userId, exam: NOT_SCHOOL_WHERE },
+    where: { userId, exam: { ...NOT_SCHOOL_WHERE, ...notRemovedExamWhere(userId) } },
     include: {
       topic: { select: { code: true, name: true } },
       exam: { select: { code: true, shortName: true } },

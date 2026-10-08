@@ -22,6 +22,9 @@
 //        and every exam mail skip active = FALSE. Nothing references an
 //        Enrollment row (only User / Exam cascade onto it), and a later
 //        ensureEnrollment creates a fresh one, active by default.
+//        7 Oct 2026 (B5): the attempt paths now pass active: true (a
+//        student's own "Remove" keeps the row inactive — /api/me/exams);
+//        this untouched sign-up guess is still deleted, as above.
 // No model call. Route files export handlers only.
 
 export const runtime = "nodejs";

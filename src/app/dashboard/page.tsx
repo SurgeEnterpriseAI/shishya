@@ -38,6 +38,9 @@ import { CoachPlanView } from "@/app/coach/CoachPlanView";
 import { InviteFriendsCard } from "./InviteFriendsCard";
 import { StudyGroupsCard } from "@/components/StudyGroupsCard";
 import { StudyGroupNudge } from "./StudyGroupNudge";
+import { RemovableExamCard } from "./RemovableExamCard";
+import { removeExamCopy } from "@/lib/remove-exam";
+import { notRemovedExamWhere } from "@/lib/db/enrollment";
 import { JoinedBanner } from "./JoinedBanner";
 import { loadStudyGroupBoards } from "@/lib/study-group-db";
 import { studyGroupLabels, USER_MAX_GROUPS } from "@/lib/study-group";
@@ -250,8 +253,10 @@ async function renderDashboard(searchParams: Promise<DashboardSearchParams>) {
         orderBy: { startedAt: "desc" },
         take: 3,
       }),
+      // 7 Oct 2026 (B5): not the exams the student removed from "Your
+      // exams" — their scores stay, but the learning loop follows the list.
       prisma.weaknessMap.findMany({
-        where: { userId },
+        where: { userId, exam: notRemovedExamWhere(userId) },
         include: {
           topic: { select: { code: true, name: true } },
           exam: { select: { code: true, shortName: true } },
@@ -704,6 +709,7 @@ async function renderDashboard(searchParams: Promise<DashboardSearchParams>) {
   const topAskedTopics = [...topicAskCounts.values()].sort((a, b) => b.count - a.count).slice(0, 3);
   const totalChatSessions = chatRecent.length;
   const chatsCopy = recentChatsCopy(locale);
+  const removeCopy = removeExamCopy(locale);
   const chatsNow = new Date();
   const recentChatItems = (await recentChatsP).map((r) => recentChatItem(r, chatsCopy, chatsNow));
   const pickup = pickupView(await pickupP, locale, chatsNow);
@@ -1060,24 +1066,27 @@ async function renderDashboard(searchParams: Promise<DashboardSearchParams>) {
                   key={e.id}
                   className="rounded-md border border-ink-200 bg-white p-5 shadow-sm"
                 >
-                  <p className="text-sm font-semibold text-ink-900">{e.exam.shortName}</p>
-                  <p className="mt-0.5 text-xs text-ink-500">{e.exam.name}</p>
-                  <div className="mt-4 flex gap-2">
-                    <Link
-                      href={`/exams/${e.exam.code}`}
-                      prefetch={false}
-                      className="btn-primary !py-1.5 !px-3 text-xs"
-                    >
-                      {t("dash.continue")}
-                    </Link>
-                    <Link
-                      href={`/exams/${e.exam.code}#syllabus`}
-                      prefetch={false}
-                      className="btn-secondary !py-1.5 !px-3 text-xs"
-                    >
-                      {t("dash.syllabus")}
-                    </Link>
-                  </div>
+                  {/* 7 Oct 2026 (B5): "Remove" with one confirm, then Undo. */}
+                  <RemovableExamCard examCode={e.exam.code} examShort={e.exam.shortName} copy={removeCopy}>
+                    <p className="text-sm font-semibold text-ink-900">{e.exam.shortName}</p>
+                    <p className="mt-0.5 text-xs text-ink-500">{e.exam.name}</p>
+                    <div className="mt-4 flex gap-2">
+                      <Link
+                        href={`/exams/${e.exam.code}`}
+                        prefetch={false}
+                        className="btn-primary !py-1.5 !px-3 text-xs"
+                      >
+                        {t("dash.continue")}
+                      </Link>
+                      <Link
+                        href={`/exams/${e.exam.code}#syllabus`}
+                        prefetch={false}
+                        className="btn-secondary !py-1.5 !px-3 text-xs"
+                      >
+                        {t("dash.syllabus")}
+                      </Link>
+                    </div>
+                  </RemovableExamCard>
                 </li>
               ))}
             </ul>
@@ -1302,7 +1311,8 @@ async function renderDashboard(searchParams: Promise<DashboardSearchParams>) {
                   <Link href={c.href} prefetch={false} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-ink-50/60">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-ink-900">{c.title}</p>
-                      <p className={`text-xs ${c.unanswered ? "text-rose-700" : "text-ink-500"}`}>{c.meta}</p>
+                      {/* 7 Oct 2026 (B3): "new answer" — a late answer not opened yet — in green. */}
+                      <p className={`text-xs ${c.answered ? "font-semibold text-emerald-700" : c.unanswered ? "text-rose-700" : "text-ink-500"}`}>{c.meta}</p>
                     </div>
                     <span className="shrink-0 text-xs font-medium text-saffron-700">{chatsCopy.continue} →</span>
                   </Link>

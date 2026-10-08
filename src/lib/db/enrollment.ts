@@ -79,6 +79,43 @@ export async function ensureEnrollment(
   });
 }
 
+// ── Removed exams (7 Oct 2026, inbox fix B5) ──────────────────────────
+// A student can take an exam off their list (DELETE /api/me/exams/[code];
+// asked on 20 Sep: "how to remove an exam that you don't need"). The row is
+// KEPT with active = FALSE, never deleted: attempts and scores never hung
+// off it, and the row keeps its shift day / target date / goal and the
+// school-age marker (schoolAgeAccountSql reads an enrolment active or not —
+// deleting an olympiad row would have put a child back into the come-back
+// mails). Every list, Daily 5 and exam mail already reads active = TRUE.
+// It comes back through a door that passes { active: true }: starting a
+// mock on that exam (/api/attempts, /mocks/[id]), the coach, the onboarding
+// wizard, the welcome strip's "Change exam" to it, opening the tutor on it
+// (/chat?examCode — a saved chat on that exam too), or the dashboard's Undo
+// (restoreEnrollment). The automatic paths (chat turns, mock builds) pass
+// no `active` and leave it off; the sign-up goal never touches a row the
+// account already holds (src/lib/signup-profile.ts).
+
+/** Turn the student's own enrolment on `examId` off. True when a row changed
+ *  (false: already off, or never enrolled — the call is idempotent). */
+export async function removeEnrollment(userId: string, examId: string): Promise<boolean> {
+  const r = await prisma.enrollment.updateMany({ where: { userId, examId, active: true }, data: { active: false } });
+  return r.count > 0;
+}
+
+/** Turn a removed enrolment back on. Never creates one (that stays with
+ *  ensureEnrollment). True when a row changed. */
+export async function restoreEnrollment(userId: string, examId: string): Promise<boolean> {
+  const r = await prisma.enrollment.updateMany({ where: { userId, examId, active: false }, data: { active: true } });
+  return r.count > 0;
+}
+
+/** Exam filter: not an exam this student removed. For reads that are not
+ *  keyed on an enrolment (WeaknessMap) but must follow the student's list —
+ *  Daily 5's weakest topic, the dashboard's learning loop. */
+export function notRemovedExamWhere(userId: string) {
+  return { enrollments: { none: { userId, active: false } } } satisfies Prisma.ExamWhereInput;
+}
+
 // ── Audiences (26 Sep 2026) ───────────────────────────────────────────
 // "Has an active enrolment" used to be `EXISTS (SELECT 1 FROM "Enrollment"
 // en WHERE en."userId" = u.id AND en.active = TRUE)` in the win-back and

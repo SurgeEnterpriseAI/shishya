@@ -377,10 +377,12 @@ export default async function MockPlayerPage({
     // 26 Sep 2026 (student mode): a school chapter practice set — built by
     // src/lib/school/student-db.ts on a Class 8-12 container — passes the
     // school flag, so the door allows that container and no other school row.
+    // 7 Oct 2026 (B5): active: true, as in POST /api/attempts — a new attempt
+    // on an exam the student removed from their list puts it back.
     await ensureEnrollment(
       userId,
       { id: mock.examId, category: mock.exam.category, code: mock.exam.code },
-      {},
+      { active: true },
       { school: mock.generatedBy === "school-chapter" },
     );
     // 27 Sep 2026 (founder: sign-in never triggers a question): a return from sign-in starts the paper the student asked for.

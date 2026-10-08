@@ -67,10 +67,13 @@ export async function POST(req: Request) {
     // 26 Sep 2026 (student mode): a school chapter practice set (generatedBy
     // "school-chapter", src/lib/school/student-db.ts) passes the school flag —
     // the door allows its Class 8-12 container and no other school row.
+    // 7 Oct 2026 (B5): active: true — starting a mock on an exam the student
+    // removed from their list puts it back (the hub's "this becomes your
+    // exam" line; src/lib/db/enrollment.ts removeEnrollment).
     await ensureEnrollment(
       session.user.id,
       { id: mock.examId, category: mock.exam.category, code: mock.exam.code },
-      {},
+      { active: true },
       { school: mock.generatedBy === "school-chapter" },
     );
 
