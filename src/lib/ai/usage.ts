@@ -100,6 +100,39 @@ function insertUsageRow(feature: string, data: NonNullable<ReturnType<typeof usa
     });
 }
 
+// ── Rows not landed yet (7 Oct 2026, background spend guard) ──────────
+// Inside a cron, recordAiUsage hands the insert to after(), so a run's rows
+// land only when the run ends. src/lib/ai/spend-guard.ts reads today's spend
+// before every background call; without this it would not see the run's own
+// calls. An entry leaves when its insert settles, and is ignored after
+// PENDING_MAX_AGE_MS in case an after() callback never ran.
+const PENDING_MAX_AGE_MS = 10 * 60_000;
+const pending: Array<{ feature: string; usd: number; at: number }> = [];
+
+function trackPending(feature: string, usd: number): () => void {
+  const entry = { feature, usd, at: Date.now() };
+  pending.push(entry);
+  return () => {
+    const i = pending.indexOf(entry);
+    if (i >= 0) pending.splice(i, 1);
+  };
+}
+
+/** USD of this process's ledger rows for `features` that have not landed yet. */
+export function pendingUsageUsd(features: Iterable<string>, now: number = Date.now()): number {
+  const want = new Set(features);
+  let usd = 0;
+  for (let i = pending.length - 1; i >= 0; i--) {
+    const p = pending[i];
+    if (now - p.at > PENDING_MAX_AGE_MS) {
+      pending.splice(i, 1);
+      continue;
+    }
+    if (want.has(p.feature)) usd += p.usd;
+  }
+  return usd;
+}
+
 /**
  * Log one model response. Never throws, never awaited by callers (returns
  * the estimated cost synchronously for callers that keep a running total).
@@ -112,7 +145,8 @@ export function recordAiUsage(
   try {
     const row = usageRow(feature, response, opts);
     if (!row) return 0;
-    const run = () => insertUsageRow(feature, row.data);
+    const landed = trackPending(row.data.feature, row.cost);
+    const run = () => insertUsageRow(feature, row.data).finally(landed);
     // Inside a request/cron scope, after() keeps the Vercel function alive
     // until the insert lands (a plain fire-and-forget can be frozen with
     // the response on short routes like /api/ask). Outside a request scope

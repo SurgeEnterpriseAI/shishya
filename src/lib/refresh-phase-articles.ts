@@ -35,6 +35,12 @@
 //   4. Titles are dated from the focus day ("SSC CGL 2026 paper analysis
 //      (12 Sep)"), never "live today" without a date.
 //   5. New article URLs are submitted to IndexNow (best-effort).
+//   6. Background spend guard (7 Oct 2026, src/lib/ai/spend-guard.ts): a
+//      page for an exam sitting TODAY (any LIVE page: exam day or a day of a
+//      CBT window; REACTIONS on exam evening) is must-run
+//      ("phase-article-today"); every other exam-week page is
+//      can-wait ("phase-article"). The guard is asked before the scrape; an
+//      empty balance stops the run and books no failed attempt.
 //
 // Returns a structured summary so the cron handler can log + return
 // it to the caller.
@@ -51,6 +57,7 @@ import { MIN_ARTICLE_SOURCES } from "@/lib/phase-article-quality";
 import { passesStrictArticleGate } from "@/lib/phase-article-strict-gate";
 import { phaseArticleUrl, SITE_ORIGIN, submitIndexNow } from "@/lib/indexnow";
 import type { ExamPhase } from "@prisma/client";
+import type { SpendGuard } from "@/lib/ai/spend-guard";
 
 export interface RefreshOptions {
   /** Don't refresh articles updated within the last N minutes. Default 90. */
@@ -61,6 +68,8 @@ export interface RefreshOptions {
   examCodeOverride?: string;
   /** Evaluate "now" at a fixed instant (tests / dry runs). */
   now?: Date;
+  /** The background spend guard (the cron route passes one; scripts run without). */
+  guard?: SpendGuard;
 }
 
 export interface RefreshReport {
@@ -70,6 +79,7 @@ export interface RefreshReport {
   errors: Array<{ examCode: string; phase: ExamPhase; error: string }>;
   claudeCalls: number;
   indexNow: { urls: number; acceptedChunks: number };
+  spendGuard?: ReturnType<SpendGuard["summary"]>;
 }
 
 interface Candidate {
@@ -347,6 +357,17 @@ export async function refreshPhaseArticles(opts: RefreshOptions = {}): Promise<R
       }
     }
 
+    // An exam sitting today is must-run; every other exam-week page can wait.
+    const usageFeature = c.phase === "LIVE" || c.state.phase === "today-pm" ? "phase-article-today" : "phase-article";
+    if (opts.guard) {
+      const d = await opts.guard.allow(usageFeature);
+      if (!d.allow) {
+        report.skipped.push({ examCode: c.examCode, phase: c.phase, reason: `held by the spend guard (${d.reason})` });
+        if (d.reason === "credit-cooldown") break;
+        continue;
+      }
+    }
+
     const snippets = await scrapeForExam(c.examShort, c.examCode);
     if (c.phase === "CHECKLIST" && snippets.length < MIN_ARTICLE_SOURCES) {
       // A checklist can only be REAL when it cites >= 2 scraped sources;
@@ -379,10 +400,13 @@ export async function refreshPhaseArticles(opts: RefreshOptions = {}): Promise<R
         snippets,
         examDay,
         examWindow,
+        usageFeature,
       });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       report.errors.push({ examCode: c.examCode, phase: c.phase, error: msg });
+      // Empty balance: no attempt booked (it was no try at the article), run stops.
+      if (opts.guard && (await opts.guard.noteFailure(usageFeature, err))) break;
       continue;
     }
     report.claudeCalls++;
@@ -467,6 +491,7 @@ export async function refreshPhaseArticles(opts: RefreshOptions = {}): Promise<R
   if (newUrls.length) {
     report.indexNow = { urls: new Set(newUrls).size, acceptedChunks: await submitIndexNow(newUrls) };
   }
+  if (opts.guard) report.spendGuard = opts.guard.summary();
 
   return report;
 }

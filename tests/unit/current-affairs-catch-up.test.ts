@@ -62,6 +62,7 @@ import {
   paidCallsAllowed,
   slotsBegun,
 } from "@/lib/current-affairs-run";
+import { runCurrentAffairsSlot } from "@/lib/current-affairs-slot";
 
 const SECRET = "test-secret";
 const call = () => GET(new Request("https://shishya.in/api/cron/daily-current-affairs", { headers: { authorization: `Bearer ${SECRET}` } }));
@@ -416,6 +417,39 @@ describe("daily-current-affairs route", () => {
     const src = readFileSync("scripts/seed-current-affairs.ts", "utf8");
     expect(src).toContain("runCurrentAffairsSlot");
     expect(src).not.toMatch(/\bgenerateDailyCurrentAffairs\b/);
+  });
+});
+
+describe("background spend guard (7 Oct 2026, src/lib/ai/spend-guard.ts)", () => {
+  it("a due slot asks the guard inside the lock; a 'no' pays nothing and writes nothing, and the next slot tries again", async () => {
+    slotDb();
+    const gate = vi.fn(async () => "credit-cooldown");
+    const out = await runCurrentAffairsSlot(new Date(SLOT1), { gate });
+    expect(out).toEqual({ kind: "held", istDate: DAY, reason: "credit-cooldown" });
+    expect(gate).toHaveBeenCalledTimes(1);
+    expect(h.generate).not.toHaveBeenCalled();
+    at(SLOT2);
+    const next = await runCurrentAffairsSlot(new Date(SLOT2), { gate: async () => null });
+    expect(next).toMatchObject({ kind: "written", attempt: 1 });
+  });
+
+  it("a written day or a used slot never asks the guard", async () => {
+    const gate = vi.fn(async () => null);
+    slotDb({ rows: 9 });
+    await runCurrentAffairsSlot(new Date(SLOT1), { gate });
+    slotDb({ paid: 1 });
+    await runCurrentAffairsSlot(new Date(SLOT1), { gate });
+    expect(gate).not.toHaveBeenCalled();
+  });
+
+  it("the route asks the guard and answers a hold plainly; a broken guard read never stops the call", async () => {
+    const src = readFileSync("src/app/api/cron/daily-current-affairs/route.ts", "utf8");
+    expect(src).toContain('guard.allow("current-affairs")');
+    expect(src).toContain('skipped: "held"');
+    // prisma here has no $queryRawUnsafe: every guard read fails, the guard allows
+    slotDb();
+    const res = await call();
+    expect(await res.json()).toMatchObject({ ok: true, date: DAY, items: 10 });
   });
 });
 

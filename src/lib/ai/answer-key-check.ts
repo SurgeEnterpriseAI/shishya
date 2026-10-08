@@ -12,7 +12,10 @@
 // never writes anything. Every URL then goes through releaseGate
 // (src/lib/answer-key-watch.ts): our own fetch, the official host, the text
 // the body printed beside the link. Spend is recorded as feature
-// 'akr-check' (AiUsage).
+// 'akr-check' (AiUsage); since 7 Oct 2026 the Monday plan's calls as
+// 'akr-plan' (opts.usageFeature), so the background spend guard
+// (src/lib/ai/spend-guard.ts) keeps the plan's $3.00 apart from the daily
+// must-run allowance.
 
 import Anthropic from "@anthropic-ai/sdk";
 import { recordAiUsage, recordAiUsageAwaited } from "@/lib/ai/usage";
@@ -91,7 +94,7 @@ export function parseCheckCandidates(text: string, kind: CheckKind): AiCandidate
 
 export async function checkAnswerKeyWithAi(
   input: AnswerKeyCheckInput,
-  opts: { awaitUsage?: boolean } = {},
+  opts: { awaitUsage?: boolean; usageFeature?: string } = {},
 ): Promise<AnswerKeyCheckResult> {
   if (input.officialHosts.length === 0) return { candidates: [], costUsd: 0 };
   const what = input.kind === "ANSWER_KEY" ? "answer key (provisional or final) / response sheet" : "result / merit list / selection list";
@@ -119,9 +122,10 @@ ${input.listingUrls.length ? `Known official listing pages: ${input.listingUrls.
     { timeout: AI_CHECK_TIMEOUT_MS, maxRetries: 0 },
   );
   const usageOpts = { model: MODEL, ref: `${input.examCode}:${input.kind}`, latencyMs: Date.now() - startedAt };
+  const feature = opts.usageFeature ?? "akr-check";
   const costUsd = opts.awaitUsage
-    ? await recordAiUsageAwaited("akr-check", response, usageOpts)
-    : recordAiUsage("akr-check", response, usageOpts);
+    ? await recordAiUsageAwaited(feature, response, usageOpts)
+    : recordAiUsage(feature, response, usageOpts);
   const text = (response.content as Anthropic.Messages.ContentBlock[])
     .filter((b): b is Anthropic.Messages.TextBlock => b.type === "text")
     .map((b) => b.text)

@@ -134,7 +134,11 @@ daysFromNow: integer offset of the date from today (negative = past). −120 to 
 
 export async function generateExamInfo(
   input: ExamInfoInput,
-  opts: { useWebSearch?: boolean } = {},
+  // usageFeature (7 Oct 2026): the AiUsage label. The refresh cron writes
+  // exam-week exams as "exam-info" (must-run) and the rest as
+  // "exam-info-other" (can-wait), so the background spend guard
+  // (src/lib/ai/spend-guard.ts) can cap the two apart.
+  opts: { useWebSearch?: boolean; usageFeature?: string } = {},
 ): Promise<ExamInfoResult> {
   const today = new Date();
   const todayIso = today.toISOString().slice(0, 10);
@@ -176,7 +180,7 @@ ${opts.useWebSearch ? `IMPORTANT: use your web_search tool to look up the LATEST
     messages: [{ role: "user", content: userPrompt }],
     ...(tools ? { tools } : {}),
   } as any);
-  recordAiUsage("exam-info", response, { model: MODEL, ref: input.examCode, latencyMs: Date.now() - startedAt });
+  recordAiUsage(opts.usageFeature ?? "exam-info", response, { model: MODEL, ref: input.examCode, latencyMs: Date.now() - startedAt });
 
   const text = response.content
     .filter((b): b is Anthropic.Messages.TextBlock => b.type === "text")

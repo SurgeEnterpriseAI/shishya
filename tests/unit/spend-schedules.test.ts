@@ -11,9 +11,9 @@
 // The late GitHub run was also the only run after 18:00 IST, when an exam
 // day turns "evening", so it wrote the evening pages. vercel.json therefore
 // gains a 21:00 IST slot for the article job.
-// Not changed by this build: how often exam news and dates are refreshed
-// (decision D2 is still open), the daily brief's schedule, the functions
-// block and the tutor answer-later job.
+// Not changed by this build: the daily brief's schedule, the functions block
+// and the tutor answer-later job.
+// 7 Oct 2026 (decision D2 taken): exam news and dates run twice a day.
 
 import { describe, expect, it } from "vitest";
 import fs from "node:fs";
@@ -88,9 +88,19 @@ describe("vercel.json: what this build must not change", () => {
     expect(schedulesOf("/api/cron/daily-brief")).toEqual(["30 20 * * *"]);
   });
 
-  it("exam news and dates are refreshed as often as before (decision D2 is open; change this line with that decision, not before)", () => {
-    expect(schedulesOf("/api/cron/refresh-exam-data")).toEqual(["15 1,7,13 * * *"]);
+  it("exam news and dates: two full runs a day (06:45 and 18:45 IST) and the 20:15 exam-evening lane (D2, 7 Oct 2026)", () => {
+    // The 12:45 run is cut: over 23 Sep-7 Oct it found the fewest first-seen,
+    // current official dates that stuck (6, against 12 at 06:45 and 15 at
+    // 18:45) for the same ~$1.65 a run (scripts/tmp-fix-b2-examinfo.ts).
+    expect(schedulesOf("/api/cron/refresh-exam-data")).toEqual(["15 1,13 * * *"]);
+    expect(istTimes("15 1,13 * * *")).toEqual(["06:45", "18:45"]);
     expect(schedulesOf("/api/cron/refresh-exam-data/today-pm")).toEqual(["45 14 * * *"]);
+    expect(istTimes("45 14 * * *")).toEqual(["20:15"]);
+  });
+
+  it("the refresh route's header names the schedule vercel.json has", () => {
+    const route = read("src/app/api/cron/refresh-exam-data/route.ts");
+    expect(route).toContain(`vercel.json "${schedulesOf("/api/cron/refresh-exam-data")[0]}"`);
   });
 
   it("every cron path still has a route file", () => {

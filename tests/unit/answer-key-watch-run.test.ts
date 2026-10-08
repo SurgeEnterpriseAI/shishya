@@ -247,6 +247,23 @@ describe("AI: where the mode allows, never past the cap", () => {
     expect(r.ai.stopped).toMatch(/API refused \(400\)/);
   });
 
+  it("the background spend guard (7 Oct 2026) is asked before each AI call; a 'no' ends the run's AI", async () => {
+    const s = setup({ exams: unreadable(4, 3), ai: noHit });
+    let asked = 0;
+    const r = await run("evening", { ...s.deps, aiGate: async () => (++asked === 2 ? "group-cap" : null) });
+    expect(s.aiCalls).toHaveLength(1);
+    expect(asked).toBe(2);
+    expect(r.ai.calls).toBe(1);
+    expect(r.ai.stopped).toBe("held by the spend guard (group-cap)");
+  });
+
+  it("the cron labels the Monday plan's spend apart and asks the guard (src/lib/ai/spend-guard.ts)", () => {
+    const src = fs.readFileSync(path.join(process.cwd(), "src/lib/answer-key-watch-run.ts"), "utf8");
+    expect(src).toContain('mode === "plan" ? "akr-plan" : "akr-check"');
+    expect(src).toContain("guard.allow(usageFeature)");
+    expect(src).toContain("guard.noteFailure(usageFeature, err)");
+  });
+
   it("an exam whose official page was read and showed nothing new costs no AI", async () => {
     const s = setup({
       exams: [exam(1, 3)],
@@ -369,7 +386,7 @@ describe("time guard", () => {
   });
   it("the cron awaits the AiUsage row; the AI call has a hard timeout and no SDK retries", () => {
     const runSrc = fs.readFileSync(path.join(process.cwd(), "src/lib/answer-key-watch-run.ts"), "utf8");
-    expect(runSrc).toMatch(/aiMod\.checkAnswerKeyWithAi\(input, \{ awaitUsage: true \}\)/);
+    expect(runSrc).toMatch(/aiMod\.checkAnswerKeyWithAi\(input, \{ awaitUsage: true, usageFeature \}\)/);
     const check = fs.readFileSync(path.join(process.cwd(), "src/lib/ai/answer-key-check.ts"), "utf8");
     expect(check).toMatch(/\{ timeout: AI_CHECK_TIMEOUT_MS, maxRetries: 0 \}/);
     expect(AI_CHECK_TIMEOUT_MS).toBe(60_000);

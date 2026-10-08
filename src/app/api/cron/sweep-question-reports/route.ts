@@ -14,6 +14,7 @@ export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 
 import { sweepReportedQuestions } from "@/lib/question-sweep";
+import { createSpendGuard } from "@/lib/ai/spend-guard";
 
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET;
@@ -32,9 +33,12 @@ export async function GET(req: Request) {
 
   // Time-bounded: ~30-60s per question; 15 keeps us safely inside
   // maxDuration. Anything left stays open for next week's run.
+  // Each re-solve asks the background spend guard first (7 Oct 2026, must-run).
+  const guard = createSpendGuard();
   const results = await sweepReportedQuestions({
     resolvedBy: "cron:key-sweep",
     maxQuestions: 15,
+    guard,
   });
 
   return new Response(
@@ -45,6 +49,7 @@ export async function GET(req: Request) {
       invalidated: results.filter((r) => r.action === "invalidated").length,
       confirmed: results.filter((r) => r.action === "confirmed").length,
       errors: results.filter((r) => r.action === "error").length,
+      spendGuard: guard.summary(),
       results,
     }),
     { status: 200, headers: { "content-type": "application/json" } },

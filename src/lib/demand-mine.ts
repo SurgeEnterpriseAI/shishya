@@ -24,6 +24,13 @@
 // retried or logged instead of silently writing nothing.
 //
 // Cost: tens of free-form items/day → one Sonnet call ≈ pennies.
+//
+// 7 Oct 2026: the cron passes a MineGate (the background spend guard,
+// src/lib/ai/spend-guard.ts, can-wait "demand-mine"). It is asked before
+// every call; a "no" ends the run's calls. An empty balance is no longer
+// treated like an unparseable reply: until now it split the batch and called
+// again down to single items (2N - 1 calls into a dry account); now the run
+// stops at the first one.
 
 import type { PrismaClient } from "@prisma/client";
 import Anthropic from "@anthropic-ai/sdk";
@@ -166,6 +173,21 @@ export interface MineResult {
   inserted: number;
   /** Classifier batches that failed even after splitting. */
   errors: number;
+  /** Why the run stopped calling the model early ("held" by the spend guard, "credit"). */
+  stopped?: "held" | "credit";
+}
+
+/** The spend guard's two questions (7 Oct 2026). */
+export interface MineGate {
+  /** May a model call be made now? */
+  allow(): Promise<boolean>;
+  /** A call failed: true when it was an empty balance (stop calling). */
+  failed(err: unknown): Promise<boolean>;
+}
+
+interface ClassifyRun {
+  gate?: MineGate;
+  stopped?: "held" | "credit";
 }
 
 function parseResults(text: string): Verdict[] | null {
@@ -191,7 +213,13 @@ async function classify(
   batch: DemandItem[],
   vocabLine: string,
   onError: (why: string) => void,
+  run: ClassifyRun = {},
 ): Promise<{ verdict: Verdict; item: DemandItem }[]> {
+  if (run.stopped) return [];
+  if (run.gate && !(await run.gate.allow())) {
+    run.stopped = "held";
+    return [];
+  }
   const user = `EXISTING CLUSTER VOCABULARY (reuse first):\n${vocabLine}\n\nITEMS:\n${batch
     .map((it, i) => `${i}. [${it.source}${it.examCode ? "/" + it.examCode : ""}] ${it.text}`)
     .join("\n")}`;
@@ -217,6 +245,11 @@ async function classify(
     }
   } catch (err) {
     why = `model call failed: ${(err as Error)?.message ?? err}`;
+    // An empty balance: no split, no retry — the run stops calling.
+    if (run.gate && (await run.gate.failed(err))) {
+      run.stopped = "credit";
+      return [];
+    }
   }
   if (results) {
     return results
@@ -225,14 +258,14 @@ async function classify(
   }
   if (batch.length > 1) {
     const mid = Math.ceil(batch.length / 2);
-    return [...(await classify(batch.slice(0, mid), vocabLine, onError)), ...(await classify(batch.slice(mid), vocabLine, onError))];
+    return [...(await classify(batch.slice(0, mid), vocabLine, onError, run)), ...(await classify(batch.slice(mid), vocabLine, onError, run))];
   }
   onError(why);
   return [];
 }
 
 /** Classify a window of items and persist signals. */
-export async function mineDemand(db: PrismaClient, since: Date, until: Date): Promise<MineResult> {
+export async function mineDemand(db: PrismaClient, since: Date, until: Date, gate?: MineGate): Promise<MineResult> {
   const items = await gatherItems(db, since, until);
   const out: MineResult = { scanned: items.length, demands: 0, newClusters: 0, inserted: 0, errors: 0 };
   if (items.length === 0) return out;
@@ -242,12 +275,19 @@ export async function mineDemand(db: PrismaClient, since: Date, until: Date): Pr
   const vocabLine = vocab.map((v) => `${v.key}: ${v.label} (${v.category})`).join("\n") || "(none yet)";
 
   const BATCH = 120;
+  const run: ClassifyRun = { gate };
   for (let start = 0; start < items.length; start += BATCH) {
     const batch = items.slice(start, start + BATCH);
-    const verdicts = await classify(batch, vocabLine, (why) => {
-      out.errors++;
-      console.error(`[demand-mine] classifier gave up on an item: ${why}`);
-    });
+    const verdicts = await classify(
+      batch,
+      vocabLine,
+      (why) => {
+        out.errors++;
+        console.error(`[demand-mine] classifier gave up on an item: ${why}`);
+      },
+      run,
+    );
+    if (run.stopped) out.stopped = run.stopped;
 
     for (const { verdict: v, item: it } of verdicts) {
       if (!v.demand) continue;
@@ -292,7 +332,7 @@ export async function mineDemand(db: PrismaClient, since: Date, until: Date): Pr
 
 /** Weekly pass: merge/rename near-duplicate clusters and write the
  *  founder's "build next" digest. */
-export async function consolidateDemand(db: PrismaClient): Promise<{ merges: number; digest: string | null }> {
+export async function consolidateDemand(db: PrismaClient, gate?: MineGate): Promise<{ merges: number; digest: string | null; held?: true }> {
   const rows = await db.$queryRaw<{ key: string; label: string; category: string; n: bigint; wk: bigint }[]>`
     SELECT c.key, c.label, c.category,
       COUNT(s.id) n,
@@ -301,6 +341,8 @@ export async function consolidateDemand(db: PrismaClient): Promise<{ merges: num
     WHERE c.status = 'active'
     GROUP BY c.key, c.label, c.category ORDER BY n DESC LIMIT 120`.catch(() => []);
   if (rows.length === 0) return { merges: 0, digest: null };
+
+  if (gate && !(await gate.allow())) return { merges: 0, digest: null, held: true };
 
   const listing = rows.map((r) => `${r.key} | ${r.label} | ${r.category} | total=${Number(r.n)} | last7d=${Number(r.wk)}`).join("\n");
   const resp = await anthropic.messages.create({
@@ -312,6 +354,9 @@ export async function consolidateDemand(db: PrismaClient): Promise<{ merges: num
         content: `Demand clusters from Shishya, a free Indian study platform (key | label | category | total | last7d):\n${listing}\n\nTasks:\n1. "merges": pairs where two keys describe the SAME need — [{"from":"key-a","into":"key-b"}] (survivor = higher total). Only merge when clearly identical; empty array is fine.\n2. "digest": 3-5 sentences for the founder — which needs are rising, which ONE feature to build next and why, grounded ONLY in these counts. Plain text, no hype.\n\nSTRICT JSON: {"merges":[...],"digest":"..."}`,
       },
     ],
+  }).catch(async (err: unknown) => {
+    await gate?.failed(err);
+    throw err;
   });
   recordAiUsage("demand-consolidate", resp, { model: MODEL });
   const text = resp.content

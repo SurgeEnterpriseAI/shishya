@@ -4,12 +4,19 @@
 // up. Failures are silent per-user: the deterministic engine covers
 // anyone the night shift missed.
 // Auth: Bearer ${CRON_SECRET}. Schedule: 30 22 * * * (4:00 AM IST).
+//
+// Background spend guard (7 Oct 2026, src/lib/ai/spend-guard.ts): the notes
+// are must-run ("coach-day", $0.24 a day). Each plan asks first; a "no", or
+// an empty balance on an earlier plan this run, stores the rule-built plan
+// with no model call, so the 07:00 coach mail still has every plan. Until
+// now a dry night sent one failed call per plan-holder (35-57).
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 import { activePlanUserIds, generateCoachDay } from "@/lib/coach-plan";
+import { createSpendGuard } from "@/lib/ai/spend-guard";
 
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET;
@@ -19,6 +26,11 @@ export async function GET(req: Request) {
   }
 
   const userIds = await activePlanUserIds();
+  const guard = createSpendGuard();
+  // Set by an empty balance or the guard's first "no": the rest of the run
+  // stores rule-built plans without asking again.
+  let creditStop = false;
+  let aiHeld = false;
   let planned = 0;
   let fallback = 0;
   let failed = 0;
@@ -27,7 +39,14 @@ export async function GET(req: Request) {
   for (const uid of userIds) {
     // Leave 30s headroom so a long tail never hits the function limit.
     if (Date.now() - started > (maxDuration - 30) * 1000) break;
-    const r = await generateCoachDay(uid);
+    if (!creditStop && !aiHeld && !(await guard.allow("coach-day")).allow) aiHeld = true;
+    const ai = !creditStop && !aiHeld;
+    const r = await generateCoachDay(uid, {
+      ai,
+      onAiError: async (err) => {
+        if (await guard.noteFailure("coach-day", err)) creditStop = true;
+      },
+    });
     if (r === "planned") planned++;
     // Model unavailable: the deterministic plan was stored, so the 7 AM
     // coach-morning mail still goes out (13 Sep 2026).
@@ -35,5 +54,5 @@ export async function GET(req: Request) {
     else if (r === "failed") failed++;
     else skipped++;
   }
-  return Response.json({ ok: true, total: userIds.length, planned, fallback, failed, skipped });
+  return Response.json({ ok: true, total: userIds.length, planned, fallback, failed, skipped, spendGuard: guard.summary() });
 }

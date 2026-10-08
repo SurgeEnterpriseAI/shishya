@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 import { extractResults } from "@/lib/results-extract";
+import { createSpendGuard } from "@/lib/ai/spend-guard";
 
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET;
@@ -15,6 +16,8 @@ export async function GET(req: Request) {
   if ((req.headers.get("authorization") ?? "") !== `Bearer ${secret}`) {
     return Response.json({ error: "unauthorized" }, { status: 401 });
   }
-  const out = await extractResults({ days: 3, cap: 20 });
-  return Response.json({ ok: true, ...out });
+  // Each call asks the background spend guard first (7 Oct 2026, must-run).
+  const guard = createSpendGuard();
+  const out = await extractResults({ days: 3, cap: 20, guard });
+  return Response.json({ ok: true, ...out, spendGuard: guard.summary() });
 }

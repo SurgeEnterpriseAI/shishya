@@ -39,6 +39,7 @@
 import type { ExamPhase } from "@prisma/client";
 import { anthropic, MODEL } from "./client";
 import { recordAiUsage } from "./usage";
+import { classifyTutorFailure } from "./tutor-failure";
 import type { ScrapedSnippet } from "@/lib/scrape/types";
 import { istDay } from "@/lib/exam-week";
 import { isPlaceholderArticle, MIN_ARTICLE_SOURCES } from "@/lib/phase-article-quality";
@@ -177,6 +178,13 @@ export interface SummarisePhaseInput {
   examDay?: string | null;
   /** "YYYY-MM-DD to YYYY-MM-DD" for multi-day windows (SSC-style CBTs). */
   examWindow?: string | null;
+  /**
+   * AiUsage label (7 Oct 2026): "phase-article" (default) or
+   * "phase-article-today" for an exam sitting today; "-web" is added for a
+   * web-grounded call. The background spend guard caps the two apart
+   * (src/lib/ai/spend-guard.ts).
+   */
+  usageFeature?: string;
 }
 
 export async function summarisePhase({
@@ -187,6 +195,7 @@ export async function summarisePhase({
   snippets,
   examDay,
   examWindow,
+  usageFeature = "phase-article",
 }: SummarisePhaseInput): Promise<SummaryResult | null> {
   // LIVE and REACTIONS are real-time, source-grounded phases. Reddit/
   // RSS covers national exams well (UPSC, RRB, banking) but STATE-exam
@@ -273,7 +282,7 @@ ${inputBundle}
         : [SUMMARY_TOOL],
     });
 
-    recordAiUsage(webGrounded ? "phase-article-web" : "phase-article", res, { model: MODEL, ref: `${examCode}:${phase}` });
+    recordAiUsage(webGrounded ? `${usageFeature}-web` : usageFeature, res, { model: MODEL, ref: `${examCode}:${phase}` });
 
     const toolUse = res.content.find((b) => b.type === "tool_use" && b.name === SUMMARY_TOOL.name);
     if (!toolUse || toolUse.type !== "tool_use") {
@@ -321,6 +330,9 @@ ${inputBundle}
       sourcesUsed: sources,
     };
   } catch (err) {
+    // An empty AI balance is not "no real article" (7 Oct 2026): rethrown, so
+    // the caller books no failed attempt (no back-off) and stops the run.
+    if (classifyTutorFailure(err) === "credit") throw err;
     console.error("[phase-summariser] Claude call failed:", err);
     return null;
   }

@@ -23,6 +23,7 @@ const RESULT_KEYWORDS =
 // minutes of extraction, not at the weekly re-submission. Shared helper
 // (src/lib/indexnow.ts) since 23 Aug 2026.
 import { pingIndexNow } from "@/lib/indexnow";
+import type { SpendGuard } from "@/lib/ai/spend-guard";
 
 interface Extraction {
   isDeclaredResult: boolean;
@@ -34,10 +35,17 @@ interface Extraction {
   nextSteps: { step: string; note: string }[];
 }
 
-export async function extractResults(opts?: { days?: number; cap?: number }): Promise<{
+/**
+ * `opts.guard` (7 Oct 2026): the cron's background spend guard
+ * (src/lib/ai/spend-guard.ts, must-run "results-extract"), asked before each
+ * call; a "no" or an empty balance ends the run's calls and the rest wait for
+ * the next run (news rows stay candidates for 3 days).
+ */
+export async function extractResults(opts?: { days?: number; cap?: number; guard?: SpendGuard }): Promise<{
   scanned: number;
   inserted: number;
   skipped: number;
+  held?: number;
 }> {
   const days = opts?.days ?? 3;
   const cap = opts?.cap ?? 20;
@@ -60,7 +68,12 @@ export async function extractResults(opts?: { days?: number; cap?: number }): Pr
   let skipped = 0;
   const newUrls: string[] = [];
 
-  for (const c of candidates) {
+  let held = 0;
+  for (const [i, c] of candidates.entries()) {
+    if (opts?.guard && !(await opts.guard.allow("results-extract")).allow) {
+      held = candidates.length - i;
+      break;
+    }
     let ex: Extraction;
     try {
       const res = await callClaude({
@@ -88,8 +101,12 @@ export async function extractResults(opts?: { days?: number; cap?: number }): Pr
       });
       const text = res.response.content.map((b) => (b.type === "text" ? b.text : "")).join("");
       ex = parseJson<Extraction>(text);
-    } catch {
+    } catch (err) {
       skipped++;
+      if (opts?.guard && (await opts.guard.noteFailure("results-extract", err))) {
+        held = candidates.length - i - 1;
+        break;
+      }
       continue;
     }
 
@@ -128,5 +145,5 @@ export async function extractResults(opts?: { days?: number; cap?: number }): Pr
   // hub (its listing changed too).
   if (newUrls.length) await pingIndexNow([...newUrls, "https://shishya.in/results"]);
 
-  return { scanned: candidates.length, inserted, skipped };
+  return { scanned: candidates.length, inserted, skipped, ...(held ? { held } : {}) };
 }

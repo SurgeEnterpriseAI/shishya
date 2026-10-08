@@ -12,15 +12,22 @@
 //      computeExamWeekState per exam — read-only) → every exam in
 //      eve / today-am / today-pm / window / post, ≤ LANE_MAX_PER_RUN,
 //      ordered by src/lib/exam-refresh-lane.ts, AHEAD of the tail
-//   3. tail: TOP_N-stale-first, then most-stale-first (unchanged)
-//   4. loop: stamp refreshAttemptedAt first (raw SQL — never bump
+//   3. tail: exams not in exam week, picked by hub visitors (7 Oct 2026,
+//      plan build 5d; src/lib/exam-refresh-lane.ts), TAIL_MAX_PER_RUN a run
+//   4. loop: ask the background spend guard (src/lib/ai/spend-guard.ts,
+//      7 Oct 2026) — lane calls are must-run ("exam-info"), tail calls
+//      can-wait ("exam-info-other") — then stamp refreshAttemptedAt first (raw SQL — never bump
 //      Exam.updatedAt, the sitemap lastModified), generateExamInfo with
 //      web search, writeExamInfo (archives prior generated rows, keeps
 //      prior OFFICIAL rows, IndexNow-pings exam-week exams)
 // Budgets: the lane is charged separately (LANE_BUDGET_USD) and never
 // consumes the tail's PER_RUN_TAIL_BUDGET_USD; the TIME_BUDGET_MS guard is
-// shared, so a lane-heavy run shortens the tail (self-healing:
-// most-stale-first picks it up next run).
+// shared, so a lane-heavy run shortens the tail (self-healing: the most
+// overdue exam is first again next run). The spend guard's daily caps bind
+// across runs.
+// An empty AI balance (7 Oct 2026): the run stops at the first credit error,
+// writes that exam's previous refreshAttemptedAt back so it keeps its place,
+// and every other background job skips for 20 minutes.
 
 import { prisma } from "@/lib/db/prisma";
 import { REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
@@ -30,16 +37,20 @@ import { loadExamWeekExams } from "@/lib/exam-week-aeo";
 import type { ExamWeekPhase } from "@/lib/exam-week";
 import type { SourceTier } from "@/lib/official-source";
 import { LANE_MAX_PER_RUN, orderRefreshQueue, type LaneState, type QueueExam } from "@/lib/exam-refresh-lane";
+import type { SpendGuard } from "@/lib/ai/spend-guard";
 
 // Measured 6 Sep 2026 (spend audit): Sonnet 4.5 + 3-5 web searches per
 // exam ≈ $0.15-0.20, not the $0.04 the old constant assumed — which is
 // why the "budget" below never bound. Real per-call cost is now logged
 // to AiUsage (feature "exam-info") by generateExamInfo itself.
 const COST_PER_EXAM_USD = 0.18;
-// Tail spend cap per RUN (the cron runs 3×/day + the 20:15 IST lane run):
-// 10 exams at the real cost ≈ 30 exams/day — the top-15 daily plus ~15 of
-// the tail, so the tail cycles in ~10 days.
-const PER_RUN_TAIL_BUDGET_USD = 1.8;
+// Tail spend cap per RUN. 7 Oct 2026: 3 exams a run (TAIL_MAX_PER_RUN), two
+// full runs a day (06:45 and 18:45 IST, vercel.json "15 1,13 * * *"); the
+// guard's $1.22 "exam-info-other" cap at about $0.21 a call holds the
+// evening run to 2, so 5 a day. Until then $1.80 a run (10 exams) never
+// bound: the clock did, at 1-2 tail exams a run.
+const TAIL_MAX_PER_RUN = 3;
+const PER_RUN_TAIL_BUDGET_USD = TAIL_MAX_PER_RUN * COST_PER_EXAM_USD;
 // Lane spend cap per run — LANE_MAX_PER_RUN exams; separate from the
 // tail so exam night never starves the rotation and vice versa.
 const LANE_BUDGET_USD = LANE_MAX_PER_RUN * COST_PER_EXAM_USD;
@@ -74,6 +85,13 @@ export interface ExamRefreshReport {
   estSpendUsd: number;
   elapsedMs: number;
   lane: Array<{ code: string; phase: ExamWeekPhase; tier: SourceTier | null }>;
+  /** Exam-week exams refreshed too recently to call again (option C rest). */
+  resting: Array<{ code: string; phase: ExamWeekPhase }>;
+  /** Calls the spend guard held (the reason per exam is in the log). */
+  held: number;
+  /** True when the hub-visitor read failed and the tail fell back to most-stale-first. */
+  visitorsUnavailable?: boolean;
+  spendGuard?: ReturnType<SpendGuard["summary"]>;
   log: ExamRefreshLogEntry[];
 }
 
@@ -81,6 +99,30 @@ export interface ExamRefreshRunOptions {
   /** Only the lane, restricted to these phases (the 20:15 IST run passes ["today-pm"]). */
   laneOnly?: ExamWeekPhase[];
   now?: Date;
+  /** The background spend guard (the cron routes pass one; scripts run without). */
+  guard?: SpendGuard;
+}
+
+/**
+ * Human hub visitors per exam code, last 7 days (5d). One grouped SELECT
+ * (131 ms on 2 Oct 2026). Null when the read fails: the tail then falls
+ * back to most-stale-first.
+ */
+async function loadHubVisitors(now: Date): Promise<Map<string, number> | null> {
+  try {
+    const rows = await prisma.$queryRawUnsafe<Array<{ code: string; people: number }>>(
+      `SELECT split_part(e.path, '/', 3) AS code, COUNT(DISTINCT COALESCE(e."userId", e."anonId"))::int AS people
+         FROM "AnalyticsEvent" e
+        WHERE e.kind = 'PAGE_VIEW'::"EventKind" AND (e.client IS NULL OR e.client = 'browser')
+          AND e."createdAt" >= $1 AND e.path LIKE '/exams/%'
+        GROUP BY 1`,
+      new Date(now.getTime() - 7 * 86_400_000),
+    );
+    return new Map(rows.map((r) => [r.code, Number(r.people) || 0]));
+  } catch (err) {
+    console.warn("[refresh-exam-data] hub visitor read failed; tail is most-stale-first:", (err as Error)?.message);
+    return null;
+  }
 }
 
 export async function runExamDataRefresh(opts: ExamRefreshRunOptions = {}): Promise<ExamRefreshReport> {
@@ -119,7 +161,8 @@ export async function runExamDataRefresh(opts: ExamRefreshRunOptions = {}): Prom
   // Read-only: loadExamWeekExams runs the shared state machine over each
   // exam's typed tracker rows; a failure here must not stop the tail.
   const week = await loadExamWeekExams({ now }).catch(() => []);
-  const lanes = new Map<string, LaneState>(week.map((w) => [w.id, { phase: w.state.phase, tier: w.state.tier }]));
+  const lanes = new Map<string, LaneState>(week.map((w) => [w.id, { phase: w.state.phase, tier: w.state.tier, daysTo: w.state.daysTo }]));
+  const visitors = opts.laneOnly ? null : await loadHubVisitors(now);
 
   const queueExams: QueueExam[] = exams.map((e) => ({
     id: e.id,
@@ -127,14 +170,19 @@ export async function runExamDataRefresh(opts: ExamRefreshRunOptions = {}): Prom
     candidatesPerYear: e.candidatesPerYear,
     lastRefreshedMs: Math.max(lastNews.get(e.id) ?? 0, e.refreshAttemptedAt?.getTime() ?? 0),
   }));
-  const { lane, tail } = orderRefreshQueue(queueExams, lanes, { nowMs: now.getTime(), laneOnly: opts.laneOnly });
+  const { lane, tail, resting } = orderRefreshQueue(queueExams, lanes, { nowMs: now.getTime(), laneOnly: opts.laneOnly, visitors });
   const laneById = new Map(lane.map((l) => [l.id, l]));
-  const slice = [...lane, ...tail].slice(0, RUN_EXAM_CAP);
+  // Only the tail exams this run may reach (review, 7 Oct 2026): with 3 a
+  // run, the rest of the tail would each log a "budget" failure, and the
+  // reply would show ~50 failures a run that are not failures.
+  const slice = [...lane, ...tail.slice(0, TAIL_MAX_PER_RUN)].slice(0, RUN_EXAM_CAP);
 
   const started = Date.now();
   const log: ExamRefreshLogEntry[] = [];
   let laneSpent = 0;
   let tailSpent = 0;
+  let held = 0;
+  const heldFeatures = new Set<string>();
 
   for (const q of slice) {
     const exam = byId.get(q.id);
@@ -147,6 +195,24 @@ export async function runExamDataRefresh(opts: ExamRefreshRunOptions = {}): Prom
     if (laneEntry ? laneSpent >= LANE_BUDGET_USD : tailSpent >= PER_RUN_TAIL_BUDGET_USD) {
       log.push({ code: exam.code, ok: false, lane: laneEntry?.phase, err: "budget" });
       continue;
+    }
+    // Exam-week exams are must-run, the others can-wait (src/lib/ai/spend-guard.ts).
+    const feature = laneEntry ? "exam-info" : "exam-info-other";
+    if (heldFeatures.has(feature)) {
+      // Caps and the outage pause do not lift within a run: counted, not asked again.
+      held++;
+      continue;
+    }
+    if (opts.guard) {
+      const d = await opts.guard.allow(feature);
+      if (!d.allow) {
+        held++;
+        heldFeatures.add(feature);
+        // Not stamped: a held exam keeps its place in the queue.
+        log.push({ code: exam.code, ok: false, lane: laneEntry?.phase, err: `held: ${d.reason}` });
+        if (d.reason === "credit-cooldown") break;
+        continue;
+      }
     }
     // Stamp the attempt FIRST so a timeout, parse failure or empty result
     // still moves this exam to the back of the staleness queue. Raw SQL on
@@ -173,7 +239,7 @@ export async function runExamDataRefresh(opts: ExamRefreshRunOptions = {}): Prom
           officialUrl: exam.eligibility?.officialUrl ?? null,
           officialName: exam.eligibility?.officialName ?? null,
         },
-        { useWebSearch: true },
+        { useWebSearch: true, usageFeature: feature },
       );
       // ARCHIVE (don't delete) prior generated rows and insert the new
       // generation — shared writer (src/lib/exam-data-writer.ts) so the
@@ -185,12 +251,17 @@ export async function runExamDataRefresh(opts: ExamRefreshRunOptions = {}): Prom
       log.push({ code: exam.code, ok: true, lane: laneEntry?.phase, news: w.news, dates: w.dates, datesDropped: w.datesDropped, newsSuppressed: w.newsSuppressed });
     } catch (err) {
       log.push({ code: exam.code, ok: false, lane: laneEntry?.phase, err: (err as Error).message });
+      if (opts.guard && (await opts.guard.noteFailure(feature, err))) {
+        // Empty balance: nothing was refreshed, so the exam keeps its place.
+        await prisma.$executeRaw`UPDATE "Exam" SET "refreshAttemptedAt" = ${exam.refreshAttemptedAt} WHERE id = ${exam.id}`.catch(() => {});
+        break;
+      }
     }
   }
 
   return {
     ok: true,
-    strategy: opts.laneOnly ? `exam-week-lane:${opts.laneOnly.join(",")}` : "exam-week-lane + most-stale-first",
+    strategy: opts.laneOnly ? `exam-week-lane:${opts.laneOnly.join(",")}` : `exam-week-lane + ${visitors ? "hub-visitor interval" : "most-stale-first"}`,
     queueDepth: slice.length,
     laneDepth: lane.length,
     processed: log.length,
@@ -199,6 +270,10 @@ export async function runExamDataRefresh(opts: ExamRefreshRunOptions = {}): Prom
     estSpendUsd: Number((laneSpent + tailSpent).toFixed(2)),
     elapsedMs: Date.now() - started,
     lane: lane.map((l) => ({ code: l.code, phase: l.phase, tier: l.tier })),
+    resting: resting.map((r) => ({ code: r.code, phase: r.phase })),
+    held,
+    ...(opts.laneOnly ? {} : { visitorsUnavailable: visitors === null }),
+    ...(opts.guard ? { spendGuard: opts.guard.summary() } : {}),
     log,
   };
 }

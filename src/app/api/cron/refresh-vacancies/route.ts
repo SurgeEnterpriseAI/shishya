@@ -17,6 +17,12 @@
 // hub's no-practice panel and vacancy block would have printed it as such.
 // Those rows change only when the official research is re-read.
 //
+// 7 Oct 2026: every call asks the background spend guard first (can-wait
+// "vacancies", $0.15 a day ≈ 2 exams; src/lib/ai/spend-guard.ts). A held
+// exam is not stamped, so it keeps its place; an empty balance stops the
+// run, writes the exam's previous vacanciesAttemptedAt back, and the other
+// jobs skip for 20 minutes.
+//
 // Auth: Bearer ${CRON_SECRET}. Daily per vercel.json.
 
 export const runtime = "nodejs";
@@ -27,6 +33,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "@/lib/db/prisma";
 import { notSchoolSqlText } from "@/lib/db/exam-scope";
 import { recordAiUsage } from "@/lib/ai/usage";
+import { createSpendGuard } from "@/lib/ai/spend-guard";
 
 const MODEL = "claude-sonnet-4-5-20250929";
 const BATCH = 5;
@@ -59,9 +66,9 @@ export async function GET(req: Request) {
   // ATTEMPT (vacanciesAttemptedAt), so a failing exam cannot hog the batch.
   // 25 Sep 2026: real exams only — no web-searched vacancies for a school class.
   const exams = await prisma.$queryRawUnsafe<
-    { id: string; code: string; name: string; shortName: string }[]
+    { id: string; code: string; name: string; shortName: string; attemptedAt: Date | null }[]
   >(
-    `SELECT e.id, e.code, e.name, e."shortName"
+    `SELECT e.id, e.code, e.name, e."shortName", x."vacanciesAttemptedAt" AS "attemptedAt"
      FROM "ExamEligibility" x JOIN "Exam" e ON e.id = x."examId"
      WHERE e.active = TRUE AND ${notSchoolSqlText("e")}
        AND COALESCE(x."generatedBy", '') NOT LIKE 'official-research:%'
@@ -70,9 +77,16 @@ export async function GET(req: Request) {
   );
 
   const tools = [{ type: "web_search_20250305", name: "web_search", max_uses: 2 }] as any[];
-  let updated = 0, failed = 0;
+  const guard = createSpendGuard();
+  let updated = 0, failed = 0, held = 0;
   for (const ex of exams) {
     if (Date.now() - started > TIME_BUDGET_MS) break;
+    const d = await guard.allow("vacancies");
+    if (!d.allow) {
+      // Not stamped: the exam keeps its place for the next run.
+      held = exams.length - updated - failed;
+      break;
+    }
     await prisma
       .$executeRawUnsafe(`UPDATE "ExamEligibility" SET "vacanciesAttemptedAt" = NOW() WHERE "examId" = $1`, ex.id)
       .catch(() => {});
@@ -107,8 +121,15 @@ export async function GET(req: Request) {
     } catch (err) {
       failed++;
       console.warn(`[refresh-vacancies] ${ex.code}: ${String((err as Error)?.message).slice(0, 80)}`);
+      if (await guard.noteFailure("vacancies", err)) {
+        // Empty balance: nothing was checked, so the exam keeps its place.
+        await prisma
+          .$executeRawUnsafe(`UPDATE "ExamEligibility" SET "vacanciesAttemptedAt" = $2 WHERE "examId" = $1`, ex.id, ex.attemptedAt)
+          .catch(() => {});
+        break;
+      }
     }
   }
 
-  return Response.json({ ok: true, refreshed: updated, failed, batch: exams.length });
+  return Response.json({ ok: true, refreshed: updated, failed, held, batch: exams.length, spendGuard: guard.summary() });
 }

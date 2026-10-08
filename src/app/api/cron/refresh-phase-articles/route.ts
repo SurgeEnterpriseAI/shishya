@@ -22,6 +22,7 @@ export const maxDuration = 300; // 5 min — scraping + Claude can be slow
 export const dynamic = "force-dynamic";
 
 import { refreshPhaseArticles } from "@/lib/refresh-phase-articles";
+import { createSpendGuard } from "@/lib/ai/spend-guard";
 
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET;
@@ -44,7 +45,8 @@ export async function GET(req: Request) {
   const examCodeOverride = url.searchParams.get("examCode") ?? undefined;
 
   const started = Date.now();
-  const report = await refreshPhaseArticles({ examCodeOverride });
+  // Every model call asks the background spend guard first (7 Oct 2026).
+  const report = await refreshPhaseArticles({ examCodeOverride, guard: createSpendGuard() });
   const elapsedMs = Date.now() - started;
 
   return new Response(

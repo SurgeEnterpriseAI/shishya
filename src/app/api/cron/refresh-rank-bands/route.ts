@@ -1,7 +1,13 @@
 // GET /api/cron/refresh-rank-bands — daily refresh of score→rank→outcome
-// bands for a rotating subset of exams. Cut-off patterns change much
-// slower than news/dates, so we use a 14-day rotation (~12 exams/day)
-// rather than 7.
+// bands. Cut-off patterns change much slower than news/dates.
+//
+// 7 Oct 2026: oldest first (stored bands or the last paid call), as many as the background spend
+// guard allows (can-wait "rank-bands", $0.05 a day ≈ 2 exams at $0.018;
+// src/lib/ai/spend-guard.ts). Until now a 14-day rotation slot (~14 exams)
+// was called whatever the day had left; with a daily cap a slot would have
+// reached its first 3 exams and starved the rest for good. Oldest-first
+// picks up whatever a held day left. An empty balance stops the run and the
+// other jobs skip for 20 minutes.
 //
 // Auth: Bearer ${CRON_SECRET}.
 
@@ -12,16 +18,15 @@ export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/db/prisma";
 import { REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
 import { generateRankBands } from "@/lib/ai/rank-bands";
+import { createSpendGuard } from "@/lib/ai/spend-guard";
 
 const GEN_SOURCE = "ai-generated:claude";
 // Each call ~$0.06.
 const COST_PER_EXAM_USD = 0.06;
 const PER_DAY_BUDGET_USD = 5.0;
 
-function dayOfYearUtc(now = new Date()): number {
-  const start = Date.UTC(now.getUTCFullYear(), 0, 0);
-  return Math.floor((now.getTime() - start) / (24 * 60 * 60 * 1000));
-}
+/** Most exams a run reaches (the guard's cap usually stops it first). */
+const MAX_PER_RUN = 14;
 
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET;
@@ -45,9 +50,18 @@ export async function GET(req: Request) {
     select: { id: true, code: true, name: true, shortName: true, category: true },
   });
 
-  const ROTATION = 14;
-  const slot = dayOfYearUtc() % ROTATION;
-  const slice = exams.filter((_, idx) => idx % ROTATION === slot);
+  // Oldest first by the later of the stored bands and the last paid call
+  // (AiUsage ref = exam code), so an exam whose call returned no bands does
+  // not hold the head of the queue; one never tried comes first of all.
+  const [last, paid] = await Promise.all([
+    prisma.examRankBand.groupBy({ by: ["examId"], where: { source: GEN_SOURCE }, _max: { createdAt: true } }),
+    prisma.aiUsage.groupBy({ by: ["ref"], where: { feature: "rank-bands" }, _max: { createdAt: true } }),
+  ]);
+  const bandsAt = new Map(last.map((l) => [l.examId, l._max.createdAt?.getTime() ?? 0]));
+  const paidAt = new Map(paid.map((p) => [p.ref ?? "", p._max.createdAt?.getTime() ?? 0]));
+  const lastAt = (e: { id: string; code: string }) => Math.max(bandsAt.get(e.id) ?? 0, paidAt.get(e.code) ?? 0);
+  const slice = [...exams].sort((a, b) => lastAt(a) - lastAt(b)).slice(0, MAX_PER_RUN);
+  const guard = createSpendGuard();
 
   const started = Date.now();
   const log: Array<{ code: string; ok: boolean; bands?: number; err?: string }> = [];
@@ -57,6 +71,11 @@ export async function GET(req: Request) {
     if (spent >= PER_DAY_BUDGET_USD) {
       log.push({ code: exam.code, ok: false, err: "budget" });
       continue;
+    }
+    const d = await guard.allow("rank-bands");
+    if (!d.allow) {
+      log.push({ code: exam.code, ok: false, err: `held: ${d.reason}` });
+      break;
     }
     try {
       const { bands } = await generateRankBands({
@@ -98,17 +117,19 @@ export async function GET(req: Request) {
       spent += COST_PER_EXAM_USD;
     } catch (err) {
       log.push({ code: exam.code, ok: false, err: (err as Error).message });
+      if (await guard.noteFailure("rank-bands", err)) break;
     }
   }
 
   return new Response(
     JSON.stringify({
-      ok: true, slot, rotation: ROTATION,
+      ok: true, order: "oldest-bands-first",
       processed: log.length,
       ok_count: log.filter((l) => l.ok).length,
       failed: log.filter((l) => !l.ok).length,
       estSpendUsd: Number(spent.toFixed(2)),
       elapsedMs: Date.now() - started,
+      spendGuard: guard.summary(),
       log,
     }),
     { status: 200, headers: { "content-type": "application/json" } },

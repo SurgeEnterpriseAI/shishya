@@ -32,7 +32,11 @@
 // recorded cost, never past the mode's cap; a 4xx from the API (credit
 // balance, auth, rate limit) stops all AI for the run. ?dry=1 → the full
 // report, nothing written, no IndexNow (the AI still runs when allowed — use
-// ?ai=0 for a $0 dry run). Spend is recorded as 'akr-check' (AiUsage).
+// ?ai=0 for a $0 dry run). Spend is recorded as 'akr-check' (AiUsage), the
+// Monday plan's as 'akr-plan'. 7 Oct 2026: before each AI call the cron asks
+// the background spend guard (src/lib/ai/spend-guard.ts: the 21:00 check is
+// must-run, the Monday plan can-wait with its own $3.00); a "no" ends the
+// run's AI like the cap does, and an empty balance tells the guard.
 
 import {
   AI_START_GUARD_MS,
@@ -307,6 +311,8 @@ export interface WatchRunDeps {
   fetchUrl(url: string, opts: { maxBytes: number }): Promise<FetchedPage>;
   /** Null → no AI in this process (tests, ?ai=0). */
   aiCheck: ((input: AnswerKeyCheckInput) => Promise<AnswerKeyCheckResult>) | null;
+  /** Asked before each AI call (the background spend guard): a reason string holds the run's AI, null goes ahead. */
+  aiGate?: () => Promise<string | null>;
   isStopError(err: unknown): boolean;
   ensureTables(): Promise<void>;
   writeRelease(args: WriteReleaseArgs): Promise<WriteReleaseResult>;
@@ -575,6 +581,11 @@ export async function runAnswerKeyWatch(opts: WatchRunOptions, deps: WatchRunDep
       const examWatches = watches.filter((w) => w.examId === d.examId);
       const hosts = officialHostsFor(exam.portalUrl, examWatches.map((w) => w.host));
       if (hosts.length === 0) continue;
+      const heldBy = deps.aiGate ? await deps.aiGate() : null;
+      if (heldBy) {
+        report.ai.stopped = `held by the spend guard (${heldBy})`;
+        break;
+      }
       if (!budget.charge()) {
         report.ai.stopped = `cap reached ($${capUsd.toFixed(2)}, ${budget.calls} calls)`;
         break;
@@ -698,9 +709,17 @@ export async function handleAnswerKeyWatchCron(req: Request, defaultMode: WatchM
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
-  const [{ prisma }, db, aiMod] = await Promise.all([import("@/lib/db/prisma"), import("@/lib/answer-key-watch-db"), import("@/lib/ai/answer-key-check")]);
+  const [{ prisma }, db, aiMod, { createSpendGuard }] = await Promise.all([
+    import("@/lib/db/prisma"),
+    import("@/lib/answer-key-watch-db"),
+    import("@/lib/ai/answer-key-check"),
+    import("@/lib/ai/spend-guard"),
+  ]);
   const now = new Date();
   const jar = new CookieJar();
+  // The Monday plan is can-wait with its own cap; the 21:00 check is must-run.
+  const usageFeature = mode === "plan" ? "akr-plan" : "akr-check";
+  const guard = createSpendGuard();
   try {
     const report = await runAnswerKeyWatch(
       { mode, dry, ai, maxUsd },
@@ -713,14 +732,25 @@ export async function handleAnswerKeyWatchCron(req: Request, defaultMode: WatchM
         fetchUrl: (url, o) => fetchForWatch(url, { ...o, jar }),
         // awaitUsage (review, 30 Sep 2026): the AiUsage row lands before the
         // response, so a function ended at maxDuration never loses spend.
-        aiCheck: (input) => aiMod.checkAnswerKeyWithAi(input, { awaitUsage: true }),
+        aiCheck: async (input) => {
+          try {
+            return await aiMod.checkAnswerKeyWithAi(input, { awaitUsage: true, usageFeature });
+          } catch (err) {
+            await guard.noteFailure(usageFeature, err);
+            throw err;
+          }
+        },
+        aiGate: async () => {
+          const d = await guard.allow(usageFeature);
+          return d.allow ? null : d.reason;
+        },
         isStopError: aiMod.isStopError,
         ensureTables: () => db.ensureOfficialWatchTables(prisma),
         writeRelease: (args) => db.writeRelease(prisma, args),
         markChecked: (id, status) => db.markWatchChecked(prisma, id, status, now),
       },
     );
-    return Response.json(report);
+    return Response.json({ ...report, spendGuard: guard.summary() });
   } catch (err) {
     console.error("[answer-key-watch] run failed", err);
     return Response.json({ ok: false, error: String((err as Error)?.message ?? err).slice(0, 300) }, { status: 500 });

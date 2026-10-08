@@ -7,9 +7,15 @@
 //
 // Scheduled 20:00 UTC (1:30 AM IST) with a 26h lookback window — the
 // (source, sourceId) unique key makes overlap harmless.
+//
+// 7 Oct 2026: can-wait work for the background spend guard
+// (src/lib/ai/spend-guard.ts, "demand-mine"): asked before every call; a
+// held night mines nothing (re-run with ?hours= to cover it), and an empty
+// balance stops the run at its first failed call.
 
 import { prisma } from "@/lib/db/prisma";
-import { consolidateDemand, mineDemand } from "@/lib/demand-mine";
+import { consolidateDemand, mineDemand, type MineGate } from "@/lib/demand-mine";
+import { createSpendGuard } from "@/lib/ai/spend-guard";
 
 export const maxDuration = 300;
 export const dynamic = "force-dynamic";
@@ -26,13 +32,18 @@ export async function GET(req: Request) {
   const until = new Date();
   const since = new Date(until.getTime() - hours * 3600_000);
 
-  const mined = await mineDemand(prisma, since, until);
+  const guard = createSpendGuard();
+  const gate: MineGate = {
+    allow: async () => (await guard.allow("demand-mine")).allow,
+    failed: (err) => guard.noteFailure("demand-mine", err),
+  };
+  const mined = await mineDemand(prisma, since, until, gate);
 
   // Consolidate on Sundays (UTC) or on demand via ?consolidate=1.
   let consolidated: { merges: number; digest: string | null } | null = null;
   if (until.getUTCDay() === 0 || url.searchParams.get("consolidate") === "1") {
-    consolidated = await consolidateDemand(prisma);
+    consolidated = await consolidateDemand(prisma, gate);
   }
 
-  return Response.json({ ok: true, windowHours: hours, ...mined, consolidated });
+  return Response.json({ ok: true, windowHours: hours, ...mined, consolidated, spendGuard: guard.summary() });
 }

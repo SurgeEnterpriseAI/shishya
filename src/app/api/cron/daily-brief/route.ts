@@ -26,6 +26,13 @@
 // score, next announced exam day with its tier word), no practice set, and NO further
 // model calls this run.
 // inputs.source says which path wrote the brief ("ai" | "rule:ai-unavailable").
+//
+// Background spend guard (7 Oct 2026, src/lib/ai/spend-guard.ts): the note is
+// can-wait work ("daily-brief"). Before each model call the run asks the
+// guard; a "no" (credit cool-down, an outage earlier today, the day's cap)
+// flips the run to rule briefs exactly as a failed call does, so every
+// student still gets a brief. An empty balance tells the guard, and the
+// other jobs skip for 20 minutes.
 
 // Cron job that walks every enrollment + calls Claude once per user-exam. We
 // stay at 300s (Vercel Pro plan ceiling); the cron itself processes users
@@ -40,6 +47,7 @@ import { prisma } from "@/lib/db/prisma";
 import { NOT_SCHOOL_WHERE } from "@/lib/db/exam-scope";
 import { istDayNumber } from "@/lib/exam-phase";
 import { recordAiUsage } from "@/lib/ai/usage";
+import { createSpendGuard } from "@/lib/ai/spend-guard";
 import { briefSittingName, buildFallbackBrief, rankWeakTopics, RULE_BRIEF_SOURCE, type BriefFacts } from "@/lib/brief-fallback";
 import { buildTimeline } from "@/lib/exam-timeline";
 import { hubDateLead } from "@/lib/hub-title";
@@ -160,6 +168,7 @@ export async function GET(req: Request) {
     );
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? "" });
+  const guard = createSpendGuard();
   const TIME_BUDGET_MS = 240_000;
   // Set by the first failed model call; every later enrollment this run gets
   // a rule brief with no model call (16 Sep 2026).
@@ -271,6 +280,8 @@ Tone: warm but direct. Refer to specific topics by name. Suggest one concrete ac
 Output ONLY the note, no quotes, no formatting markers.`;
 
       let aiReflection = "";
+      // The spend guard can hold the note (rule briefs for the rest of the run).
+      if (!aiDown && !(await guard.allow("daily-brief")).allow) aiDown = true;
       if (!aiDown) {
         try {
           const response = await client.messages.create({
@@ -290,6 +301,7 @@ Output ONLY the note, no quotes, no formatting markers.`;
         } catch (err) {
           // Outage, credits, overload: no more model calls this run.
           aiDown = true;
+          await guard.noteFailure("daily-brief", err);
           console.warn(`[daily-brief] model call failed at user=${enr.userId} exam=${enr.exam.code}; rule briefs for the rest of this run:`, err);
         }
       }
@@ -348,6 +360,7 @@ Output ONLY the note, no quotes, no formatting markers.`;
     briefsUpdated: stats.briefsUpdated,
     ruleBriefs,
     aiDown,
+    spendGuard: guard.summary(),
     spendUsd: spendUsd(stats).toFixed(4),
     tokens: { in: stats.in, out: stats.out, cacheW: stats.cacheW, cacheR: stats.cacheR },
   });

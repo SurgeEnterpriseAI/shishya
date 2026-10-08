@@ -4,7 +4,10 @@
 // UPSC, SSC and the state PSCs post answer keys / question papers on the
 // evening of the paper; the 18:45 IST general run (which already sees
 // today-pm exams first) is often too early for them, and the next general
-// run is 06:45 IST the following day. This run refreshes only exams whose
+// run is 06:45 IST the following day. Kept on 7 Oct 2026 when the 12:45 run
+// was cut: about $0.30 a day, and it wrote the one first-seen exam date of
+// 3 Oct evening (MH_MPSC_RAJYASEVA). Its calls ask the background spend
+// guard first (must-run, src/lib/ai/spend-guard.ts). This run refreshes only exams whose
 // exam day is today and is past 18:00 IST (phase today-pm, ≤ 6 exams) —
 // no staleness tail, so it is cheap and short.
 //
@@ -18,6 +21,7 @@ export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 
 import { runExamDataRefresh } from "@/lib/exam-refresh-run";
+import { createSpendGuard } from "@/lib/ai/spend-guard";
 
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET;
@@ -35,6 +39,6 @@ export async function GET(req: Request) {
     });
   }
 
-  const body = await runExamDataRefresh({ laneOnly: ["today-pm"] });
+  const body = await runExamDataRefresh({ laneOnly: ["today-pm"], guard: createSpendGuard() });
   return new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } });
 }

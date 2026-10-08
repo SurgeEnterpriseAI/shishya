@@ -14,6 +14,7 @@ import { prisma } from "@/lib/db/prisma";
 import { anthropic, MODEL } from "@/lib/ai/client";
 import { recordAiUsage } from "@/lib/ai/usage";
 import { createNotification } from "@/lib/db/notifications";
+import type { SpendGuard } from "@/lib/ai/spend-guard";
 
 // Close the loop back to the students who flagged a question: when a
 // report leads to a key fix or an invalidation, the reporter was RIGHT
@@ -171,6 +172,8 @@ export async function adjudicateQuestion(
 export async function sweepReportedQuestions(opts: {
   resolvedBy: string;
   maxQuestions?: number;
+  /** The cron's background spend guard (7 Oct 2026); scripts run without. */
+  guard?: SpendGuard;
 }): Promise<SweepResult[]> {
   const reports = await prisma.questionReport.findMany({
     where: { resolved: false },
@@ -192,6 +195,9 @@ export async function sweepReportedQuestions(opts: {
   let n = 0;
   for (const [qid, rs] of byQ) {
     if (opts.maxQuestions && n++ >= opts.maxQuestions) break;
+    // The cron's background spend guard (7 Oct 2026): a "no" leaves the
+    // remaining reports open for the next run.
+    if (opts.guard && !(await opts.guard.allow("question-adjudicate")).allow) break;
     const q = rs[0].question;
     const options = (q.options as { key: string; text: string }[]) ?? [];
     let verdict: Verdict;
@@ -199,6 +205,8 @@ export async function sweepReportedQuestions(opts: {
       verdict = await solve({ body: q.body, options });
     } catch (e: any) {
       results.push({ questionId: qid, action: "error", detail: String(e?.message ?? e).slice(0, 120) });
+      // An empty balance: no more calls this run.
+      if (opts.guard && (await opts.guard.noteFailure("question-adjudicate", e))) break;
       continue; // leave reports open for the next run
     }
 

@@ -547,9 +547,19 @@ Rules:
 
 Respond with ONLY JSON: {"taskIds": ["..."], "note": "..."}`;
 
-export async function generateCoachDay(userId: string): Promise<"planned" | "fallback" | "skipped" | "failed"> {
+/**
+ * `opts.ai` false (7 Oct 2026): the night cron's spend guard said no (credit
+ * cool-down or the day's cap) — store the rule-built plan with no model
+ * call, as on a failed call. `opts.onAiError` hears a failed model call (the
+ * cron tells its guard). The on-open rebuild passes neither.
+ */
+export async function generateCoachDay(
+  userId: string,
+  opts: { ai?: boolean; onAiError?: (err: unknown) => Promise<unknown> | void } = {},
+): Promise<"planned" | "fallback" | "skipped" | "failed"> {
   const ctx = await loadPlanContext(userId);
   if (!ctx || ctx.daysLeft <= 0) return "skipped";
+  if (opts.ai === false) return writeDeterministicDay(ctx);
 
   // Candidate menu: deterministic, validated.
   const menu: { id: string; desc: string }[] = [];
@@ -604,7 +614,8 @@ export async function generateCoachDay(userId: string): Promise<"planned" | "fal
       ON CONFLICT ("userId", date)
       DO UPDATE SET tasks = ${JSON.stringify(tasks)}::jsonb, note = ${note}`;
     return "planned";
-  } catch {
+  } catch (err) {
+    await opts.onAiError?.(err);
     return writeDeterministicDay(ctx);
   }
 }

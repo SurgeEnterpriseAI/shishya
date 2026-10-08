@@ -22,6 +22,12 @@
 // transaction idle for 150 s and then queried it without error.
 //
 // Used by /api/cron/daily-current-affairs and scripts/seed-current-affairs.ts.
+//
+// `gate` (7 Oct 2026): the cron passes the background spend guard
+// (src/lib/ai/spend-guard.ts, must-run "current-affairs"). It is asked only
+// once the slot rule says a call is due, inside the lock; a "no" (credit
+// cool-down, the day's cap) is { kind: "held" }: nothing paid, nothing
+// written, and the next slot tries again.
 
 import { generateDailyCurrentAffairs, type CurrentAffairItem } from "@/lib/current-affairs";
 import { CA_CALL_TX_TIMEOUT_MS, caCallLockKey, caRunDecision, istDateStr, type CaRunDecision } from "@/lib/current-affairs-run";
@@ -29,6 +35,7 @@ import { prisma } from "@/lib/db/prisma";
 
 export type CaSlotOutcome =
   | { kind: "in-flight"; istDate: string }
+  | { kind: "held"; istDate: string; reason: string }
   | { kind: "skipped"; istDate: string; decision: Exclude<CaRunDecision, { run: true }> }
   | {
       kind: "written";
@@ -48,7 +55,10 @@ export type CaSlotOutcome =
  * any, were rolled back). Rejects only when the lock or the check failed, in
  * which case no model call was made.
  */
-export async function runCurrentAffairsSlot(now: Date): Promise<CaSlotOutcome> {
+export async function runCurrentAffairsSlot(
+  now: Date,
+  opts: { gate?: () => Promise<string | null> } = {},
+): Promise<CaSlotOutcome> {
   const istDate = istDateStr(now);
   let attempt = 0; // > 0 once the model call has begun
   try {
@@ -64,6 +74,8 @@ export async function runCurrentAffairsSlot(now: Date): Promise<CaSlotOutcome> {
           rowsToday === 0 ? await tx.aiUsage.count({ where: { feature: "current-affairs", ref: istDate } }) : 0;
         const decision = caRunDecision({ rowsToday, paidCallsToday, now });
         if (!decision.run) return { kind: "skipped", istDate, decision };
+        const heldBy = opts.gate ? await opts.gate() : null;
+        if (heldBy) return { kind: "held", istDate, reason: heldBy };
         attempt = decision.attempt;
         const r = await generateDailyCurrentAffairs({ istDate, tx });
         if (r.written === 0) {

@@ -26,6 +26,11 @@
 // stays missing here (a digest written later and filed under an earlier date
 // would carry the wrong day's news); past days are filled only from a
 // date-scoped official source (scripts/backfill-current-affairs-pib.ts).
+//
+// 7 Oct 2026: the call asks the background spend guard first (must-run,
+// src/lib/ai/spend-guard.ts) → 200 { ok: false, skipped: "held", reason }
+// when it says no; an empty balance tells the guard, so the other jobs skip
+// for 20 minutes.
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -35,6 +40,7 @@ import { CurrentAffairsReplyError } from "@/lib/current-affairs";
 import { istDateStr, nextSlotIso } from "@/lib/current-affairs-run";
 import { runCurrentAffairsSlot, type CaSlotOutcome } from "@/lib/current-affairs-slot";
 import { classifyTutorFailure } from "@/lib/ai/tutor-failure";
+import { createSpendGuard } from "@/lib/ai/spend-guard";
 
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET;
@@ -46,9 +52,15 @@ export async function GET(req: Request) {
   }
 
   const now = new Date();
+  const guard = createSpendGuard();
   let outcome: CaSlotOutcome;
   try {
-    outcome = await runCurrentAffairsSlot(now);
+    outcome = await runCurrentAffairsSlot(now, {
+      gate: async () => {
+        const d = await guard.allow("current-affairs");
+        return d.allow ? null : d.reason;
+      },
+    });
   } catch (err) {
     // The lock or today's check failed before any model call.
     console.error("[daily-current-affairs] today's check failed; no model call", (err as Error)?.message);
@@ -60,6 +72,9 @@ export async function GET(req: Request) {
     case "in-flight":
       // Another run holds today's call lock (a second delivery of the same cron event, or a hand run).
       return Response.json({ ok: false, date, skipped: "call-in-flight" });
+    case "held":
+      // The spend guard said no: nothing paid, nothing written; the next slot tries again.
+      return Response.json({ ok: false, date, skipped: "held", reason: outcome.reason, spendGuard: guard.summary() });
     case "skipped": {
       const d = outcome.decision;
       if (d.skipped === "already-written") return Response.json({ ok: true, date, skipped: "already-written" });
@@ -79,6 +94,7 @@ export async function GET(req: Request) {
       if (classifyTutorFailure(err) === "credit") {
         // The AI balance is empty: nothing was paid and nothing written. The next slot tries again.
         console.warn("[daily-current-affairs] stopped: AI credit", (err as Error)?.message);
+        await guard.noteFailure("current-affairs", err);
         return Response.json({ ok: false, date, stopped: "credit" });
       }
       const nextSlot = nextSlotIso(now);

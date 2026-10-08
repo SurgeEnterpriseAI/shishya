@@ -26,7 +26,7 @@
     },
     {
       "path": "/api/cron/refresh-exam-data",
-      "schedule": "15 1,7,13 * * *"
+      "schedule": "15 1,13 * * *"
     },
     {
       "path": "/api/cron/refresh-exam-data/today-pm",
