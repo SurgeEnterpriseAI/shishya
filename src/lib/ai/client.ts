@@ -3,6 +3,7 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { recordAiUsage, PRICING } from "@/lib/ai/usage";
+import { ledgerFeature, withReserve } from "@/lib/ai/reserve";
 
 const apiKey = process.env.ANTHROPIC_API_KEY;
 if (!apiKey) {
@@ -94,27 +95,31 @@ export function messageParamsFor(opts: CallClaudeOpts): MessageParams {
  *  - sets model + max_tokens (model defaults to the standard tier; pass
  *    `model` to route a call to a faster/stronger tier — see ai/router.ts)
  *  - records latency + cache stats for observability
+ *  - (7 Oct 2026) retries once on the reserve key when the main balance is
+ *    empty and `feature` is a student-facing one (src/lib/ai/reserve.ts)
  */
 export async function callClaude(opts: CallClaudeOpts) {
   const start = Date.now();
   const params = messageParamsFor(opts);
   const model = params.model;
-  let response: Anthropic.Messages.Message;
-  try {
-    response = await anthropic.messages.create(params);
-  } catch (err: any) {
-    // Newer models (Opus 4.8+) reject the temperature param as deprecated.
-    // Strip it and retry once so callers don't need per-model knowledge.
-    const msg = String(err?.message ?? "");
-    if (opts.temperature != null && msg.includes("temperature") && (msg.includes("deprecated") || msg.includes("not supported"))) {
-      const { temperature: _omit, ...rest } = params as any;
-      response = await anthropic.messages.create(rest);
-    } else {
+  const feature = opts.feature ?? "other";
+  const send = async (client: Anthropic): Promise<Anthropic.Messages.Message> => {
+    try {
+      return await client.messages.create(params);
+    } catch (err: any) {
+      // Newer models (Opus 4.8+) reject the temperature param as deprecated.
+      // Strip it and retry once so callers don't need per-model knowledge.
+      const msg = String(err?.message ?? "");
+      if (opts.temperature != null && msg.includes("temperature") && (msg.includes("deprecated") || msg.includes("not supported"))) {
+        const { temperature: _omit, ...rest } = params as any;
+        return await client.messages.create(rest);
+      }
       throw err;
     }
-  }
+  };
+  const { value: response, reserve } = await withReserve(feature, anthropic, send);
   const latencyMs = Date.now() - start;
-  recordAiUsage(opts.feature ?? "other", response, { model, ref: opts.ref, latencyMs });
+  recordAiUsage(ledgerFeature(feature, reserve), response, { model, ref: opts.ref, latencyMs });
 
   return {
     response,

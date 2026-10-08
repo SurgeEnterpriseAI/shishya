@@ -83,6 +83,7 @@ export default async function AiSpendPage() {
         <h1 className="mb-1 text-2xl font-bold">AI spend</h1>
         <p className="mb-6 text-sm text-stone-600">
           Estimated from list prices per logged call (Sonnet $3/$15, Haiku $1/$5 per M tokens, cache write/read, $0.01 per web search). The Anthropic console is the invoice; this page says which feature caused it.
+          A feature ending in &quot;:reserve&quot; was paid from the reserve organization (ANTHROPIC_RESERVE_API_KEY), when the main balance was empty or its spend limit was reached.
         </p>
         <Table rows={byFeature24h} total={total24} title="Last 24 hours" />
         <Table rows={byFeature7d} total={total7} title="Last 7 days" />

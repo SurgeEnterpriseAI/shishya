@@ -43,6 +43,10 @@ const REQUIRED_VARS = [
 const OPTIONAL_VARS = [
   { key: "ADMIN_EMAILS", hint: "Comma-separated list. Without this, /admin will redirect everyone away." },
   { key: "ANTHROPIC_MODEL", hint: "Default is claude-sonnet-4-5-20250929" },
+  {
+    key: "ANTHROPIC_RESERVE_API_KEY",
+    hint: "Key from a SEPARATE Anthropic organization with its own prepaid credit; student calls retry on it when the main balance is empty (src/lib/ai/reserve.ts). Set it in Vercel production only.",
+  },
 ];
 
 function checkEnvVars() {

@@ -9,6 +9,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { recordAiUsage } from "@/lib/ai/usage";
 import { anthropic, MODEL } from "./client";
+import { ledgerFeature, withReserve } from "./reserve";
 import type { Locale } from "@/lib/i18n";
 import { localeNames } from "@/lib/i18n";
 
@@ -155,16 +156,21 @@ export async function translateBatch(
   const indicScripts = new Set(["hi", "te", "kn", "ta", "ml", "bn", "gu", "pa", "or", "as", "mr", "sa", "mai", "ne", "kok", "ks", "sd"]);
   const tokenBudgetPerQ = indicScripts.has(input.locale) ? 1500 : 700;
   const start = Date.now();
-  const finalMessage = await anthropic.messages.create({
-    model: TRANSLATION_MODEL,
-    max_tokens: Math.min(8192, tokenBudgetPerQ * input.questions.length + 2000),
-    system: [
-      { type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } },
-    ] as Anthropic.Messages.TextBlockParam[],
-    messages: [{ role: "user", content: userBlock }],
-  });
+  // 7 Oct 2026: an empty main balance is retried once on the reserve key
+  // (src/lib/ai/reserve.ts). Inside the app only: the prewarm/backfill
+  // scripts that call this file never reach the reserve.
+  const { value: finalMessage, reserve } = await withReserve("translate", anthropic, (client) =>
+    client.messages.create({
+      model: TRANSLATION_MODEL,
+      max_tokens: Math.min(8192, tokenBudgetPerQ * input.questions.length + 2000),
+      system: [
+        { type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } },
+      ] as Anthropic.Messages.TextBlockParam[],
+      messages: [{ role: "user", content: userBlock }],
+    }),
+  );
   const latencyMs = Date.now() - start;
-  recordAiUsage("translate", finalMessage, { model: TRANSLATION_MODEL, ref: input.locale, latencyMs });
+  recordAiUsage(ledgerFeature("translate", reserve), finalMessage, { model: TRANSLATION_MODEL, ref: input.locale, latencyMs });
 
   const text = finalMessage.content
     .filter((b): b is Anthropic.Messages.TextBlock => b.type === "text")

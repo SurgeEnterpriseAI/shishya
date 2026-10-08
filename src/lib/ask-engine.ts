@@ -49,6 +49,7 @@ import { NOT_SCHOOL_SQL, REAL_EXAM_SQL } from "@/lib/db/exam-scope";
 import { SUPPRESSED_SOURCE } from "@/lib/exam-timeline";
 import { anthropic, MODEL, cachedSystem } from "@/lib/ai/client";
 import { recordAiUsage } from "@/lib/ai/usage";
+import { ledgerFeature, withReserve } from "@/lib/ai/reserve";
 import { resolveAliases } from "@/lib/exam-aliases";
 import { GATES_CLOSED, examPageGates } from "@/lib/exam-page-gates";
 import { askAgeSummary } from "@/lib/page-gates-copy";
@@ -387,6 +388,13 @@ export interface AskOptions {
    * cron, the JSON path): one messages.create per turn, as before.
    */
   onEvent?: (e: AskStreamEvent) => void;
+  /**
+   * 7 Oct 2026: a person is waiting for this answer, so a turn that fails on
+   * an empty main balance is retried once on the reserve key
+   * (src/lib/ai/reserve.ts). POST /api/ask passes true. Absent — the
+   * teacher-request-sla cron — every turn stays on the main key.
+   */
+  reserve?: boolean;
 }
 
 export interface AskResult {
@@ -588,6 +596,8 @@ type TextGate = ReturnType<typeof createTextGate>;
  * One model turn over the streaming API: status lines for the tools it calls,
  * the answer's words through the gate, and the whole Message back — the same
  * object messages.create returns, so the loop below treats both paths alike.
+ * `reserve` (7 Oct 2026): whether the reserve key served the turn, as
+ * withReserve says for the non-streaming path.
  */
 async function streamTurn(
   body: Record<string, unknown>,
@@ -595,12 +605,23 @@ async function streamTurn(
   emit: (e: AskStreamEvent) => void,
   gate: TextGate,
   index: SearchIndex,
-): Promise<Anthropic.Messages.Message> {
+  reserveFeature: string | null,
+): Promise<{ value: Anthropic.Messages.Message; reserve: boolean }> {
   gate.newTurn();
   const acc = createTurnAccumulator();
   const t = Date.now();
+  // The ledger label: "ask", or "ask:reserve" once the reserve took the request.
+  let ledger = "ask";
+  let reserve = false;
   try {
-    const stream = await anthropic.messages.create({ ...body, stream: true } as unknown as Anthropic.Messages.MessageCreateParamsStreaming, { signal });
+    // A failed request (an empty balance) throws here, before any event: only
+    // then is the turn retried on the reserve. A stream that breaks later is not.
+    const opened = await withReserve(reserveFeature, anthropic, (client) =>
+      client.messages.create({ ...body, stream: true } as unknown as Anthropic.Messages.MessageCreateParamsStreaming, { signal }),
+    );
+    reserve = opened.reserve;
+    ledger = ledgerFeature("ask", reserve);
+    const stream = opened.value;
     for await (const ev of stream as AsyncIterable<any>) {
       acc.push(ev);
       if (ev?.type === "content_block_start") {
@@ -622,7 +643,7 @@ async function streamTurn(
     // same — ledger what the stream reported so far (ref "aborted"; the output
     // count is the start's, so the row is a floor, not the full cost).
     const partial = acc.message();
-    if (partial?.usage) recordAiUsage("ask", partial, { model: MODEL, latencyMs: Date.now() - t, ref: "aborted" });
+    if (partial?.usage) recordAiUsage(ledger, partial, { model: MODEL, latencyMs: Date.now() - t, ref: "aborted" });
     throw err;
   }
   const msg = acc.message();
@@ -633,13 +654,13 @@ async function streamTurn(
   // known usage once (ref "aborted") and fail, so runAsk rejects and the
   // route logs no answered question.
   if (signal?.aborted || !msg || msg.stop_reason == null) {
-    if (msg?.usage) recordAiUsage("ask", msg, { model: MODEL, latencyMs: Date.now() - t, ref: "aborted" });
+    if (msg?.usage) recordAiUsage(ledger, msg, { model: MODEL, latencyMs: Date.now() - t, ref: "aborted" });
     throw new Error(signal?.aborted ?"ask stream aborted" : msg ? "ask stream ended before message_stop" : "ask stream ended before message_start");
   }
   // The turn is over: a short answer that looked like narration is released.
   // (A paused turn is resumed, and the answer is the next response's text.)
   if ((msg.stop_reason as string | null) !== "pause_turn") gate.update(visibleTurnText(msg.content), true);
-  return msg;
+  return { value: msg, reserve };
 }
 
 async function loadDeepIndex(): Promise<SearchIndex> {
@@ -754,6 +775,8 @@ export async function runAsk(question: string, opts: AskOptions = {}): Promise<A
   // itself accepts and executes it.
   const tools: any[] = [...ASK_TOOLS, { type: "web_search_20250305", name: "web_search", max_uses: ASK_WEB_MAX_USES }];
   const system = cachedSystem(askSystemPrompt());
+  // Only a caller with a person waiting may fall back to the reserve (AskOptions.reserve).
+  const reserveFeature = opts.reserve ? "ask" : null;
   let final: Anthropic.Messages.Message | null = null;
 
   for (let turn = 0; turn < ASK_TURN_CAP; turn++) {
@@ -770,9 +793,11 @@ export async function runAsk(question: string, opts: AskOptions = {}): Promise<A
     if (turn > 0) emit({ type: "status", key: "thinking" });
     const t = Date.now();
     // Streaming: the same request over the streaming API, one Message back.
-    const res = gate ? await streamTurn(body, opts.signal, emit, gate, index) : await anthropic.messages.create(body, { signal: opts.signal });
+    const { value: res, reserve } = gate
+      ? await streamTurn(body, opts.signal, emit, gate, index, reserveFeature)
+      : await withReserve(reserveFeature, anthropic, (client) => client.messages.create(body, { signal: opts.signal }));
     turns++;
-    costUsd += recordAiUsage("ask", res, { model: MODEL, latencyMs: Date.now() - t });
+    costUsd += recordAiUsage(ledgerFeature("ask", reserve), res, { model: MODEL, latencyMs: Date.now() - t });
 
     for (const b of res.content as any[]) {
       if (b?.type === "server_tool_use" || b?.type === "web_search_tool_result") {

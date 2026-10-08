@@ -12,6 +12,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { recordAiUsage } from "@/lib/ai/usage";
 import { anthropic, MODEL, cachedSystemHourFirst, TOKEN_LIMITS } from "./client";
+import { ledgerFeature, withReserve } from "./reserve";
 import {
   PLATFORM_PERSONA,
   ANSWER_FORMAT_RULES,
@@ -250,14 +251,19 @@ export async function* tutorStream(
 
   while (true) {
     const start = Date.now();
-    const response = await anthropic.messages.create({
-      model: MODEL,
-      max_tokens: TOKEN_LIMITS.tutor,
-      system: systemBlocks,
-      messages,
-      tools: ctx ? tutorTools : undefined,
-    });
-    const cost = recordAiUsage(input.usage?.feature ?? (school ? "tutor-school" : ctx ? "tutor" : "tutor-anon"), response, { model: MODEL, ref: input.syllabus?.examCode ?? null, latencyMs: Date.now() - start });
+    // 7 Oct 2026: an empty main balance is retried once on the reserve key
+    // for a student's turn (src/lib/ai/reserve.ts); "tutor-late" never is.
+    const feature = input.usage?.feature ?? (school ? "tutor-school" : ctx ? "tutor" : "tutor-anon");
+    const { value: response, reserve } = await withReserve(feature, anthropic, (client) =>
+      client.messages.create({
+        model: MODEL,
+        max_tokens: TOKEN_LIMITS.tutor,
+        system: systemBlocks,
+        messages,
+        tools: ctx ? tutorTools : undefined,
+      }),
+    );
+    const cost = recordAiUsage(ledgerFeature(feature, reserve), response, { model: MODEL, ref: input.syllabus?.examCode ?? null, latencyMs: Date.now() - start });
     input.usage?.onCost?.(cost);
 
     // Append the assistant message to the conversation history (full content blocks
@@ -297,15 +303,18 @@ export async function* tutorStream(
       // answer. `tools` stays in the request so the cached prefix
       // (tools → system) is byte-identical to the loop's requests and the
       // call is a cache HIT; omitting tools re-wrote ~4k tokens per wrap.
-      const wrap = await anthropic.messages.create({
-        model: MODEL,
-        max_tokens: TOKEN_LIMITS.tutor,
-        system: systemBlocks,
-        messages,
-        tools: tutorTools,
-        tool_choice: { type: "none" },
-      });
-      input.usage?.onCost?.(recordAiUsage(input.usage?.feature ? `${input.usage.feature}-wrap` : "tutor-wrap", wrap, { model: MODEL, ref: input.syllabus?.examCode ?? null }));
+      const wrapFeature = input.usage?.feature ? `${input.usage.feature}-wrap` : "tutor-wrap";
+      const { value: wrap, reserve: wrapReserve } = await withReserve(wrapFeature, anthropic, (client) =>
+        client.messages.create({
+          model: MODEL,
+          max_tokens: TOKEN_LIMITS.tutor,
+          system: systemBlocks,
+          messages,
+          tools: tutorTools,
+          tool_choice: { type: "none" },
+        }),
+      );
+      input.usage?.onCost?.(recordAiUsage(ledgerFeature(wrapFeature, wrapReserve), wrap, { model: MODEL, ref: input.syllabus?.examCode ?? null }));
       for (const block of wrap.content) {
         if (block.type === "text") finalText += (finalText ? "\n" : "") + block.text;
       }

@@ -191,7 +191,8 @@ export async function POST(req: Request) {
   if (wantsStream) return streamAnswer({ req, question, resolution, index, locale, via, event, unavailableEvent });
 
   try {
-    const result = await runAsk(question, { resolution, index, locale, via, signal: req.signal });
+    // reserve: a person is waiting — an empty main balance falls back to the reserve key (src/lib/ai/reserve.ts).
+    const result = await runAsk(question, { resolution, index, locale, via, signal: req.signal, reserve: true });
 
     // Content-gap flywheel: a web fallback means Shishya's own data could not
     // answer — the question is logged so the factory can close it.
@@ -259,6 +260,7 @@ function streamAnswer(a: {
           locale: a.locale,
           via: a.via,
           signal: abort.signal,
+          reserve: true,
           onEvent: (e) => {
             if (e.type === "status") emit("status", { key: e.key, text: askStatusText(copy.stream.status, e.key, e.subject), ...(e.subject ? { subject: e.subject } : {}) });
             else if (e.type === "delta") emit("delta", e.text);

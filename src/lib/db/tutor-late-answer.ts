@@ -59,6 +59,7 @@ import { PRICING, recordAiUsage } from "@/lib/ai/usage";
 import { estimateTokens } from "@/lib/ai/batch";
 import { genModelTier } from "@/lib/ai/question-gen-run";
 import { classifyTutorFailure } from "@/lib/ai/tutor-failure";
+import { withoutReserve } from "@/lib/ai/reserve";
 import { historyFromRows, loadTutorTurnContext, tutorStreamArgs, type TutorTurnScope } from "@/lib/tutor-turn";
 import { getSchoolTutorContext, type SchoolTutorContext } from "@/lib/school/tutor-context";
 import { schoolStudentExamKey } from "@/lib/school/tutor-scope";
@@ -494,7 +495,10 @@ export function lateAnswerDeps(): LateAnswerDeps {
     loadRows,
     probe,
     claim,
-    answer,
+    // 7 Oct 2026: an hourly cron never spends the reserve key, not even
+    // through a tutor tool that builds a warm-up mock under a student label
+    // (src/lib/ai/reserve.ts). The probe and these answers use the main key.
+    answer: (row, remainingUsd) => withoutReserve(() => answer(row, remainingUsd)),
     save,
     release,
     pendingMail,
