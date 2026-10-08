@@ -161,7 +161,8 @@ describe("createUser: no exam-prep welcome mail on a school sign-in", () => {
   it("an exam return → the welcome exactly as before; SIGNUP props = provider + where it signed up from", async () => {
     state.cookies[SECURE] = "https://shishya.in/exams/SSC_CGL?start=practice";
     await signUp();
-    expect(state.welcome).toEqual([{ email: "student@example.com", name: "Asha" }]);
+    // id (7 Oct 2026): the 'sent:welcome' send-log row — the mail itself is unchanged.
+    expect(state.welcome).toEqual([{ id: "u-1", email: "student@example.com", name: "Asha" }]);
     expect(signupRow().props).toEqual({ provider: "google", callbackFamily: "exam", callbackPath: "/exams/SSC_CGL" });
   });
 

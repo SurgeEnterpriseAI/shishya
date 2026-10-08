@@ -40,7 +40,7 @@ export async function GET(req: Request) {
 
   let sent = false;
   if (kind === "nudge") {
-    sent = await sendDay3NudgeEmail({ email: to, name: null, daysSinceSignup: 3 });
+    sent = await sendDay3NudgeEmail({ email: to, name: null, examShort: null });
   } else {
     sent = await sendWelcomeEmail({ email: to, name: null });
   }

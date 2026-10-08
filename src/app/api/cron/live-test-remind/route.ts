@@ -40,8 +40,10 @@ export async function GET(req: Request) {
     return Response.json({ ok: true, sent: 0, reason: "no live tests open today" });
   }
 
-  const due = await prisma.$queryRaw<{ id: string; email: string }[]>`
-    SELECT id, email FROM "LiveTestReminder"
+  // userId (7 Oct 2026): a member's reminder carries the user-keyed
+  // unsubscribe (sendLiveTestReminderEmail); a guest's stays a one-off.
+  const due = await prisma.$queryRaw<{ id: string; email: string; userId: string | null }[]>`
+    SELECT id, email, "userId" FROM "LiveTestReminder"
     WHERE "sundayDate" = ${istToday}::date AND "notifiedAt" IS NULL
     LIMIT 500
   `.catch(() => []);
@@ -50,6 +52,7 @@ export async function GET(req: Request) {
   for (const r of due) {
     const ok = await sendLiveTestReminderEmail({
       to: r.email,
+      userId: r.userId,
       exams: exams.map((e) => e.short),
       count: exams.length,
     }).catch(() => false);

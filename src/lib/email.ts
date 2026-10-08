@@ -16,14 +16,40 @@
 //                     Must use a domain verified in the Resend
 //                     dashboard, or sends will be rejected.
 //                     Defaults to tutor@shishya.in if unset.
+//   EMAIL_REPLY_TO    optional, a mailbox a person reads. Default Reply-To
+//                     for every send that sets none. Unset → a reply goes
+//                     to EMAIL_FROM's send-only domain and bounces (7 Oct
+//                     2026: send.surgesoftware.co.in has no MX), so the
+//                     copy says "unsubscribe below", never "Reply to stop".
 
 import { Resend } from "resend";
-import { unsubFooterHtml, unsubApiUrl } from "./email-unsubscribe";
+import { unsubFooterHtml, unsubApiUrl, unsubUrl } from "./email-unsubscribe";
 import { tk } from "./i18n";
 import { mailFamily } from "./loops-readout";
 
 const apiKey = process.env.RESEND_API_KEY;
 const from = process.env.EMAIL_FROM ?? "Shishya <tutor@shishya.in>";
+
+/** EMAIL_REPLY_TO, read per call (tests stub it). */
+function defaultReplyTo(): string | undefined {
+  return process.env.EMAIL_REPLY_TO?.trim() || undefined;
+}
+
+/** The closing "how to stop" line, true in every state (7 Oct 2026): "reply"
+ *  only when a reply reaches a person (EMAIL_REPLY_TO set), "unsubscribe
+ *  below" only when sendEmail puts the link below (a known recipient's
+ *  unsubUserId). Neither → no line at all. */
+export function stopLine(what: string, hasUnsubLink: boolean): string {
+  const reply = !!defaultReplyTo();
+  if (reply && hasUnsubLink) return `Reply to stop ${what}, or unsubscribe below.`;
+  if (hasUnsubLink) return `To stop ${what}, unsubscribe below.`;
+  return reply ? `Reply to stop ${what}.` : "";
+}
+
+/** `(line)` for a plain-text closing note; "" when there is no line. */
+function textNote(line: string): string {
+  return line ? `(${line})` : "";
+}
 
 // Founder oversight: BCC the founder on every outbound email so there's
 // a full record of what candidates receive. Env-overridable (set
@@ -61,6 +87,12 @@ export interface EmailPayload {
    *  Omit for purely transactional mail the user's own action triggered
    *  (mentor replies, payment receipts) — those need no opt-out. */
   unsubUserId?: string;
+  /** 7 Oct 2026: the recipient's userId on TRANSACTIONAL mail (welcome,
+   *  teacher-request answer) — only so sendEmail writes the 'sent:<tag>'
+   *  EmailTouch row its returns are counted against. No opt-out gate, no
+   *  footer, no List-Unsubscribe, founder BCC unchanged. Ignored when
+   *  unsubUserId is set (that already logs). */
+  logUserId?: string;
   /** Informational only since 25 Aug 2026 (founder call: revert the
    *  inbox-budget hold — email scenarios back to the pre-22-Aug
    *  behaviour). The field is kept on senders so the classification is
@@ -172,14 +204,17 @@ export async function sendEmail(payload: EmailPayload): Promise<boolean> {
             "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
           }
         : undefined;
+    // Same opt-out link in the plain-text part, so "unsubscribe below" holds there too.
+    const unsubText = payload.bulk ? payload.bulk.unsubscribeUrl : payload.unsubUserId ? unsubUrl(payload.unsubUserId) : null;
+    const text = bodyText && unsubText ? `${bodyText}\n\nUnsubscribe: ${unsubText}` : bodyText;
     const res = await c.emails.send({
       from,
       to: payload.to,
       subject: payload.subject,
       html,
-      text: bodyText,
+      text,
       bcc: bcc.length > 0 ? bcc : undefined,
-      replyTo: payload.replyTo,
+      replyTo: payload.replyTo ?? defaultReplyTo(),
       headers,
       // Resend rejects tag values with anything outside [A-Za-z0-9_-] —
       // a colon in a tag fails the WHOLE send (learned 1 Sep 2026 when
@@ -215,13 +250,16 @@ export async function sendEmail(payload: EmailPayload): Promise<boolean> {
     }
     // Unified send log for the inbox budget: every mail to a KNOWN user
     // leaves a row, so the next routine send in the window is held.
-    // (Crons also write their own dedup tags; both coexist.)
-    if (payload.unsubUserId) {
+    // (Crons also write their own dedup tags; both coexist.) 7 Oct 2026:
+    // transactional mail to a known user (logUserId) logs too, so its
+    // returns have a denominator — the row is the only thing it changes.
+    const touchUserId = payload.unsubUserId ?? payload.logUserId;
+    if (touchUserId) {
       try {
         const { prisma } = await import("./db/prisma");
         const { randomUUID } = await import("node:crypto");
         await prisma.$executeRaw`
-          INSERT INTO "EmailTouch" (id, "userId", tag) VALUES (${randomUUID()}, ${payload.unsubUserId}, ${"sent:" + (payload.tag ?? "email")})`;
+          INSERT INTO "EmailTouch" (id, "userId", tag) VALUES (${randomUUID()}, ${touchUserId}, ${"sent:" + (payload.tag ?? "email")})`;
       } catch {
         /* logging must never fail a delivered send */
       }
@@ -304,56 +342,66 @@ Everything here is free.
 }
 
 interface NudgeProps extends CommonProps {
-  ctaUrl: string;
-  /** Days since signup — usually 3. Drives the copy hook. */
-  daysSinceSignup: number;
+  /** The exam /today builds the set on (pickDailyFive's examShort); null =
+   *  no enrolment on an exam with practice yet, so /today opens the exam
+   *  picker and the mail says "pick your exam", never "ready". */
+  examShort: string | null;
 }
 
+/** Day-3 nudge, reworked 7 Oct 2026. The old "three places to start" mail
+ *  had 0 clicks from 92 recipients in 21 days; the Daily-5 mail — ONE
+ *  one-tap action, "your 5 questions are ready" — is the best-clicked kind
+ *  (5.8%). So this mail leads with the same single action, linking to
+ *  /today (which builds the set, or opens the exam picker when there is no
+ *  exam to build it on), and keeps the coach invite as a secondary line. */
 export function renderDay3NudgeEmail(p: NudgeProps): {
   subject: string;
   html: string;
   text: string;
 } {
-  const subject = `${p.firstName}, where would you like to start on Shishya?`;
-  const text = `Hi ${p.firstName},
+  const first = p.firstName;
+  const exam = p.examShort ? esc(p.examShort) : null;
+  // pickFirstName's "there" (no usable name) reads badly as an opener
+  // ("there, your 5…"): the subject and lead then start plainly, and the
+  // text part greets "Hi there," as the old mail did.
+  const named = first !== "there";
+  const subjectBody = p.examShort ? `your 5 ${p.examShort} questions are ready` : "your first 5 questions take 3 minutes";
+  const subject = named ? `${first}, ${subjectBody}` : subjectBody.charAt(0).toUpperCase() + subjectBody.slice(1);
+  const leadText = p.examShort
+    ? `Your first 5 ${p.examShort} questions are ready — about 3 minutes, and a first look at where you stand.`
+    : `Pick the exam you are preparing for, and Shishya builds your first 5 questions on it — about 3 minutes, and a first look at where you stand.`;
+  const leadHtml = exam
+    ? `${named ? `${esc(first)}, your` : "Your"} first 5 <strong>${exam}</strong> questions are ready — about 3 minutes, and a first look at where you stand.`
+    : `${named ? `${esc(first)}, pick` : "Pick"} the exam you are preparing for, and Shishya builds your first 5 questions on it — about 3 minutes, and a first look at where you stand.`;
+  const cta = p.examShort ? "Start my 5" : "Pick my exam";
+  const text = `${named ? first : "Hi there"},
 
-You signed up ${p.daysSinceSignup} days ago. Three easy places to start:
+${leadText}
 
-• Ask Shishya anything you are studying — free, in your language: https://shishya.in/chat
-• Preparing for an exam? Take the 5-question, 90-second diagnostic and see your weak topics: ${p.ctaUrl}
-• Or open School, Entrance exams, Government exams, Colleges & scholarships or Careers from https://shishya.in
+${cta}: https://shishya.in/today
 
-If you are preparing for an exam, your free personal coach can plan each day to your exam date and re-plan whenever life gets in the way: https://shishya.in/coach
+Want a plan too? Your free personal coach decides what to study each day to your exam date and re-plans whenever life gets in the way: https://shishya.in/coach
 
-— The Shishya team`;
+— Shishya (free, always)
+
+(Not interested? Just ignore this email — we won't send this one again.)`;
 
   const html = `<!doctype html>
 <html><head><meta charset="utf-8"></head>
-<body style="margin:0;padding:0;background:#fff7ed;font-family:'Inter',system-ui,sans-serif;color:#0f172a;">
-  <div style="max-width:560px;margin:0 auto;padding:32px 24px;">
-    <div style="text-align:center;margin-bottom:24px;">
-      <div style="display:inline-block;width:48px;height:48px;background:#f97316;border-radius:10px;line-height:48px;color:#fff;font-weight:700;font-size:22px;">शि</div>
-      <div style="font-weight:700;font-size:18px;margin-top:8px;">Shishya</div>
-    </div>
-    <h1 style="font-size:22px;line-height:1.3;margin:0 0 12px;">Where would you like to start, ${p.firstName}?</h1>
-    <p style="font-size:15px;line-height:1.55;margin:0 0 16px;color:#334155;">You signed up ${p.daysSinceSignup} days ago. Three easy places to start:</p>
-    <p style="margin:24px 0;text-align:center;">
-      <a href="https://shishya.in/chat" style="display:inline-block;background:#f97316;color:#fff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 24px;border-radius:8px;">Ask Shishya a question →</a>
+<body style="margin:0;padding:0;background:#f8fafc;font-family:system-ui,sans-serif;color:#0f172a;">
+  <div style="max-width:520px;margin:0 auto;padding:28px 24px;">
+    <div style="font-weight:700;font-size:18px;">${exam ? `🎯 Your 5 ${exam} questions are ready` : "🎯 Your first 5 questions, about 3 minutes"}</div>
+    <p style="font-size:14px;line-height:1.6;margin:14px 0;">${leadHtml}</p>
+    <a href="https://shishya.in/today"
+       style="display:inline-block;background:#f59e0b;color:#fff;text-decoration:none;font-weight:700;font-size:14px;border-radius:10px;padding:12px 22px;">
+      ${cta} →
+    </a>
+    <p style="font-size:12px;line-height:1.6;margin:18px 0 0;color:#475569;">
+      Want a plan too? Your <strong style="color:#0f172a;">free personal coach</strong> decides what to study each day to your exam date and re-plans whenever life gets in the way —
+      <a href="https://shishya.in/coach" style="color:#c2410c;font-weight:600;text-decoration:none;">set up my free coach →</a>
     </p>
-    <ul style="font-size:13px;line-height:1.6;margin:0 0 24px;padding-left:20px;color:#475569;">
-      <li>Preparing for an exam? <a href="${p.ctaUrl}" style="color:#c2410c;font-weight:600;">Take the 5-question, 90-second diagnostic</a> and see your weak topics.</li>
-      <li>Or open School, Entrance exams, Government exams, Colleges &amp; scholarships or Careers from <a href="https://shishya.in" style="color:#c2410c;font-weight:600;">shishya.in</a>.</li>
-    </ul>
-    <div style="border:1px solid #fed7aa;background:#fff7ed;border-radius:10px;padding:14px 16px;margin:0 0 24px;">
-      <p style="font-size:14px;font-weight:700;margin:0 0 6px;color:#0f172a;">A plan for every day to your exam</p>
-      <p style="font-size:13px;line-height:1.55;margin:0 0 10px;color:#334155;">If you are preparing for an exam, your <strong style="color:#0f172a;">free personal coach</strong> decides what to study each day and re-plans whenever life gets in the way.</p>
-      <a href="https://shishya.in/coach" style="display:inline-block;background:#f97316;color:#fff;text-decoration:none;font-weight:600;font-size:13px;padding:9px 18px;border-radius:8px;">Set up my free coach (30s) →</a>
-    </div>
-    <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;">
-    <p style="font-size:11px;line-height:1.6;color:#94a3b8;margin:0;text-align:center;">
-      Not interested? Just ignore this email — we won't send again.<br>
-      <a href="https://shishya.in" style="color:#c2410c;">shishya.in</a>
-    </p>
+    <p style="font-size:12px;color:#64748b;margin:18px 0 0;">— Shishya, free always</p>
+    <p style="font-size:11px;color:#94a3b8;margin:10px 0 0;">Not interested? Just ignore this email — we won't send this one again.</p>
   </div>
 </body></html>`;
   return { subject, html, text };
@@ -631,6 +679,7 @@ export async function sendDailyFiveEmail(p: {
   const weakText = p.examShort ? `one of your weakest ${p.examShort} topics` : "one of your weakest topics";
   const weakHtml = exam ? `one of your weakest <strong>${exam}</strong> topics` : "one of your weakest topics";
   const coachTarget = p.examShort ? `your ${p.examShort} exam` : "your exam date";
+  const stop = stopLine("the daily reminder", !!p.userId);
 
   const text = `${first},
 
@@ -646,7 +695,7 @@ ${
     ? `\nP.S. Five questions keep the habit alive; a plan decides what to study each day. Your free personal coach maps every day from here to ${coachTarget} and rebuilds it each morning around what you actually did. It costs nothing: https://shishya.in/coach\n`
     : ""
 }
-(Reply to this email to stop the daily reminder.)`;
+${textNote(stop)}`;
   const html = `<!doctype html>
 <html><head><meta charset="utf-8"></head>
 <body style="margin:0;padding:0;background:#f8fafc;font-family:system-ui,sans-serif;color:#0f172a;">
@@ -677,7 +726,7 @@ ${
     </div>`
         : ""
     }
-    <p style="font-size:11px;color:#94a3b8;margin:10px 0 0;">Reply to this email to stop the daily reminder.</p>
+    ${stop ? `<p style="font-size:11px;color:#94a3b8;margin:10px 0 0;">${stop}</p>` : ""}
   </div>
 </body></html>`;
   return sendEmail({ to: p.to, subject, html, text, tag: "daily-five", unsubUserId: p.userId, privateParts: p.pickup ? [p.pickup.html, p.pickup.text] : undefined });
@@ -751,7 +800,7 @@ Today's study pack, built from your weakest topics: https://shishya.in/me/report
 
 — Shishya (your free personal coach)
 
-(Reply to stop, or unsubscribe below.)`;
+${textNote(stopLine("the morning plan email", true))}`;
 
   const html = `<!doctype html>
 <html><head><meta charset="utf-8"></head>
@@ -826,7 +875,7 @@ ${
     ? `\nP.S. A streak is the habit; a plan decides what each day is for. Your free personal coach picks your 2-3 things every morning and never holds a missed day against you. Free: https://shishya.in/coach\n`
     : ""
 }
-(Reply to this email to stop these reminders.)`;
+${textNote(stopLine("these reminders", !!p.userId))}`;
   const html = `<!doctype html>
 <html><head><meta charset="utf-8"></head>
 <body style="margin:0;padding:0;background:#fff7ed;font-family:system-ui,sans-serif;color:#0f172a;">
@@ -921,7 +970,7 @@ Continue where you left off: https://shishya.in/dashboard
 One good session is all it takes to be back in rhythm. See you inside.
 — Shishya (100% free, always)
 
-(Reply to this email to stop these check-ins.)`;
+${textNote(stopLine("these check-ins", !!p.userId))}`;
 
   const html = `<!doctype html>
 <html><head><meta charset="utf-8"></head>
@@ -965,6 +1014,8 @@ One good session is all it takes to be back in rhythm. See you inside.
 /** Convenience wrappers — caller doesn't have to think about
  *  templating, just hands us a user. */
 export async function sendWelcomeEmail(user: {
+  /** The new account's id: logs 'sent:welcome' (transactional, no opt-out). */
+  id?: string;
   email: string;
   name?: string | null;
 }): Promise<boolean> {
@@ -973,20 +1024,20 @@ export async function sendWelcomeEmail(user: {
     firstName,
     ctaUrl: "https://shishya.in/dashboard",
   });
-  return sendEmail({ to: user.email, subject, html, text, tag: "welcome" });
+  return sendEmail({ to: user.email, subject, html, text, tag: "welcome", logUserId: user.id });
 }
 
 export async function sendDay3NudgeEmail(user: {
   id?: string;
   email: string;
   name?: string | null;
-  daysSinceSignup: number;
+  /** pickDailyFive(id)?.examShort — the exam /today will build the set on. */
+  examShort?: string | null;
 }): Promise<boolean> {
   const firstName = pickFirstName(user.name, user.email);
   const { subject, html, text } = renderDay3NudgeEmail({
     firstName,
-    ctaUrl: "https://shishya.in/dashboard",
-    daysSinceSignup: user.daysSinceSignup,
+    examShort: user.examShort ?? null,
   });
   return sendEmail({ to: user.email, subject, html, text, tag: "day3-nudge", unsubUserId: user.id });
 }
@@ -1006,10 +1057,16 @@ function pickFirstName(name: string | null | undefined, email: string): string {
  *  ritual's alarm clock: papers are open 6 AM–11 PM, rank on submit. */
 export async function sendLiveTestReminderEmail(p: {
   to: string;
+  /** LiveTestReminder.userId — every row so far is a member's (7 Oct 2026:
+   *  81 of 81). Set → the user-keyed unsubscribe; null → a guest's one-off. */
+  userId?: string | null;
   exams: string[];
   count: number;
 }): Promise<boolean> {
   const names = p.exams.slice(0, 5).join(", ") + (p.exams.length > 5 ? ` +${p.exams.length - 5} more` : "");
+  // One reminder per tap, for one Sunday: there is no series to "reply to
+  // stop". A member also gets the unsubscribe link below (sendEmail footer).
+  const note = `You asked for this reminder on shishya.in. It is sent once, for today only.${p.userId ? " To stop Shishya's study emails, unsubscribe below." : ""}`;
   const subject = `🏆 Today: ${p.count} All-India Live Test${p.count > 1 ? "s" : ""} — you asked us to remind you`;
   const text = `The test hall is open.
 
@@ -1022,7 +1079,7 @@ Enter the test hall: https://shishya.in/live-test
 One paper today tells you exactly where you stand against aspirants across India. Good luck!
 — Shishya
 
-(You asked for this reminder on shishya.in. Reply to stop.)`;
+(${note})`;
   const html = `<!doctype html>
 <html><head><meta charset="utf-8"></head>
 <body style="margin:0;padding:0;background:#fff7ed;font-family:system-ui,sans-serif;color:#0f172a;">
@@ -1043,12 +1100,16 @@ One paper today tells you exactly where you stand against aspirants across India
     <p style="font-size:12px;color:#64748b;margin:18px 0 0;">
       One paper today tells you exactly where you stand against aspirants across India. — Shishya
     </p>
-    <p style="font-size:11px;color:#94a3b8;margin:10px 0 0;">You asked for this reminder on shishya.in. Reply to stop.</p>
+    <p style="font-size:11px;color:#94a3b8;margin:10px 0 0;">${note}</p>
   </div>
 </body></html>`;
   // User-requested, time-bound ("remind me Sunday") — always important:
-  // must never be held by the routine inbox budget.
-  return sendEmail({ to: p.to, subject, html, text, tag: "live-test-reminder", priority: "important" });
+  // must never be held by the routine inbox budget. 7 Oct 2026: a member's
+  // reminder carries unsubUserId (footer + one-click headers + the global
+  // opt-out the unsubscribe page promises covers "exam reminders"), which
+  // also swaps the per-recipient founder BCC for sendEmail's one wave copy.
+  // A guest's (no userId) stays transactional: one mail, founder BCC'd.
+  return sendEmail({ to: p.to, subject, html, text, tag: "live-test-reminder", priority: "important", unsubUserId: p.userId ?? undefined });
 }
 
 /** Exam-tracker alert (23 Aug 2026) — sent by /api/cron/exam-alerts when
@@ -1315,7 +1376,7 @@ Register (or just show up): https://shishya.in/live-test
 Whatever your score, you'll know exactly what to fix in the days that matter most.
 — Shishya (free, always)
 
-(Reply to stop these.)`;
+${textNote(stopLine("these invites", !!p.userId))}`;
 
   const html = `<!doctype html>
 <html><head><meta charset="utf-8"></head>
@@ -1415,6 +1476,7 @@ export async function sendExamEveEmail(p: {
       : fillVars(tk("ew.eve.admitCard"), { text: p.admitCard.when })
     : "";
   const checklistLabel = p.checklistIsArticle ? `${tk("ew.week.checklist")} for ${p.examShort}` : `Your ${p.examShort} hub`;
+  const stop = stopLine("these emails", !!p.userId);
 
   const text = `${first},
 
@@ -1445,7 +1507,7 @@ ${estimateUrl ? `Estimate your score when the key is out: ${estimateUrl}\n` : ""
 Go show up. We're rooting for you.
 — Shishya
 
-(You're getting this because you're preparing for ${p.examShort} on shishya.in. Reply to stop, or unsubscribe below.)`;
+(You're getting this because you're preparing for ${p.examShort} on shishya.in.${stop ? ` ${stop}` : ""})`;
 
   const html = `<!doctype html>
 <html><head><meta charset="utf-8"></head>
@@ -1585,7 +1647,7 @@ ${nextLine ? `\n${nextLine}: https://shishya.in/exams/${p.nextExam?.code}\n${inv
 Whatever the paper felt like, the next step is the same one — keep the routine going.
 — Shishya (free, always)
 
-(Reply to stop, or unsubscribe below.)`;
+${textNote(stopLine("these emails", true))}`;
 
   const html = `<!doctype html>
 <html><head><meta charset="utf-8"></head>

@@ -205,7 +205,8 @@ export const authOptions: NextAuthOptions = {
       try {
         if (user.email && !schoolSignIn) {
           const { sendWelcomeEmail } = await import("./email");
-          await sendWelcomeEmail({ email: user.email, name: user.name });
+          // id: the 'sent:welcome' send-log row (7 Oct 2026) — no opt-out, still transactional.
+          await sendWelcomeEmail({ id: user.id, email: user.email, name: user.name });
         } else if (schoolSignIn) {
           console.log(`[auth] welcome email skipped — school sign-in (user ${user.id})`);
         }

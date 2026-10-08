@@ -8,16 +8,21 @@
 //
 // This is transactional (a direct reply to the student's own ask), so
 // it always sends — no opt-out gate.
+//
+// 7 Oct 2026: a signed-in student's answer mail now leaves the usual
+// 'sent:teacher-request-answer' EmailTouch row (sendEmail logUserId), so
+// its returns have a denominator on /admin/loops — EmailTouch had no
+// teacher rows at all. Still no opt-out, footer or List-Unsubscribe.
 
 import { prisma } from "./db/prisma";
 import { sendEmail } from "./email";
 
 export async function emailTeacherRequestAnswer(requestId: string): Promise<void> {
   const rows = await prisma.$queryRaw<
-    Array<{ answerText: string | null; contactEmail: string | null; contactName: string | null; userEmail: string | null; userName: string | null; examCode: string | null }>
+    Array<{ answerText: string | null; contactEmail: string | null; contactName: string | null; userId: string | null; userEmail: string | null; userName: string | null; examCode: string | null }>
   >`
     SELECT tr."answerText", tr."contactEmail", tr."contactName", tr."examCode",
-           u.email AS "userEmail", u.name AS "userName"
+           u.id AS "userId", u.email AS "userEmail", u.name AS "userName"
     FROM "TeacherRequest" tr
     LEFT JOIN "User" u ON u.id = tr."userId"
     WHERE tr.id = ${requestId} LIMIT 1`;
@@ -46,5 +51,7 @@ export async function emailTeacherRequestAnswer(requestId: string): Promise<void
 <p>It's also on your follow-up card at <a href="https://shishya.in/dashboard">shishya.in</a>, where you can tell us if it helped or ask for more.</p>
 <p>— Shishya</p>`,
     tag: "teacher-request-answer",
+    // The joined account (null for a guest's request): send log only.
+    logUserId: r.userId ?? undefined,
   }).catch(() => {});
 }

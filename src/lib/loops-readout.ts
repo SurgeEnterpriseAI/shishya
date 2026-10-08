@@ -45,9 +45,11 @@ export const MAIL_FAMILY_ORDER: readonly string[] = [
 
 /** Mail kinds that carry `unsubUserId` and therefore leave a 'sent:' row in
  *  EmailTouch (src/lib/email.ts sendEmail). Transactional kinds (welcome,
- *  aptitude-pass, mentor-session, …) log no send — their denominator on
+ *  aptitude-pass, mentor-session, …) are not listed — their denominator on
  *  the page is the webhook's 'delivered:' count, never a fabricated sends
- *  number. */
+ *  number. 7 Oct 2026: welcome and teacher-request-answer stay
+ *  transactional but log a 'sent:' row too (sendEmail logUserId), so the
+ *  page prints their sends once rows exist. */
 export const LOGGED_SEND_FAMILIES: ReadonlySet<string> = new Set([
   "daily-five",
   "coach-morning",
@@ -55,6 +57,7 @@ export const LOGGED_SEND_FAMILIES: ReadonlySet<string> = new Set([
   "winback",
   "day3-nudge",
   "live-test-invite",
+  "live-test-reminder", // a member's reminder carries unsubUserId since 7 Oct 2026
   "exam-eve",
   "exam-day-after",
   "result-day",

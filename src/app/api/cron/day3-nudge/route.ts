@@ -5,8 +5,9 @@
 //   - signed up between 2.5 and 3.5 days ago (a 24h-wide window)
 //   - have ZERO mock attempts
 //   - have ZERO chat messages
-// and sends them the day-3 nudge email — "your 5-question diagnostic
-// is still waiting".
+// and sends them the day-3 nudge email — since 7 Oct 2026 one action,
+// "your 5 questions are ready" → /today (or "pick your exam" when /today
+// has no exam to build the set on), coach invite as a secondary line.
 //
 // The 24h-wide signup window is the dedup mechanism: each user falls
 // inside it exactly ONE nightly run, so we never re-send. No
@@ -35,6 +36,7 @@
 import { prisma } from "@/lib/db/prisma";
 import { schoolAgeAccountSql, schoolOnlyAccountSql } from "@/lib/db/enrollment";
 import { sendDay3NudgeEmail } from "@/lib/email";
+import { pickDailyFive } from "@/lib/study-day-five";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -95,14 +97,17 @@ export async function GET(req: Request) {
 
   const log: Array<{ email: string; ok: boolean }> = [];
   for (const u of candidates) {
-    const daysSinceSignup = Math.round(
-      (now - u.createdAt.getTime()) / 86_400_000,
-    );
+    // 7 Oct 2026: the mail leads with "your 5 questions are ready" → /today.
+    // The same picker /today uses names the exam it will build the set on;
+    // no pick (no enrolment on an exam with practice — most of this
+    // audience) → the mail says "pick your exam" instead. A failed read
+    // takes the honest no-exam copy.
+    const pick = await pickDailyFive(u.id).catch(() => null);
     const ok = await sendDay3NudgeEmail({
       id: u.id,
       email: u.email,
       name: u.name,
-      daysSinceSignup,
+      examShort: pick?.examShort ?? null,
     });
     log.push({ email: u.email, ok });
   }

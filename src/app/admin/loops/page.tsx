@@ -184,7 +184,7 @@ export default async function AdminLoopsPage({ searchParams }: { searchParams: P
                       <tr key={fam} className="border-t border-ink-100">
                         <td className="px-2 py-1.5 font-mono text-ink-800">
                           {fam}
-                          {!logged && <span title="transactional — no send row is logged">*</span>}
+                          {!logged && <span title="transactional — founder BCC'd; no send row except welcome and teacher-request-answer (7 Oct 2026)">*</span>}
                         </td>
                         <td className={td}>{logged || f.sent > 0 ? num(f.sent) : "–"}</td>
                         <td className={td}>{logged || f.sentUsers > 0 ? num(f.sentUsers) : "–"}</td>
@@ -206,8 +206,9 @@ export default async function AdminLoopsPage({ searchParams }: { searchParams: P
           <p className="mt-2 text-xs text-ink-500">
             Opens and clicks appear only after the Resend webhook is set up (RESEND_WEBHOOK_SECRET + open/click tracking on the sending domain).
             {!anyWebhookRows && " No webhook rows yet in this window."}{" "}
-            * Transactional kinds (welcome, aptitude-pass, mentor-session…) log no send row and BCC the founder; their opens can include the founder&apos;s copy — read those as an upper bound.
-            Logged sends count marketing kinds only (the ones with an unsubscribe footer).
+            * Transactional kinds (welcome, aptitude-pass, mentor-session…) BCC the founder; their opens can include the founder&apos;s copy — read those as an upper bound.
+            Logged sends count marketing kinds (the ones with an unsubscribe footer), plus welcome and teacher-request-answer from 7 Oct 2026.
+            Welcome is sent at sign-up, so its Return ≤36 h counts the sign-up visit itself — read its clicks, not its return.
           </p>
         </Section>
 
