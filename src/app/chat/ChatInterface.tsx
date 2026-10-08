@@ -74,6 +74,13 @@
 // simply" — each an ordinary turn; never in a school chat. The results seed
 // carries its attempt (`reviewAttemptId`) on its own turn only, so the new
 // conversation is tagged and the results page can reopen it.
+//
+// Late answers (7 Oct 2026, build B3 — src/lib/late-answer-notice.ts): with
+// `lateAnswer` (a member's late tutor answer, not opened yet, in another
+// conversation — never in a school chat) the chat shows "Your question is
+// answered" at its top, above everything else, with a link to that
+// conversation. A Recent chats line whose conversation holds one reads "new
+// answer", in green.
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -126,6 +133,7 @@ import {
 } from "@/lib/tutor-unavailable";
 import { SignUpButton } from "@/components/SignUpButton";
 import { signUpLabel } from "@/lib/signup-cta-copy";
+import type { PickupAnsweredView } from "@/lib/pickup";
 
 // AI unavailable (1 Oct 2026, src/lib/tutor-unavailable.ts): an error event
 // with a "tutor-unavailable…" code shows this chat's own line in the UI
@@ -339,6 +347,7 @@ export function ChatInterface({
   recentChats,
   reviewAttemptId,
   followUp,
+  lateAnswer,
 }: {
   /** Null when the chat is in "General" mode — exam-agnostic Q&A. The
    *  /api/chat call then sends `general: true` instead of an examCode
@@ -377,6 +386,9 @@ export function ChatInterface({
   /** A reopened chat from a "Pick up where you left off" link: the one
    *  follow-up to do once (src/lib/pickup-followup.ts, 30 Sep 2026). */
   followUp?: PickupFollowUp | null;
+  /** Signed-in, never a school chat (7 Oct 2026, B3): a late answer not opened
+   *  yet, in another conversation — shown first, with a link to it. */
+  lateAnswer?: PickupAnsweredView | null;
 }) {
   const router = useRouter();
   const [sessionId, setSessionId] = useState<string | null>(resume?.sessionId ?? null);
@@ -935,6 +947,25 @@ export function ChatInterface({
       </div>
     )}
     <div className="mt-4 flex flex-1 flex-col rounded-md border border-ink-200 bg-white">
+      {/* 7 Oct 2026 (B3): a late answer not opened yet, in another conversation — first. */}
+      {lateAnswer && !school && !under13 && (
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-300 bg-emerald-50 px-4 py-2 text-xs" data-late-answer="chat">
+          <div className="min-w-0">
+            <p className="font-semibold text-emerald-800">
+              {lateAnswer.label} · <span className="font-normal text-ink-500">{lateAnswer.meta}</span>
+            </p>
+            {lateAnswer.text && <p className="mt-0.5 line-clamp-2 text-sm font-medium text-ink-900">“{lateAnswer.text}”</p>}
+            <p className="mt-0.5 text-ink-600">{lateAnswer.note}</p>
+          </div>
+          <a
+            href={lateAnswer.href}
+            onClick={() => beacon({ cta: "late-answer-open", surface: "chat", examCode })}
+            className="shrink-0 rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700"
+          >
+            {lateAnswer.cta}
+          </a>
+        </div>
+      )}
       {/* A reopened saved chat (30 Sep 2026): when it was last active, and a way to start fresh. */}
       {resume && (
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-ink-200 bg-ink-50 px-4 py-2 text-xs text-ink-600">
@@ -1021,12 +1052,12 @@ export function ChatInterface({
                     <li key={c.id}>
                       <a
                         href={c.href}
-                        onClick={() => beacon({ cta: "chat-recent-open", surface: "chat", examCode, unanswered: c.unanswered })}
+                        onClick={() => beacon({ cta: "chat-recent-open", surface: "chat", examCode, unanswered: c.unanswered, ...(c.answered ? { answered: true } : {}) })}
                         className="flex items-center justify-between gap-3 px-3 py-2 hover:bg-saffron-50/40"
                       >
                         <span className="min-w-0">
                           <span className="block truncate text-sm text-ink-800">{c.title}</span>
-                          <span className={`block text-[11px] ${c.unanswered ? "text-rose-700" : "text-ink-500"}`}>{c.meta}</span>
+                          <span className={`block text-[11px] ${c.answered ? "font-semibold text-emerald-700" : c.unanswered ? "text-rose-700" : "text-ink-500"}`}>{c.meta}</span>
                         </span>
                         <span className="shrink-0 text-xs font-medium text-saffron-700">{recentChats.continueLabel} →</span>
                       </a>

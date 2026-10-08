@@ -69,6 +69,10 @@ export interface RecentChatsCopy {
   continueReview: string;
   /** Results page, under it. {when} as above. */
   continueReviewNote: string;
+  /** 7 Oct 2026 (B3): a list line whose conversation holds a late answer not opened yet. */
+  newAnswer: string;
+  /** 7 Oct 2026 (B3): a guest on a link that names a saved chat (the late-answer mail) — the reason line over the sign-up button. */
+  signInToOpen: string;
 }
 
 /** {name} placeholders — local, so the chat island does not pull in the i18n dictionary. */
@@ -92,6 +96,8 @@ const COPY: Readonly<Record<CopyLocale, RecentChatsCopy>> = {
     moreInTutor: "More in Ask Shishya →",
     continueReview: "Continue your mistake review →",
     continueReviewNote: "You started this review {when}. It opens where you left off.",
+    newAnswer: "new answer",
+    signInToOpen: "To see your saved chat, sign in with the same Google account.",
   },
   hi: {
     heading: "आपकी हाल की बातचीत",
@@ -108,6 +114,8 @@ const COPY: Readonly<Record<CopyLocale, RecentChatsCopy>> = {
     moreInTutor: "Ask Shishya में और देखें →",
     continueReview: "गलतियों की समीक्षा जारी रखें →",
     continueReviewNote: "यह समीक्षा आपने {when} शुरू की थी। यह वहीं से खुलेगी जहाँ आपने छोड़ा था।",
+    newAnswer: "नया जवाब",
+    signInToOpen: "अपनी सेव बातचीत देखने के लिए उसी Google अकाउंट से साइन इन करें।",
   },
   te: {
     heading: "మీ ఇటీవలి చాట్‌లు",
@@ -124,6 +132,8 @@ const COPY: Readonly<Record<CopyLocale, RecentChatsCopy>> = {
     moreInTutor: "Ask Shishya లో మరిన్ని →",
     continueReview: "తప్పుల సమీక్ష కొనసాగించండి →",
     continueReviewNote: "ఈ సమీక్షను మీరు {when} మొదలుపెట్టారు. మీరు ఆపిన చోటు నుంచే తెరుచుకుంటుంది.",
+    newAnswer: "కొత్త సమాధానం",
+    signInToOpen: "మీ సేవ్ అయిన చాట్ చూడాలంటే అదే Google అకౌంట్‌తో సైన్ ఇన్ చేయండి.",
   },
 };
 
@@ -278,6 +288,29 @@ export function isUnseenLateAnswer(metadata: unknown): boolean {
 }
 
 /**
+ * 7 Oct 2026 (B3 review): whether a reopened chat shows a stored reply with
+ * this many rows after it. The chat reads the last RESUME_TURNS rows and
+ * drops a reply whose question fell outside them (historyToBubbles); a late
+ * answer is dated 1 ms after its question, so both must be inside — at most
+ * RESUME_TURNS - 2 rows after it. The card, /chat and the lists offer a late
+ * answer only when this holds, so every offer opens onto the answer.
+ */
+export function replyShownOnReopen(rowsAfter: number): boolean {
+  return Number.isInteger(rowsAfter) && rowsAfter >= 0 && rowsAfter <= RESUME_TURNS - 2;
+}
+
+/** The unseen late answers among a reopened chat's rows (oldest first) that it
+ *  shows — from its first question on, as historyToBubbles keeps them. */
+export function shownUnseenLateIds(rows: readonly StoredChatRow[]): string[] {
+  const first = rows.findIndex((r) => String(r.role) === "USER");
+  if (first < 0) return [];
+  return rows
+    .slice(first)
+    .filter((r) => String(r.role) === "ASSISTANT" && isUnseenLateAnswer(r.metadata))
+    .map((r) => r.id);
+}
+
+/**
  * Stored rows (oldest first) → the bubbles the chat shows. A question with no
  * stored reply after it gets an empty failed reply ("Not answered"; on the
  * latest turn the chat's Retry re-sends it with its own turnId, which the
@@ -382,6 +415,8 @@ export interface RecentChatRow {
   /** The last stored row's role — "USER" means the student's last message has no reply. */
   lastRole: string;
   reviewMockTitle: string | null;
+  /** 7 Oct 2026 (B3): it holds a late answer the student has not opened (set only when true). */
+  lateUnseen?: boolean;
 }
 
 /** One line of a Recent chats list. */
@@ -392,11 +427,14 @@ export interface RecentChatItem {
   meta: string;
   href: string;
   unanswered: boolean;
+  /** 7 Oct 2026 (B3): a late answer waits in it, not opened yet ("new answer"; set only when true). */
+  answered?: boolean;
 }
 
 export function recentChatItem(row: RecentChatRow, copy: RecentChatsCopy, now: Date): RecentChatItem {
   const unanswered = row.lastRole === "USER";
   const parts = [row.examShort || copy.general, istDayLabel(row.lastAt, now, copy)];
+  if (row.lateUnseen) parts.push(copy.newAnswer);
   if (unanswered) parts.push(copy.noReply);
   return {
     id: row.id,
@@ -404,6 +442,7 @@ export function recentChatItem(row: RecentChatRow, copy: RecentChatsCopy, now: D
     meta: parts.join(" · "),
     href: chatResumeHref({ examCode: row.examCode, sessionId: row.id }),
     unanswered,
+    ...(row.lateUnseen ? { answered: true } : {}),
   };
 }
 

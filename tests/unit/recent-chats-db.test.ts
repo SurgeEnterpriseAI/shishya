@@ -16,7 +16,11 @@
 //   • (1 Oct 2026 review) reopening a chat marks seen ONLY the member's own
 //     late answers it shows that are not seen yet (ASSISTANT rows with
 //     lateAnswer, no lateSeenAt) — one idempotent write, none when there is
-//     nothing to mark, none for someone else's conversation.
+//     nothing to mark, none for someone else's conversation;
+//   • (7 Oct 2026, B3) the loader no longer writes that mark: it returns the
+//     ids (lateUnseenIds) and /chat marks them once it shows the chat
+//     (markLateAnswersSeen); a list line whose conversation holds a late
+//     answer not opened yet is flagged and listed first.
 // No DB. Run: npx vitest run tests/unit/recent-chats-db.test.ts
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -60,6 +64,10 @@ vi.mock("@/lib/db/prisma", () => ({
     chatMessage: {
       findMany: rec("chatMessage", "findMany", messagesFor),
       findFirst: rec("chatMessage", "findFirst", (args) => messagesFor(args)[0] ?? null),
+      // B3 review: rows stored after a late answer in its conversation.
+      count: rec("chatMessage", "count", (args) =>
+        calls.messages.filter((m) => m.sessionId === args.where?.sessionId && (!args.where?.createdAt?.gt || m.createdAt > args.where.createdAt.gt)).length,
+      ),
     },
     attempt: { findFirst: rec("attempt", "findFirst", () => calls.attempt) },
     exam: { findUnique: rec("exam", "findUnique", () => calls.exam) },
@@ -72,7 +80,7 @@ vi.mock("@/lib/db/prisma", () => ({
 }));
 
 import { Prisma } from "@prisma/client";
-import { findMistakeReviewChat, listRecentChats, loadResumableChat } from "@/lib/db/recent-chats";
+import { findMistakeReviewChat, listRecentChats, loadResumableChat, markLateAnswersSeen } from "@/lib/db/recent-chats";
 import { getStudentJourney } from "@/lib/db/student-journey";
 
 const T0 = new Date("2026-09-30T06:00:00Z").getTime();
@@ -153,6 +161,54 @@ describe("listRecentChats", () => {
     calls.messages = [msg("sc", "USER", "What is matter?", 1)];
     expect((await listRecentChats("u1", { examId: "e-c09" }, { limit: 5, now: new Date(T0) })).map((r) => r.id)).toEqual(["sc"]);
   });
+  it("B3: a conversation holding a late answer not opened yet is flagged and listed first; an opened one is not", async () => {
+    calls.sessions = [
+      { id: "newer", updatedAt: at(1), contextSnapshot: null, exam: null },
+      { id: "late1", updatedAt: at(20), contextSnapshot: null, exam: { code: "SSC_CGL", shortName: "SSC CGL", category: "GOVT_JOBS", active: true } },
+      { id: "seen1", updatedAt: at(3), contextSnapshot: null, exam: null },
+    ];
+    calls.messages = [
+      msg("newer", "USER", "What is a noun?", 1),
+      msg("newer", "ASSISTANT", "A noun…", 0.9),
+      msg("late1", "USER", "Why is 1 not prime?", 30),
+      msg("late1", "ASSISTANT", "Because…", 29.99, { lateAnswer: true, lateAnsweredAt: T0 - 20 * 3600_000 }),
+      msg("seen1", "USER", "What is GDP?", 4),
+      msg("seen1", "ASSISTANT", "GDP is…", 3.99, { lateAnswer: true, lateAnsweredAt: T0 - 3 * 3600_000, lateSeenAt: T0 - 3600_000 }),
+    ];
+    const rows = await listRecentChats("u1", "general", { limit: 5, now: new Date(T0) });
+    expect(rows.map((r) => [r.id, r.lateUnseen ?? false])).toEqual([
+      ["late1", true],
+      ["newer", false],
+      ["seen1", false],
+    ]);
+    // The late read: these sessions' ASSISTANT rows whose metadata says lateAnswer.
+    const lateRead = calls.log.find((c) => c.model === "chatMessage" && c.args.where?.metadata)!;
+    expect(lateRead.args.where).toEqual({ sessionId: { in: ["newer", "late1", "seen1"] }, role: "ASSISTANT", metadata: { path: ["lateAnswer"], equals: true } });
+    // A school class's own list flags its own late answer too (inside that class chat only).
+    calls.sessions = [{ id: "sc", updatedAt: at(1), contextSnapshot: null, exam: { code: "NCERT_C09", shortName: "NCERT 9", category: "SCHOOL_BOARD", active: false } }];
+    calls.messages = [msg("sc", "USER", "What is matter?", 2), msg("sc", "ASSISTANT", "Matter is…", 1.99, { lateAnswer: true, lateAnsweredAt: T0 })];
+    expect((await listRecentChats("u1", { examId: "e-c09" }, { limit: 5, now: new Date(T0) }))[0].lateUnseen).toBe(true);
+    // …and never reaches the general list.
+    expect(await listRecentChats("u1", "general", { limit: 5, now: new Date(T0) })).toEqual([]);
+  });
+  it("B3 review: 'new answer' only where reopening shows it — the newest unseen one with at most 28 rows after it", async () => {
+    calls.sessions = [{ id: "busy", updatedAt: at(1), contextSnapshot: null, exam: null }];
+    const base = [msg("busy", "USER", "Why is 1 not prime?", 40), msg("busy", "ASSISTANT", "Because…", 39.99, { lateAnswer: true, lateAnsweredAt: T0 - 3600_000 })];
+    const after = (n: number) => Array.from({ length: n }, (_, i) => msg("busy", i % 2 ? "ASSISTANT" : "USER", `m${i}`, 30 - i * 0.5));
+    // 29 rows after it: the reopened chat's 30 rows hold the answer but not its question, so it is dropped — no flag.
+    calls.messages = [...base, ...after(29)];
+    expect((await listRecentChats("u1", "general", { limit: 5, now: new Date(T0) }))[0].lateUnseen).toBeUndefined();
+    const cnt = calls.log.find((c) => c.op === "count")!;
+    expect(cnt.args.where).toEqual({ sessionId: "busy", createdAt: { gt: at(39.99) } });
+    // 28: both inside — flagged.
+    calls.messages = [...base, ...after(28)];
+    expect((await listRecentChats("u1", "general", { limit: 5, now: new Date(T0) }))[0].lateUnseen).toBe(true);
+    // No unseen late answer: no count at all.
+    calls.log = [];
+    calls.messages = [msg("busy", "USER", "Hi", 2), msg("busy", "ASSISTANT", "Hello", 1.9)];
+    await listRecentChats("u1", "general", { limit: 5, now: new Date(T0) });
+    expect(calls.log.filter((c) => c.op === "count")).toHaveLength(0);
+  });
   it("reads no message when there is no conversation", async () => {
     expect(await listRecentChats("u1", "general", { limit: 5 })).toEqual([]);
     expect(calls.log.filter((c) => c.model === "chatMessage")).toHaveLength(0);
@@ -183,10 +239,11 @@ describe("loadResumableChat", () => {
     expect(r!.lastAt.getTime()).toBe(at(1).getTime());
     const read = calls.log.find((c) => c.model === "chatMessage" && c.op === "findMany")!;
     expect(read.args).toMatchObject({ where: { sessionId: "s1" }, orderBy: { createdAt: "desc" }, take: 30 });
-    // No late answer among them: nothing is written.
+    // No late answer among them: nothing to mark, nothing written.
+    expect(r!.lateUnseenIds).toEqual([]);
     expect(calls.raw).toEqual([]);
   });
-  it("marks seen only the late answers it shows that are not seen yet — one idempotent write (1 Oct 2026)", async () => {
+  it("names the late answers it read that are not seen yet, and writes nothing; markLateAnswersSeen is one idempotent write (1 Oct 2026; B3 7 Oct 2026)", async () => {
     calls.unique = { id: "s1", userId: "u1", examId: null, updatedAt: at(1), contextSnapshot: null, exam: null };
     calls.messages = [
       msg("s1", "USER", "What is GDP?", 5, { turnId: "t1", lateAnsweredAt: T0 - 3600_000 }),
@@ -200,22 +257,41 @@ describe("loadResumableChat", () => {
     ];
     const r = await loadResumableChat("u1", "s1");
     expect(r!.rows).toHaveLength(7);
+    // B3: the loader writes nothing — the page marks once it shows the chat.
+    expect(calls.raw).toEqual([]);
+    expect(r!.lateUnseenIds).toEqual(["s1-4.99-ASSISTANT"]);
+    await markLateAnswersSeen(r!.lateUnseenIds, T0);
     expect(calls.raw).toHaveLength(1);
     const { sql, values } = calls.raw[0];
     const flat = sql.replace(/\s+/g, " ");
     expect(flat).toContain(`UPDATE "ChatMessage" SET metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object('lateSeenAt', ?::bigint)`);
     expect(flat).toContain(`WHERE id = ANY(?) AND role = 'ASSISTANT' AND metadata->>'lateSeenAt' IS NULL`);
+    expect(values[0]).toBe(String(T0));
     expect(values[1]).toEqual(["s1-4.99-ASSISTANT"]);
-    // Reopened again once seen: nothing left to mark.
+    // Nothing to mark: no write at all.
     calls.raw = [];
-    calls.messages[1].metadata = { ...calls.messages[1].metadata, lateSeenAt: T0 };
-    await loadResumableChat("u1", "s1");
+    await markLateAnswersSeen([], T0);
     expect(calls.raw).toEqual([]);
-    // Another account's conversation: never read, never marked.
+    // Reopened again once seen: nothing left to name.
+    calls.messages[1].metadata = { ...calls.messages[1].metadata, lateSeenAt: T0 };
+    expect((await loadResumableChat("u1", "s1"))!.lateUnseenIds).toEqual([]);
+    // Another account's conversation: never read, never named.
     calls.unique = { ...calls.unique, userId: "u2" };
     calls.messages[1].metadata = { lateAnswer: true, lateAnsweredAt: T0 - 3600_000 };
     expect(await loadResumableChat("u1", "s1")).toBeNull();
     expect(calls.raw).toEqual([]);
+  });
+  it("B3 review: a late answer the chat drops (its question fell outside the 30 rows) is not named, so never marked seen unshown", async () => {
+    calls.unique = { id: "s1", userId: "u1", examId: null, updatedAt: at(1), contextSnapshot: null, exam: null };
+    calls.messages = [
+      msg("s1", "USER", "Why is 1 not prime?", 40),
+      msg("s1", "ASSISTANT", "Because…", 39.99, { lateAnswer: true, lateAnsweredAt: T0 - 3600_000 }),
+      ...Array.from({ length: 29 }, (_, i) => msg("s1", i % 2 ? "ASSISTANT" : "USER", `m${i}`, 30 - i * 0.5)),
+    ];
+    const r = await loadResumableChat("u1", "s1");
+    expect(r!.rows).toHaveLength(30);
+    expect(r!.rows[0].id).toBe("s1-39.99-ASSISTANT");
+    expect(r!.lateUnseenIds).toEqual([]);
   });
 });
 

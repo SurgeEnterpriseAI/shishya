@@ -41,6 +41,14 @@
 // as the rest of the card (general chats and active real exams, never a
 // school chat); when it is the same conversation as the thread below, the
 // thread line is dropped (one line per conversation).
+// 7 Oct 2026 (build B3, src/lib/late-answer-notice.ts): of 19 students with
+// a late answer only 2 ever opened it. Two came back to the right exam's hub
+// on day 3.3 and 4.5, after the card had dropped it; one opened another
+// exam's hub, whose card showed that exam only. PICKUP_ANSWERED_DAYS is now
+// the Recent chats window (14 days — the conversation stays listed that
+// long), and the hub's card shows the late answer from any of the member's
+// chats (the thread and the mock stay the hub's exam). The same answered
+// line (lateAnswerView) now also leads /chat and the strip under the header.
 //
 // Pure — no DB, no React. DB reads: src/lib/db/pickup.ts. Card:
 // src/components/PickupCard.tsx. Tests: tests/unit/pickup.test.ts
@@ -73,8 +81,9 @@ export const PICKUP_WEAK_TOPICS = 3;
 export const EMAIL_QUOTE_CHARS = 60;
 /** The mail quotes a question from today or the two IST days before. */
 export const EMAIL_QUOTE_MAX_DAYS = 2;
-/** A late answer leads the card for this long after it was stored (unless opened). */
-export const PICKUP_ANSWERED_DAYS = 3;
+/** A late answer leads the card for this long after it was stored (unless opened).
+ *  7 Oct 2026 (B3): 3 → the Recent chats window, see the header. */
+export const PICKUP_ANSWERED_DAYS = RECENT_CHATS_DAYS;
 
 export interface PickupCopy {
   /** 1 Oct 2026: a late answer. */
@@ -230,19 +239,22 @@ export function pickLateAnswer(
   return best;
 }
 
+/** The late answer's line — on the card, at the top of /chat and in the strip under the header. */
+export interface PickupAnsweredView {
+  label: string;
+  text: string;
+  note: string;
+  /** "SSC CGL · today" (the day it was answered) */
+  meta: string;
+  href: string;
+  cta: string;
+}
+
 /** What the card renders — plain strings and links, serialisable (the hub strip gets it as JSON). */
 export interface PickupView {
   title: string;
   /** 1 Oct 2026: a question an outage left unanswered, answered later — shown first. */
-  answered?: {
-    label: string;
-    text: string;
-    note: string;
-    /** "SSC CGL · today" (the day it was answered) */
-    meta: string;
-    href: string;
-    cta: string;
-  } | null;
+  answered?: PickupAnsweredView | null;
   question: {
     answered: boolean;
     label: string;
@@ -324,6 +336,21 @@ export function weakTopicSeed(examShort: string, t: { name: string; correct: num
   return `On my last ${examShort} mock I got ${t.correct}/${t.total} on ${t.name}. Help me improve on this topic.`;
 }
 
+/** "Your question is answered": the question, the exam and day, a link into that conversation. */
+export function lateAnswerView(la: PickupLateAnswer, locale: string | null | undefined, now: Date): PickupAnsweredView {
+  const c = pickupCopy(locale);
+  const rc = recentChatsCopy(locale);
+  const q = (la.question ?? "").trim();
+  return {
+    label: c.answered,
+    text: q && !isMistakeReviewOpener(q) ? cutText(q, PICKUP_QUESTION_CHARS) : chatTitle({ opener: q || null, reviewMockTitle: null }, rc),
+    note: c.answeredNote,
+    meta: [la.examShort || rc.general, istDayLabel(la.answeredAt, now, rc)].join(" · "),
+    href: chatResumeHref({ examCode: la.examCode, sessionId: la.sessionId }),
+    cta: c.seeAnswer,
+  };
+}
+
 /** The card, or null when there is nothing to pick up. `now` sets the IST day labels. */
 export function pickupView(data: PickupData | null | undefined, locale: string | null | undefined, now: Date): PickupView | null {
   if (!data || (!data.thread && !data.mock && !data.lateAnswer)) return null;
@@ -332,19 +359,8 @@ export function pickupView(data: PickupData | null | undefined, locale: string |
   const lang = asCopyLocale(locale);
 
   // 1 Oct 2026: the late answer leads (see the header).
-  let answered: PickupView["answered"] = null;
   const la = data.lateAnswer;
-  if (la) {
-    const q = (la.question ?? "").trim();
-    answered = {
-      label: c.answered,
-      text: q && !isMistakeReviewOpener(q) ? cutText(q, PICKUP_QUESTION_CHARS) : chatTitle({ opener: q || null, reviewMockTitle: null }, rc),
-      note: c.answeredNote,
-      meta: [la.examShort || rc.general, istDayLabel(la.answeredAt, now, rc)].join(" · "),
-      href: chatResumeHref({ examCode: la.examCode, sessionId: la.sessionId }),
-      cta: c.seeAnswer,
-    };
-  }
+  const answered: PickupView["answered"] = la ? lateAnswerView(la, locale, now) : null;
 
   let question: PickupView["question"] = null;
   const t = data.thread && !(la && data.thread.sessionId === la.sessionId) ? data.thread : null;

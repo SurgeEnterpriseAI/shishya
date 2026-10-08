@@ -7,6 +7,8 @@
 // an inactive exam or an unknown code is 404); without: general chats and
 // every active real exam. Always the member's own rows; guests get 401 and
 // nothing is read. Private and never cached.
+// 7 Oct 2026 (B3): the late answer ("Your question is answered") is read from
+// all of the member's chats even with examCode (src/lib/db/pickup.ts loadPickup).
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

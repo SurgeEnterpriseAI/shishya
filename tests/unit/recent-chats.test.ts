@@ -179,6 +179,26 @@ describe("honest titles and dates", () => {
     const list = recentChatsList([], en, now);
     expect(list).toEqual({ heading: "Your recent chats", continueLabel: "Continue", items: [] });
   });
+  it("B3 (7 Oct 2026): a conversation holding a late answer not opened yet says 'new answer' and is flagged; others carry no flag", () => {
+    const now = new Date("2026-09-30T06:00:00Z");
+    const row = { id: "s3_000000", examCode: "SSC_CGL", examShort: "SSC CGL", opener: "Why is 1 not prime?", lastAt: new Date("2026-09-29T06:00:00Z"), lastRole: "ASSISTANT", reviewMockTitle: null };
+    const late = recentChatItem({ ...row, lateUnseen: true }, en, now);
+    expect(late.meta).toBe("SSC CGL · yesterday · new answer");
+    expect(late.answered).toBe(true);
+    expect(late.href).toBe("/chat?examCode=SSC_CGL&session=s3_000000");
+    expect(recentChatItem({ ...row, lateUnseen: true }, recentChatsCopy("hi"), now).meta).toBe("SSC CGL · कल · नया जवाब");
+    expect(recentChatItem({ ...row, lateUnseen: true }, recentChatsCopy("te"), now).meta).toBe("SSC CGL · నిన్న · కొత్త సమాధానం");
+    // A later question of theirs still waiting reads as well.
+    expect(recentChatItem({ ...row, lateUnseen: true, lastRole: "USER" }, en, now).meta).toBe("SSC CGL · yesterday · new answer · no reply yet");
+    // No flag: the line is exactly what it was.
+    expect("answered" in recentChatItem(row, en, now)).toBe(false);
+    expect("answered" in recentChatItem({ ...row, lateUnseen: false }, en, now)).toBe(false);
+  });
+  it("B3: the guest line for a link that names a saved chat says what happens, in en / hi / te", () => {
+    expect(en.signInToOpen).toBe("To see your saved chat, sign in with the same Google account.");
+    expect(recentChatsCopy("hi").signInToOpen).toContain("Google");
+    expect(recentChatsCopy("te").signInToOpen).toContain("Google");
+  });
   it("the reopened chat's note and the results page's continue line", () => {
     const now = new Date("2026-09-30T06:00:00Z");
     const v = chatResumeView(

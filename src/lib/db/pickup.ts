@@ -9,7 +9,7 @@
 import { prisma } from "./prisma";
 import { REAL_EXAM_SQL, REAL_EXAM_WHERE, isSchoolCategory } from "./exam-scope";
 import { isTypedQuestion } from "@/lib/tutor-memory";
-import { reviewTagOf } from "@/lib/recent-chats";
+import { replyShownOnReopen, reviewTagOf } from "@/lib/recent-chats";
 import {
   PICKUP_ANSWERED_DAYS,
   PICKUP_CHAT_DAYS,
@@ -30,6 +30,8 @@ const DAY_MS = 86_400_000;
 const USER_ROWS_READ = 10;
 /** Rows per member the mail loader reads, newest first. */
 const EMAIL_ROWS_PER_USER = 12;
+/** Late answers the card tries, newest first, past ones their chat cannot show (B3 review). */
+const LATE_PICK_TRIES = 3;
 
 export interface PickupScope {
   /** One real exam (the hub strip); omitted = general chats and every active real exam. */
@@ -151,6 +153,13 @@ export async function loadPickupMock(userId: string, scope: PickupScope = {}): P
  * (LATE_HARD_STOP_MS). With the old floor an answer given 3 to 7 days after
  * the question left the card early, and one given after day 6 never showed
  * on it (the chat note and the mail still told the student).
+ * 7 Oct 2026 (B3): a late answer the reopened chat would not show — RESUME_TURNS
+ * or more rows stored after it, the student kept chatting there from a tab
+ * opened before it came — is not offered: its link could not show it, and so
+ * nothing would ever mark it seen (plain /chat would open it every time).
+ * B3 review: the chat also drops a reply whose question fell outside its
+ * window, so the bound is RESUME_TURNS - 2 rows after it (replyShownOnReopen);
+ * and such an answer is passed over for the next one rather than hiding all.
  */
 export async function loadPickupLateAnswer(userId: string, scope: PickupScope = {}): Promise<PickupLateAnswer | null> {
   const now = scope.now ?? new Date();
@@ -175,33 +184,42 @@ export async function loadPickupLateAnswer(userId: string, scope: PickupScope = 
     },
   });
   if (!Array.isArray(rows) || rows.length === 0) return null;
-  const pick = pickLateAnswer(
-    rows
-      .filter((r) => r && r.session)
-      .map((r) => ({
-        sessionId: r.sessionId,
-        metadata: r.metadata,
-        ownerId: r.session.userId,
-        examCode: r.session.exam?.code ?? null,
-        examShort: r.session.exam?.shortName ?? null,
-        examCategory: r.session.exam ? String(r.session.exam.category) : null,
-      })),
-    userId,
-    now,
-  );
-  if (!pick) return null;
-  const reply = rows.find((r) => r.sessionId === pick.sessionId && (r.metadata as Record<string, unknown> | null)?.lateAnsweredAt === pick.answeredAt.getTime());
-  const question = reply
-    ? await prisma.chatMessage.findFirst({
-        where: { sessionId: pick.sessionId, role: "USER", createdAt: { lt: reply.createdAt } },
-        orderBy: { createdAt: "desc" },
-        select: { content: true },
-      })
-    : null;
-  return { ...pick, question: question?.content ?? null };
+  let pool = rows
+    .filter((r) => r && r.session)
+    .map((r) => ({
+      sessionId: r.sessionId,
+      metadata: r.metadata,
+      ownerId: r.session.userId,
+      examCode: r.session.exam?.code ?? null,
+      examShort: r.session.exam?.shortName ?? null,
+      examCategory: r.session.exam ? String(r.session.exam.category) : null,
+    }));
+  const answeredAtOf = (metadata: unknown) => (metadata as Record<string, unknown> | null)?.lateAnsweredAt;
+  // B3 review: one the chat cannot show is passed over for the next (a few tries), so it never hides the rest.
+  for (let tries = 0; tries < LATE_PICK_TRIES; tries++) {
+    const pick = pickLateAnswer(pool, userId, now);
+    if (!pick) return null;
+    const isPick = (r: { sessionId: string; metadata: unknown }) => r.sessionId === pick.sessionId && answeredAtOf(r.metadata) === pick.answeredAt.getTime();
+    const reply = rows.find(isPick);
+    const [question, rowsAfter] = reply
+      ? await Promise.all([
+          prisma.chatMessage.findFirst({
+            where: { sessionId: pick.sessionId, role: "USER", createdAt: { lt: reply.createdAt } },
+            orderBy: { createdAt: "desc" },
+            select: { content: true },
+          }),
+          prisma.chatMessage.count({ where: { sessionId: pick.sessionId, createdAt: { gt: reply.createdAt } } }),
+        ])
+      : ([null, 0] as const);
+    if (replyShownOnReopen(rowsAfter)) return { ...pick, question: question?.content ?? null };
+    pool = pool.filter((r) => !isPick(r));
+  }
+  return null;
 }
 
-/** The halves of the card, read in parallel; each best-effort (a failed read shows none). */
+/** The halves of the card, read in parallel; each best-effort (a failed read shows none).
+ *  7 Oct 2026 (B3): the late answer is read in every scope — the hub's card
+ *  shows it whichever of the member's chats it is in (see src/lib/pickup.ts). */
 export async function loadPickup(userId: string, scope: PickupScope = {}): Promise<PickupData> {
   const [thread, mock, lateAnswer] = await Promise.all([
     loadPickupThread(userId, scope).catch((err) => {
@@ -212,7 +230,7 @@ export async function loadPickup(userId: string, scope: PickupScope = {}): Promi
       console.error("[pickup] mock read failed:", err);
       return null;
     }),
-    loadPickupLateAnswer(userId, scope).catch((err) => {
+    loadPickupLateAnswer(userId, { now: scope.now }).catch((err) => {
       console.error("[pickup] late answer read failed:", err);
       return null;
     }),

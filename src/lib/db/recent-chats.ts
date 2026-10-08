@@ -3,6 +3,14 @@
 // nothing here writes — except (1 Oct 2026) the one mark a reopened chat
 // leaves on a late answer it shows (lateSeenAt), so the pick-up card stops
 // leading with "Your question is answered" once the student has seen it.
+// 7 Oct 2026 (B3, src/lib/late-answer-notice.ts): loadResumableChat no longer
+// writes that mark itself — it returns the unseen late answers among the rows
+// it read (lateUnseenIds), and /chat calls markLateAnswersSeen only once it
+// has decided to show that conversation. It used to mark them before the page
+// knew: a declared 13-17 account sent on to its class chat, or a chat on an
+// exam /chat could not open, had its answer marked seen and never shown. The
+// lists also say which conversations hold a late answer not opened yet, and
+// list those first.
 
 import { Prisma } from "@prisma/client";
 import { prisma } from "./prisma";
@@ -11,19 +19,21 @@ import {
   RECENT_CHATS_DAYS,
   RESUME_TURNS,
   isUnseenLateAnswer,
+  replyShownOnReopen,
   reviewTagOf,
+  shownUnseenLateIds,
   type RecentChatRow,
   type StoredChatRow,
 } from "@/lib/recent-chats";
 
-/** Marks these late answers seen (the member's own rows, just read). Best-effort, idempotent. */
-async function markLateAnswersSeen(ids: string[], nowMs: number): Promise<void> {
+/** Marks these late answers seen (the member's own rows, just read and now shown). Best-effort, idempotent. */
+export async function markLateAnswersSeen(ids: readonly string[], nowMs: number): Promise<void> {
   if (ids.length === 0) return;
   try {
     await prisma.$executeRaw`
       UPDATE "ChatMessage"
       SET metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object('lateSeenAt', ${String(nowMs)}::bigint)
-      WHERE id = ANY(${ids}) AND role = 'ASSISTANT' AND metadata->>'lateSeenAt' IS NULL`;
+      WHERE id = ANY(${[...ids]}) AND role = 'ASSISTANT' AND metadata->>'lateSeenAt' IS NULL`;
   } catch (err) {
     console.error("[recent-chats] could not mark late answers seen:", err);
   }
@@ -65,7 +75,7 @@ export async function listRecentChats(
   });
   if (sessions.length === 0) return [];
   const ids = sessions.map((s) => s.id);
-  const [openers, lastRows] = await Promise.all([
+  const [openers, lastRows, lateRows] = await Promise.all([
     prisma.chatMessage.findMany({
       where: { sessionId: { in: ids }, role: "USER" },
       orderBy: { createdAt: "asc" },
@@ -78,9 +88,31 @@ export async function listRecentChats(
       distinct: ["sessionId"],
       select: { sessionId: true, role: true, createdAt: true },
     }),
+    // 7 Oct 2026 (B3): the late answers in these conversations; the unseen ones mark their line.
+    prisma.chatMessage.findMany({
+      where: { sessionId: { in: ids }, role: "ASSISTANT", metadata: { path: ["lateAnswer"], equals: true } },
+      select: { sessionId: true, metadata: true, createdAt: true },
+    }),
   ]);
   const openerOf = new Map(openers.map((o) => [o.sessionId, o.content]));
   const lastOf = new Map(lastRows.map((r) => [r.sessionId, r]));
+  // B3 review: "new answer" only where reopening shows it (replyShownOnReopen) —
+  // the newest unseen one per conversation, the one with the fewest rows after it.
+  const newestUnseen = new Map<string, Date>();
+  for (const r of lateRows) {
+    if (!isUnseenLateAnswer(r.metadata)) continue;
+    const prev = newestUnseen.get(r.sessionId);
+    if (!prev || r.createdAt > prev) newestUnseen.set(r.sessionId, r.createdAt);
+  }
+  const lateUnseen = new Set(
+    (
+      await Promise.all(
+        [...newestUnseen].map(async ([sessionId, createdAt]) =>
+          replyShownOnReopen(await prisma.chatMessage.count({ where: { sessionId, createdAt: { gt: createdAt } } })) ? sessionId : null,
+        ),
+      )
+    ).filter((id): id is string => id !== null),
+  );
   const out: RecentChatRow[] = [];
   for (const s of sessions) {
     const opener = openerOf.get(s.id);
@@ -99,9 +131,13 @@ export async function listRecentChats(
       lastAt: last.createdAt > s.updatedAt ? last.createdAt : s.updatedAt,
       lastRole: last.role,
       reviewMockTitle: reviewTagOf(s.contextSnapshot)?.mockTitle ?? null,
+      ...(lateUnseen.has(s.id) ? { lateUnseen: true } : {}),
     });
   }
-  return out.sort((a, b) => b.lastAt.getTime() - a.lastAt.getTime()).slice(0, opts.limit);
+  // A conversation with an answer not opened yet first, then most recently active.
+  return out
+    .sort((a, b) => Number(!!b.lateUnseen) - Number(!!a.lateUnseen) || b.lastAt.getTime() - a.lastAt.getTime())
+    .slice(0, opts.limit);
 }
 
 /** A saved conversation the member reopens on /chat. */
@@ -117,6 +153,10 @@ export interface ResumableChat {
   /** The conversation's first question (it may be outside `rows`). */
   opener: string | null;
   reviewMockTitle: string | null;
+  /** 7 Oct 2026 (B3): the late answers among `rows` not seen yet that the chat
+   *  shows (shownUnseenLateIds) — /chat marks them (markLateAnswersSeen) once it
+   *  shows this conversation, never before. */
+  lateUnseenIds: string[];
 }
 
 /** The member's own conversation by id, or null (not theirs, unknown, or empty). */
@@ -148,11 +188,6 @@ export async function loadResumableChat(userId: string, sessionId: string): Prom
   ]);
   if (rows.length === 0) return null;
   rows.reverse();
-  // 1 Oct 2026: the late answers this reopened chat now shows have been seen.
-  await markLateAnswersSeen(
-    rows.filter((r) => String(r.role) === "ASSISTANT" && isUnseenLateAnswer(r.metadata)).map((r) => r.id),
-    Date.now(),
-  );
   const lastRowAt = rows[rows.length - 1].createdAt;
   return {
     id: s.id,
@@ -163,6 +198,8 @@ export async function loadResumableChat(userId: string, sessionId: string): Prom
     rows: rows.map((r) => ({ id: r.id, role: r.role, content: r.content, metadata: r.metadata })),
     opener: opener?.content ?? null,
     reviewMockTitle: reviewTagOf(s.contextSnapshot)?.mockTitle ?? null,
+    // B3 review: only the ones the chat shows (a reply whose question fell outside the window is dropped).
+    lateUnseenIds: shownUnseenLateIds(rows),
   };
 }
 

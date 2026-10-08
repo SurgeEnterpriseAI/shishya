@@ -40,11 +40,17 @@
 // the guest-chat carry-over (src/components/WelcomeStrip.tsx). It renders
 // nothing on the server and nothing without its cookie; not on admin or
 // childSafe pages.
+//
+// 7 Oct 2026 (build B3): just above it, the LateAnswerStrip island — "Your question
+// is answered" for a member whose late tutor answer is not opened yet, on the
+// pages members come back to (src/lib/late-answer-notice.ts). Nothing on the
+// server, nothing for a guest; not on admin or childSafe pages.
 
 import Link from "next/link";
 import { BackLink } from "./BackLink";
 import { HeaderAuthControls, TodayNavLink } from "./HeaderAuthControls";
 import { WelcomeStrip } from "./WelcomeStrip";
+import { LateAnswerStrip } from "./LateAnswerStrip";
 import { getDailyQuote } from "@/data/motivational-quotes";
 
 // English labels for the auth-aware right rail. We keep this static so
@@ -346,6 +352,7 @@ export function Header({ admin = false, childSafe = false }: { admin?: boolean; 
           </div>
         </nav>
       )}
+      {!admin && !childSafe && <LateAnswerStrip />}
       {!admin && !childSafe && <WelcomeStrip />}
     </header>
   );

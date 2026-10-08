@@ -43,6 +43,20 @@
 // through Retry, or our own follow-up words), done once by the chat island.
 // Only with a conversation this page reopens for its owner, never with a
 // seed, never in a school chat.
+//
+// Late answers reach the student (7 Oct 2026, build B3 — rules and why in
+// src/lib/late-answer-notice.ts): of 33 late answers only 2 were ever opened;
+// /chat started a new conversation and named the answer nowhere. Now, for a
+// signed-in member with a late answer not opened yet (general chats and
+// active real exams — the pick-up card's scope, never a school chat): plain
+// /chat opens that conversation; any other /chat shows "Your question is
+// answered" at the top of the chat. The reopened conversation's late answers
+// are marked seen only once a branch below decides to show it (no longer by
+// the loader — a declared 13-17 account sent on to its class chat, or an
+// exam this page cannot open, used to have the answer marked and never
+// shown). A guest on a link that names a saved chat (the late-answer mail,
+// opened where they are not signed in) is told to sign in with the same
+// Google account, and the sign-in comes back to that chat.
 
 import Link from "next/link";
 import { Header } from "@/components/Header";
@@ -62,7 +76,7 @@ import { isMinorBand, isStudentModeClass, schoolBandOfProfile, schoolContainerCl
 import { schoolOnlyChatPath } from "@/lib/school/tutor-scope";
 import { countSchoolTutorMessagesToday, getSchoolChapterFocus, getSchoolTutorContext } from "@/lib/school/tutor-context";
 import { SCHOOL_TUTOR_CAP_COPY, schoolTutorCapReached, schoolTutorMessagesLeft, schoolUiLang } from "@/lib/school/tutor-cap";
-import { listRecentChats, loadResumableChat, type RecentChatsScope, type ResumableChat } from "@/lib/db/recent-chats";
+import { listRecentChats, loadResumableChat, markLateAnswersSeen, type RecentChatsScope, type ResumableChat } from "@/lib/db/recent-chats";
 import {
   RECENT_CHATS_LIMIT,
   chatResumeHref,
@@ -72,9 +86,13 @@ import {
   recentChatsList,
   resumeSessionParam,
   reviewAttemptParam,
+  type ChatResume,
   type RecentChatsList,
 } from "@/lib/recent-chats";
 import { pickupFollowUpParam } from "@/lib/pickup-followup";
+import { loadPickupLateAnswer } from "@/lib/db/pickup";
+import { lateAnswerView, type PickupAnsweredView } from "@/lib/pickup";
+import { lateAnswerOpensChat } from "@/lib/late-answer-notice";
 
 export default async function ChatPage({
   searchParams,
@@ -119,6 +137,12 @@ export default async function ChatPage({
   /** The reopened conversation, when it belongs to the scope this branch renders. */
   const resumeIn = (examId: string | null, newChatHref: string) =>
     saved && saved.examId === examId ? chatResumeView(saved, newChatHref, chatsCopy, now) : null;
+  /** 7 Oct 2026 (B3): the reopened conversation's late answers are seen once a
+   *  branch shows it — marked here, never before (see the header). */
+  const lateSeen = saved && saved.lateUnseenIds.length > 0 ? { lateSeen: saved.lateUnseenIds.length } : {};
+  const markShown = async (view: ChatResume | null) => {
+    if (view && saved && saved.lateUnseenIds.length > 0) await markLateAnswersSeen(saved.lateUnseenIds, Date.now());
+  };
   /** The member's recent chats for this branch's empty state — none for a
    *  seeded or reopened chat (it is never empty). Best-effort. */
   const recentFor = async (scope: RecentChatsScope, reopened: boolean): Promise<RecentChatsList | null> => {
@@ -143,6 +167,7 @@ export default async function ChatPage({
     // class chat, and its turns still count toward the daily cap (the API's
     // scope check is unchanged); the list shows this class's chats only.
     const schoolResume = resumeIn(ctx.exam.id, `/chat?examCode=${encodeURIComponent(examCode)}${focus ? `&topicCode=${encodeURIComponent(focus.code)}` : ""}`);
+    await markShown(schoolResume);
     const schoolRecent = await recentFor({ examId: ctx.exam.id }, schoolResume != null);
     const starters = focus
       ? [t("chat.school.starter.1"), t("chat.school.starter.2"), t("chat.school.starter.3"), t("chat.school.starter.4")]
@@ -171,7 +196,7 @@ export default async function ChatPage({
             <p className="mt-0.5 text-[11px] text-ink-500">{t("chat.school.ageLine")}</p>
           </div>
 
-          <ChatOpenedBeacon props={{ examCode, topicCode: sp.topicCode ?? null, general: false, anon: memberId == null, school: true, ...(schoolResume ? { resumed: true } : {}) }} />
+          <ChatOpenedBeacon props={{ examCode, topicCode: sp.topicCode ?? null, general: false, anon: memberId == null, school: true, ...(schoolResume ? { resumed: true, ...lateSeen } : {}) }} />
           <ChatInterface
             key={schoolResume?.sessionId ?? "new"}
             examCode={examCode}
@@ -243,8 +268,13 @@ export default async function ChatPage({
           t("chat.general.starter.3"),
           t("chat.general.starter.4"),
         ];
+    // 7 Oct 2026 (B3): a link that names a saved chat (the late-answer mail,
+    // opened where the student is not signed in) comes back to that chat
+    // after sign-in; this page shows it only to its owner.
+    const guestResumeId = resumeSessionParam(sp);
+    const guestBack = anonExamCode ? `/chat?examCode=${anonExamCode}` : "/chat?general=1";
     const loginHref = `/login?callbackUrl=${encodeURIComponent(
-      anonExamCode ? `/chat?examCode=${anonExamCode}` : "/chat?general=1"
+      guestResumeId ? `${guestBack}&session=${encodeURIComponent(guestResumeId)}` : guestBack
     )}`;
     return (
       <main className="min-h-screen bg-ink-50/40">
@@ -286,7 +316,9 @@ export default async function ChatPage({
             initialSeed={sp.seed ?? null}
             guestSignInHref={loginHref}
             guestBanner={{
-              text: `${anonExamShort ? fillTemplate(t("chat.guest.leadExam"), { exam: anonExamShort }) : t("chat.guest.lead")} ${t("chat.guest.signin")} ${anonExamShort ? t("chat.guest.tailExam") : t("chat.guest.tail")}`,
+              text: guestResumeId
+                ? chatsCopy.signInToOpen
+                : `${anonExamShort ? fillTemplate(t("chat.guest.leadExam"), { exam: anonExamShort }) : t("chat.guest.lead")} ${t("chat.guest.signin")} ${anonExamShort ? t("chat.guest.tailExam") : t("chat.guest.tail")}`,
               locale,
               continueLabel: t("login.continue"),
             }}
@@ -333,6 +365,15 @@ export default async function ChatPage({
   const profile = await prisma.user.findUnique({ where: { id: session.user.id }, select: { onbStage: true, onbPrepCodes: true } });
   const schoolProfile = schoolBandOfProfile(profile);
   if (schoolProfile && isMinorBand(schoolProfile.band)) redirect(schoolOnlyChatPath(schoolProfile.classCodes, sp.examCode));
+
+  // 7 Oct 2026 (B3, see the header): a late answer not opened yet. Plain /chat
+  // opens its conversation (which marks it seen); every other /chat shows it
+  // first, at the top of the chat. Best-effort: a failed read shows nothing.
+  const late = await loadPickupLateAnswer(session.user.id, { now }).catch(() => null);
+  if (late && lateAnswerOpensChat(sp)) redirect(chatResumeHref({ examCode: late.examCode, sessionId: late.sessionId }));
+  /** The line, unless this branch shows that very conversation. */
+  const lateLine = (shown: ChatResume | null): PickupAnsweredView | null =>
+    late && late.sessionId !== shown?.sessionId ? lateAnswerView(late, locale, now) : null;
 
   // Real exams only: the school profile flow enrols a declared account on
   // its class container (src/lib/school/student-db.ts), and that row must
@@ -388,6 +429,7 @@ export default async function ChatPage({
     // 30 Sep 2026: a saved general chat reopens here; the list shows the
     // member's general and real-exam chats, each opening in its own scope.
     const generalResume = resumeIn(null, "/chat?general=1");
+    await markShown(generalResume);
     const generalRecent = await recentFor("general", generalResume != null);
     return (
       <main className="min-h-screen bg-ink-50/40">
@@ -404,7 +446,7 @@ export default async function ChatPage({
             {enrollments.length > 0 && <ExamSwitcher current="" generalLabel={t("chat.general.tile.title")} options={enrollments.map((e) => ({ code: e.exam.code, shortName: e.exam.shortName }))} label={`${t("nav.exams")}:`} />}
           </div>
 
-          <ChatOpenedBeacon props={{ examCode: null, general: true, anon: false, ...(generalResume ? { resumed: true } : {}) }} />
+          <ChatOpenedBeacon props={{ examCode: null, general: true, anon: false, ...(generalResume ? { resumed: true, ...lateSeen } : {}) }} />
           <ChatInterface
             key={generalResume?.sessionId ?? "new"}
             examCode={null}
@@ -413,6 +455,7 @@ export default async function ChatPage({
             resume={generalResume}
             recentChats={generalRecent}
             followUp={generalResume ? followUp : null}
+            lateAnswer={lateLine(generalResume)}
             labels={{
               placeholder: t("chat.placeholder"),
               send: t("chat.send"),
@@ -512,6 +555,7 @@ export default async function ChatPage({
   // 30 Sep 2026: a saved chat of this exam reopens here; the list shows this
   // exam's chats. A results-page seed carries the attempt it reviews.
   const examResume = currentEnrollment ? resumeIn(currentEnrollment.examId, `/chat?examCode=${encodeURIComponent(examCode)}`) : null;
+  await markShown(examResume);
   const examRecent = currentEnrollment ? await recentFor({ examId: currentEnrollment.examId }, examResume != null) : null;
 
   return (
@@ -535,7 +579,7 @@ export default async function ChatPage({
           )}
         </div>
 
-        <ChatOpenedBeacon props={examResume ? { ...chatOpenedProps, resumed: true } : chatOpenedProps} />
+        <ChatOpenedBeacon props={examResume ? { ...chatOpenedProps, resumed: true, ...lateSeen } : chatOpenedProps} />
         <ChatInterface
           key={examResume?.sessionId ?? "new"}
           examCode={examCode}
@@ -547,6 +591,7 @@ export default async function ChatPage({
           recentChats={examRecent}
           followUp={examResume ? followUp : null}
           reviewAttemptId={reviewAttemptParam(sp)}
+          lateAnswer={lateLine(examResume)}
           labels={{
             placeholder: t("chat.placeholder"),
             send: t("chat.send"),

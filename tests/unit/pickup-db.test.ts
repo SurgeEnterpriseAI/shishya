@@ -20,9 +20,15 @@
 //     (2 Oct 2026: it was the 72-hour window; since build 7b the 72 hours
 //     run from the last send, up to the 7-day hard stop); never a school
 //     chat; the question read is that conversation's USER row before the reply.
+//   • (7 Oct 2026, B3) the card keeps a late answer 14 days (it was 3); the
+//     hub's card reads it from all of the member's chats (the thread and the
+//     mock stay the hub's exam); an answer the reopened chat would not show
+//     (30+ rows after it) is not offered; GET /api/me/late-answer (the strip
+//     under the header): a guest gets 401 and nothing is read, a member the
+//     same line as the card, private, never cached, nothing written.
 // No DB. Run: npx vitest run tests/unit/pickup-db.test.ts
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const calls = vi.hoisted(() => ({
   log: [] as Array<{ model: string; op: string; args: any }>,
@@ -36,6 +42,8 @@ const calls = vi.hoisted(() => ({
   raw: [] as any[],
   rawCalls: [] as Array<{ sql: string; values: unknown[] }>,
   session: null as null | { user: { id: string } },
+  /** Rows stored after a reply: one number, or per session (B3 review). */
+  rowsAfter: 0 as number | Record<string, number>,
 }));
 
 vi.mock("@/lib/auth", () => ({ auth: async () => calls.session }));
@@ -51,6 +59,10 @@ vi.mock("@/lib/db/prisma", () => ({
       findMany: async (args: any) => {
         calls.log.push({ model: "chatMessage", op: "findMany", args });
         return calls.userRows;
+      },
+      count: async (args: any) => {
+        calls.log.push({ model: "chatMessage", op: "count", args });
+        return typeof calls.rowsAfter === "number" ? calls.rowsAfter : (calls.rowsAfter[args.where?.sessionId] ?? 0);
       },
     },
     attempt: {
@@ -76,6 +88,7 @@ vi.mock("@/lib/db/prisma", () => ({
 import { REAL_EXAM_SQL, REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
 import { loadEmailQuestions, loadPickup, loadPickupLateAnswer, loadPickupMock, loadPickupThread } from "@/lib/db/pickup";
 import { GET } from "@/app/api/me/pickup/route";
+import { GET as GET_LATE } from "@/app/api/me/late-answer/route";
 import { LATE_HARD_STOP_MS } from "@/lib/tutor-late-answer";
 
 const NOW = new Date("2026-09-30T06:00:00Z");
@@ -108,6 +121,7 @@ beforeEach(() => {
   calls.exam = { id: "e-ssc", active: true };
   calls.raw = [];
   calls.session = null;
+  calls.rowsAfter = 0;
 });
 
 describe("loadPickupThread", () => {
@@ -200,7 +214,7 @@ describe("loadPickupLateAnswer (1 Oct 2026)", () => {
   });
   const SSC = { code: "SSC_CGL", shortName: "SSC CGL", category: "GOVT_JOBS" };
 
-  it("the member's own ASSISTANT late answers, in the card's scope, back 3 days + the 7-day hard stop; the question before the reply", async () => {
+  it("the member's own ASSISTANT late answers, in the card's scope, back 14 days + the 7-day hard stop; the question before the reply", async () => {
     calls.userRows = [
       late("s-school", 5, 1, { code: "NCERT_C09", shortName: "NCERT 9", category: "SCHOOL_BOARD" }),
       late("s-seen", 5, 1.5, SSC, { lateSeenAt: NOW.getTime() }),
@@ -213,9 +227,10 @@ describe("loadPickupLateAnswer (1 Oct 2026)", () => {
     expect(q.args.where.role).toBe("ASSISTANT");
     expect(q.args.where.metadata).toEqual({ path: ["lateAnswer"], equals: true });
     expect(q.args.where.session).toEqual({ userId: "u1", OR: [{ examId: null }, { exam: REAL_EXAM_WHERE }] });
-    // 2 Oct 2026: 3 days on the card + the 7-day hard stop (it was + 72 hours).
-    expect(q.args.where.createdAt.gte.getTime()).toBe(NOW.getTime() - 3 * DAY - 7 * DAY);
-    expect(q.args.where.createdAt.gte.getTime()).toBe(NOW.getTime() - 3 * DAY - LATE_HARD_STOP_MS);
+    // 2 Oct 2026: the card's days + the 7-day hard stop (it was + 72 hours).
+    // 7 Oct 2026 (B3): the card's days are 14 (they were 3).
+    expect(q.args.where.createdAt.gte.getTime()).toBe(NOW.getTime() - 14 * DAY - 7 * DAY);
+    expect(q.args.where.createdAt.gte.getTime()).toBe(NOW.getTime() - 14 * DAY - LATE_HARD_STOP_MS);
     expect(q.args.orderBy).toEqual({ createdAt: "desc" });
     // The school row and the opened one never lead; the most recently answered of the rest does.
     expect(la).toMatchObject({ sessionId: "s-late", examCode: "SSC_CGL", examShort: "SSC CGL", question: "Why is 1 not prime?" });
@@ -223,6 +238,9 @@ describe("loadPickupLateAnswer (1 Oct 2026)", () => {
     const qr = calls.log.find((c) => c.model === "chatMessage" && c.op === "findFirst" && c.args.where?.sessionId === "s-late")!;
     expect(qr.args.where).toEqual({ sessionId: "s-late", role: "USER", createdAt: { lt: hoursAgo(6) } });
     expect(qr.args.orderBy).toEqual({ createdAt: "desc" });
+    // B3: the rows after the reply are counted (is it inside the chat's 30-row window?).
+    const cnt = calls.log.find((c) => c.op === "count")!;
+    expect(cnt.args.where).toEqual({ sessionId: "s-late", createdAt: { gt: hoursAgo(6) } });
   });
 
   it("a question answered on its 7th day (stored 6 days 23 hours ago, answered an hour ago) is inside the read and leads the card", async () => {
@@ -236,19 +254,58 @@ describe("loadPickupLateAnswer (1 Oct 2026)", () => {
     // The old floor (3 days + 72 hours) would have left it out.
     expect(reply.createdAt.getTime()).toBeLessThan(NOW.getTime() - 3 * DAY - 72 * 3600_000);
     expect(la).toMatchObject({ sessionId: "s-day7", question: "Why is 1 not prime?" });
-    // An answer stored at the very end of the hard stop stays inside the read for the card's whole 3 days.
-    const edge = new Date(NOW.getTime() - 3 * DAY - LATE_HARD_STOP_MS);
+    // An answer stored at the very end of the hard stop stays inside the read for the card's whole 14 days.
+    const edge = new Date(NOW.getTime() - 14 * DAY - LATE_HARD_STOP_MS);
     expect(edge.getTime()).toBe(q.args.where.createdAt.gte.getTime());
   });
 
   it("the hub strip reads one exam; another account's rows and old answers never lead; nothing → null, no question read", async () => {
-    calls.userRows = [late("s-theirs", 5, 1, SSC, {}, "u2"), late("s-old", 5, 4 * 24, SSC)];
+    calls.userRows = [late("s-theirs", 5, 1, SSC, {}, "u2"), late("s-old", 5, 15 * 24, SSC)];
     expect(await loadPickupLateAnswer("u1", { examId: "e-ssc", now: NOW })).toBeNull();
     const q = calls.log.find((c) => c.op === "findMany")!;
     expect(q.args.where.session).toEqual({ userId: "u1", examId: "e-ssc" });
     expect(calls.log.filter((c) => c.op === "findFirst")).toHaveLength(0);
     calls.userRows = [];
     expect(await loadPickupLateAnswer("u1", { now: NOW })).toBeNull();
+  });
+
+  it("B3: kept on the card 14 days — day 4 (two students reached the right hub on day 3.3 and 4.5) leads; day 15 does not", async () => {
+    calls.lastRow = { content: "Why is 1 not prime?" };
+    calls.userRows = [late("s-day4", 4 * 24 + 12, 4 * 24 + 11, SSC)];
+    expect((await loadPickupLateAnswer("u1", { now: NOW }))?.sessionId).toBe("s-day4");
+    calls.userRows = [late("s-day15", 15 * 24 + 1, 15 * 24, SSC)];
+    expect(await loadPickupLateAnswer("u1", { now: NOW })).toBeNull();
+  });
+
+  it("B3: an answer the reopened chat would not show is not offered — 29 rows after it put its question outside the 30-row window; 28 still show both", async () => {
+    calls.lastRow = { content: "Why is 1 not prime?" };
+    calls.userRows = [late("s-busy", 6, 2, SSC)];
+    for (const n of [30, 29]) {
+      calls.rowsAfter = n;
+      expect(await loadPickupLateAnswer("u1", { now: NOW }), String(n)).toBeNull();
+    }
+    calls.rowsAfter = 28;
+    expect((await loadPickupLateAnswer("u1", { now: NOW }))?.sessionId).toBe("s-busy");
+  });
+
+  it("B3 review: one the chat cannot show is passed over for the next, never hiding it (up to 3 tries)", async () => {
+    calls.lastRow = { content: "Why is 1 not prime?" };
+    calls.userRows = [late("s-busy", 6, 1, SSC), late("s-next", 8, 2, SSC), late("s-third", 9, 3, SSC), late("s-fourth", 10, 4, SSC)];
+    calls.rowsAfter = { "s-busy": 40 };
+    expect((await loadPickupLateAnswer("u1", { now: NOW }))?.sessionId).toBe("s-next");
+    calls.log = [];
+    calls.rowsAfter = { "s-busy": 40, "s-next": 35, "s-third": 31 };
+    expect(await loadPickupLateAnswer("u1", { now: NOW })).toBeNull();
+    expect(calls.log.filter((c) => c.op === "count").map((c) => c.args.where.sessionId)).toEqual(["s-busy", "s-next", "s-third"]);
+  });
+
+  it("B3: the hub's card reads the late answer from all of the member's chats; the thread and the mock stay the hub's exam", async () => {
+    await loadPickup("u1", { examId: "e-ssc", now: NOW });
+    const lateRead = calls.log.find((c) => c.op === "findMany" && c.args.where?.metadata)!;
+    expect(lateRead.args.where.session).toEqual({ userId: "u1", OR: [{ examId: null }, { exam: REAL_EXAM_WHERE }] });
+    const threadRead = calls.log.find((c) => c.op === "findFirst" && c.args.where?.session)!;
+    expect(threadRead.args.where.session).toEqual({ userId: "u1", examId: "e-ssc" });
+    expect(calls.log.find((c) => c.model === "attempt")!.args.where.mock).toEqual({ examId: "e-ssc" });
   });
 });
 
@@ -326,5 +383,44 @@ describe("GET /api/me/pickup", () => {
     expect(j.view.mock.href).toBe("/attempts/a1abcdefg/results");
     const threadRead = calls.log.find((c) => c.args.where?.session)!;
     expect(threadRead.args.where.session).toEqual({ userId: "u1", examId: "e-ssc" });
+  });
+});
+
+describe("GET /api/me/late-answer (7 Oct 2026, B3 — the strip under the header)", () => {
+  const get = (qs = "") => GET_LATE(new Request(`https://shishya.in/api/me/late-answer${qs}`));
+  const SSC = { code: "SSC_CGL", shortName: "SSC CGL", category: "GOVT_JOBS" };
+  afterEach(() => vi.useRealTimers());
+
+  it("a guest gets 401 and nothing is read", async () => {
+    const r = await get("?lang=en");
+    expect(r.status).toBe(401);
+    expect(calls.log).toHaveLength(0);
+    expect(r.headers.get("cache-control")).toBe("private, no-store");
+    expect(await r.json()).toEqual({ answered: null });
+  });
+
+  it("a member: the card's own line in their language — the card's read, every chat of theirs, nothing written", async () => {
+    // The route reads the clock itself.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(NOW);
+    calls.session = { user: { id: "u1" } };
+    calls.userRows = [
+      { sessionId: "s-late", createdAt: hoursAgo(30), metadata: { lateAnswer: true, lateAnsweredAt: NOW.getTime() - 2 * 3600_000 }, session: { userId: "u1", exam: SSC } },
+    ];
+    calls.lastRow = { content: "Why is 1 not prime?" };
+    const r = await get("?lang=hi");
+    expect(r.status).toBe(200);
+    expect(r.headers.get("cache-control")).toBe("private, no-store");
+    const j = (await r.json()) as { answered: any };
+    expect(j.answered).toMatchObject({ label: "आपके सवाल का जवाब आ गया है", text: "Why is 1 not prime?", href: "/chat?examCode=SSC_CGL&session=s-late", cta: "जवाब देखें →" });
+    const read = calls.log.find((c) => c.op === "findMany")!;
+    expect(read.args.where.session).toEqual({ userId: "u1", OR: [{ examId: null }, { exam: REAL_EXAM_WHERE }] });
+    expect(calls.rawCalls).toHaveLength(0);
+  });
+
+  it("nothing to show (or a failed read) is { answered: null }", async () => {
+    calls.session = { user: { id: "u1" } };
+    calls.userRows = [];
+    expect(await (await get()).json()).toEqual({ answered: null });
   });
 });

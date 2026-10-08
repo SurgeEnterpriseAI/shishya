@@ -1163,19 +1163,23 @@ describe("the thread and the pick-up card", () => {
     expect(pickupView({ thread: null, mock: null, lateAnswer: late }, "te", NOW)!.answered!.cta).toBe("సమాధానం చూడండి →");
   });
 
-  it("which late answer leads: the member's own, unopened, within 3 days, never a school chat, newest first", () => {
+  // 7 Oct 2026 (B3): within 14 days (the Recent chats window) — it was 3.
+  it("which late answer leads: the member's own, unopened, within 14 days, never a school chat, newest first", () => {
     const base = { ownerId: "u1", examCode: "SSC_CGL", examShort: "SSC CGL", examCategory: "GOVT_JOBS" };
     const rows = [
       { ...base, sessionId: "seen", metadata: { lateAnswer: true, lateAnsweredAt: NOW_MS - 1000, lateSeenAt: NOW_MS } },
       { ...base, sessionId: "school", examCategory: "SCHOOL_BOARD", metadata: { lateAnswer: true, lateAnsweredAt: NOW_MS - 2000 } },
       { ...base, sessionId: "theirs", ownerId: "u2", metadata: { lateAnswer: true, lateAnsweredAt: NOW_MS - 3000 } },
-      { ...base, sessionId: "old", metadata: { lateAnswer: true, lateAnsweredAt: NOW_MS - 4 * 86_400_000 } },
+      { ...base, sessionId: "old", metadata: { lateAnswer: true, lateAnsweredAt: NOW_MS - 15 * 86_400_000 } },
       { ...base, sessionId: "older-ok", metadata: { lateAnswer: true, lateAnsweredAt: NOW_MS - 7200_000 } },
       { ...base, sessionId: "newest-ok", metadata: { lateAnswer: true, lateAnsweredAt: NOW_MS - 3600_000 } },
       { ...base, sessionId: "live", metadata: { actions: null } },
     ];
     expect(pickLateAnswer(rows, "u1", NOW)?.sessionId).toBe("newest-ok");
     expect(pickLateAnswer(rows.slice(0, 4), "u1", NOW)).toBeNull();
+    // Day 4 still leads now (two students reached the right hub on day 3.3 and 4.5 — 7 Oct 2026 read).
+    const day4 = { ...base, sessionId: "day4", metadata: { lateAnswer: true, lateAnsweredAt: NOW_MS - 4.5 * 86_400_000 } };
+    expect(pickLateAnswer([...rows.slice(0, 4), day4], "u1", NOW)?.sessionId).toBe("day4");
   });
 });
 
