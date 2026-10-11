@@ -9,13 +9,15 @@
 // do. props.retroTag keeps every action auditable/reversible.
 //
 // Three rules, run in this order: the botnet rule (one page per address,
-// 15+ addresses on one user agent), the deep-reader rule (3 Oct 2026: one
+// 15+ addresses on one user agent, unless the agent is people-shaped — 11
+// Oct 2026, src/lib/botnet-release.ts), the deep-reader rule (3 Oct 2026: one
 // user agent, many addresses, all day, several different deep pages per
 // address; remembered on every day once convicted on 3 days) and the
 // login-redirect phantoms. Each only tags (client = 'bot'); nothing is
 // ever deleted.
 
 import { Prisma } from "@prisma/client";
+import { peopleShapedHavingSql } from "./botnet-release";
 
 // NOTE (5 Sep 2026): uaHash is stable across months, ipHash rotates
 // monthly. A convicted UA therefore stays convicted across the 1st of the
@@ -269,6 +271,14 @@ export async function runBotScrub(p: {
   // The pool keeps rows the deep-reader rule tagged (3 Oct 2026), so this
   // verdict is exactly what it was before that rule existed (checked 3 Oct:
   // 83 agents convicted either way).
+  // PEOPLE-SHAPED AGENTS (11 Oct 2026, src/lib/botnet-release.ts): an agent
+  // that meets the bar is still not convicted when 40%+ of its pool rows are
+  // on entry pages and under 20% are at night (00-06 IST). Since 9 Oct
+  // ChatGPT's links carry no tag and no referrer, so its visitors on a phone
+  // browser build (one user-agent string for every Android phone on that
+  // Chrome) leave one identity-less row each — the bar's own signature — and
+  // the rule convicted Android Chrome 149-154, Samsung Internet and iPhone
+  // Safari. Read 11 Oct: 94 → 75 agents; no crawler released.
   const convictedRows = await p.$queryRaw<Array<{ uaHash: string }>>`
     SELECT "uaHash" FROM "AnalyticsEvent"
     WHERE kind = 'PAGE_VIEW' AND "userId" IS NULL AND "anonId" IS NULL AND "uaHash" IS NOT NULL
@@ -276,7 +286,8 @@ export async function runBotScrub(p: {
     GROUP BY "uaHash"
     HAVING COUNT(DISTINCT "ipHash") >= ${MIN_IPS}
       AND COUNT(*) FILTER (WHERE "refHost" IS NOT NULL) = 0
-      AND COUNT(*)::numeric / GREATEST(COUNT(DISTINCT "ipHash"), 1) <= ${MAX_VIEWS_PER_IP}`;
+      AND COUNT(*)::numeric / GREATEST(COUNT(DISTINCT "ipHash"), 1) <= ${MAX_VIEWS_PER_IP}
+      AND NOT ${Prisma.raw(peopleShapedHavingSql(entryPathSql("path")))}`;
   const convicted = convictedRows.map((r) => r.uaHash);
 
   // HUMAN-SAFETY (review 22 Aug 2026): within a convicted UA cluster we

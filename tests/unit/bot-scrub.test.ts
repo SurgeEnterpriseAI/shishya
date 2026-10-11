@@ -28,6 +28,7 @@ import {
   runBotScrub,
   type ReaderRow,
 } from "@/lib/bot-scrub";
+import { NIGHT_END_HOUR_IST, RELEASE_MAX_NIGHT_SHARE, RELEASE_MIN_ENTRY_SHARE, peopleShapedHavingSql } from "@/lib/botnet-release";
 
 const SRC = fs.readFileSync(path.resolve(__dirname, "../../src/lib/bot-scrub.ts"), "utf8");
 
@@ -327,6 +328,21 @@ describe("runBotScrub", () => {
     const conviction = log.find((l) => l.op === "query" && l.sql.includes(`GROUP BY "uaHash"`))!;
     expect(conviction.sql.replace(/\s+/g, " ")).toContain(`(client = 'browser' OR (client = 'bot' AND (props->>'retroTag' LIKE 'ua-sweep%' OR props->>'retroTag' LIKE ?)))`);
     expect(conviction.values).toContain("deep-reader%");
+  });
+
+  it("the botnet rule does not convict a people-shaped agent (11 Oct 2026): the bar, then NOT the release clause", async () => {
+    const { client, log } = recorder([]);
+    await runBotScrub(client);
+    const conviction = log.find((l) => l.op === "query" && l.sql.includes(`GROUP BY "uaHash"`))!;
+    const sql = conviction.sql.replace(/\s+/g, " ");
+    expect(sql).toContain(
+      `HAVING COUNT(DISTINCT "ipHash") >= ? AND COUNT(*) FILTER (WHERE "refHost" IS NOT NULL) = 0 AND COUNT(*)::numeric / GREATEST(COUNT(DISTINCT "ipHash"), 1) <= ? AND NOT ${peopleShapedHavingSql(entryPathSql("path"))}`,
+    );
+    expect(conviction.values).toEqual(["deep-reader%", 15, 1.5]);
+    expect(sql).toContain(`>= ${RELEASE_MIN_ENTRY_SHARE} * COUNT(*)`);
+    expect(sql).toContain(`< ${NIGHT_END_HOUR_IST}) < ${RELEASE_MAX_NIGHT_SHARE} * COUNT(*)`);
+    // Only the verdict changes: no UPDATE carries the clause (a released agent's rows go back through the existing restore).
+    expect(log.filter((l) => l.op === "execute" && l.sql.includes(`>= ${RELEASE_MIN_ENTRY_SHARE} * COUNT(*)`)).length).toBe(0);
   });
 
   it("with no botnet convicted, the reader rule still runs and nothing else tags", async () => {
