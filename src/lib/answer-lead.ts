@@ -30,6 +30,7 @@
 
 import {
   clipDescription,
+  examYearName,
   heldDescriptionLead,
   heldVerb,
   heldYearDescriptionLead,
@@ -176,7 +177,9 @@ export function hubLead(i: HubLeadInput): string | null {
 
 export interface UpdatesLeadInput {
   short: string;
-  year: number;
+  /** The hub's cycle year (src/lib/exam-title-year.ts), or null: the hub
+   *  prints none, so the lead names the exam alone (6 Oct 2026). */
+  year: number | null;
   /** stageOf(shown): the next exam day, the next row of any kind, the last done row. */
   nextExam: TimelineRow | null;
   next: TimelineRow | null;
@@ -189,9 +192,10 @@ export function updatesLead(i: UpdatesLeadInput): string | null {
   const next = live(i.next);
   // A "Last:" row is something that happened: never an estimate that went by.
   const last = i.last && i.last.tier !== "expected" && !i.last.passedEstimate ? i.last : null;
+  const named = examYearName(i.short, i.year);
   const first = nextExam
-    ? `${examPrefix(`${i.short} ${i.year}`, nextExam.label)}${datedLabel(nextExam)}.`
-    : trackerNoDate(`${i.short} ${i.year}`);
+    ? `${examPrefix(named, nextExam.label)}${datedLabel(nextExam)}.`
+    : trackerNoDate(named);
   return capLead([
     first,
     next && next.id !== nextExam?.id ? `Next: ${datedLabel(next)}.` : null,

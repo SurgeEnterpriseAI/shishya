@@ -11,6 +11,7 @@
 // & Study Help", indexable, with an empty body (src/lib/page-gates-copy.ts).
 
 import Link from "next/link";
+import { NOTE_AUTHOR } from "@/lib/note-disclosure";
 import { StateExamsLink } from "@/components/StateExamsLink";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -267,7 +268,8 @@ export default async function TopicPage({
         ...(notesAt ? { datePublished: notesAt.toISOString() } : {}),
         ...(notesUpdatedAt || notesAt ? { dateModified: (notesUpdatedAt ?? notesAt)!.toISOString() } : {}),
         image: [`https://shishya.in/exams/${exam.code}/opengraph-image`],
-        author: { "@type": "Organization", name: "Shishya", url: "https://shishya.in" },
+        // 6 Oct 2026: one entity for the English note and its Hindi twin (src/lib/note-disclosure.ts).
+        author: NOTE_AUTHOR,
         publisher: { "@type": "Organization", name: "Shishya", url: "https://shishya.in" },
         isPartOf: {
           "@type": "Course",

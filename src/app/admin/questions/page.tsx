@@ -137,7 +137,8 @@ export default async function AdminQuestionList({
           >
             <option value="">Any source</option>
             <option value="AI_GENERATED">AI-generated (pending)</option>
-            <option value="AI_VALIDATED">AI + SME-validated</option>
+            {/* 6 Oct 2026 (review r1): was "AI + SME-validated" — validated by the automated AI answer check, a bulk script or an admin by hand; none by an SME on 6 Oct. */}
+            <option value="AI_VALIDATED">AI-generated, validated</option>
             <option value="SME">SME-authored</option>
             <option value="PYQ">Previous-year question</option>
           </select>

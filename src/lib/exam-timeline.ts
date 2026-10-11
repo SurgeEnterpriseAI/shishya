@@ -296,8 +296,12 @@ export function focusExamRow(timeline: TimelineRow[]): TimelineRow | null {
   return pool.length ? pool[pool.length - 1] : null;
 }
 
-/** Cycle year to show in titles: year of the next exam day, else the
- *  latest upcoming row, else the current year. */
+/** The calendar year of the next exam day, else of the next upcoming row,
+ *  else the current year.
+ *  @deprecated 6 Oct 2026: no page prints it. /updates printed it as the
+ *  title year and disagreed with the hub on 54 of 192 exams ("GATE CSE
+ *  2026" / "CLAT 2026" beside hubs saying 2027); titles now use the hub's
+ *  decision (src/lib/hub-title.ts hubTitleDecision, src/lib/exam-title-year.ts). */
 export function cycleYear(timeline: TimelineRow[], now: Date = new Date()): number {
   const { nextExam, next } = stageOf(timeline);
   const ref = nextExam ?? next;
@@ -317,8 +321,8 @@ const PRE_EXAM_KINDS: ReadonlySet<DateKind> = new Set<DateKind>([
 ]);
 
 /** The year a page <title> may print next to the exam's name (26 Sep 2026),
- *  or null when nothing ahead names one. Unlike cycleYear (the tracker's —
- *  /updates keeps it) it never falls back to the calendar year: the hubs
+ *  or null when nothing ahead names one. Unlike cycleYear (which /updates
+ *  printed until 6 Oct 2026) it never falls back to the calendar year: the hubs
  *  said "JEE Main 2026 — Exam Date Not Announced Yet" in September 2026,
  *  months after JEE Main 2026 was held, while the tracker already held the
  *  2027 rows. In order:

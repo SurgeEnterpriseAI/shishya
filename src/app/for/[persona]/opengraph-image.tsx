@@ -203,7 +203,8 @@ export default async function Image({ params }: { params: Promise<{ persona: str
             display: "flex",
           }}
         >
-          free · grounded in official notifications · in your language
+          {/* 6 Oct 2026: was "grounded in official notifications" — unbacked (search plan doNow 1). */}
+          free · official dates linked to the source · in your language
         </div>
       </div>
     ),

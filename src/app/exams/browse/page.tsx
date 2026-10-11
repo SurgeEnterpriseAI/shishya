@@ -35,8 +35,10 @@ export const revalidate = 300; // 5 min — the underlying list barely changes
 // (same definition as the page body's `totalActive`: active, school boards
 // excluded) instead of a typed number that drifts (audit 11 Sep 2026: it
 // said 163 while the catalogue held 178). No "verified by students who
-// cleared" — content is AI-drafted and checked against the official
-// notification.
+// cleared". 6 Oct 2026 (search plan doNow 1): nor "checked against the
+// official notification" — unbacked (0 EXAM Fact rows, 0 AiCheck rows); the
+// description says the content is AI-written and that dates marked official
+// link the conducting body (src/lib/official-source.ts).
 // 26 Sep 2026: the catalogue holds government AND entrance exams, and its
 // title said "All Entrance Exams in India" over SSC, UPSC and 128 state
 // exams. Title, heading, JSON-LD and the social card now say both, with
@@ -65,7 +67,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title,
     description:
-      `Search and filter ${scope} across India by state, exam name, language, or category. Free mock tests, previous year papers and PYQ-pattern practice, AI tutor and a free day-by-day coach plan — AI-drafted, checked against the official notification. ${names}, state PSCs, TETs and police exams.`,
+      `Search and filter ${scope} across India by state, exam name, language, or category. Free mock tests, previous year papers and PYQ-pattern practice, AI tutor and a free day-by-day coach plan — written with AI; dates marked official link the conducting body. ${names}, state PSCs, TETs and police exams.`,
     alternates: { canonical: "https://shishya.in/exams/browse" },
     keywords: [
       "government exams india",

@@ -74,9 +74,10 @@ const SAFFRON: ExamTheme = {
   examDayText: "text-saffron-900",
   phaseChip: "bg-saffron-100 text-saffron-800 hover:bg-saffron-200",
   // Audit 11 Sep 2026: was "Verified by students who've cleared the same
-  // path" — an unbacked claim. Content is AI-drafted and checked against
-  // the official notification; say what is true.
-  tagline: "Free mocks, PYQ-pattern papers, a tutor and a day-by-day plan — AI-drafted, checked against the official notification",
+  // path" — an unbacked claim. 6 Oct 2026: its replacement, "AI-drafted,
+  // checked against the official notification", was unbacked too (no EXAM
+  // Fact row, no AiCheck row); say what is true.
+  tagline: "Free mocks, PYQ-pattern papers, a tutor and a day-by-day plan — written with AI; dates marked official link the conducting body",
 };
 
 // IMPORTANT: every class string here must appear verbatim in source —

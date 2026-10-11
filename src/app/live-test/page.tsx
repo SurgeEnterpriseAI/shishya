@@ -1,8 +1,27 @@
 // /live-test — the All-India Live Test hub.
-// Sunday, same paper, whole country: cards for this week's tests with
-// countdown (upcoming), Join (open) or aggregate results (closed).
+// Sunday, one paper per exam, the same for everyone who takes it that day:
+// cards for this week's tests with countdown (upcoming), Join (open) or
+// aggregate results (closed).
 // Privacy: aggregates + the signed-in user's OWN rank only — never a
 // named public leaderboard.
+//
+// 10 Oct 2026 (honesty, Release 1): this page promised what the site does
+// not do. It said a live test had no sign-in barrier, but taking one needs
+// a free account (src/lib/guest-paper.ts: live tests keep their sign-in;
+// isGuestPaperMock refuses a live-test mock). It said the whole country
+// writes each paper and gets a national rank, but each Sunday paper had
+// 0–4 takers from 30 Aug to 4 Oct 2026 (LiveTest × Attempt, SELECT of
+// 10 Oct). Every line now says what is true: free, the same paper for
+// everyone who takes it that day, a free sign-up to take it, and a rank
+// among those who have taken it so far (each card prints how many wrote
+// it; the rank shown on submit counts those who have submitted by then).
+// tests/unit/live-test-honesty.test.ts keeps the old claims out.
+//
+// Under 13 (founder rule: content only, no sign-up, no data; review of
+// Release 1, 10 Oct 2026): a kids' exam's card (src/lib/signin-cta.ts
+// isKidsExamCode: the SOF, Silverzone and NSTSE olympiads, JNVST) shows a
+// guest NO sign-up button. On 10 Oct the SZF IOS rehearsal card offered
+// "Sign up with Google" to Class 1-12 olympiad students.
 //
 // Exam-week rehearsals (Mock.config.rehearsalFor) also live in "LiveTest"
 // but are open for 3–7 days before ONE exam's day, so they get their own
@@ -20,17 +39,22 @@ import { Header } from "@/components/Header";
 import { SignUpButton } from "@/components/SignUpButton";
 import { signUpWords } from "@/lib/signup-place-words";
 import { signUpReason } from "@/lib/signup-cta-copy";
+import { isKidsExamCode } from "@/lib/signin-cta";
 
 export const dynamic = "force-dynamic";
 
+// The share card's line (Open Graph and X), one sentence set for both.
+const SHARE_DESCRIPTION =
+  "Every Sunday: a free live mock test for top government exams, the same paper for everyone who takes it that day. Sign up free to take it; when you submit, you see your rank among those who have taken it so far.";
+
 export const metadata: Metadata = {
-  title: "All-India Live Test — free Sunday mock with national rank | Shishya",
+  title: "All-India Live Test — free Sunday mock test with your rank | Shishya",
   description:
-    "Every Sunday, one shared mock test per top exam — the whole country writes the same paper and gets an All-India rank. Free, 6 AM to 11 PM IST. SSC, banking, railways, state exams.",
+    "Every Sunday, 6 AM to 11 PM IST: one free 25-question mock per exam, the same paper for everyone who takes it that day. Sign up free to take it; your rank is among those who took the same paper. SSC, banking, railways, state exams.",
   alternates: { canonical: "https://shishya.in/live-test" },
   openGraph: {
     title: 'All-India Live Test — free weekly mock with your rank | Shishya'.replace(" | Shishya", ""),
-    description: 'Every Sunday: a free All-India Live Test for top government exams. Same paper, same window, real All-India rank the moment you submit. No fee, no login wall.',
+    description: SHARE_DESCRIPTION,
     url: "https://shishya.in/live-test",
     siteName: "Shishya",
     locale: "en_IN",
@@ -43,7 +67,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     images: ["https://shishya.in/opengraph-image"],
     title: 'All-India Live Test — free weekly mock with your rank | Shishya'.replace(" | Shishya", ""),
-    description: 'Every Sunday: a free All-India Live Test for top government exams. Same paper, same window, real All-India rank the moment you submit. No fee, no login wall.',
+    description: SHARE_DESCRIPTION,
   },
 };
 
@@ -150,7 +174,7 @@ export default async function LiveTestPage() {
         <p className="mt-1 text-xs text-ink-500">
           {state === "rehearsal"
             ? "25 questions · 20 minutes · a calm run-through before your exam day"
-            : "25 questions · 20 minutes · same paper across India"}
+            : "25 questions · 20 minutes · one paper for everyone who takes it"}
         </p>
 
         {(state !== "upcoming" || r.participants > 0) && (
@@ -183,6 +207,10 @@ export default async function LiveTestPage() {
           >
             Write it now →
           </Link>
+        ) : (state === "open" || state === "rehearsal") && isKidsExamCode(r.code) ? (
+          // Under 13: a kids' exam (olympiads sat from Class 1, JNVST) asks a
+          // guest for nothing — no sign-up button, no line asking for one.
+          null
         ) : state === "open" || state === "rehearsal" ? (
           // 2 Oct 2026 (founder: every sign-in call is the white Google
           // button, with a line saying why): a guest's button here was our
@@ -227,7 +255,7 @@ export default async function LiveTestPage() {
       operatingSystem: "Web",
       url: "https://shishya.in/live-test",
       description:
-        "Free weekly All-India live mock test for Indian government exams — every Sunday one shared paper per exam, with an All-India rank on submission.",
+        "Free weekly live mock test for Indian government exams — every Sunday one 25-question paper per exam, the same for everyone who takes it that day. A free sign-up is needed to take it; when you submit, you see your rank among those who have taken it so far.",
       isAccessibleForFree: true,
       offers: { "@type": "Offer", price: "0", priceCurrency: "INR" },
       provider: { "@type": "EducationalOrganization", name: "Shishya", url: "https://shishya.in" },
@@ -238,10 +266,10 @@ export default async function LiveTestPage() {
       mainEntity: [
         {
           "@type": "Question",
-          name: "Is there a free All-India mock test with rank for government exams?",
+          name: "Is there a free weekly mock test with a rank for government exams?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "Yes. Shishya runs a free All-India Live Test every Sunday from 6 AM to 11 PM IST at https://shishya.in/live-test — one shared 25-question paper per exam, written by aspirants across India on the same day, with your All-India rank shown the moment you submit. No fee and no test-series subscription.",
+            text: "Yes. Shishya runs a free live test every Sunday from 6 AM to 11 PM IST at https://shishya.in/live-test — one 25-question paper per exam, the same for everyone who takes it that day. You sign up free to take it. When you submit, you see your rank among those who have taken the same paper so far; each paper's card shows how many wrote it. No fee and no test-series subscription.",
           },
         },
         {
@@ -249,7 +277,7 @@ export default async function LiveTestPage() {
           name: "Why should I take a live test instead of a normal mock?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "A live test adds the two things a solo mock cannot: a fixed appointment that builds exam-day routine, and a comparison against everyone else who wrote the same paper that day. That relative position — not your raw score — is what actually predicts selection, because government exams are ranked competitions with cutoffs.",
+            text: "A live test adds two things a solo mock cannot: a fixed appointment that builds an exam-day routine, and a rank among everyone else who took the same paper that day. The rank is out of however many took that paper, so when only a few take it, read it as a rough comparison, not a forecast of selection.",
           },
         },
         {
@@ -281,9 +309,9 @@ export default async function LiveTestPage() {
       <section className="container-prose py-8">
         <h1 className="text-2xl font-bold text-ink-900">🇮🇳 All-India Live Test</h1>
         <p className="mt-1 max-w-2xl text-sm leading-relaxed text-ink-600">
-          Every Sunday, 6 AM – 11 PM IST: one paper per exam, the whole country writes the
-          same 25 questions, and you get your All-India rank the moment you submit. Free,
-          like everything on Shishya.
+          Every Sunday, 6 AM – 11 PM IST: one free 25-question paper per exam, the same for
+          everyone who takes it that day. Sign up free to take it. When you submit, you see
+          your rank among those who have taken the same paper so far.
         </p>
 
         {open.length > 0 && (
@@ -299,7 +327,7 @@ export default async function LiveTestPage() {
                 source tier, and an untiered date is not ours to show. */}
             <p className="mt-1 max-w-2xl text-xs leading-relaxed text-ink-600">
               These exams are being written this week. An easier-leaning warm-up paper — open now,
-              closing the evening before the exam day. Not the Sunday All-India paper: write one to
+              closing the evening before the exam day. Not the Sunday paper: write one to
               settle the nerves and check your timing.
             </p>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">

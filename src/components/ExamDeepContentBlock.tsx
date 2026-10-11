@@ -62,17 +62,23 @@ function EligibilitySection({
   return (
     <section id="eligibility" className="scroll-mt-20">
       <h2 className="text-base font-semibold text-ink-800">{examShortName} eligibility</h2>
+      {/* 6 Oct 2026 (search plan doNow 1, review r1): said "Verified against
+          the official notification … last reconciled {date}". No record shows
+          that anyone checked these entries against the notice, and most
+          `source` links are the body's home page, not the notification. The
+          line now claims no check: Shishya's summary, its date, and the
+          official site to confirm on. */}
       <p className="mt-1 text-xs text-ink-500">
-        Verified against the official notification.{" "}
+        Shishya&apos;s summary, as of {eligibility.verifiedAt} — confirm the details on the{" "}
         <a
           href={eligibility.source}
           target="_blank"
           rel="noopener noreferrer"
           className="text-saffron-700 underline"
         >
-          Source ↗
-        </a>{" "}
-        · last reconciled {eligibility.verifiedAt}.
+          official site ↗
+        </a>
+        .
       </p>
       <div className="mt-3 rounded-md border border-ink-200 bg-white p-5">
         <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-[max-content_1fr]">
@@ -198,6 +204,9 @@ function CutoffSection({
                 </tbody>
               </table>
             </div>
+            {/* 6 Oct 2026 (review r1): "verified {date}" here, on the paper
+                analysis and on the salary bands became "as of {date}" — no
+                record shows who verified them. */}
             <p className="mt-3 text-[11px] text-ink-500">
               Source:{" "}
               <a
@@ -208,7 +217,7 @@ function CutoffSection({
               >
                 official ↗
               </a>{" "}
-              · verified {t.verifiedAt}.
+              · as of {t.verifiedAt}.
             </p>
           </div>
         ))}
@@ -248,7 +257,7 @@ function PaperAnalysisSection({
         >
           Source ↗
         </a>{" "}
-        · verified {analysis.verifiedAt}.
+        · as of {analysis.verifiedAt}.
       </p>
       <div className="mt-3 rounded-md border border-ink-200 bg-white p-5">
         <div className="space-y-5">
@@ -361,7 +370,7 @@ function SalarySection({
               >
                 official ↗
               </a>{" "}
-              · verified {b.verifiedAt}.
+              · as of {b.verifiedAt}.
             </p>
           </li>
         ))}

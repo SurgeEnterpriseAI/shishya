@@ -57,7 +57,7 @@ const STEPS: Step[] = [
     placement: "bottom",
     title: "3 · Ask Shishya anytime",
     body:
-      "Stuck on a concept? Click the help icon up here. Answers grounded in verified Shishya content, with sources you can check — in English, Hindi, or your language. All free.",
+      "Stuck on a concept? Click the help icon up here. Shishya's AI tutor answers in English, Hindi, or your language. All free.",
   },
   {
     key: "done",

@@ -64,6 +64,9 @@ import { examPracticeState } from "@/lib/db/exam-practice";
 import { SHISHYA_ORG_REF } from "@/components/JsonLd";
 import { newsCanonicalMap, newsRobots } from "@/lib/news-index-policy";
 import { SignupInline } from "@/components/SignupInline";
+// 6 Oct 2026 (search plan doNow 3): what the page may say about its source
+// (src/lib/news-provenance.ts).
+import { NEWS_AI_LABEL, newsProvenance } from "@/lib/news-provenance";
 
 interface RouteParams {
   code: string;
@@ -170,12 +173,23 @@ export default async function NewsPermalinkPage({
   });
   // A story a human suppressed as wrong is gone, not archived history.
   if (!row || row.exam.code !== code || row.source === SUPPRESSED_SOURCE) notFound();
-  const [{ t, locale }, gates, hasNotes, practice] = await Promise.all([
+  const [{ t, locale }, gates, hasNotes, practice, elig] = await Promise.all([
     getT(),
     examPageGates(row.exam.code),
     examHasNotes(row.exam.code),
     examPracticeState(row.exam.code),
+    // The exam's own portal widens "official" to a body on a commercial TLD
+    // (src/lib/official-source.ts); a failed read only narrows it.
+    prisma.examEligibility
+      .findUnique({ where: { examId: row.exam.id }, select: { officialUrl: true } })
+      .catch(() => null),
   ]);
+  // 6 Oct 2026 (search plan doNow 3): the stored source URL (row.url — 2,376
+  // rows, never rendered before) is shown as "Source: {host}"; the body of an
+  // AI-tagged row is labelled "AI summary"; "from official notifications" is
+  // said only when the shown link is on an official site, and a row with no
+  // link says so (src/lib/news-provenance.ts).
+  const provenance = newsProvenance({ source: row.source, url: row.url }, elig?.officialUrl ?? null);
 
   const theme = getExamTheme(row.exam.category);
   const isArchived = row.archivedAt !== null;
@@ -195,6 +209,8 @@ export default async function NewsPermalinkPage({
     isAccessibleForFree: true,
     author: SHISHYA_ORG_REF,
     publisher: SHISHYA_ORG_REF,
+    // 6 Oct 2026: the page's own source link, only where one is shown.
+    ...(provenance.link ? { isBasedOn: provenance.link } : {}),
     about: {
       "@type": "Course",
       name: row.exam.name,
@@ -297,6 +313,12 @@ export default async function NewsPermalinkPage({
         </p>
 
         <article className="prose prose-ink mt-6 max-w-none rounded-lg border border-ink-200 bg-white p-6 shadow-sm">
+          {/* 6 Oct 2026: the body of an AI-written row says so. */}
+          {provenance.aiSummary && (
+            <p className="not-prose mb-3 inline-block rounded-full bg-ink-100 px-2.5 py-0.5 text-[11px] font-semibold text-ink-700" data-news-ai-label>
+              {NEWS_AI_LABEL}
+            </p>
+          )}
           {/* News body is short-form (1-3 paragraphs from cron output).
               Split paragraph on double-newline; otherwise render as-is. */}
           {row.body.split(/\n\n+/).map((para, i) => (
@@ -308,29 +330,30 @@ export default async function NewsPermalinkPage({
           {/* Source line. Real URLs link out; internal provenance tags
               (e.g. "ai-generated:claude") must NEVER leak raw to students —
               they read as untrustworthy debug output. Instead: an honest,
-              human trust line. */}
-          {row.source && (
-            <p className="mt-4 border-t border-ink-100 pt-3 text-xs text-ink-500">
-              {row.source.startsWith("http") ? (
-                <>
-                  Source:{" "}
-                  <a
-                    href={row.source}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-medium text-saffron-700 hover:underline"
-                  >
-                    {new URL(row.source).hostname.replace(/^www\./, "")}
-                  </a>
-                </>
-              ) : (
-                <>
-                  Compiled by <span className="font-medium text-ink-700">Shishya</span> from
-                  official notifications — always verify dates on the official exam portal.
-                </>
-              )}
-            </p>
-          )}
+              human trust line.
+              6 Oct 2026 (search plan doNow 3): every row gets the line. The
+              stored source URL (row.url, else an http source) links out as
+              "Source: {host}" unless it is on the copycat denylist; "from
+              official notifications" only beside an official-site link; no
+              link = "No source link is stored for this item"
+              (src/lib/news-provenance.ts). */}
+          <p className="mt-4 border-t border-ink-100 pt-3 text-xs text-ink-500" data-news-source={provenance.kind}>
+            {provenance.link && provenance.host ? (
+              <>
+                Source:{" "}
+                <a
+                  href={provenance.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-saffron-700 hover:underline"
+                >
+                  {provenance.host}
+                </a>
+                .{" "}
+              </>
+            ) : null}
+            {provenance.line}
+          </p>
         </article>
 
         {/* Funnel card — the reason a searcher should stay after reading

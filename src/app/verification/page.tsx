@@ -74,8 +74,9 @@ export default async function VerificationExplainerPage() {
           College and school-board pages show a badge next to key facts —
           a college&apos;s NIRF rank, a board&apos;s official website — and
           each badge names the official source for that fact. Exam pages
-          show one &ldquo;Sourced&rdquo; line naming the official
-          notification instead. Signed-in students can confirm a fact or
+          with practice show one line under the exam pattern instead:
+          &ldquo;Sourced&rdquo;, naming the notice the pattern was read
+          from, or &ldquo;Not yet verified&rdquo;. Signed-in students can confirm a fact or
           flag it as wrong from its badge. If something looks wrong to you,
           click the badge and tell us. Every flag reaches the team and
           stays open until someone reviews it.

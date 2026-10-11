@@ -260,7 +260,8 @@ export default async function SmeStatsPage({
         <aside className="mt-10 rounded-md border border-ink-200 bg-saffron-50/30 p-4">
           <h3 className="text-sm font-semibold text-ink-800">How to read this page</h3>
           <ul className="mt-2 space-y-1 text-xs text-ink-600">
-            <li>• <strong>AI validated</strong> = SME reviewed and approved. These are live for students.</li>
+            {/* 6 Oct 2026: said "SME reviewed and approved". Live AI_VALIDATED questions were validated by the automated AI answer check (validatedBy "factory:…", 29,351) or a bulk script (67); none by a person. Worded as a dated fact (review r1): an admin can validate one by hand (src/app/api/admin/questions/[id]/route.ts stamps the admin's email). */}
+            <li>• <strong>AI validated</strong> = AI-generated and validated by the automated AI answer check (a few older ones by a bulk script, and any an admin validates by hand). On 6 Oct 2026 none had been validated by a person. These are live for students.</li>
             <li>• <strong>Pending</strong> = AI-generated, awaiting SME review. Click to start reviewing.</li>
             <li>• <strong>Rejected</strong> = AI-generated, SME marked as not usable. Counts against acceptance rate.</li>
             <li>• <strong>Acceptance rate</strong> = AI validated ÷ (AI validated + rejected). Target: ≥70% for the pipeline to be considered viable.</li>

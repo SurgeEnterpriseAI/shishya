@@ -22,6 +22,8 @@ import { splitAfterFirstSection } from "@/lib/content-signup";
 import { examPracticeState } from "@/lib/db/exam-practice";
 // 3 Oct 2026 (fix plan C12): the heading count that tells a cut Hindi note.
 import { noteHeadingCount } from "@/lib/topic-notes";
+// 6 Oct 2026 (search plan doNow 2): the AI disclosure and author entity.
+import { HINDI_NOTE_AUTHOR, HINDI_NOTE_DISCLOSURE } from "@/lib/note-disclosure";
 
 export const revalidate = 3600;
 
@@ -93,6 +95,12 @@ export default async function HindiTopicPage({
   // note; the stored text is not changed here.
   const hiIncomplete = noteHeadingCount(hi.content) < noteHeadingCount(topic.teachingNote?.content);
 
+  // 6 Oct 2026 (search plan doNow 2): the author is the same Organization
+  // entity the English note's Article names (../page.tsx) — no person is
+  // named or implied — and the page says what it is: an AI translation
+  // (scripts/generate-hindi-notes.ts, Claude Haiku) of the English note, which
+  // was itself drafted with AI from Shishya's syllabus outline. No person
+  // reviews the translation (TopicNoteTranslation has no review field).
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": ["Article", "LearningResource"],
@@ -102,7 +110,9 @@ export default async function HindiTopicPage({
     url: `${enUrl}/hi`,
     about: [{ "@type": "Thing", name: topic.name }, { "@type": "Thing", name: exam.name }],
     datePublished: hi.generatedAt.toISOString(),
+    author: HINDI_NOTE_AUTHOR,
     publisher: { "@type": "Organization", name: "Shishya", url: "https://shishya.in" },
+    translationOfWork: { "@type": "Article", url: enUrl, inLanguage: "en-IN" },
   };
 
   return (
@@ -158,6 +168,21 @@ export default async function HindiTopicPage({
             <NotesMarkdown markdown={hiMd} rich demoteH1 />
           )}
         </article>
+        {/* Provenance, as it is (6 Oct 2026, search plan doNow 2) — the
+            English note's line in Hindi, plus the translation step. Hindi
+            wording: founder review. */}
+        <p className="mt-4 text-xs text-ink-500" data-notes-provenance>
+          {HINDI_NOTE_DISCLOSURE.hi}{" "}
+          <span lang="en">({HINDI_NOTE_DISCLOSURE.en})</span>{" "}
+          ·{" "}
+          <a
+            href={`mailto:corp@surgesoftware.co.in?subject=${encodeURIComponent(`Error in Hindi notes: ${topic.name} (${exam.shortName})`)}`}
+            rel="nofollow"
+            className="font-medium text-saffron-700 underline-offset-2 hover:underline"
+          >
+            गलती बताएँ
+          </a>
+        </p>
         {!hiParts && <SignupInline surface="topic" exam={exam.shortName} practice={examHasPractice} locale="hi" revealOffscreen />}
 
         <div className="mt-8 rounded-xl border-2 border-saffron-300 bg-gradient-to-r from-saffron-50 to-amber-50 p-5">
@@ -174,7 +199,7 @@ export default async function HindiTopicPage({
         </div>
 
         <p className="mt-6 text-[11px] text-ink-400">
-          यह हिंदी अनुवाद Shishya द्वारा तैयार किया गया है। तकनीकी शब्द जान-बूझकर English में रखे गए
+          यह हिंदी अनुवाद Shishya ने AI से तैयार किया है। तकनीकी शब्द जान-बूझकर English में रखे गए
           हैं जैसा परीक्षा में आता है। कोई त्रुटि दिखे तो English नोट्स से मिलान करें।
         </p>
       </section>

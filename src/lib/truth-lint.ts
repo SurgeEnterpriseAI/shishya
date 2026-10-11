@@ -165,6 +165,25 @@ export const FORBIDDEN_PHRASES: readonly string[] = [
   "validated by Shishya's admin team",
   "एडमिन-जाँचे",
   "అడ్మిన్ పరిశీలించిన",
+  // 6 Oct 2026 (search plan doNow 1): nothing backs a blanket "checked
+  // against the official notification" — the Fact table holds 0 EXAM rows
+  // and AiCheck 0 rows; notes are drafted from Shishya's syllabus outline
+  // and no official document is read. The hub sign-in box, the Course
+  // JSON-LD fallback, /exams/browse and the editorial policy said it, in
+  // all three languages. What is backed: dates marked Official link the
+  // conducting body's own site (src/lib/official-source.ts).
+  "checked against the official notification",
+  "grounded in official notifications",
+  "अधिसूचना से मिलाकर जाँची",
+  "నోటిఫికేషన్‌తో సరిచూసినది",
+  // 6 Oct 2026 (review r1): the same unbacked claim in other words — /press
+  // ("grounded in the conducting bodies' notifications"), the hub tutor card
+  // ("answers grounded in verified content"; the tutor is AI and 0 notes are
+  // reviewed by a person) and the hub eligibility block ("Verified against
+  // the official notification"; no record of anyone checking).
+  "grounded in the conducting bodies",
+  "grounded in verified content",
+  "verified against the official notification",
 ];
 
 export interface PhraseOptions {

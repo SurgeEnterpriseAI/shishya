@@ -15,20 +15,22 @@
 //
 // Server-only (Prisma through the cached payload); no request-scoped call,
 // so the statically rendered guide and tricks pages stay static.
+//
+// 6 Oct 2026 (search plan doNow 4): the tracker (/exams/[code]/updates and
+// its /hi and /te twins) reads this too. It printed cycleYear() — the
+// calendar year of the next dated row — so GATE CSE / GATE CE / CLAT said
+// 2026 beside hubs saying 2027. The decision itself is one function,
+// src/lib/hub-title.ts hubTitleDecision, which the hub calls as well.
 
 import { getExamShared } from "@/lib/db/exam-cache";
-import { buildTimeline } from "@/lib/exam-timeline";
-import { hubDateLead, hubTitleYear } from "@/lib/hub-title";
+import { cycleYearOf, hubTitleDecision } from "@/lib/hub-title";
 
 export async function examTitleYear(code: string, now: Date = new Date()): Promise<number | null> {
   try {
     const shared = await getExamShared(code);
     if (!shared || !shared.exam.active) return null;
     const rows = shared.titleDates.length > 0 ? shared.titleDates : shared.importantDates;
-    const timeline = buildTimeline(rows, now, shared.officialUrl);
-    const lead = hubDateLead(timeline, shared.exam, new Map(rows.map((r) => [r.id, r.createdAt] as const)));
-    const y = hubTitleYear(lead, timeline, shared.exam, now);
-    return y.kind === "cycle" ? y.year : null;
+    return cycleYearOf(hubTitleDecision(rows, shared.exam, shared.officialUrl, now).year);
   } catch {
     return null;
   }

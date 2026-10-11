@@ -15,9 +15,19 @@ import { NIRF_SOURCE_URL, NIRF_SOURCE_YEAR } from "@/lib/colleges-data";
 // exactly as the data file's own header comment states it
 // (src/lib/colleges-data.ts, src/data/scholarships.ts, src/data/careers.ts)
 // — nothing added. The date tiers match src/lib/official-source.ts.
+// 6 Oct 2026 (search plan doNow 1): the page said notes and summaries "are
+// grounded in … official notifications from the conducting bodies,
+// previous-year papers, and each exam's published pattern". That was not
+// true: notes are drafted by AI from Shishya's syllabus outline (no official
+// document is read — scripts/generate-topic-notes.ts), no note has been
+// reviewed by a person (TopicTeachingNote.validatedAt: 0 rows), every practice
+// question is written by AI and checked by an automated AI answer check, and
+// the previous-year pages hold questions written in each year's pattern, not
+// the original paper. The page now says exactly that; the date tiers, the
+// school, colleges, scholarships and careers sections are unchanged.
 const EDITORIAL_TITLE = "How Shishya builds and checks its content | Shishya";
 const EDITORIAL_DESCRIPTION =
-  "Shishya's editorial policy: AI-assisted content grounded in official notifications and previous-year papers, dates labelled official, reported or expected, school pages that link the official books and never copy them, stated sources for colleges, scholarships and careers, and student error-reporting on every question.";
+  "Shishya's editorial policy: study notes drafted with AI from a syllabus outline and not reviewed by a person, AI-written practice questions with an automated AI answer check, previous-year pages that hold pattern questions, not the original paper, dates labelled official, reported or expected, school pages that link the official books and never copy them, stated sources for colleges, scholarships and careers, and student error-reporting on every question.";
 
 export const metadata: Metadata = {
   title: EDITORIAL_TITLE,
@@ -44,15 +54,45 @@ export default function EditorialPolicyPage() {
           <a className="text-saffron-700 underline" href="mailto:corp@surgesoftware.co.in">corp@surgesoftware.co.in</a>
         </p>
 
-        <h2 className="mt-8 text-lg font-semibold text-ink-900">AI-assisted, source-grounded</h2>
+        <h2 className="mt-8 text-lg font-semibold text-ink-900">Written with AI — what that means</h2>
         <p className="mt-2">
           Shishya covers school, entrance and government exams, colleges, scholarships and careers.
-          At that breadth, our practice questions, study notes and exam summaries are drafted with
-          AI — we say that plainly — and they are grounded in the material that matters: official
-          notifications from the conducting bodies, previous-year papers, and each exam&apos;s
-          published pattern. Practice questions go through a validation step before they are served
-          to students.
+          At that breadth, our study notes, practice questions and exam summaries are written with
+          AI. This is exactly how each is made:
         </p>
+        <ul className="mt-2 list-disc pl-5 space-y-1">
+          <li>
+            <b>Study notes</b> on exam topic pages are drafted by AI from Shishya&apos;s syllabus
+            outline for the exam (for many exams that outline was itself drafted with AI). No
+            official document is read when a note is written. Notes are <b>not reviewed by a
+            person</b> unless the page says so: each topic note shows &ldquo;Reviewed by a
+            person&rdquo; with a date, or &ldquo;not yet&rdquo;. Hindi notes are AI translations of
+            the English note and are not reviewed by a person either.
+          </li>
+          <li>
+            <b>Practice questions</b> are written by AI and checked by an automated AI answer check:
+            each question is solved several times by an AI model that is not shown the stored answer
+            key, and an AI examiner compares the key with those solves. The question is kept, its
+            key is corrected, or it is withdrawn. The check is automated, not a person, and it can
+            be wrong. Some older questions were validated before the check existed and have not been
+            through it yet;{" "}
+            <Link href="/shishya-in-numbers#answer-check" className="text-saffron-700 underline">the numbers page</Link>{" "}
+            counts them, with what the check kept, corrected and withdrew.
+          </li>
+          <li>
+            <b>Previous-year paper pages</b> hold questions written by AI in the pattern of each
+            year&apos;s paper — not the original paper&apos;s questions. Where we have found the
+            original paper on the conducting body&apos;s site, the page links it.
+          </li>
+          <li>
+            <b>Exam news</b> items are AI summaries. Where a source link is stored, the item shows
+            it (never a copycat or scraper site); where none is stored, the item says so.
+          </li>
+          <li>
+            <b>Dates</b> marked <b>Official</b> link the conducting body&apos;s own site (see the
+            next section).
+          </li>
+        </ul>
 
         <h2 className="mt-6 text-lg font-semibold text-ink-900">Official, reported or expected — always labelled</h2>
         <p className="mt-2">

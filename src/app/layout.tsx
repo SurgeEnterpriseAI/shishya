@@ -175,7 +175,11 @@ const organizationJsonLd = {
   slogan: SITE_SLOGAN,
   url: SITE_BASE,
   logo: { "@type": "ImageObject", url: `${SITE_BASE}/icons/icon-512.png`, width: 512, height: 512 },
-  description: `${siteDescriptionStatic()} Exam content is AI-drafted, grounded in official notifications and re-checked when a student reports an error. No credit card, no ads, no affiliate links, no agent referrals.`,
+  // 6 Oct 2026 (search plan doNow 1): was "AI-drafted, grounded in official
+  // notifications" — unbacked (notes read no official document; 0 EXAM Fact
+  // rows, 0 AiCheck rows). What is true: AI-written, official dates link the
+  // conducting body, a reported question is re-checked.
+  description: `${siteDescriptionStatic()} Exam content is written with AI; dates marked official link the conducting body, and a question a student reports is re-checked. No credit card, no ads, no affiliate links, no agent referrals.`,
   areaServed: { "@type": "Country", name: "India" },
   knowsAbout: [
     "CBSE",

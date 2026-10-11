@@ -2,11 +2,11 @@
 //
 // Why: founder ask (27 Sep 2026) — let the market (press, institutions,
 // partners, AI assistants) slowly recognise Shishya, honestly. What a
-// journalist needs is not a big number but how Shishya is built: grounded in
-// official sources, answer-checked, school books linked instead of copied,
-// with students as the subject. /press tells that story and hands over the
-// facts, the brand files that already exist and a contact. Founder strategy
-// (27 Sep 2026): no ranking or trust claims, no superlatives, no invented
+// journalist needs is not a big number but how Shishya is built: written with
+// AI and said so, answer-checked, official sources linked and labelled, school
+// books linked instead of copied, with students as the subject. /press tells
+// that story and hands over the facts, the brand files that already exist
+// and a contact. Founder strategy (27 Sep 2026): no ranking or trust claims, no superlatives, no invented
 // quotes or logos, no valuation, traction, growth-rate or infra-cost
 // headlines, no boasting about AI-written content.
 //
@@ -308,7 +308,14 @@ export function methodBlocks(p: PublicNumbers, opts: { upcomingDays: number }): 
   const ai: string[] = [
     "Practice questions, study notes and exam summaries are drafted with AI, and Shishya says so in its editorial policy.",
     `The tutor is an AI tutor and is named as one; it works in English and ${formatInt(INDIAN_LANGUAGE_COUNT)} Indian languages.`,
-    "Exam content is grounded in the conducting bodies' notifications, previous-year papers and each exam's published pattern, and students can report any question.",
+    // 6 Oct 2026 (search plan doNow 1, review r1): said "Exam content is
+    // grounded in the conducting bodies' notifications, previous-year papers
+    // and each exam's published pattern" — untrue (notes read no official
+    // document; PYQ pages hold AI pattern questions; 0 EXAM Fact and 0
+    // AiCheck rows). Now only what /editorial-policy says.
+    "Study notes are drafted by AI from Shishya's syllabus outline for each exam, not from an official document, and no person reviews a note unless its page says so; Hindi notes are AI translations of the English note.",
+    "Practice questions are written by AI and go through the automated answer check described above, apart from the few validated before it existed. Previous-year paper pages hold questions written in each year's pattern, not the original paper, and link the original where Shishya has found it.",
+    "Dates marked Official link the conducting body's own site, and students can report any question.",
   ];
 
   const ncert = coverageRow(p, NUMBERS_ANCHORS.ncertChapters);
@@ -329,7 +336,9 @@ export function methodBlocks(p: PublicNumbers, opts: { upcomingDays: number }): 
   return [
     {
       id: "official-sources",
-      title: "Grounded in official sources",
+      // 6 Oct 2026: was "Grounded in official sources" — the body says what is
+      // linked and labelled; the content itself is AI-written (search plan doNow 1).
+      title: "Official sources, linked and labelled",
       body: official,
       links: [
         { href: "/editorial-policy", label: "Editorial policy" },

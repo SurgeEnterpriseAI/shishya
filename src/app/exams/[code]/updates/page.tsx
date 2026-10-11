@@ -24,7 +24,6 @@ import {
   KIND_ICON,
   OFFICIAL_WATCH_SOURCE,
   buildTimeline,
-  cycleYear,
   fmtDay,
   latestOfKind,
   stageOf,
@@ -47,6 +46,13 @@ import { countdownQualifierKey, dateTierView } from "@/lib/date-tier-view";
 import { RELEASE_SHOWN_DAYS, officialReleases, releaseLineKey, releaseLineText, titleRelease } from "@/lib/official-release";
 import { OfficialReleaseLine } from "@/components/OfficialReleaseLine";
 import { leadDescription, updatesLead } from "@/lib/answer-lead";
+// 6 Oct 2026 (search plan doNow 4): the year beside the exam's name is the
+// hub's cycle year — one decision (src/lib/hub-title.ts hubTitleDecision via
+// src/lib/exam-title-year.ts), never cycleYear()'s calendar year of the next
+// dated row ("GATE CSE 2026" and "CLAT 2026" here while their hubs said
+// 2027). With no cycle year the hub prints none, and neither does this page.
+import { examTitleYear } from "@/lib/exam-title-year";
+import { examYearName, examYearTemplate } from "@/lib/hub-title";
 // 27 Sep 2026: the practice rule (src/lib/exam-practice-state.ts) — no
 // "Take a free mock" box and no "Practice is one tap away" for an exam with
 // no practice questions.
@@ -120,7 +126,9 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
   const urlLocale = await getUrlLocale();
   const tt = tFor(urlLocale) as TFn;
   const [{ timeline, officialUrl: metaOfficialUrl }, metaReleaseRows] = await Promise.all([loadTimeline(exam.id), loadReleaseRows(exam.id)]);
-  const year = cycleYear(timeline);
+  const year = await examTitleYear(exam.code);
+  const named = examYearName(exam.shortName, year);
+  const ys = year !== null ? ` ${year}` : "";
   const { nextExam } = stageOf(timeline);
   // Lead with the answer (the date) so it survives SERP truncation; the
   // qualifier "(expected)" stays glued to an estimated date.
@@ -137,7 +145,7 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
     : "";
   const title = metaRelease
     ? `${releaseLead}${dateLead}${tt("tracker.title")} | Shishya`
-    : `${exam.shortName} ${year} ${dateLead}${tt("tracker.title")} | Shishya`;
+    : `${named} ${dateLead}${tt("tracker.title")} | Shishya`;
   // 27 Sep 2026: no "Practice is one tap away" where there is no practice (a
   // failed read claims none).
   const metaPractice = await examPracticeState(exam.code);
@@ -167,10 +175,10 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
     description,
     alternates: { canonical: twinCanonical(path, urlLocale, twins), languages: languageAlternates(path, twins) },
     keywords: [
-      `${exam.shortName} exam date ${year}`,
-      `${exam.shortName} notification ${year}`,
+      `${exam.shortName} exam date${ys}`,
+      `${exam.shortName} notification${ys}`,
       `${exam.shortName} admit card`,
-      `${exam.shortName} result ${year}`,
+      `${exam.shortName} result${ys}`,
       `${exam.shortName} answer key`,
       `${exam.shortName} last date to apply`,
       `${exam.shortName} cutoff`,
@@ -252,7 +260,8 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
   const NP = noPracticeCopy(locale);
   const viewer: ExamWeekViewer | null = userId ? { enrolled: !!enrollment, shiftDay: shiftDayIso(enrollment?.shiftDate) } : null;
 
-  const year = cycleYear(timeline);
+  const year = await examTitleYear(exam.code);
+  const named = examYearName(exam.shortName, year);
   const { next, nextExam } = stageOf(timeline);
   // Passed estimates (24 Sep 2026, src/lib/official-source.ts): an EXPECTED
   // date that has gone by is never printed as a date. One an announced row
@@ -329,12 +338,12 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
         : `${kindLabel(k)}: ${fmtDay(row.date, locale)} (${t(`tracker.${row.tier}`).toLowerCase()})`
       : `${kindLabel(k)}: ${t("tracker.notAnnounced").toLowerCase()}`;
   });
-  const shareMessage = `${short} ${year} — ${t("tracker.keyDates")}: ${shareRows.join(" · ")} — ${t("tracker.title")}:`;
+  const shareMessage = `${named} — ${t("tracker.keyDates")}: ${shareRows.join(" · ")} — ${t("tracker.title")}:`;
 
   // FAQ — generated from the data, never from imagination.
   const faqFor = (qKey: string, kind: DateKind) => {
     const row = upcomingOfKind(shown, kind) ?? latestOfKind(shown, kind);
-    const q = fill(t(qKey), { exam: short, year });
+    const q = fill(examYearTemplate(t(qKey), year), { exam: short, year: year ?? "" });
     let a: string;
     if (!row) a = t("tracker.faq.a.unknown");
     // A passed estimate answers with the honest line, never "was expected
@@ -359,7 +368,7 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
     {
       "@context": "https://schema.org",
       "@type": "Article",
-      headline: `${short} ${year} — ${t("tracker.title")}`,
+      headline: `${named} — ${t("tracker.title")}`,
       description: introLine,
       url,
       inLanguage: lang,
@@ -391,7 +400,7 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
     jsonLd.push({
       "@context": "https://schema.org",
       "@type": "Event",
-      name: `${short} ${year} — ${nextExam.label}`,
+      name: `${named} — ${nextExam.label}`,
       // GSC "improve item appearance" (2 Sep 2026): description, endDate,
       // image were missing on every valid Event.
       description: `${exam.name} — ${nextExam.label}, ${fmtDay(nextExam.date, "en")}, per the conducting body's official notice. ${practice.hasPractice ? "Free mock tests, syllabus, cutoffs and a date tracker on Shishya." : "Official dates and a date tracker on Shishya."}`,
@@ -433,7 +442,7 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
         <p className="text-xs text-ink-500">
           <Link href={p(`/exams/${exam.code}`)} className="hover:text-ink-800">{short}</Link> · {t("tracker.title")}
         </p>
-        <h1 className="mt-1 text-2xl font-bold text-ink-900 sm:text-3xl">{fill(t("tracker.h1"), { exam: short, year })}</h1>
+        <h1 className="mt-1 text-2xl font-bold text-ink-900 sm:text-3xl">{fill(examYearTemplate(t("tracker.h1"), year), { exam: short, year: year ?? "" })}</h1>
         {/* The answer first (26 Sep 2026, G3): the next exam day, the next
             milestone and the last one, each with its tier word. English body
             on the English URL only — the /hi and /te twins' native-script

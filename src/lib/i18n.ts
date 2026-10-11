@@ -500,7 +500,7 @@ export const dict = {
     "values.expl.title": "Step-by-step solutions",
     "values.expl.body": "Got a question wrong? Tap and get a clear explanation in your language — English or Hindi.",
     "values.tutor.title": "Tutor that answers anything",
-    "values.tutor.body": "Stuck on a concept? Ask Shishya. It knows your syllabus and your weak areas — answers grounded in verified content with sources you can check.",
+    "values.tutor.body": "Stuck on a concept? Ask Shishya. The AI tutor knows your syllabus and your weak areas.",
 
     // ── how it works
     "how.h2": "How Shishya works",
@@ -682,7 +682,7 @@ export const dict = {
     "exam.mocks.langHint": "Take any mock in your preferred language — use the language picker inside the mock to switch (Hindi, Telugu, Tamil, Bengali, and 15 more).",
     "exam.shishya.title": "Talk to Shishya",
     "exam.shishya.openChat": "Open chat",
-    "exam.shishya.body": "Ask Shishya — answers grounded in verified content. Knows this exam's syllabus and your weak topics.",
+    "exam.shishya.body": "Ask Shishya, the AI tutor — it knows this exam's syllabus and your weak topics.",
     "exam.shishya.prompt.weakest": "Quiz me on my weakest topic",
     "exam.shishya.prompt.explain": "Explain my last wrong answer",
     "exam.shishya.prompt.plan": "Make a 30-min study plan for today",

@@ -34,7 +34,7 @@
 // withholds a better-tier date, and rows from one refresh run are a
 // multi-day window, not a revision.
 
-import { titleCycleYear, type SourceTier, type TimelineRow } from "@/lib/exam-timeline";
+import { buildTimeline, titleCycleYear, type SourceTier, type TimelineInput, type TimelineRow } from "@/lib/exam-timeline";
 import { istDayNumber } from "@/lib/exam-phase";
 
 /** How far back an announced exam day still leads the title. */
@@ -395,6 +395,50 @@ export function hubTitleYear(lead: HubDateLead, timeline: readonly TimelineRow[]
   if (year !== null) return { kind: "cycle", year };
   const heldYear = lastHeldExamYear(timeline, exam, now);
   return heldYear !== null ? { kind: "held-year", year: heldYear } : { kind: "none" };
+}
+
+/** A tracker row as stored: what buildTimeline reads, plus its write time
+ *  (hubDateLead's same-run rule). */
+export type HubTitleRowInput = TimelineInput & { createdAt?: Date | string | null };
+
+/** The hub title's whole date-and-year decision over stored tracker rows
+ *  (6 Oct 2026, search plan doNow 4) — the ONE function the hub
+ *  (/exams/[code]: title, description, answer lead) and every page beside it
+ *  (src/lib/exam-title-year.ts: /updates, /syllabus, /guide, /tricks, the
+ *  social card) read, so their years cannot disagree. Pass the hub's rows:
+ *  getExamShared's titleDates, else its importantDates.
+ *  Before this, /updates printed cycleYear() (the calendar year of the next
+ *  dated row): "GATE CSE 2026" and "CLAT 2026" beside hubs saying 2027, on
+ *  54 of 192 exams (6 Oct 2026 read). */
+export function hubTitleDecision(
+  rows: readonly HubTitleRowInput[],
+  exam: HubTitleExam,
+  officialUrl: string | null | undefined,
+  now: Date = new Date(),
+): { timeline: TimelineRow[]; lead: HubDateLead; year: HubTitleYear } {
+  const timeline = buildTimeline([...rows], now, officialUrl);
+  const lead = hubDateLead(timeline, exam, new Map(rows.map((r) => [r.id, r.createdAt] as const)));
+  return { timeline, lead, year: hubTitleYear(lead, timeline, exam, now) };
+}
+
+/** The year a page beside the hub prints next to the exam's name: the hub's
+ *  CYCLE year, else none. A held year is stated only in the hub's own held
+ *  words ("2026 Exam Held"), never as a bare "{Exam} 2026" — and never the
+ *  calendar year. */
+export function cycleYearOf(y: HubTitleYear): number | null {
+  return y.kind === "cycle" ? y.year : null;
+}
+
+/** "GATE CSE 2027", or "GATE CSE" when the hub prints no cycle year. */
+export function examYearName(short: string, year: number | null): string {
+  return year !== null ? `${short} ${year}` : short;
+}
+
+/** A template that names "{exam} {year}" (the tracker's h1 and FAQ, en / hi /
+ *  te): with no cycle year the pair collapses to "{exam}", so nothing prints
+ *  "GATE CSE null" or a calendar year the hub does not state. */
+export function examYearTemplate(template: string, year: number | null): string {
+  return year !== null ? template : template.replace(/\{exam\} \{year\}/g, "{exam}");
 }
 
 // ── Wording ──────────────────────────────────────────────────────────────

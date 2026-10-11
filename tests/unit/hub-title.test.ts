@@ -542,7 +542,7 @@ describe("clipDescription — the hub meta description at a sentence or word bou
 
   it("a real hub description never ends mid-word", () => {
     const d =
-      "SSC CGL exam date: not announced yet. Free SSC CGL (Staff Selection Commission Combined Graduate Level) 2026 mock tests, previous year papers and PYQ-pattern practice, AI tutor and a free day-by-day coach plan — AI-drafted, checked against the official notification. Karnataka (ಕರ್ನಾಟಕ / कर्नाटक). Questions available in English and Hindi. No paywall.";
+      "SSC CGL exam date: not announced yet. Free SSC CGL (Staff Selection Commission Combined Graduate Level) 2026 mock tests, previous year papers and PYQ-pattern practice, AI tutor and a free day-by-day coach plan — AI-written; dates marked official link the conducting body. Karnataka (ಕರ್ನಾಟಕ / कर्नाटक). Questions available in English and Hindi. No paywall.";
     const out = clipDescription(d, 300);
     expect(out.length).toBeLessThanOrEqual(300);
     expect(out).toMatch(/[.…]$/);

@@ -35,6 +35,9 @@ import {
   resultRobots,
   type ResultCopyInput,
 } from "@/lib/result-permalink-copy";
+// 6 Oct 2026 (search review r1): the news permalinks' source rule, for results.
+import { NEWS_AI_LABEL, resultProvenance } from "@/lib/news-provenance";
+import { sourceHostLabel } from "@/lib/official-source";
 
 export const revalidate = 3600;
 
@@ -56,14 +59,17 @@ interface Row {
   code: string;
   short: string;
   examName: string;
+  /** The exam's own portal (ExamEligibility.officialUrl), for the official test. */
+  examPortal: string | null;
 }
 
 async function loadResult(code: string, id: string): Promise<Row | null> {
   const rows = await prisma.$queryRaw<Row[]>`
     SELECT r.id, r.stage, r.headline, r."declaredOn", r."officialUrl", r."officialName",
            r."cutoffNote", r."nextSteps", r."createdAt",
-           e.code, e."shortName" AS short, e.name AS "examName"
+           e.code, e."shortName" AS short, e.name AS "examName", el."officialUrl" AS "examPortal"
     FROM "ExamResult" r JOIN "Exam" e ON e.id = r."examId"
+    LEFT JOIN "ExamEligibility" el ON el."examId" = e.id
     WHERE r.id = ${id} AND e.code = ${code} AND ${NOT_SCHOOL_SQL} AND r.stage <> '__not_a_result__'
     LIMIT 1`;
   return rows[0] ?? null;
@@ -127,6 +133,12 @@ export default async function ResultPermalinkPage({
 
   const url = `https://shishya.in/exams/${code}/results/${id}`;
   const [gates, hasNotes] = await Promise.all([examPageGates(r.code), examHasNotes(r.code)]);
+  // 6 Oct 2026 (search review r1): one rule with the news permalinks. Every
+  // result row is AI-extracted (src/lib/results-extract.ts), so the page is
+  // labelled "AI summary"; the official wording and the "Official portal"
+  // button need a link isOfficialNoticeSource accepts with the exam's own
+  // portal; a denylisted link is never shown (src/lib/news-provenance.ts).
+  const provenance = resultProvenance(r.officialUrl, r.examPortal);
   const articleJsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -140,6 +152,8 @@ export default async function ResultPermalinkPage({
     publisher: SHISHYA_ORG_REF,
     about: { "@type": "Course", name: r.examName, url: `https://shishya.in/exams/${code}` },
     mainEntityOfPage: url,
+    // 6 Oct 2026: the page's own source link, only where one is shown.
+    ...(provenance.link ? { isBasedOn: provenance.link } : {}),
   };
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
@@ -183,6 +197,10 @@ export default async function ResultPermalinkPage({
         <h1 className="mt-2 text-2xl font-bold leading-tight text-ink-900 sm:text-3xl">
           {r.short} {r.stage} result — declared {copy.declaredLabel}
         </h1>
+        {/* 6 Oct 2026 (search review r1): every result is an AI extraction. */}
+        <p className="mt-2 inline-block rounded-full bg-ink-100 px-2.5 py-0.5 text-[11px] font-semibold text-ink-700" data-result-ai-label>
+          {NEWS_AI_LABEL}
+        </p>
         <h2 className="mt-4 text-sm font-bold text-ink-900">{declaredQ.question}</h2>
         <p className="mt-1 rounded-lg border border-ink-200 bg-white p-4 text-sm leading-relaxed text-ink-800">
           {declaredQ.answer}
@@ -220,14 +238,14 @@ export default async function ResultPermalinkPage({
         )}
 
         <div className="mt-5 flex flex-wrap gap-2">
-          {r.officialUrl && (
+          {provenance.link && (
             <a
-              href={r.officialUrl}
+              href={provenance.link}
               target="_blank"
               rel="noopener noreferrer nofollow"
               className="rounded-lg bg-ink-800 px-4 py-2 text-sm font-bold text-white hover:bg-ink-900"
             >
-              Official portal ↗
+              {provenance.kind === "official" ? "Official portal ↗" : `Source: ${sourceHostLabel(provenance.link)} ↗`}
             </a>
           )}
           <Link
@@ -245,9 +263,17 @@ export default async function ResultPermalinkPage({
             </Link>
           )}
         </div>
-        <p className="mt-3 text-xs text-ink-500">
-          Compiled by Shishya from official notifications — always verify dates and lists on the
-          official portal{r.officialName ? ` (${r.officialName})` : ""}.
+        {/* 6 Oct 2026 (search plan doNow 3, as on the news permalinks): "from
+            official notifications" only beside an official link (1 of 54 rows
+            on 6 Oct: ojee.nic.in; NATA's nata.in is not on Shishya's lists, so
+            it gets the neutral line); the rest were extracted by AI from
+            Shishya's AI news summaries (src/lib/results-extract.ts) and say
+            that no official source link is stored (resultProvenance). */}
+        <p className="mt-3 text-xs text-ink-500" data-result-source={provenance.kind}>
+          {provenance.line}
+          {/* The extractor's portal name, except beside a link Shishya does not
+              list (NATA's "nata.in" would contradict the line). */}
+          {r.officialName && provenance.kind !== "secondary" ? ` (${r.officialName})` : ""}.
         </p>
       </section>
     </main>

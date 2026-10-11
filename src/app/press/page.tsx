@@ -4,7 +4,7 @@
 // slowly recognises, honestly. Journalists, institutions and AI assistants
 // asked "what is Shishya, who runs it, can I quote this?" had to piece it
 // together from /about, /pricing and /editorial-policy. This page tells the
-// story of HOW Shishya is built (grounded in official sources, answer-checked
+// story of HOW Shishya is built (official sources linked and labelled, answer-checked
 // with the results published, AI said plainly, school books linked not
 // copied), hands over live key facts with their definitions, story angles
 // that are data rather than claims, what Shishya is not, the brand files that

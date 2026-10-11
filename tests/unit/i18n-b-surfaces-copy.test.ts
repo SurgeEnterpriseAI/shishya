@@ -187,7 +187,7 @@ describe("English output is unchanged", () => {
       "Free SSC CGL mock tests and previous year paper practice — start now.",
     );
     expect(H.coachBodyA + "Shishya " + H.coachBodyB).toBe(
-      "Full-length mocks with instant scoring and solutions, PYQ-pattern papers, topic-wise tests and Ask Shishya when you're stuck. Your scores and a free day-by-day plan are saved to your account. All free, no credit card. Content is AI-drafted and checked against the official notification.",
+      "Full-length mocks with instant scoring and solutions, PYQ-pattern papers, topic-wise tests and Ask Shishya when you're stuck. Your scores and a free day-by-day plan are saved to your account. All free, no credit card. Content is written with AI; dates marked Official link the conducting body's own site.",
     );
     expect(fillHub(H.langLine, { n: 9 })).toBe("· every mock readable in हिंदी + 9 languages inside the test");
   });

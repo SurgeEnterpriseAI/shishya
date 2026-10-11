@@ -67,18 +67,17 @@ import {
   heldTitleLead,
   heldYearDescriptionLead,
   hubCourseNameTail,
-  hubDateLead,
   hubPracticeCtaCopy,
   hubPracticeSuffix,
   hubShareMessage,
+  hubTitleDecision,
   hubTitlePrefix,
-  hubTitleYear,
   revisionDescriptionLead,
   revisionTitleLead,
   type HubOffers,
 } from "@/lib/hub-title";
 import { cutoffHeadlineSentences, hubLead, leadDescription } from "@/lib/answer-lead";
-import { verifiedPattern } from "@/lib/pattern-verified";
+import { patternCitation, verifiedPattern } from "@/lib/pattern-verified";
 import { hubFaqExtraItems, hubPyqOffer } from "@/lib/hub-faq";
 import { groupCutoffTables, type OfficialCutoffRow } from "@/lib/official-cutoffs";
 import { pickCutoffHeadline, type CutoffHeadline } from "@/lib/official-cutoff-title";
@@ -204,8 +203,11 @@ export async function generateMetadata({
   // (17 Sep 2026). Over every live row the rule states no date instead.
   const titleRows = titleDates.length > 0 ? titleDates : importantDates;
   const titleNow = new Date();
-  const timeline = buildTimeline(titleRows, titleNow, officialUrl);
-  const dateLead = hubDateLead(timeline, exam, new Map(titleRows.map((r) => [r.id, r.createdAt] as const)));
+  // 6 Oct 2026 (search plan doNow 4): one decision, src/lib/hub-title.ts
+  // hubTitleDecision — the tracker and the pages beside the hub read the same
+  // function over the same rows (src/lib/exam-title-year.ts).
+  const titleDecision = hubTitleDecision(titleRows, exam, officialUrl, titleNow);
+  const { timeline, lead: dateLead } = titleDecision;
   // The year beside the name (26 Sep 2026, src/lib/hub-title.ts hubTitleYear):
   // it was the calendar year, so in September 2026 the hubs said "JEE Main
   // 2026 — Exam Date Not Announced Yet" months after JEE Main 2026 was held.
@@ -214,7 +216,7 @@ export async function generateMetadata({
   // leads), else the held lead's own year; with nothing ahead the title
   // says "{Exam} — 2026 Exam Held; Next Exam Date Not Announced Yet" or
   // carries no year at all. No future year is invented.
-  const titleYear = hubTitleYear(dateLead, timeline, exam, titleNow);
+  const titleYear = titleDecision.year;
   const year = titleYear.kind === "none" ? null : titleYear.year;
   // Descriptions and keywords name only a cycle year ("Free SSC CGL … 2027
   // mock tests"); a held year stays in the held words.
@@ -274,9 +276,11 @@ export async function generateMetadata({
       : titleYear.kind === "held-year"
         ? heldYearDescriptionLead("en", exam.shortName, titleYear.year)
         : `${exam.shortName} exam date: ${nextDate ?? notAnnounced}. `;
-  // Honesty (11 Sep 2026): no "verified by students who cleared it" — the
-  // content is AI-drafted and checked against the official notification
-  // (the page's own SectionVerificationSummary says exactly that).
+  // Honesty (11 Sep 2026): no "verified by students who cleared it".
+  // 6 Oct 2026 (search plan doNow 1): nor "checked against the official
+  // notification" — nothing backs it (0 EXAM Fact rows, 0 AiCheck rows). The
+  // offer says the content is AI-written and that dates marked official link
+  // the conducting body (src/lib/official-source.ts), which is true.
   // 26 Sep 2026 (G3): mock tests, previous year papers and the question
   // languages are named only where the hub has them.
   const offerText = [
@@ -305,7 +309,7 @@ export async function generateMetadata({
       ? `${noPracticeHolds.slice(0, -1).join(", ")} and ${noPracticeHolds[noPracticeHolds.length - 1]}`
       : noPracticeHolds[0];
   const descriptionOffer = metaPractice.hasPractice
-    ? `Free ${exam.shortName} (${exam.name})${cycleYearText} preparation: ${offerText.slice(0, -1).join(", ")} and ${offerText[offerText.length - 1]} — AI-drafted, checked against the official notification. ` +
+    ? `Free ${exam.shortName} (${exam.name})${cycleYearText} preparation: ${offerText.slice(0, -1).join(", ")} and ${offerText[offerText.length - 1]} — AI-written; dates marked official link the conducting body. ` +
       `${stateCopy}${shared.validatedQuestionCount > 0 ? `Questions available in ${langCopy}. ` : ""}No paywall.`
     : `${exam.shortName} (${exam.name})${cycleYearText} on Shishya: ${noPracticeHoldsText}. ` +
       `No practice questions yet. ${stateCopy}No paywall.`;
@@ -799,7 +803,7 @@ export default async function ExamPage({
     "@context": "https://schema.org",
     "@type": "Course",
     name: `${exam.shortName}${stateInfo2 ? ` (${stateInfo2.name})` : ""} — ${hubCourseNameTail(hubOffers)}`,
-    description: exam.description ?? `${exam.name} preparation on Shishya — ${hubOffers.hasMocks ? "free full-length mocks, " : ""}${hubOffers.hasPyq ? `${hubPyqPhrase(hubPageHasOfficial)}, ` : ""}an AI tutor and a free day-by-day coach plan. Content is AI-drafted and checked against the official notification.`,
+    description: exam.description ?? `${exam.name} preparation on Shishya — ${hubOffers.hasMocks ? "free full-length mocks, " : ""}${hubOffers.hasPyq ? `${hubPyqPhrase(hubPageHasOfficial)}, ` : ""}an AI tutor and a free day-by-day coach plan. Content is written with AI; dates marked official link the conducting body.`,
     // 26 Sep 2026: the provider points at the one Organization node the root
     // layout declares (src/lib/site-description.ts SITE_ORG_ID), and the
     // level says what the exam is — it said "Entrance Exam" for SSC GD and
@@ -909,13 +913,12 @@ export default async function ExamPage({
   // the official site. English body only.
   const leadRows = shared.titleDates.length > 0 ? shared.titleDates : importantDates;
   const leadNow = new Date();
-  const leadTimeline = buildTimeline(leadRows, leadNow, officialUrl);
-  const leadDecision = hubDateLead(leadTimeline, exam, new Map(leadRows.map((r) => [r.id, r.createdAt] as const)));
+  const { timeline: leadTimeline, lead: leadDecision, year: leadYear } = hubTitleDecision(leadRows, exam, officialUrl, leadNow);
   const hubLeadText = englishBody
     ? hubLead({
         short: exam.shortName,
         dateLead: leadDecision,
-        titleYear: hubTitleYear(leadDecision, leadTimeline, exam, leadNow),
+        titleYear: leadYear,
         timeline: leadTimeline,
         pattern,
         officialUrl,
@@ -1167,8 +1170,9 @@ export default async function ExamPage({
             Audit 11 Sep 2026: sells the concrete account value (the coach
             plan is what converts — coach landers bounce 8%), in CoachEntry's
             own words; no "expert-curated" / "verified by students who
-            cleared" — content is AI-drafted and checked against the official
-            notification.
+            cleared". 6 Oct 2026: nor "checked against the official
+            notification" (unbacked) — the box says the content is written
+            with AI and that dates marked Official link the conducting body.
             18 Sep 2026: the 11 Sep coach-plan pitch ("build my plan",
             callback /coach) cost sign-ins — hub -> /login within 30 min went
             49% -> 40% -> 31% — because a visitor who asked for mocks or
@@ -1386,12 +1390,21 @@ export default async function ExamPage({
         {/* Single section-level verification badge covers the static
             exam meta above (pattern, duration, marks). Once per-fact
             verification rows ship in Phase 2 each chip will get its
-            own badge. */}
-        <SectionVerificationSummary
-          status="ai"
-          source="official exam authority notification"
-          refreshCadence="weekly"
-        />
+            own badge.
+            6 Oct 2026 (search plan doNow 1): it said "Sourced · Source:
+            official exam authority notification · refreshed weekly" on every
+            hub — the same unbacked claim as "checked against the official
+            notification": the chips print the stored pattern row whether or
+            not anyone read a notice, and no job refreshes it weekly. Now it
+            renders only where the chips do, cites the notice the pattern was
+            read from (src/lib/pattern-verified.ts) when the stored row
+            agrees with it, and otherwise says "Not yet verified". */}
+        {practice.hasPractice &&
+          (pattern ? (
+            <SectionVerificationSummary status="ai" source={patternCitation(pattern)} />
+          ) : (
+            <SectionVerificationSummary status="none" />
+          ))}
 
         {/* "Try one question" hook — converts anonymous SEO traffic.
             Shown to signed-out visitors (the sign-in box itself moved up

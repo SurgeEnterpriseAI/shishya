@@ -11,6 +11,7 @@
 import { describe, it, expect } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
+import { LAYOUT_PENDING_LINE, isPendingLayoutLine } from "../fixtures/pending-patches";
 import {
   buildNotesIndex,
   checkAnswerKey,
@@ -41,9 +42,20 @@ describe("findForbiddenPhrases", () => {
     const f = findForbiddenPhrases("Free mocks — Verified by students who cleared it.", "https://shishya.in/x");
     expect(f.map((x) => x.detail).join(" ")).toMatch(/verified by students/);
   });
-  it("passes the honest replacement line", () => {
-    const f = findForbiddenPhrases("AI-drafted, checked against the official notification.", "https://shishya.in/x");
-    expect(f).toEqual([]);
+  // 6 Oct 2026 (search plan doNow 1): the 11 Sep "honest replacement line"
+  // was itself unbacked — 0 EXAM Fact rows, 0 AiCheck rows, and notes read no
+  // official document. It is now caught, in all three languages.
+  it.each([
+    ["AI-drafted, checked against the official notification.", "checked against the official notification"],
+    ["Exam content is AI-drafted, grounded in official notifications and re-checked.", "grounded in official notifications"],
+    ["सामग्री AI से तैयार है और आधिकारिक अधिसूचना से मिलाकर जाँची जाती है।", "अधिसूचना से मिलाकर जाँची"],
+    ["కంటెంట్ AI రూపొందించినది, అధికారిక నోటిఫికేషన్‌తో సరిచూసినది.", "నోటిఫికేషన్‌తో సరిచూసినది"],
+  ])("catches the unbacked official-check claim: %s", (text, phrase) => {
+    const f = findForbiddenPhrases(text, "https://shishya.in/x");
+    expect(f.map((x) => x.detail).join(" ")).toContain(`"${phrase}"`);
+  });
+  it("passes the backed line that replaces it", () => {
+    expect(findForbiddenPhrases("Content is written with AI; dates marked Official link the conducting body's own site.", "u")).toEqual([]);
   });
   // 26 Sep 2026: live questions are answer-checked by the AI firewall, not
   // validated by an admin team — the claim is forbidden in all three languages.
@@ -424,11 +436,18 @@ describe("source scan — no forbidden trust phrase or stale count ships", () =>
     // other i18n line, and every other file, is still scanned.
     const PENDING_UNRENDERED = (rel: string, line: string) =>
       rel === path.join("src", "lib", "i18n.ts") && /^\s*"brand\.tagline":/.test(line);
+    // 6 Oct 2026: "grounded in official notifications" joined the list. Its one
+    // remaining hit is the Organization JSON-LD description in
+    // src/app/layout.tsx, a file build B3 owns this week; the fix ships as
+    // scratchpad search-oct06/patches/layout.tsx.patch. Review r1: the
+    // allowance is that exact HEAD line only (tests/fixtures/pending-patches.ts),
+    // and the test below fails once the patch lands while it is still set.
+    const PENDING_PATCH = (rel: string, line: string) => isPendingLayoutLine(rel, line);
     const hits: string[] = [];
     for (const file of files) {
       const text = stripComments(fs.readFileSync(file, "utf8"));
       const rel = path.relative(ROOT, file);
-      for (const f of findForbiddenPhrases(text, rel, { allow: (_p, line) => ALLOWED_LINE.test(line) || PENDING_UNRENDERED(rel, line) })) {
+      for (const f of findForbiddenPhrases(text, rel, { allow: (_p, line) => ALLOWED_LINE.test(line) || PENDING_UNRENDERED(rel, line) || PENDING_PATCH(rel, line) })) {
         hits.push(`${f.url}:${f.line} ${f.detail} — ${f.snippet ?? ""}`);
       }
     }
@@ -439,6 +458,20 @@ describe("source scan — no forbidden trust phrase or stale count ships", () =>
       }
     }
     expect(hits).toEqual([]);
+    // 6 Oct 2026: 21 phrases over every src file took 7.4 s in a loaded full
+    // run (the 5 s default timed out); the scan is the point, so it gets 30 s.
+  }, 30_000);
+
+  // Review r1 (6 Oct 2026): a stale allowance is caught. Once
+  // patches/layout.tsx.patch lands, LAYOUT_PENDING_LINE must be set to null in
+  // the same commit (patches/b1-layout-release.py does both).
+  it("the layout.tsx allowance is live only while that exact line is still in the file", () => {
+    if (LAYOUT_PENDING_LINE === null) return;
+    const lines = fs.readFileSync(path.join(ROOT, "src", "app", "layout.tsx"), "utf8").split(/\r?\n/);
+    expect(
+      lines.filter((l) => l === LAYOUT_PENDING_LINE),
+      "patches/layout.tsx.patch has landed: set LAYOUT_PENDING_LINE to null in tests/fixtures/pending-patches.ts",
+    ).toHaveLength(1);
   });
 });
 
