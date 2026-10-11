@@ -44,16 +44,22 @@ function textOf(content: Msg["content"]): string | null {
   return parts.join("\n");
 }
 
-/** True when every text in the request is English and asks for an English reply. */
+/**
+ * True when the conversation is English and asks for an English reply. The
+ * script check reads the conversation only: Shishya's own system prompt
+ * carries a Hindi link label ("हिंदी में पढ़ें", ai/site-facts.ts), which
+ * kept every guest turn off the local route on the first deploy (12 Oct 2026).
+ * The "Reply language" line is read everywhere, system prompt included.
+ */
 export function isEnglishOnly(system: Block[], messages: Msg[]): boolean {
-  const texts = [...system.map((b) => b.text)];
+  const convo: string[] = [];
   for (const m of messages) {
     const t = textOf(m.content);
     if (t == null) return false;
-    texts.push(t);
+    convo.push(t);
   }
-  const all = texts.join("\n");
-  if (INDIC.test(all)) return false;
+  if (INDIC.test(convo.join("\n"))) return false;
+  const all = [...system.map((b) => b.text), ...convo].join("\n");
   for (const m of all.matchAll(REPLY_LANG)) {
     const lang = m[1].toUpperCase();
     if (lang !== "EN" && lang !== "ENGLISH") return false;

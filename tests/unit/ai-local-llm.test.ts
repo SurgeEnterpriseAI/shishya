@@ -29,6 +29,12 @@ describe("isEnglishOnly", () => {
     expect(m.isEnglishOnly(sys("Persona"), user("अनुच्छेद 21 क्या है?"))).toBe(false);
     expect(m.isEnglishOnly(sys("Persona"), user("ఆర్టికల్ 21 అంటే ఏమిటి?"))).toBe(false);
   });
+  it("ignores Indian script inside Shishya's own system prompt", async () => {
+    const m = await load(ON);
+    const persona = sys('Site map: /exams/{CODE}/topics/{TOPIC}/hi — "हिंदी में पढ़ें"');
+    expect(m.isEnglishOnly(persona, user("What is Article 21?"))).toBe(true);
+    expect(m.isEnglishOnly(sys("Persona\nReply language: TE"), user("What is Article 21?"))).toBe(false);
+  });
   it("rejects a non-English reply language even when the text is Latin", async () => {
     const m = await load(ON);
     expect(m.isEnglishOnly(sys("Persona"), user("Article 21 kya hai?\nReply language: HI"))).toBe(false);
