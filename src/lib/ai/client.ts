@@ -4,6 +4,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { recordAiUsage, PRICING } from "@/lib/ai/usage";
 import { ledgerFeature, withReserve } from "@/lib/ai/reserve";
+import { localFirst } from "@/lib/ai/local-llm";
 
 const apiKey = process.env.ANTHROPIC_API_KEY;
 if (!apiKey) {
@@ -117,14 +118,26 @@ export async function callClaude(opts: CallClaudeOpts) {
       throw err;
     }
   };
-  const { value: response, reserve } = await withReserve(feature, anthropic, send);
+  // 12 Oct 2026: an English, tool-free call whose feature is listed in
+  // LOCAL_LLM_FEATURES tries Surge's own server first (ai/local-llm.ts).
+  let reserve = false;
+  const { value: response, local } = await localFirst(
+    feature,
+    { system: params.system, messages: params.messages, maxTokens: params.max_tokens, temperature: opts.temperature, tools: params.tools },
+    async () => {
+      const r = await withReserve(feature, anthropic, send);
+      reserve = r.reserve;
+      return r.value;
+    },
+  );
   const latencyMs = Date.now() - start;
-  recordAiUsage(ledgerFeature(feature, reserve), response, { model, ref: opts.ref, latencyMs });
+  const servedBy = local ? response.model : model;
+  recordAiUsage(ledgerFeature(feature, reserve), response, { model: servedBy, ref: opts.ref, latencyMs });
 
   return {
     response,
     stats: {
-      model,
+      model: servedBy,
       latencyMs,
       inputTokens: response.usage.input_tokens,
       outputTokens: response.usage.output_tokens,
@@ -188,6 +201,7 @@ export interface CallStats {
 
 /** Estimate USD cost of one call from its stats. Used for spend observability. */
 export function estimateCostUsd(stats: CallStats): number {
+  if (stats.model.startsWith("local:")) return 0;
   const tier = stats.model.includes("haiku")
     ? "haiku"
     : stats.model.includes("opus")
