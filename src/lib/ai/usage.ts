@@ -40,6 +40,8 @@ export interface UsageLike {
 }
 
 export function usageCostUsd(model: string, u: UsageLike): { cost: number; searches: number } {
+  // Surge's own GPU server (ai/local-llm.ts): no per-token bill.
+  if (model.startsWith("local:")) return { cost: 0, searches: 0 };
   const tier = model.includes("haiku") ? "haiku" : model.includes("opus") ? "opus" : "sonnet";
   const p = PRICING[tier];
   const searches = Number(u.server_tool_use?.web_search_requests ?? 0) || 0;

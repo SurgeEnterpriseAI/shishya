@@ -26,6 +26,7 @@ import {
 } from "./prompts";
 import type { TutorInput, TutorOutput } from "./types";
 import { tutorTools, executeTool, type ToolContext } from "./tools";
+import { localFirst } from "./local-llm";
 import { siteFeaturesBlock } from "./site-facts";
 import { buildTutorExamFacts, examFactsBlock } from "./exam-facts";
 import { SCHOOL_TUTOR_STATIC_PROMPT, schoolClassBlock, schoolTurnContext, type SchoolTurn, type SchoolTutorScope } from "@/lib/school/tutor-persona";
@@ -254,16 +255,23 @@ export async function* tutorStream(
     // 7 Oct 2026: an empty main balance is retried once on the reserve key
     // for a student's turn (src/lib/ai/reserve.ts); "tutor-late" never is.
     const feature = input.usage?.feature ?? (school ? "tutor-school" : ctx ? "tutor" : "tutor-anon");
-    const { value: response, reserve } = await withReserve(feature, anthropic, (client) =>
-      client.messages.create({
-        model: MODEL,
-        max_tokens: TOKEN_LIMITS.tutor,
-        system: systemBlocks,
-        messages,
-        tools: ctx ? tutorTools : undefined,
-      }),
+    // 12 Oct 2026: a tools-off English turn (guest or school chat) whose
+    // feature is in LOCAL_LLM_FEATURES tries Surge's own server first
+    // (ai/local-llm.ts); a signed-in turn with tools always stays on Claude.
+    let reserve = false;
+    const tools = ctx ? tutorTools : undefined;
+    const { value: response, local } = await localFirst(
+      feature,
+      { system: systemBlocks, messages, maxTokens: TOKEN_LIMITS.tutor, tools },
+      async () => {
+        const r = await withReserve(feature, anthropic, (client) =>
+          client.messages.create({ model: MODEL, max_tokens: TOKEN_LIMITS.tutor, system: systemBlocks, messages, tools }),
+        );
+        reserve = r.reserve;
+        return r.value;
+      },
     );
-    const cost = recordAiUsage(ledgerFeature(feature, reserve), response, { model: MODEL, ref: input.syllabus?.examCode ?? null, latencyMs: Date.now() - start });
+    const cost = recordAiUsage(ledgerFeature(feature, reserve), response, { model: local ? response.model : MODEL, ref: input.syllabus?.examCode ?? null, latencyMs: Date.now() - start });
     input.usage?.onCost?.(cost);
 
     // Append the assistant message to the conversation history (full content blocks
