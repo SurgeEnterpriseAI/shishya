@@ -21,6 +21,7 @@ import { sendEmail } from "@/lib/email";
 import { fillTemplate, locales, tk, type Locale } from "@/lib/i18n";
 import { clipText, isAllowedPushEndpoint, type PushPayload } from "@/lib/push-alert-rules";
 import { pushConfigured, sendPush } from "@/lib/web-push";
+import { under13ExamGuard } from "@/lib/signin-cta";
 import {
   CHALLENGE_EMAIL_GAP_MS,
   CHALLENGE_KEY_RE,
@@ -326,9 +327,14 @@ export async function recordChallengePlay(
     choices,
   );
   const playerKeyHash = hashChallengeKey(input.playerKey);
+  // 12 Oct 2026 (Release 2 review, round 2; under-13 rule): a kids'
+  // exam's challenge keeps no player's name. Its pages never ask for one
+  // (AnonQuizPlayer sends nothing there); this is the net under a direct POST
+  // to /api/challenge/{token}/play. src/lib/signin-cta.ts under13ExamGuard.
+  const playerName = under13ExamGuard(ch.examCode) ? null : input.name;
   const rows = await prisma.$queryRaw<{ id: string }[]>`
     INSERT INTO "ChallengePlay" (id, "challengeId", "playerUserId", "playerAnonId", "playerKeyHash", "playerName", choices, correct, "createdAt")
-    VALUES (${crypto.randomUUID()}, ${ch.id}, ${who.userId}, ${who.anonId}, ${playerKeyHash}, ${input.name},
+    VALUES (${crypto.randomUUID()}, ${ch.id}, ${who.userId}, ${who.anonId}, ${playerKeyHash}, ${playerName},
       ${JSON.stringify(choices)}::jsonb, ${correct}, NOW())
     ON CONFLICT ("challengeId", "playerKeyHash") DO NOTHING
     RETURNING id`;

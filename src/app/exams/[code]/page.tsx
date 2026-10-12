@@ -26,6 +26,7 @@ import { getExamWeekInputs } from "@/lib/exam-week-inputs";
 import { shiftDayIso } from "@/lib/exam-week-student";
 import { buildTimeline } from "@/lib/exam-timeline";
 import { HubDateTier } from "@/components/HubDateTier";
+import { reportedGloss, reportedNote } from "@/lib/date-tier-view";
 import { passedEstimateLine, passedEstimateView } from "@/lib/official-source";
 import { ExamWeekBlock, type ExamWeekViewer } from "@/components/ExamWeekBlock";
 import { HubSignInLink, StartMockButton } from "./StartMockButton";
@@ -60,6 +61,7 @@ import { MemberPickupStrip } from "@/components/MemberPickupStrip";
 import { OfficialSamplePapersBlock } from "@/components/OfficialSamplePapersBlock";
 import { hubPyqPhrase } from "@/lib/pyq-naming";
 import { examHubCopy, fillHub, type ExamHubCopy } from "@/lib/exam-hub-copy";
+import { under13ExamGuard } from "@/lib/signin-cta";
 import { examPageGates, GATES_CLOSED } from "@/lib/exam-page-gates";
 import {
   clipDescription,
@@ -927,6 +929,9 @@ export default async function ExamPage({
   // Sign-in box copy for a hub with no previous year paper (G3): the default
   // promises "previous year paper practice".
   const ctaCopy = hubPracticeCtaCopy(locale, hubOffers);
+  // 12 Oct 2026 (Release 2 review, under-13 rule): the guest box's words on a
+  // kids' exam (no account, no guest tutor there).
+  const kidsHub = under13ExamGuard(exam.code);
 
   // "Related on Shishya" (26 Sep 2026, src/lib/exam-related-links.ts): the
   // NCERT subject pages an entrance or olympiad aspirant studies from and the
@@ -1190,13 +1195,21 @@ export default async function ExamPage({
             A hub with no previous year paper gets copy that names none. */}
         {!userId && hasContent && (
           <div className={`mt-6 rounded-md border p-5 ${theme.borderAccent} ${theme.heroTint}`}>
+            {/* 12 Oct 2026 (Release 2 review, under-13 rule): on a kids' exam
+                the box offers no account and no guest tutor (HubSignInLink
+                renders nothing; /chat is closed to guests there), so its words
+                name only the no-sign-in quiz beside them. */}
             <p className="text-sm font-semibold text-ink-900">
-              {fillHub(ctaCopy?.coachTitle ?? H.coachTitle, { short: exam.shortName })}
+              {fillHub(kidsHub ? H.coachTitleKids : ctaCopy?.coachTitle ?? H.coachTitle, { short: exam.shortName })}
             </p>
-            <p className="mt-1 text-sm text-ink-700">
-              {ctaCopy?.coachBodyA ?? H.coachBodyA}<strong>Shishya</strong>{" "}
-              {H.coachBodyB}
-            </p>
+            {kidsHub ? (
+              <p className="mt-1 text-sm text-ink-700">{H.coachBodyKids}</p>
+            ) : (
+              <p className="mt-1 text-sm text-ink-700">
+                {ctaCopy?.coachBodyA ?? H.coachBodyA}<strong>Shishya</strong>{" "}
+                {H.coachBodyB}
+              </p>
+            )}
             <div className="mt-3 flex flex-wrap items-start gap-3">
               {/* 28 Sep 2026 (founder: the sign-up must be there as it was):
                   the free sign-in is the main button again and the quiz the
@@ -2044,12 +2057,19 @@ export default async function ExamPage({
                         <HubDateTier
                           row={hubDateRowById.get(d.id)}
                           labels={{ official: t("tracker.official"), reported: t("tracker.reported"), expected: t("tracker.expected") }}
+                          reportedNote={reportedGloss(locale)}
                         />
                         {d.notes && <p className="mt-1.5 text-xs text-ink-600">{d.notes}</p>}
                       </li>
                     );
                   })}
                 </ol>
+              )}
+              {/* 14 Oct 2026 (Release 2): what "Reported" means, once — an
+                  AI-made date is never Official (src/lib/official-source.ts
+                  dateRowTier). Outside the <li>s: truth-lint counts their <p>s. */}
+              {hubDates.slice(0, 12).some((d) => hubDateRowById.get(d.id)?.tier === "reported") && (
+                <p className="mt-2 text-xs text-ink-500">{reportedNote(locale)}</p>
               )}
             </div>
             </div>{/* /grid news+dates */}

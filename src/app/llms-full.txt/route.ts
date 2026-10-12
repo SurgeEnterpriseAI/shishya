@@ -47,6 +47,8 @@ import { ALL_STREAMS, COLLEGES, NIRF_SOURCE_URL, NIRF_SOURCE_YEAR } from "@/lib/
 // (Buddy4Study) the raw catalogue holds — src/lib/scholarship-schemes.ts.
 import { SCHOLARSHIP_SCHEMES } from "@/lib/scholarship-schemes";
 import { officialExamFacts } from "@/lib/official-exam-facts";
+// 12 Oct 2026 (Release 2 review, under-13 rule): no alert offer for a kids' exam.
+import { under13ExamGuard } from "@/lib/signin-cta";
 import { CAREERS, CAREER_CATEGORIES } from "@/data/careers";
 import { TEST_PREP, WORLDWIDE_COUNTRIES } from "@/lib/worldwide-data";
 import { PERSONAS } from "@/data/personas";
@@ -421,7 +423,7 @@ export async function GET() {
     );
     // No hi/te suffix (13 Sep 2026, index shape): most tracker twins are
     // English bodies that canonicalise here (src/lib/twin-localisation.ts).
-    lines.push(`- Exam tracker — exam date, notification, admit card, answer key, result, cutoff (official vs expected, email alerts): ${SITE}/exams/${e.code}/updates`);
+    lines.push(`- Exam tracker — exam date, notification, admit card, answer key, result, cutoff (official vs expected${under13ExamGuard(e.code) ? "" : ", email alerts"}): ${SITE}/exams/${e.code}/updates`);
     if (e.category !== "SCHOOL_BOARD") {
       lines.push(`- Last-minute exam checklist — exam-day timing with its source tier, what to carry, the marking scheme when one can be stated for the sitting: ${SITE}/exams/${e.code}/checklist`);
     }

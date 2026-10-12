@@ -26,6 +26,7 @@ import { SHISHYA_ORG_REF } from "@/components/JsonLd";
 import { computeCoachPlan } from "@/lib/coach-plan";
 import { examSignUpFacts, loadExamPracticeStates, practiceExamCodes } from "@/lib/db/exam-practice";
 import { coachTaskDoneFlags } from "@/lib/coach-done";
+import { dateRowTier } from "@/lib/official-source";
 import { CoachIntake, type CoachRollover, type ExamOption } from "./CoachIntake";
 import { CoachPlanView } from "./CoachPlanView";
 
@@ -135,19 +136,32 @@ async function examOptions(userId: string | null): Promise<ExamOption[]> {
     WHERE ${REAL_EXAM_SQL}
     ORDER BY (en."userId" IS NOT NULL) DESC, COALESCE(pop.c, 0) DESC, e."shortName" ASC
     LIMIT 60`;
-  const dates = await prisma.$queryRaw<{ code: string; d: Date }[]>`
-    SELECT DISTINCT ON (e.code) e.code, i.date AS d
+  // 14 Oct 2026 (Release 2): the prefilled date carries its tier — the form
+  // said "from the official calendar" for every row, AI-made estimates and
+  // unchecked AI rows included. dateRowTier: an AI-made row is at most
+  // "reported" (src/lib/official-source.ts).
+  const dates = await prisma.$queryRaw<
+    { code: string; d: Date; confidence: string | null; url: string | null; source: string | null; officialUrl: string | null }[]
+  >`
+    SELECT DISTINCT ON (e.code) e.code, i.date AS d, i.confidence, i.url, i.source, el."officialUrl"
     FROM "ExamImportantDate" i JOIN "Exam" e ON e.id = i."examId"
+    LEFT JOIN "ExamEligibility" el ON el."examId" = e.id
     WHERE i."isExamDay" = TRUE AND i."archivedAt" IS NULL AND i.date > NOW() AND ${NOT_SCHOOL_SQL}
     ORDER BY e.code, i.date ASC`;
-  const dateByCode = new Map(dates.map((x) => [x.code, x.d.toISOString().slice(0, 10)]));
+  const dateByCode = new Map(
+    dates.map((x) => {
+      const cite = x.url && /^https?:\/\//i.test(x.url) ? x.url : x.source && /^https?:\/\//i.test(x.source) ? x.source : null;
+      return [x.code, { day: x.d.toISOString().slice(0, 10), tier: dateRowTier(x.confidence, cite, x.officialUrl, x.source) }] as const;
+    }),
+  );
   // 27 Sep 2026 (fixer): only exams WITH practice (src/lib/exam-practice-state.ts)
   // — /api/coach refuses a plan for one without; a failed read offers them all.
   const practiceCodes = await practiceExamCodes();
   return rows.filter((r) => !practiceCodes || practiceCodes.has(r.code)).map((r) => ({
     code: r.code,
     short: r.short,
-    nextDate: dateByCode.get(r.code) ?? null,
+    nextDate: dateByCode.get(r.code)?.day ?? null,
+    nextDateTier: dateByCode.get(r.code)?.tier ?? null,
   }));
 }
 

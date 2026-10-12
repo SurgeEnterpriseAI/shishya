@@ -47,6 +47,8 @@ import { fetchSignedIn } from "@/lib/session-hint";
 import { clientUiLocale } from "@/lib/ui-locale-copy";
 import { pitchAllowedPath, signupHref, signupPitchCopy, type SignupPitchCopy } from "@/lib/signup-pitch";
 import { SignUpButton } from "@/components/SignUpButton";
+import { under13ExamGuard } from "@/lib/signin-cta";
+import { useSignUpPageData } from "@/lib/use-signup-words";
 
 /** Home page paths (the /hi and /te twins included), where the card also sits beside the events at lg. */
 const HOME_PATHS = new Set(["/", "/hi", "/te"]);
@@ -63,6 +65,12 @@ export function SignupPitch({
   const [copy, setCopy] = useState<SignupPitchCopy | null>(null);
   const [locale, setLocale] = useState<string>("en");
   const [href, setHref] = useState("/login");
+  // 12 Oct 2026 (Release 2 review, round 2; under-13 rule): what the
+  // page said about itself (null on the server and until its island mounts).
+  // A kids' exam's page whose path names no exam (/c/{token}, a challenge on
+  // SOF IEO) gets no card: SignUpButton's net (the same test) hid only the
+  // button, and the card's words stayed.
+  const page = useSignUpPageData();
 
   useEffect(() => {
     let alive = true;
@@ -83,6 +91,7 @@ export function SignupPitch({
   }, [pathname]);
 
   if (!copy) return null;
+  if (under13ExamGuard(page?.code)) return null;
   const side = placement === "home-side";
   // The home page shows the card beside its events from lg (side), so the footer copy steps aside there.
   const footerOnHome = !side && HOME_PATHS.has(pathname ?? "");

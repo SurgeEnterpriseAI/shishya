@@ -29,6 +29,7 @@ import { challengeCompareText, challengeShareMessage, type ChallengeLabels } fro
 import { rememberMadeChallenge } from "@/lib/challenge-local";
 import { pushSupported, subscribeThisDevice } from "@/lib/push-client";
 import { shareUrl, type ShareChannel } from "@/lib/share-url";
+import { under13ExamGuard } from "@/lib/signin-cta";
 
 // First-party analytics beacon (same shape as ShareScoreButton).
 function beacon(props: Record<string, unknown>) {
@@ -126,6 +127,10 @@ export function ChallengeCard({
   }
 
   const inputId = `challenge-name-${surface}`;
+  // 12 Oct 2026 (Release 2 review, round 2; under-13 rule): on a kids'
+  // exam a friend's score is never sent back (AnonQuizPlayer asks nothing
+  // there), so the small print says so instead of "can send you their score".
+  const noReplies = under13ExamGuard(examCode);
   return (
     <div className="mt-4 rounded-xl border-2 border-saffron-300 bg-saffron-50/60 p-4 sm:p-5">
       <p className="text-xs font-semibold uppercase tracking-wider text-saffron-700">{L["challenge.kicker"]}</p>
@@ -168,7 +173,11 @@ export function ChallengeCard({
               {busy ? L["challenge.card.making"] : L["challenge.card.make"]}
             </button>
           </div>
-          <p className="mt-2 text-[11px] text-ink-500">{name.trim() ? L["challenge.card.fineName"] : L["challenge.card.fine"]}</p>
+          <p className="mt-2 text-[11px] text-ink-500">
+            {name.trim()
+              ? L[noReplies ? "challenge.card.fineNameNoReplies" : "challenge.card.fineName"]
+              : L[noReplies ? "challenge.card.fineNoReplies" : "challenge.card.fine"]}
+          </p>
           {err && <p className="mt-2 text-xs text-rose-700">{err}</p>}
         </>
       )}
@@ -177,7 +186,9 @@ export function ChallengeCard({
 }
 
 /** Share buttons for a challenge that exists: WhatsApp, copy, the phone's
- *  share sheet, and the phone-notification toggle. */
+ *  share sheet, and the phone-notification toggle. On a kids' exam (12 Oct
+ *  2026, Release 2 review, round 2) no score comes back, so the line says so
+ *  and there is no notification toggle and no "See who played" link. */
 export function ChallengeShare({
   token,
   creatorKey,
@@ -217,6 +228,9 @@ export function ChallengeShare({
       url: shareUrl(`/c/${token}`, { surface: "challenge", channel, exam: examCode }),
     });
   const track = (via: ShareChannel) => beacon({ cta: "share", surface: "challenge", via, exam: examCode });
+  // 12 Oct 2026 (Release 2 review, round 2; under-13 rule): no friend's
+  // score is sent back on a kids' exam, so nothing to be told about or to see.
+  const noReplies = under13ExamGuard(examCode);
 
   async function copy() {
     try {
@@ -241,7 +255,7 @@ export function ChallengeShare({
   return (
     <>
       <p className="mt-1 text-base font-bold text-ink-900">{title}</p>
-      <p className="mt-1 text-xs text-ink-600">{fillTemplate(L["challenge.share.desc"], { total })}</p>
+      <p className="mt-1 text-xs text-ink-600">{fillTemplate(L[noReplies ? "challenge.share.descNoReplies" : "challenge.share.desc"], { total })}</p>
       <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
         <a
           href={`https://wa.me/?text=${encodeURIComponent(textFor("whatsapp"))}`}
@@ -272,8 +286,8 @@ export function ChallengeShare({
           </button>
         )}
       </div>
-      <ChallengeWatchButton token={token} creatorKey={creatorKey} labels={L} />
-      {showScoresLink && (
+      {!noReplies && <ChallengeWatchButton token={token} creatorKey={creatorKey} labels={L} />}
+      {showScoresLink && !noReplies && (
         <p className="mt-3 text-xs">
           <Link href={`/c/${token}`} className="font-semibold text-saffron-700 hover:underline">
             {L["challenge.share.seeScores"]}

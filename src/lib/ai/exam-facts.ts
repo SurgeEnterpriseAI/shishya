@@ -20,8 +20,9 @@
 //   - EXPECTED-tier rows (typical-cycle estimates, passed estimates) are
 //     dropped entirely — the tutor never sees an estimate, so it cannot
 //     state one as a date.
-//   - REPORTED rows (announced, cited via a secondary site) carry that
-//     site's name and the instruction to say so.
+//   - REPORTED rows (cited via a secondary site, or AI-made and not yet
+//     checked by a person — 14 Oct 2026) carry the cited site's name and the
+//     instruction to say the date is not yet checked against an official notice.
 //   - A per-question mark is printed only when src/lib/marking-scheme.ts can
 //     state one scheme for the sitting in focus; otherwise its reason is.
 //
@@ -267,10 +268,13 @@ function kindWord(kind: string): string {
 }
 
 function dateLine(d: TutorTrackerDate): string {
+  // 14 Oct 2026 (Release 2 review): a REPORTED row may cite the body's own
+  // site (a date the AI generator found, not yet checked by a person —
+  // dateRowTier), so it never says "a secondary source, not the conducting body".
   const source =
     d.tier === "official"
       ? `OFFICIAL (notice on ${d.host})`
-      : `REPORTED by ${d.host} — a secondary source, not the conducting body`;
+      : `REPORTED — not yet checked against an official notice; cited: ${d.host}`;
   return `- ${d.day} · ${kindWord(d.kind)} · ${d.label} · ${d.status}${daysPhrase(d.daysFromToday)} · ${source}`;
 }
 
@@ -323,7 +327,10 @@ export function examFactsBlock(facts: TutorExamFacts, exam: { code: string; name
   L.push(
     `- Use the day counts in brackets as they are — never work out a count yourself — and read each count from its own row (the \"starts\" row for when an exam begins, the \"ends\" row for when it ends). When an exam runs over a window (a starts row and an ends row), say both — it starts in N days and runs until the end date — and that each student's own date and shift are on their admit card or exam city slip — never guess how candidates are spread across the window. If a student asks for a plan longer than the days left before their exam, say how many days are actually left before it starts and fit the plan to that, offering a longer version only for a student whose own date is later in the window.`,
   );
-  L.push(`- REPORTED rows: always say which site reported it and that it is not yet confirmed on the official site.`);
+  // 14 Oct 2026 (Release 2): a REPORTED row may cite the body's own site — a date the AI generator
+  // found that no person has checked (src/lib/official-source.ts dateRowTier) — so it is never "a site
+  // reported it" alone.
+  L.push(`- REPORTED rows: say the date is not yet checked against an official notice, name the site the row cites, and tell the student to confirm it on the official site.`);
   if (noneAtAll) {
     L.push(`- For any date the student asks about, say no official date has been announced on Shishya's tracker yet.`);
   } else {

@@ -5,8 +5,10 @@
 //     earlier SSC CGL cycle, by day, cited host and exact label; a missing or
 //     doubled row is reported, never guessed; the 2026 cycle's rows and
 //     curated / official-watch rows are never picked;
-//   • the tracker's answer-key card: 17 Jun (reported) now; 9 Jan (official)
-//     if only jun17 goes; "not announced yet" when both go;
+//   • the tracker's answer-key card: 17 Jun (reported) now; 9 Jan if only
+//     jun17 goes — "reported" since Release 2 (14 Oct 2026: an AI-made row is
+//     never official, src/lib/official-source.ts dateRowTier); "not announced
+//     yet" when both go;
 //   • dry run by default, writes nothing; --apply needs --only; unknown flags
 //     refused; --apply refused without a 2026 exam row cited to ssc.gov.in;
 //   • the dry run never calls an AI-made row "official" (citationWord);
@@ -223,11 +225,11 @@ describe("selection: a previous cycle's key, found by day, host and label — ne
 });
 
 describe("the tracker's answer-key card", () => {
-  it("now 17 Jun (reported); 9 Jan (official) if only jun17 goes; not announced yet when both go", () => {
+  it("now 17 Jun (reported); 9 Jan (reported — AI-made, Release 2) if only jun17 goes; not announced yet when both go", () => {
     const rows = seed();
     expect(answerKeyCard(rows, NOW, PORTAL)).toMatch(/^Answer key 17 Jun 2026 · reported · Done/);
     const june = plan(selectTargets(rows, ["jun17"]).picks, NOW);
-    expect(answerKeyCard(simulate(rows, june, NOW), NOW, PORTAL)).toMatch(/^Answer key 9 Jan 2026 · official · Done/);
+    expect(answerKeyCard(simulate(rows, june, NOW), NOW, PORTAL)).toMatch(/^Answer key 9 Jan 2026 · reported · Done/);
     const both = plan(selectTargets(rows, ["jun17", "jan09"]).picks, NOW);
     expect(answerKeyCard(simulate(rows, both, NOW), NOW, PORTAL)).toBe("Answer key: not announced yet");
   });
@@ -304,7 +306,7 @@ describe("the command line: dry run by default", () => {
       expect(calls.update).toBe(0);
       const text = lines.join("\n");
       expect(text).toMatch(/now: +Answer key 17 Jun 2026 · reported · Done/);
-      expect(text).toMatch(/after --only jun17: +Answer key 9 Jan 2026 · official · Done/);
+      expect(text).toMatch(/after --only jun17: +Answer key 9 Jan 2026 · reported · Done/);
       expect(text).toMatch(/after --only both: +Answer key: not announced yet/);
       expect(text).toMatch(/DRY RUN \(nothing is written\)/);
     }

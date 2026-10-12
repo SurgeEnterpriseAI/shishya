@@ -22,7 +22,7 @@
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { SignUpButton } from "@/components/SignUpButton";
-import { loginHrefFor } from "@/lib/signin-cta";
+import { loginHrefFor, under13ExamGuard } from "@/lib/signin-cta";
 import type { AnonQuiz } from "@/lib/anon-quiz";
 import { fillTemplate, type Locale } from "@/lib/i18n";
 import type { ExamWeekPhase } from "@/lib/exam-week";
@@ -173,7 +173,9 @@ export function AnonQuizPlayer({
     setAnswers(nextAnswers);
     if (idx + 1 >= qs.length) {
       // A challenge first asks whether to send the score to the challenger.
-      if (challenge) setAskToSend(true);
+      // 12 Oct 2026 (Release 2 review, under-13 rule): never on a kids' exam,
+      // where nothing is sent and no name is asked for.
+      if (challenge && !under13ExamGuard(quiz.examCode)) setAskToSend(true);
       else setDone(true);
       // Preserve the guest result across the signup wall (audit 18 Aug
       // 2026) — the CTA promises to "track your weak topics", so stash
@@ -331,6 +333,10 @@ export function AnonQuizPlayer({
     const score = answers.filter((a) => a.correct).length;
     const pct = Math.round((score / qs.length) * 100);
     const loginHref = loginHrefFor(`/exams/${quiz.examCode}`, "quiz-end");
+    // 14 Oct 2026 (Release 2, under-13 rule): a kids' exam's quiz ends with no
+    // sign-up button and no contact offer — the tutor button stays
+    // (src/lib/signin-cta.ts under13ExamGuard; the alert box hides itself).
+    const kidsExam = under13ExamGuard(quiz.examCode);
     // Give the tutor the ACTUAL questions the student missed so it can
     // explain them, instead of a vague "the ones I got wrong" (audit
     // 18 Aug 2026).
@@ -421,7 +427,7 @@ export function AnonQuizPlayer({
             the main action by coming first, beside a tutor button that is a
             1 px ink outline. */}
         <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-start">
-          {signInSlot ? (
+          {kidsExam ? null : signInSlot ? (
             <div className="flex flex-1 flex-col">{signInSlot}</div>
           ) : (
             <SignUpButton
@@ -451,7 +457,9 @@ export function AnonQuizPlayer({
             friends — the chain. A topic with a small pool can serve fewer
             questions than a challenge needs; the card would only end in a
             refusal there. */}
-        {qs.length >= CHALLENGE_MIN_QUESTIONS && (
+        {/* 12 Oct 2026 (Release 2 review, under-13 rule): no challenge card
+            (its name field is stored) on a kids' exam. */}
+        {qs.length >= CHALLENGE_MIN_QUESTIONS && !kidsExam && (
           <ChallengeCard
             from={
               challenge
@@ -485,7 +493,7 @@ export function AnonQuizPlayer({
 
         {/* Low score + anonymous = peak discouragement; a human offer
             here retains aspirants the signup CTA alone would lose. */}
-        {!good && (
+        {!good && !kidsExam && (
           <p className="mt-3 text-sm text-ink-600">
             {QL["quiz.stuck"]}{" "}
             <TalkToTeacher

@@ -97,8 +97,8 @@ describe("sourceTier: a denylisted citation is an estimate", () => {
     const now = new Date("2026-09-26T06:00:00Z");
     const rows = buildTimeline(
       [
-        { id: "k", kind: "ANSWER_KEY", label: "Answer key", date: "2026-09-20T00:00:00.000Z", isExamDay: false, confidence: "official", url: "https://sarkariresult.com.cm/key" },
-        { id: "e", kind: "EXAM", label: "Tier 1 exam", date: "2026-10-12T00:00:00.000Z", isExamDay: true, confidence: "official", url: "https://ukexamalert.in/x" },
+        { id: "k", kind: "ANSWER_KEY", label: "Answer key", date: "2026-09-20T00:00:00.000Z", isExamDay: false, confidence: "official", url: "https://sarkariresult.com.cm/key", source: "official-research:test" },
+        { id: "e", kind: "EXAM", label: "Tier 1 exam", date: "2026-10-12T00:00:00.000Z", isExamDay: true, confidence: "official", url: "https://ukexamalert.in/x", source: "official-research:test" },
       ],
       now,
     );

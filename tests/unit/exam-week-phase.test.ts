@@ -32,6 +32,7 @@ const official: TimelineInput = {
   confidence: "official",
   url: "https://upsc.gov.in/examinations/nda-ii-2026",
   notes: "Paper I Mathematics 10:00 AM to 12:30 PM; Paper II GAT 2:00 PM to 4:30 PM",
+  source: "official-research:test",
 };
 const OFFICIAL_URL = "https://upsc.gov.in";
 
@@ -55,7 +56,7 @@ describe("computeExamWeekState — exam-day phase", () => {
   });
 
   it("ignores untyped legacy rows entirely", () => {
-    const legacy: TimelineInput = { id: "seed", label: "Exam date", date: d("2026-09-13"), isExamDay: true, kind: null, confidence: null, url: null };
+    const legacy: TimelineInput = { id: "seed", label: "Exam date", date: d("2026-09-13"), isExamDay: true, kind: null, confidence: null, url: null, source: null };
     expect(computeExamWeekState([legacy], OFFICIAL_URL, ist("2026-09-13", 14)).phase).toBe("none");
   });
 });

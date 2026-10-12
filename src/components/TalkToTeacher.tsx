@@ -16,6 +16,7 @@
 
 import { useEffect, useState } from "react";
 import { TeacherFollowUp } from "@/components/TeacherFollowUp";
+import { under13ExamGuard } from "@/lib/signin-cta";
 
 // Surge office line for subject-expert calls. Override per environment with
 // NEXT_PUBLIC_EXPERT_PHONE (E.164, e.g. +919160057000). Default = Muvva
@@ -49,7 +50,18 @@ interface Props {
   linkLabel?: string;
 }
 
-export function TalkToTeacher({
+/** The mentor card / link — or nothing on a kids' exam (14 Oct 2026,
+ *  Release 2 review, under-13 rule: its callback form takes a phone number,
+ *  name, email and city, and no contact is collected on an exam children
+ *  under 13 sit — src/lib/signin-cta.ts under13ExamGuard; /api/teacher-request
+ *  refuses the code too). Every mount (topic, cutoff, guide, syllabus, chat,
+ *  results) goes through here, so no page needs its own check. */
+export function TalkToTeacher(props: Props) {
+  if (under13ExamGuard(props.examCode)) return null;
+  return <TalkToTeacherInner {...props} />;
+}
+
+function TalkToTeacherInner({
   surface,
   examCode,
   topicCode,

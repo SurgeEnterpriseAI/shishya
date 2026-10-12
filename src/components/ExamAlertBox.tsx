@@ -24,6 +24,7 @@
 
 import { useEffect, useState } from "react";
 import type { ExamWeekPhase } from "@/lib/exam-week";
+import { under13ExamGuard } from "@/lib/signin-cta";
 
 export interface ExamAlertPushLabels {
   cta: string;
@@ -88,7 +89,19 @@ function vapidKeyBytes(base64url: string): ArrayBuffer {
   return buf;
 }
 
-export function ExamAlertBox({
+type ExamAlertBoxProps = Parameters<typeof ExamAlertBoxInner>[0];
+
+/** The alert box — or nothing on a kids' exam (14 Oct 2026, Release 2,
+ *  under-13 rule: no email or phone is collected for an exam children under
+ *  13 sit — src/lib/signin-cta.ts under13ExamGuard; the alert APIs refuse
+ *  the code too). Every mount goes through here, so no page needs its own
+ *  check. */
+export function ExamAlertBox(props: ExamAlertBoxProps) {
+  if (under13ExamGuard(props.examCode)) return null;
+  return <ExamAlertBoxInner {...props} />;
+}
+
+function ExamAlertBoxInner({
   examCode,
   signedIn,
   labels,

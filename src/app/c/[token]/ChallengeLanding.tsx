@@ -26,6 +26,7 @@ import {
 } from "@/lib/challenge-copy";
 import { madeChallengeKey, playedChallenge, type PlayedChallenge } from "@/lib/challenge-local";
 import { SignUpButton } from "@/components/SignUpButton";
+import { under13ExamGuard } from "@/lib/signin-cta";
 
 export interface ChallengeLandingData {
   token: string;
@@ -68,6 +69,10 @@ export function ChallengeLanding({
   const [playsFailed, setPlaysFailed] = useState(false);
   const [played, setPlayed] = useState<PlayedChallenge | null>(null);
   const n = data.questionCount;
+  // 12 Oct 2026 (Release 2 review, under-13 rule): on a kids' exam a friend's
+  // score is never sent (AnonQuizPlayer asks nothing), so no "you choose
+  // whether to send" line and no new challenge card with its name field.
+  const kids = under13ExamGuard(data.examCode);
 
   useEffect(() => {
     const key = madeChallengeKey(data.token);
@@ -114,7 +119,13 @@ export function ChallengeLanding({
           <h1 className="mt-1 text-2xl font-bold text-ink-900">
             {fillTemplate(L[data.fromMock ? "challenge.creator.h1Mock" : "challenge.creator.h1"], { correct: data.creatorCorrect, n })}
           </h1>
-          {playsFailed ? (
+          {/* 12 Oct 2026 (Release 2 review, round 2; under-13 rule):
+              on a kids' exam no friend's score comes back, so no list of
+              plays, no "scores appear here" and no "friends who chose to
+              send": the line that says so, as on the card. */}
+          {kids ? (
+            <p className="mt-3 text-sm text-ink-600">{L["challenge.card.fineNoReplies"]}</p>
+          ) : playsFailed ? (
             <p className="mt-3 text-sm text-rose-700">{L["challenge.creator.error"]}</p>
           ) : plays === null ? (
             <p className="mt-3 text-sm text-ink-500">{L["challenge.creator.loading"]}</p>
@@ -145,11 +156,13 @@ export function ChallengeLanding({
               })}
             </ul>
           )}
-          <p className="mt-3 text-[11px] text-ink-500">
-            {fillTemplate(L["challenge.creator.footer"], {
-              date: new Date(data.expiresAt).toLocaleDateString(challengeDateLocale(locale), { day: "numeric", month: "long" }),
-            })}
-          </p>
+          {!kids && (
+            <p className="mt-3 text-[11px] text-ink-500">
+              {fillTemplate(L["challenge.creator.footer"], {
+                date: new Date(data.expiresAt).toLocaleDateString(challengeDateLocale(locale), { day: "numeric", month: "long" }),
+              })}
+            </p>
+          )}
         </div>
         <div className="mt-4 rounded-xl border-2 border-saffron-300 bg-saffron-50/60 p-4 sm:p-5">
           <ChallengeShare
@@ -176,7 +189,7 @@ export function ChallengeLanding({
         <div className="mt-3">
           <ChallengeScores mine={played.correct} theirs={played.creatorCorrect} total={played.total} name={data.creatorName} labels={L} />
         </div>
-        {played.choices.length === n && (
+        {played.choices.length === n && !kids && (
           <ChallengeCard
             from={{ source: "challenge", parentToken: data.token, choices: played.choices }}
             examCode={data.examCode}
@@ -232,7 +245,7 @@ export function ChallengeLanding({
         })}
       </h1>
       <p className="mt-3 text-sm text-ink-600">{fillTemplate(L["challenge.intro.desc"], { n })}</p>
-      <p className="mt-1 text-xs text-ink-500">{L["challenge.intro.choice"]}</p>
+      {!kids && <p className="mt-1 text-xs text-ink-500">{L["challenge.intro.choice"]}</p>}
       <button
         type="button"
         onClick={() => setMode("playing")}

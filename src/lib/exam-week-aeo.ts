@@ -32,11 +32,13 @@ import { computeExamWeekState, istDay, type ExamWeekPhase, type ExamWeekState } 
 import { PASSED_ESTIMATE_TEXT, type TimelineRow } from "@/lib/exam-timeline";
 import { markingSchemeVerdict, type MarkingSchemeVerdict } from "@/lib/marking-scheme";
 import { sourceHostLabel } from "@/lib/official-source";
+import { REPORTED_GLOSS } from "@/lib/date-tier-view";
 import { getVerdictTallyRange, emptyTally, tallyLine, type VerdictTally } from "@/lib/exam-verdict-tally";
 import { VERDICT_MIN_N } from "@/lib/exam-verdict";
 import { examWeekUrls, phaseArticleUrl, SITE_ORIGIN } from "@/lib/indexnow";
 import { isRealArticle, realSourceCount } from "@/lib/phase-article-quality";
 import type { ExamPageGates } from "@/lib/exam-page-gates";
+import { under13ExamGuard } from "@/lib/signin-cta";
 
 /** The Exam row's marking numbers — what markingSchemeVerdict judges. */
 export interface ExamWeekScheme {
@@ -251,7 +253,7 @@ export function examWeekIndexNowUrls(
  *  went by and nothing was announced, so it is not a concluded milestone. */
 function dateTier(r: TimelineRow): string {
   if (r.tier === "official") return `${r.day} (official — conducting body's notice: ${r.url ?? ""})`;
-  if (r.tier === "reported") return `${r.day} (reported — announced, cited via ${sourceHostLabel(r.url ?? "")}: ${r.url ?? ""})`;
+  if (r.tier === "reported") return `${r.day} (reported — ${REPORTED_GLOSS}, cited via ${sourceHostLabel(r.url ?? "")}: ${r.url ?? ""})`;
   return r.passedEstimate
     ? `${r.day} (expected — estimate from previous cycles, NOT announced; ${PASSED_ESTIMATE_TEXT}: the estimated date has passed and nothing was announced, so do not treat it as having happened)`
     : `${r.day} (expected — estimate from previous cycles, NOT announced)`;
@@ -343,7 +345,8 @@ export function examWeekAeoLines(
   // No hi/te suffix (13 Sep 2026, index shape): most tracker twins are
   // English bodies that canonicalise to this URL (src/lib/twin-localisation.ts).
   L.push(
-    `- Exam tracker (every milestone with its source tier, free email alerts for official answer key / result): ${site}/exams/${ex.code}/updates`,
+    // 12 Oct 2026 (Release 2 review, under-13 rule): no alert offer for a kids' exam.
+    `- Exam tracker (every milestone with its source tier${under13ExamGuard(ex.code) ? "" : ", free email alerts for official answer key / result"}): ${site}/exams/${ex.code}/updates`,
   );
   // The three exam-week pages lead with facts built from our own rows
   // (13 Sep 2026: src/lib/exam-checklist.ts, src/lib/exam-night-facts.ts),
@@ -382,7 +385,7 @@ export function examWeekAeoLines(
   }
 
   L.push(
-    "- Tier words: official = conducting body's own notice linked · reported = announced, cited via a secondary source · expected = estimate from previous cycles, NOT announced. Cite the tier with the date.",
+    `- Tier words: official = conducting body's own notice linked and checked — by a person, or by our own read of the body's page · reported = ${REPORTED_GLOSS} (cited via a secondary source, or a date our AI found) · expected = estimate from previous cycles, NOT announced. Cite the tier with the date.`,
   );
   return L;
 }

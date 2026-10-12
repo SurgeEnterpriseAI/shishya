@@ -4,7 +4,7 @@
 //   A. when it shows — the first answered turn only, a guest only, never a
 //      school chat, never after the under-13 line, never while a reply streams,
 //      never while the B6 unanswered-question door is up, never on a kids'
-//      exam chat (the save card stays there), and the save card from the
+//      exam chat (no card at all there since 14 Oct 2026), and the save card from the
 //      second answer on: one invitation a screen;
 //   B. what it says — the variant (fail closed), the lines in en / hi / te,
 //      the words the product cannot back, and each promise's code;
@@ -123,12 +123,15 @@ describe("A. when the card shows", () => {
     expect(offer([u("q1"), a("", true), u("q2"), a("a2")])).toBe("first-answer");
   });
 
-  it("never on a kids' exam chat or a school class container — the save card stays exactly as it was there", () => {
-    for (const code of ["SOF_IMO", "SOF_NSO", "SZF_IOM", "NSTSE", "JNVST"]) {
-      expect(offer([u("q"), a("answer")], { examCode: code }), code).toBe("save");
-      expect(offer([u("q"), a("answer"), u("q2"), a("a2")], { examCode: code }), code).toBe("save");
+  it("never on a kids' exam chat (14 Oct 2026, under-13 rule: no card at all there); a school class container keeps the save card", () => {
+    for (const code of ["SOF_IMO", "SOF_NSO", "SZF_IOM", "NSTSE", "PRIL", "ZIO", "JNVST"]) {
+      expect(offer([u("q"), a("answer")], { examCode: code }), code).toBeNull();
+      expect(offer([u("q"), a("answer"), u("q2"), a("a2")], { examCode: code }), code).toBeNull();
     }
     expect(offer([u("q"), a("answer")], { examCode: "NCERT_C10" })).toBe("save");
+    // A 13+ exam is unchanged.
+    expect(offer([u("q"), a("answer")], { examCode: "SSC_CGL" })).toBe("first-answer");
+    expect(offer([u("q"), a("answer"), u("q2"), a("a2")], { examCode: "SSC_CGL" })).toBe("save");
   });
 
   it("the save card shows exactly where it did before this build, but for the first answered turn", () => {

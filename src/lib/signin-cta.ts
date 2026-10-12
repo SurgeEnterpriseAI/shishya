@@ -308,10 +308,71 @@ export function isKidsOlympiadCode(code: string | null | undefined): boolean {
  *  .test.ts lists every exam code the repo knows for under-13s. */
 export const UNDER13_ENTRY_EXAM_CODES: readonly string[] = ["JNVST"];
 
-/** A kids' exam: a kids' olympiad (isKidsOlympiadCode) or an under-13 entry
- *  test (UNDER13_ENTRY_EXAM_CODES). */
+/** Olympiads outside the SOF / Silverzone / NSTSE families whose eligibility
+ *  starts below Class 8 (Release 2, 14 Oct 2026 — derived from the stored
+ *  ExamEligibility of every OLYMPIAD exam on 10 Oct 2026, SELECT only, see
+ *  tests/unit/under13-exam-guard.test.ts):
+ *    PRIL — "grades 6th to 12th (Juniors: 6-8)";
+ *    ZIO  — "Class 8 to Class 12 (some sources mention Class 1-12)": the
+ *           stored note is unsure, so it stays closed until a person reads
+ *           the official eligibility (fails closed, as every rule here).
+ *  Not here: IOQM (Class 8-12; born up to 31 Jul 2014, so a Class 8 student
+ *  may be 12), NSEJS (Class 8-10), NSEA / NSEB / NSEC / NSEP (Class 10-12). */
+export const UNDER13_OLYMPIAD_CODES: readonly string[] = ["PRIL", "ZIO"];
+
+/** A kids' exam: a kids' olympiad (isKidsOlympiadCode), an olympiad whose
+ *  eligibility starts below Class 8 (UNDER13_OLYMPIAD_CODES) or an under-13
+ *  entry test (UNDER13_ENTRY_EXAM_CODES). Exact codes, case-sensitive. */
 export function isKidsExamCode(code: string | null | undefined): boolean {
-  return isKidsOlympiadCode(code) || (typeof code === "string" && UNDER13_ENTRY_EXAM_CODES.includes(code));
+  return (
+    isKidsOlympiadCode(code) ||
+    (typeof code === "string" && (UNDER13_ENTRY_EXAM_CODES.includes(code) || UNDER13_OLYMPIAD_CODES.includes(code)))
+  );
+}
+
+// ── The under-13 guard for exam pages (Release 2, 14 Oct 2026) ──────────
+// Founder rule: a child under 13 is never asked to sign in and gives us no
+// data. A kids' exam's pages (isKidsExamCode — children sit them from Class
+// 1-7) therefore show NO "Sign up with Google" box, card or door and NO
+// email / phone "Alert me" box. ONE guard, read by the components rather than
+// by each page:
+//   • by exam code — HubSignInLink, ExamAlertBox, CoachEntry, the quiz end
+//     screen (AnonQuizPlayer), the practice 401s (StartMockButton,
+//     SubjectTestButton, CustomMockBuilder, TopicQuizButton: a guest goes to
+//     the exam's no-sign-in quiz instead of /login), and the alert APIs
+//     (/api/exam-alerts, /api/push/subscribe refuse the code);
+//   • by path — the site-wide offers (src/lib/signup-pitch.ts
+//     pitchAllowedPath: SignupPitch, SignupInline, SignupNudge, the soft
+//     wall) and the header's guest button (HeaderAuthControls): any
+//     /exams/{CODE}[/…] page of a kids' exam, /hi and /te twins included.
+// The tutor's doors already skip kids' exams (chatQuestionDoorAllowed).
+// Content and practice stay: notes, PYQs, the no-sign-in quizzes.
+
+/** True when this exam's pages must offer no sign-up and collect no alert
+ *  contact — a kids' exam (isKidsExamCode). The one name the components use. */
+export function under13ExamGuard(examCode: string | null | undefined): boolean {
+  return isKidsExamCode(examCode);
+}
+
+/** The exam code of an exam page path — "/exams/SOF_IMO", "/hi/exams/SOF_IMO/updates",
+ *  "/exams/SOF_IMO/topics/T1/quiz?x=1" → "SOF_IMO" — or null. Upper-cased (a
+ *  lower-case URL reaches the same page). */
+export function examCodeOfPath(p: string | null | undefined): string | null {
+  if (typeof p !== "string") return null;
+  const m = /^(?:\/(?:hi|te))?\/exams\/([A-Za-z0-9_-]{1,64})(?:[/?#]|$)/.exec(p);
+  return m ? m[1].toUpperCase() : null;
+}
+
+/** True on any page of a kids' exam (under13ExamGuard of examCodeOfPath). */
+export function isKidsExamPath(p: string | null | undefined): boolean {
+  return under13ExamGuard(examCodeOfPath(p));
+}
+
+/** Where a guest's practice press goes on a kids' exam instead of /login:
+ *  the exam's (or topic's) 5-question quiz, which needs no account. */
+export function kidsPracticeHref(examCode: string, topicCode?: string | null): string {
+  const exam = encodeURIComponent(examCode);
+  return topicCode ? `/exams/${exam}/topics/${encodeURIComponent(topicCode)}/quiz` : `/exams/${exam}/quiz`;
 }
 
 /** True when a hub practice button's 401 may open the inline sign-up button

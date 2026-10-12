@@ -68,6 +68,7 @@ const exam = (day: string, extra: Partial<TimelineInput> = {}): TimelineInput =>
   kind: "EXAM",
   confidence: "official",
   url: "https://ssc.gov.in/notices/cgl-2026-tier1",
+  source: "official-research:test",
   ...extra,
 });
 

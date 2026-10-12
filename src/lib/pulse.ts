@@ -483,7 +483,9 @@ export async function computePulseView(slug: string): Promise<PulseView> {
   };
 }
 
-const cachedPulseView = unstable_cache(async (slug: string) => computePulseView(slug), ["pulse-view-v1"], {
+// v2 (14 Oct 2026, Release 2): the view's official dates follow dateRowTier —
+// an AI-made date is never "official"; no v1 view survives the deploy.
+const cachedPulseView = unstable_cache(async (slug: string) => computePulseView(slug), ["pulse-view-v2"], {
   revalidate: PULSE_REVALIDATE,
   tags: [PULSE_CACHE_TAG],
 });

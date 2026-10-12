@@ -5,6 +5,8 @@
 import { describe, it, expect } from "vitest";
 import { examDayClaim, phaseArticleCopy, phaseArticleMeta, type ExamNightSummary } from "@/lib/phase-article-copy";
 
+// An announced row here stands for a checked one (a person read the notice):
+// these tests are about copy, not provenance (14 Oct 2026, Release 2).
 const row = (id: string, day: string, confidence: string | null = "official", url: string | null = "https://ssc.gov.in/notice") => ({
   id,
   label: "Tier 1",
@@ -13,6 +15,7 @@ const row = (id: string, day: string, confidence: string | null = "official", ur
   kind: "EXAM",
   confidence,
   url,
+  source: confidence === "official" ? "official-research:test" : null,
 });
 const exam = { shortName: "SSC CGL", name: "SSC Combined Graduate Level" };
 

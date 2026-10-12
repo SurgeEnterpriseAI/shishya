@@ -43,9 +43,9 @@
 // end, unchanged. Never in a school chat, never after the under-13 line, never
 // while a reply streams, never while the B6 unanswered-question door is up
 // (no answer has finished then — the two cannot meet), and never on a kids'
-// exam chat (SOF / Silverzone / NSTSE / JNVST — chatQuestionDoorAllowed):
-// there the save card stays exactly as it was (the founder's open olympiad
-// decision of 7 Oct 2026 — this build adds nothing there).
+// exam chat (SOF / Silverzone / NSTSE / JNVST — chatQuestionDoorAllowed).
+// 14 Oct 2026 (Release 2, under-13 rule): nor the save card there — a kids'
+// exam chat shows no sign-up card at all (under13ExamGuard → null).
 //
 // HONEST WORDS — each promise and the code that makes it true:
 //   "each score is kept"            — Attempt rows (prisma/schema.prisma
@@ -88,6 +88,7 @@ import {
   isKidsExamCode,
   loginHrefWithDoor,
   signinDoorShownBeacon,
+  under13ExamGuard,
 } from "@/lib/signin-cta";
 import type { SignUpPractice } from "@/lib/signup-place";
 
@@ -122,6 +123,9 @@ export function guestChatOffer(a: {
   messages: readonly OfferMessage[];
 }): GuestChatOffer {
   if (!a.guest || a.school || a.under13 || a.busy || a.questionDoorUp) return null;
+  // 14 Oct 2026 (Release 2 review, under-13 rule): a kids' exam chat shows no
+  // sign-up card at all — neither card (it showed the save card until then).
+  if (under13ExamGuard(a.examCode)) return null;
   let finished = 0;
   let last: OfferMessage | null = null;
   for (const m of a.messages) {

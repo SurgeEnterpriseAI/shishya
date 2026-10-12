@@ -19,10 +19,17 @@
 // also carries `passedEstimate: true` and `displayStatus:
 // "passed-estimate"`, and surfaces must render THAT — "was expected — not
 // confirmed" — never "Done".
+//
+// Who stands behind a row (Release 2, 14 Oct 2026): the tier is
+// dateRowTier(), not sourceTier() — a row the AI generator wrote (source
+// "ai-generated…") is at most "reported", "not yet checked against an
+// official notice", until a person gives it a checked provenance tag. Every
+// loader must hand buildTimeline the row's `source` column (TimelineInput
+// requires the key); a row without it reads as not checked.
 
 import { kindFromLabel, type DateKind } from "@/lib/ai/exam-info";
 import { istDayNumber } from "@/lib/exam-phase";
-import { sourceTier, type SourceTier } from "@/lib/official-source";
+import { dateRowTier, sourceTier, type SourceTier } from "@/lib/official-source";
 
 export type { DateKind, SourceTier };
 
@@ -50,7 +57,10 @@ export interface TimelineInput {
   confidence?: string | null;
   url?: string | null;
   notes?: string | null;
-  source?: string | null;
+  /** The row's provenance (ExamImportantDate.source) — required, so every
+   *  loader selects it: an AI-made row ("ai-generated…") is never official
+   *  (src/lib/official-source.ts dateRowTier). Null when the column is NULL. */
+  source: string | null;
 }
 
 export interface TimelineRow {
@@ -66,10 +76,12 @@ export interface TimelineRow {
   /** ISO calendar day (YYYY-MM-DD) of the IST date. */
   day: string;
   isExamDay: boolean;
-  /** Gold tier only: announced AND cited on the conducting body's own
-   *  site. The only rows that may enter schema.org structured data. */
+  /** Gold tier only: cited on the conducting body's own site AND checked by
+   *  a person (not AI-made — dateRowTier). The only rows that may enter
+   *  schema.org structured data. */
   official: boolean;
-  /** official | reported (announced via secondary source) | expected. */
+  /** official | reported (via a secondary source, or AI-made and not yet
+   *  checked against an official notice) | expected. */
   tier: SourceTier;
   url: string | null;
   notes: string | null;
@@ -220,7 +232,9 @@ export function buildTimeline(rows: TimelineInput[], now: Date = new Date(), off
     const date = r.date instanceof Date ? r.date : new Date(r.date);
     const { kind, declared } = resolveKindInfo({ kind: r.kind, label: r.label, isExamDay: r.isExamDay });
     const url = rowCitation(r);
-    const tier = sourceTier(r.confidence, url, officialUrl);
+    // Release 2 (14 Oct 2026): an AI-made row is at most "reported". A row
+    // whose loader dropped `source` (undefined at runtime) reads unchecked.
+    const tier = dateRowTier(r.confidence, url, officialUrl, r.source);
     if (kind === "ANSWER_KEY" && tier === "expected") continue;
     const delta = istDayNumber(date) - today;
     const status: TimelineStatus = delta < 0 ? "done" : delta === 0 ? "today" : "upcoming";

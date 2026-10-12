@@ -316,7 +316,8 @@ export const getStateUpcoming = unstable_cache(
       horizonDays,
     );
   },
-  ["state-upcoming-v2"],
+  // v3 (14 Oct 2026, Release 2): cached tiers — an AI-made date is never "official" now.
+  ["state-upcoming-v3"],
   { revalidate: 3600, tags: ["exam-catalog"] },
 );
 

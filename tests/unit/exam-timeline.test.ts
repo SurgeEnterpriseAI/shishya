@@ -22,6 +22,7 @@ const examDay: TimelineInput = {
   kind: "EXAM",
   confidence: "official",
   url: "https://ssc.gov.in/tier1",
+  source: "official-research:test",
 };
 // The May seed: no kind column, no confidence — RESULT is inferred from
 // the label, and the date is earlier than the exam it claims to report.
@@ -33,6 +34,7 @@ const seededResult: TimelineInput = {
   kind: null,
   confidence: null,
   url: null,
+  source: null,
 };
 const declaredResult: TimelineInput = {
   id: "declared",
@@ -42,6 +44,7 @@ const declaredResult: TimelineInput = {
   kind: "RESULT",
   confidence: "expected",
   url: null,
+  source: null,
 };
 
 describe("upcomingOfKind / latestOfKind — declared kind beats inferred kind", () => {
@@ -69,7 +72,7 @@ describe("upcomingOfKind / latestOfKind — declared kind beats inferred kind", 
 
   it("does not let a declared row of another kind hide legacy rows", () => {
     // ADMIT_CARD has no declared row here, so the inferred one survives.
-    const admit: TimelineInput = { id: "ac", label: "Admit card", date: d("2026-09-18"), isExamDay: false, kind: null, confidence: null, url: null };
+    const admit: TimelineInput = { id: "ac", label: "Admit card", date: d("2026-09-18"), isExamDay: false, kind: null, confidence: null, url: null, source: null };
     const tl = buildTimeline([examDay, admit, declaredResult], now);
     expect(upcomingOfKind(tl, "ADMIT_CARD")?.id).toBe("ac");
   });
@@ -87,7 +90,7 @@ describe("outcome rows cannot precede the exam they report on", () => {
   it("applies to answer keys too", () => {
     // An announced, cited key (so it survives the expected-key guard
     // below) dated before the only exam day is still not offered.
-    const key: TimelineInput = { id: "k", label: "Answer key", date: d("2026-09-15"), isExamDay: false, kind: "ANSWER_KEY", confidence: "official", url: "https://ssc.gov.in/key" };
+    const key: TimelineInput = { id: "k", label: "Answer key", date: d("2026-09-15"), isExamDay: false, kind: "ANSWER_KEY", confidence: "official", url: "https://ssc.gov.in/key", source: "official-research:test" };
     const tl = buildTimeline([examDay, key], now);
     expect(tl.map((r) => r.id)).toContain("k");
     expect(upcomingOfKind(tl, "ANSWER_KEY")).toBeNull();
@@ -97,7 +100,7 @@ describe("outcome rows cannot precede the exam they report on", () => {
     // Tier 1 already written, Tier 1 result due 15 Dec, Tier 2 in Jan —
     // the result precedes the next upcoming exam but not the first one.
     const later = new Date("2026-11-01T06:00:00Z");
-    const tier2: TimelineInput = { id: "t2", label: "Tier 2", date: d("2027-01-20"), isExamDay: true, kind: "EXAM", confidence: "expected", url: null };
+    const tier2: TimelineInput = { id: "t2", label: "Tier 2", date: d("2027-01-20"), isExamDay: true, kind: "EXAM", confidence: "expected", url: null, source: null };
     const tl = buildTimeline([examDay, declaredResult, tier2], later);
     expect(tl.find((r) => r.id === "exam")?.status).toBe("done");
     expect(upcomingOfKind(tl, "RESULT")?.id).toBe("declared");
@@ -105,7 +108,7 @@ describe("outcome rows cannot precede the exam they report on", () => {
   });
 
   it("keeps a result that has already passed (genuine history)", () => {
-    const past: TimelineInput = { id: "old", label: "Result", date: d("2026-08-01"), isExamDay: false, kind: "RESULT", confidence: null, url: null };
+    const past: TimelineInput = { id: "old", label: "Result", date: d("2026-08-01"), isExamDay: false, kind: "RESULT", confidence: null, url: null, source: null };
     const tl = buildTimeline([examDay, past], now);
     expect(upcomingOfKind(tl, "RESULT")).toBeNull(); // it is done, not upcoming
     expect(latestOfKind(tl, "RESULT")?.id).toBe("old");
@@ -123,12 +126,12 @@ describe("outcome rows cannot precede the exam they report on", () => {
 // date — is enforced at read time in buildTimeline, so no surface built on
 // it can leak one. RESULT estimates are allowed with their tier word.
 describe("expected answer-key rows never enter the timeline", () => {
-  const officialKey: TimelineInput = { id: "ok", label: "Answer key", date: d("2026-09-28"), isExamDay: false, kind: "ANSWER_KEY", confidence: "official", url: "https://ssc.gov.in/key" };
-  const reportedKey: TimelineInput = { id: "rk", label: "Answer key", date: d("2026-09-29"), isExamDay: false, kind: "ANSWER_KEY", confidence: "official", url: "https://testbook.com/ssc-key" };
-  const expectedKey: TimelineInput = { id: "xk", label: "Answer key (expected)", date: d("2026-09-30"), isExamDay: false, kind: "ANSWER_KEY", confidence: "expected", url: null };
-  const uncitedKey: TimelineInput = { id: "uk", label: "Answer key", date: d("2026-10-01"), isExamDay: false, kind: "ANSWER_KEY", confidence: "official", url: null };
-  const legacyKey: TimelineInput = { id: "lk", label: "Provisional answer key release", date: d("2026-10-02"), isExamDay: false, kind: null, confidence: null, url: null };
-  const expectedResult: TimelineInput = { id: "xr", label: "Result (expected)", date: d("2026-11-15"), isExamDay: false, kind: "RESULT", confidence: "expected", url: null };
+  const officialKey: TimelineInput = { id: "ok", label: "Answer key", date: d("2026-09-28"), isExamDay: false, kind: "ANSWER_KEY", confidence: "official", url: "https://ssc.gov.in/key", source: "official-research:test" };
+  const reportedKey: TimelineInput = { id: "rk", label: "Answer key", date: d("2026-09-29"), isExamDay: false, kind: "ANSWER_KEY", confidence: "official", url: "https://testbook.com/ssc-key", source: "official-research:test" };
+  const expectedKey: TimelineInput = { id: "xk", label: "Answer key (expected)", date: d("2026-09-30"), isExamDay: false, kind: "ANSWER_KEY", confidence: "expected", url: null, source: null };
+  const uncitedKey: TimelineInput = { id: "uk", label: "Answer key", date: d("2026-10-01"), isExamDay: false, kind: "ANSWER_KEY", confidence: "official", url: null, source: "official-research:test" };
+  const legacyKey: TimelineInput = { id: "lk", label: "Provisional answer key release", date: d("2026-10-02"), isExamDay: false, kind: null, confidence: null, url: null, source: null };
+  const expectedResult: TimelineInput = { id: "xr", label: "Result (expected)", date: d("2026-11-15"), isExamDay: false, kind: "RESULT", confidence: "expected", url: null, source: null };
 
   it("drops expected, uncited and legacy-inferred keys; keeps official and reported ones", () => {
     const tl = buildTimeline([examDay, officialKey, reportedKey, expectedKey, uncitedKey, legacyKey, expectedResult], now);
@@ -157,10 +160,10 @@ describe("expected answer-key rows never enter the timeline", () => {
 // working) but its display status is "passed-estimate", which every
 // surface must render as "was expected — not confirmed".
 describe("passed estimates are never 'done'", () => {
-  const pastExpectedExam: TimelineInput = { id: "px", label: "Tier 1 exam (expected)", date: d("2026-09-01"), isExamDay: true, kind: "EXAM", confidence: "expected", url: null };
-  const pastOfficialExam: TimelineInput = { id: "po", label: "Tier 1 exam", date: d("2026-08-20"), isExamDay: true, kind: "EXAM", confidence: "official", url: "https://ssc.gov.in/tier1" };
-  const pastReported: TimelineInput = { id: "pr", label: "Admit card", date: d("2026-08-10"), isExamDay: false, kind: "ADMIT_CARD", confidence: "official", url: "https://testbook.com/ac" };
-  const legacyPast: TimelineInput = { id: "lp", label: "Notification", date: d("2026-06-01"), isExamDay: false, kind: null, confidence: null, url: null };
+  const pastExpectedExam: TimelineInput = { id: "px", label: "Tier 1 exam (expected)", date: d("2026-09-01"), isExamDay: true, kind: "EXAM", confidence: "expected", url: null, source: null };
+  const pastOfficialExam: TimelineInput = { id: "po", label: "Tier 1 exam", date: d("2026-08-20"), isExamDay: true, kind: "EXAM", confidence: "official", url: "https://ssc.gov.in/tier1", source: "official-research:test" };
+  const pastReported: TimelineInput = { id: "pr", label: "Admit card", date: d("2026-08-10"), isExamDay: false, kind: "ADMIT_CARD", confidence: "official", url: "https://testbook.com/ac", source: "official-research:test" };
+  const legacyPast: TimelineInput = { id: "lp", label: "Notification", date: d("2026-06-01"), isExamDay: false, kind: null, confidence: null, url: null, source: null };
 
   it("marks a past expected row as a passed estimate, not done", () => {
     const [row] = buildTimeline([pastExpectedExam], now);
@@ -201,8 +204,8 @@ describe("passed estimates are never 'done'", () => {
 // The exam-day row a "this sitting" question is about — feeds the
 // marking-scheme stage check outside the ±7-day exam-week window.
 describe("focusExamRow — next or just-held exam day", () => {
-  const prelims: TimelineInput = { id: "pre", label: "Prelims Exam", date: d("2026-08-02"), isExamDay: true, kind: "EXAM", confidence: "official", url: "https://sbi.bank.in/pre" };
-  const mainsRow: TimelineInput = { id: "mains", label: "Mains Exam", date: d("2026-09-12"), isExamDay: true, kind: "EXAM", confidence: "official", url: "https://sbi.bank.in/mains" };
+  const prelims: TimelineInput = { id: "pre", label: "Prelims Exam", date: d("2026-08-02"), isExamDay: true, kind: "EXAM", confidence: "official", url: "https://sbi.bank.in/pre", source: "official-research:test" };
+  const mainsRow: TimelineInput = { id: "mains", label: "Mains Exam", date: d("2026-09-12"), isExamDay: true, kind: "EXAM", confidence: "official", url: "https://sbi.bank.in/mains", source: "official-research:test" };
 
   it("prefers today's / the next upcoming exam day", () => {
     const tl = buildTimeline([prelims, mainsRow, declaredResult], now); // 7 Sep
@@ -229,7 +232,7 @@ describe("isUnannouncedAnswerKey", () => {
   it("flags an untyped, unsourced row whose label reads as an answer key", () => {
     expect(isUnannouncedAnswerKey({ label: "Final answer key release", isExamDay: false, kind: null, confidence: null, url: null })).toBe(true);
     // and buildTimeline drops the same row
-    expect(buildTimeline([{ id: "x", label: "Final answer key release", date: on, isExamDay: false }], new Date("2026-09-13T06:00:00Z"))).toEqual([]);
+    expect(buildTimeline([{ id: "x", label: "Final answer key release", date: on, isExamDay: false, source: null }], new Date("2026-09-13T06:00:00Z"))).toEqual([]);
   });
   it("keeps an official, cited answer key", () => {
     expect(isUnannouncedAnswerKey({ label: "Provisional answer key released", isExamDay: false, kind: "ANSWER_KEY", confidence: "official", url: "https://tgeapcet.nic.in/key.pdf" })).toBe(false);

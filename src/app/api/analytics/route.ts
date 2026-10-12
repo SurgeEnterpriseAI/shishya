@@ -17,8 +17,8 @@
 //     only; no userId, anonId, utm, referrer host or fingerprint — and no
 //     cookie is issued (isUnder13SchoolPath, src/lib/school/student-classes.ts)
 
-import { createHmac } from "node:crypto";
 import { withUtmContent } from "@/lib/utm-content";
+import { analyticsFingerprint as fingerprint } from "@/lib/ua-fingerprint";
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { recordEvent, type EventKind } from "@/lib/analytics";
@@ -91,16 +91,9 @@ const ANON_MAX_AGE_S = 30 * 24 * 3600;
 //     and escaped tagging for days (deep-path landers 6/day → 22/day).
 //     A stable UA hash keeps convictions across month boundaries; the
 //     rotating IP hash still limits the ipHash↔IP linkage window.
-const HASH_SECRET = process.env.NEXTAUTH_SECRET ?? "shishya-analytics";
-function fingerprint(value: string | null, scope: "ua" | "ip", now = new Date()): string | null {
-  if (!value) return null;
-  const period =
-    scope === "ip"
-      ? `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`
-      : "stable";
-  const scopeKey = createHmac("sha256", HASH_SECRET).update(`fp-${scope}-${period}`).digest();
-  return createHmac("sha256", scopeKey).update(value).digest("hex").slice(0, 16);
-}
+// 14 Oct 2026: the function (fingerprint, unchanged) lives in
+// src/lib/ua-fingerprint.ts, so /api/chat hashes a user agent exactly as these
+// rows do and can hold a convicted crawler's auto-sent seed (src/lib/guest-seed-hold.ts).
 
 function clientIp(req: NextRequest): string | null {
   // Vercel sets x-forwarded-for with the real client IP first.

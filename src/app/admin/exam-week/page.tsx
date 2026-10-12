@@ -230,7 +230,7 @@ export default async function AdminExamWeekPage() {
         />
 
         <p className="mt-4 text-xs text-ink-500">
-          Tier words: official = conducting body&apos;s notice linked · reported = announced via a secondary source ·
+          Tier words: official = conducting body&apos;s notice linked and checked · reported = not yet checked against an official notice (a secondary source, or AI-made) ·
           expected = estimate, not announced (student surfaces never treat an expected day as held). D0 for an exam inside a
           multi-day window is the state machine&apos;s focus day (latest exam day ≤ today); the window span is in brackets.
           &ldquo;–&rdquo; = that day has not started yet, or the read behind that column failed on this open (never 0).

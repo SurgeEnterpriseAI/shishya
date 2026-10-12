@@ -37,6 +37,7 @@ const row = (id: string, label: string, iso: string, kind: string, tier: "offici
   kind,
   confidence: tier === "expected" ? "expected" : "official",
   url: tier === "official" ? "https://psc.ap.gov.in/notice.pdf" : tier === "reported" ? "https://testbook.com/news/x" : null,
+  source: tier === "expected" ? null : "official-research:test",
 });
 
 describe("isPassedEstimate — expected tier, IST day before today", () => {

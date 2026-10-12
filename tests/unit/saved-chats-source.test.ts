@@ -73,7 +73,8 @@ describe("the chat island", () => {
   });
 
   it("the results seed's attempt rides on that seed's own first turn only", () => {
-    expect(src).toContain("void send(seed, reviewAttemptId ? { reviewAttemptId } : {});");
+    // 14 Oct 2026: the seed's own turn also carries autoSeed (src/lib/guest-seed-hold.ts).
+    expect(src).toContain("void send(seed, reviewAttemptId ? { reviewAttemptId, autoSeed: true } : { autoSeed: true });");
     expect(src).toContain("reviewAttemptId: opts.reviewAttemptId && !sessionId ? opts.reviewAttemptId : undefined,");
     expect(src.match(/reviewAttemptId \?/g)?.length).toBe(1);
   });

@@ -35,6 +35,7 @@ import { computeExamWeekState } from "@/lib/exam-week";
 import { applyShiftDay, shiftDayIso } from "@/lib/exam-week-student";
 import { alertPhase } from "@/lib/exam-week-inputs";
 import { ExamAlertBox } from "@/components/ExamAlertBox";
+import { under13ExamGuard } from "@/lib/signin-cta";
 import { ExamWeekBlock, type ExamWeekViewer } from "@/components/ExamWeekBlock";
 import { PulseAsk } from "@/components/PulseAsk";
 import { ShareExamButton } from "@/components/ShareExamButton";
@@ -42,7 +43,7 @@ import { LangTwinLinks } from "@/components/LangTwinLinks";
 import { StateExamsLink } from "@/components/StateExamsLink";
 import { examPageGates } from "@/lib/exam-page-gates";
 import { passedEstimateLine, passedEstimateView } from "@/lib/official-source";
-import { countdownQualifierKey, dateTierView } from "@/lib/date-tier-view";
+import { countdownQualifierKey, dateTierView, reportedGloss, reportedNote } from "@/lib/date-tier-view";
 import { RELEASE_SHOWN_DAYS, officialReleases, releaseLineKey, releaseLineText, titleRelease } from "@/lib/official-release";
 import { OfficialReleaseLine } from "@/components/OfficialReleaseLine";
 import { leadDescription, updatesLead } from "@/lib/answer-lead";
@@ -345,7 +346,11 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
     const row = upcomingOfKind(shown, kind) ?? latestOfKind(shown, kind);
     const q = fill(examYearTemplate(t(qKey), year), { exam: short, year: year ?? "" });
     let a: string;
-    if (!row) a = t("tracker.faq.a.unknown");
+    // 12 Oct 2026 (Release 2 review, under-13 rule): a kids' exam has no
+    // alert box (ExamAlertBox renders nothing; /api/exam-alerts refuses the
+    // code), so its "not announced" answer offers no alerts and asks for no
+    // email, here and in the FAQPage JSON-LD.
+    if (!row) a = t(under13ExamGuard(exam.code) ? "tracker.faq.a.unknownNoAlerts" : "tracker.faq.a.unknown");
     // A passed estimate answers with the honest line, never "was expected
     // around {date}" (24 Sep 2026) — the FAQ is also this page's JSON-LD.
     else if (row.passedEstimate) a = `${peLine(row)}.`;
@@ -425,7 +430,7 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
     r.tier === "official" ? (
       <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-800">{t("tracker.official")}</span>
     ) : r.tier === "reported" ? (
-      <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-semibold text-sky-800">{t("tracker.reported")}</span>
+      <span title={reportedGloss(locale)} className="rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-semibold text-sky-800">{t("tracker.reported")}</span>
     ) : (
       <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">{t("tracker.expected")}</span>
     );
@@ -542,6 +547,9 @@ export default async function ExamUpdatesPage({ params }: { params: Promise<{ co
               {t("tracker.expected.note")}
               {dataUpdatedAt && <> · {fill(t("tracker.updated"), { date: fmtDay(dataUpdatedAt, locale) })}</>}
             </p>
+            {/* 14 Oct 2026 (Release 2): what "Reported" means — an AI-made
+                date is never Official (src/lib/official-source.ts dateRowTier). */}
+            <p className="mt-1 text-xs text-ink-500">{reportedNote(locale)}</p>
           </section>
         )}
 

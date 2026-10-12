@@ -134,7 +134,7 @@ describe("dates carry their tier; an estimate is called one", () => {
     const withDates = list.map((e) => (e.code === "SBI_PO" ? { ...e, nextExam: { day: "2026-11-02", tier: "reported" as const, label: "Prelims" } } : e));
     expect(categoryFaq(banking, withDates)).toEqual({
       q: "When is the next banking exam?",
-      a: "Announced on Shishya's tracker: SBI PO — 2 Nov 2026 (reported). Official dates come from the conducting body's own site; reported ones from a cited secondary source.",
+      a: "Announced on Shishya's tracker: SBI PO — 2 Nov 2026 (reported). Official dates come from the conducting body's own notice, checked; reported ones are not yet checked against an official notice.",
     });
   });
 });

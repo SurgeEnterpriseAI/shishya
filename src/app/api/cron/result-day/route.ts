@@ -3,7 +3,8 @@
 //
 // Trigger: an active exam whose tracker holds a RESULT row of OFFICIAL
 // tier (announced AND cited on the conducting body's own site — gold
-// only, via sourceTier with the exam's ExamEligibility.officialUrl).
+// only, with the exam's ExamEligibility.officialUrl; from 14 Oct 2026 also
+// checked by a person — dateRowTier: an AI-made row never fires).
 // Reported / expected result rows never trigger this mail: "the result is
 // out" on a coaching-portal citation or an estimate is a broken promise.
 // Window (30 Sep 2026, src/lib/result-day-trigger.ts): the mail fires when

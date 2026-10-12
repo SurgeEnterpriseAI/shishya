@@ -123,7 +123,9 @@ function row(iso: string, over: Partial<CatalogueDateRow> = {}): CatalogueDateRo
     confidence: "official",
     url: "https://ssc.gov.in/notice.pdf",
     notes: null,
-    source: null,
+    // A checked row (a person read the notice): an AI-made row is never
+    // official from 14 Oct 2026 (src/lib/official-source.ts dateRowTier).
+    source: "official-research:test",
     createdAt: new Date("2026-08-01T00:00:00Z"),
     ...over,
   };

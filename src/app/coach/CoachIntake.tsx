@@ -13,11 +13,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CoachRolloverCard, type CoachRolloverLabels } from "@/components/CoachRolloverCard";
+import { coachPrefillDateNote } from "@/lib/date-tier-view";
 
 export interface ExamOption {
   code: string;
   short: string;
   nextDate: string | null; // YYYY-MM-DD from our calendar, if announced
+  /** The tier of nextDate's row (14 Oct 2026, Release 2): the label says it.
+   *  Null/absent when the caller does not know it (the rollover pick). */
+  nextDateTier?: "official" | "reported" | "expected" | null;
 }
 
 export interface CoachRollover extends CoachRolloverLabels {
@@ -104,7 +108,7 @@ export function CoachIntake({
       </select>
 
       <label className="mt-4 block text-xs font-semibold uppercase tracking-wider text-ink-500">
-        2 · Exam date {options.find((o) => o.code === examCode)?.nextDate ? "(from the official calendar — confirm or change)" : ""}
+        2 · Exam date {coachPrefillDateNote(options.find((o) => o.code === examCode))}
       </label>
       <input
         type="date"

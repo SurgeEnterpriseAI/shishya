@@ -276,7 +276,7 @@ export function methodBlocks(p: PublicNumbers, opts: { upcomingDays: number }): 
   const dExp = coverageRow(p, NUMBERS_ANCHORS.datesExpected);
 
   const official: string[] = [
-    "On every exam tracker a date is marked Official only when it is cited from the conducting body's own site, Reported when it was announced but is cited through a secondary source such as a news or coaching site, and Expected when it is an estimate from previous cycles.",
+    "On every exam tracker a date is marked Official only when it is cited from the conducting body's own site and was checked there (by a person, or, for a released answer key or result, by our own read of that page), Reported when it is not yet checked against an official notice (cited through a secondary source such as a news or coaching site, or found by our AI), and Expected when it is an estimate from previous cycles.",
   ];
   if (papers) official.push(`${formatInt(papers.value)} official previous-year papers and answer keys are linked${onExamsText(papers)}, on the conducting bodies' own sites.`);
   if (cutoffs) official.push(`${formatInt(cutoffs.value)} official cutoff rows${onExamsText(cutoffs)} are copied from the bodies' published documents, each with its source link.`);

@@ -18,6 +18,7 @@ import { realExamKey } from "@/lib/db/exam-scope";
 import { checkRateLimit, rateLimited } from "@/lib/rate-limit";
 import { isAllowedPushEndpoint, welcomePushPayload } from "@/lib/push-alert-rules";
 import { pushConfigured, sendPush } from "@/lib/web-push";
+import { under13ExamGuard } from "@/lib/signin-cta";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -47,6 +48,12 @@ export async function POST(req: NextRequest) {
     body = Subscribe.parse(await req.json());
   } catch {
     return NextResponse.json({ error: "invalid request" }, { status: 400 });
+  }
+  // 14 Oct 2026 (Release 2, under-13 rule): no device is subscribed for a
+  // kids' exam — refused before anything is read or stored. Unsubscribing
+  // (DELETE) still works.
+  if (under13ExamGuard(body.examCode)) {
+    return NextResponse.json({ error: "Alerts are not offered for this exam." }, { status: 403 });
   }
   const { endpoint, keys } = body.subscription;
   if (!isAllowedPushEndpoint(endpoint)) {

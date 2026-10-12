@@ -18,7 +18,7 @@
 // seen {date} on {host}" — never a release day we did not read.
 
 import { FIRST_SEEN_NOTE_PREFIX, OFFICIAL_WATCH_SOURCE, fmtDay, resolveKind } from "@/lib/exam-timeline";
-import { citableSourceUrl, sourceHostLabel, sourceTier } from "@/lib/official-source";
+import { citableSourceUrl, dateRowTier, sourceHostLabel } from "@/lib/official-source";
 import { istDayNumber } from "@/lib/exam-phase";
 
 export const RELEASE_SHOWN_DAYS = 30;
@@ -68,7 +68,7 @@ export function isVerifiedRelease(r: ReleaseRowInput, officialUrl: string | null
   if (!url) return false;
   const kind = resolveKind({ kind: r.kind, label: r.label, isExamDay: !!r.isExamDay });
   if (kind !== "ANSWER_KEY" && kind !== "RESULT") return false;
-  return sourceTier(r.confidence, url, officialUrl) === "official";
+  return dateRowTier(r.confidence, url, officialUrl, r.source) === "official";
 }
 
 /** The newest verified answer key and result released within the last

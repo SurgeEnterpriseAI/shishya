@@ -30,7 +30,9 @@ function row(date: string, createdAt: string, over: Partial<ResultTriggerRow> = 
     kind: "RESULT",
     confidence: "official",
     url: "https://ssc.gov.in/result-t1.pdf",
-    source: "ai-generated:claude",
+    // A checked row (a person read the notice): an AI-made row never fires
+    // the mail from 14 Oct 2026 (Release 2) — see the test below.
+    source: "official-research:test",
     createdAt: new Date(`${createdAt}T08:00:00Z`),
     archivedAt: null,
     ...over,
@@ -85,6 +87,13 @@ describe("resultDayFires", () => {
     expect(resultDayFires([row("2026-09-29", "2026-09-29", { kind: "ANSWER_KEY", label: "Answer key" })], PORTAL, now)).toEqual([]);
   });
 
+  it("an AI-made row never fires, whatever it cites (Release 2, 14 Oct 2026: it is 'reported' until a person checks it)", () => {
+    const now = at("2026-09-30");
+    expect(resultDayFires([row("2026-09-29", "2026-09-29", { source: "ai-generated:claude" })], PORTAL, now)).toEqual([]);
+    expect(resultDayFires([row("2026-09-30", "2026-09-10", { source: "ai-generated:claude" })], PORTAL, now)).toEqual([]);
+    expect(resultDayFires([row("2026-09-29", "2026-09-29", { source: null })], PORTAL, now)).toEqual([]);
+  });
+
   it("the exam's own portal widens the official tier, as on every surface", () => {
     const r = row("2026-09-29", "2026-09-29", { url: "https://www.comedk.org/result.pdf" });
     expect(resultDayFires([r], "https://www.comedk.org", at("2026-09-30"))).toHaveLength(1);
@@ -125,8 +134,8 @@ describe("resultDayFires", () => {
 
   // Review, 30 Sep 2026 (nice-to-have 7): one result, two mails.
   describe("coversDays — the same result under an earlier date is never mailed twice", () => {
-    it("an AI row dated X-3 (mailed then) and the watch's first-seen row on X: X covers X-3", () => {
-      const ai = row("2026-09-26", "2026-09-26", { label: "NDA 2 2026 written result", archivedAt: new Date("2026-09-29T15:40:00Z") });
+    it("an AI row dated X-3 (mailed then, before 14 Oct 2026) and the watch's first-seen row on X: X covers X-3", () => {
+      const ai = row("2026-09-26", "2026-09-26", { label: "NDA 2 2026 written result", source: "ai-generated:claude", archivedAt: new Date("2026-09-29T15:40:00Z") });
       const watch = row("2026-09-29", "2026-09-29", { label: "Result — NDA 2 2026 exam", source: OFFICIAL_WATCH_SOURCE, url: "https://ssc.gov.in/r/nda-2.pdf" });
       const f = resultDayFires([ai, watch], PORTAL, at("2026-09-30"), ["NDA"]);
       expect(f[0]).toMatchObject({ day: "2026-09-29", verified: true, coversDays: ["2026-09-26"] });

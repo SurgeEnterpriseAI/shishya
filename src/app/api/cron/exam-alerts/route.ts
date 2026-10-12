@@ -11,6 +11,10 @@
 //     URL or its normalised title);
 //   • exam day within 3 days (an announced EXAM row; a reported one says
 //     "(reported)") — one reminder.
+// Release 2 (14 Oct 2026): a row's tier is dateRowTier (src/lib/official-
+// source.ts) — an AI-made row ("ai-generated…" source) is never called
+// "official" here: its detail reads "reported date — not yet checked against
+// an official notice" and its link "source". Both date reads select `source`.
 // Each change carries the time it appeared; a subscriber only gets the
 // changes newer than their last alert, so a result declared the day
 // after an admit-card mail is NOT lost to the 7-day cap — it goes out
@@ -39,8 +43,8 @@ import { sendExamAlertEmail } from "@/lib/email";
 import { alertUnsubApiUrl, alertUnsubUrl } from "@/lib/exam-alerts";
 import { MATERIAL_NEWS_RE, buildTimeline, fmtDay, stageOf } from "@/lib/exam-timeline";
 import { computeExamWeekState } from "@/lib/exam-week";
-import { examSoonTitle } from "@/lib/date-tier-view";
-import { sourceTier } from "@/lib/official-source";
+import { REPORTED_GLOSS, examSoonTitle } from "@/lib/date-tier-view";
+import { dateRowTier, sourceTier } from "@/lib/official-source";
 import { examAlertPushPayload } from "@/lib/push-alert-rules";
 import { pushConfigured, sendPush } from "@/lib/web-push";
 
@@ -118,8 +122,8 @@ export async function GET(req: Request) {
 
     // 1) New OFFICIAL timeline rows in the window (same kind + calendar day
     //    already official before the window = not new).
-    const newDates = await prisma.$queryRaw<{ label: string; date: Date; url: string | null; kind: string | null; createdAt: Date }[]>`
-      SELECT label, date, url, kind, "createdAt" FROM "ExamImportantDate" d
+    const newDates = await prisma.$queryRaw<{ label: string; date: Date; url: string | null; kind: string | null; source: string | null; createdAt: Date }[]>`
+      SELECT label, date, url, kind, source, "createdAt" FROM "ExamImportantDate" d
       WHERE d."examId" = ${ex.id} AND d."archivedAt" IS NULL AND d.confidence = 'official'
         AND d."createdAt" > ${since}
         AND NOT EXISTS (
@@ -133,10 +137,12 @@ export async function GET(req: Request) {
       // Tier honesty (29 Aug 2026): only conducting-body citations may be
       // called "official" in the mail; press/coaching citations are real
       // announcements but say so — in the detail AND the link label.
-      const gold = sourceTier("official", d.url, ex.officialUrl) === "official";
+      // 14 Oct 2026: and only a row a person checked (dateRowTier) — an
+      // AI-made row is "reported", not yet checked against an official notice.
+      const gold = dateRowTier("official", d.url, ex.officialUrl, d.source) === "official";
       changes.push({
         title: `${d.label}: ${fmtDay(new Date(d.date))}`,
-        detail: gold ? "official date" : "announced date (via press reports)",
+        detail: gold ? "official date" : `reported date — ${REPORTED_GLOSS}`,
         url: d.url,
         linkLabel: gold ? "official notice" : "source",
         at: new Date(d.createdAt),
@@ -176,8 +182,8 @@ export async function GET(req: Request) {
 
     // 4) Exam within 3 days (official row) — one reminder line, stamped
     //    "now" so it only reaches subscribers whose last mail predates it.
-    const live = await prisma.$queryRaw<{ id: string; label: string; date: Date; isExamDay: boolean; kind: string | null; confidence: string | null; url: string | null; notes: string | null }[]>`
-      SELECT id, label, date, "isExamDay", kind, confidence, url, notes FROM "ExamImportantDate"
+    const live = await prisma.$queryRaw<{ id: string; label: string; date: Date; isExamDay: boolean; kind: string | null; confidence: string | null; url: string | null; notes: string | null; source: string | null }[]>`
+      SELECT id, label, date, "isExamDay", kind, confidence, url, notes, source FROM "ExamImportantDate"
       WHERE "examId" = ${ex.id} AND "archivedAt" IS NULL ORDER BY date ASC`.catch(() => []);
     const timeline = buildTimeline(live, now, ex.officialUrl);
     const { nextExam, next } = stageOf(timeline);
@@ -195,7 +201,7 @@ export async function GET(req: Request) {
     if (nextExam && nextExam.tier !== "expected" && nextExam.daysFromToday >= 0 && nextExam.daysFromToday <= 3 && changes.length < 4) {
       changes.push({
         title: examSoonTitle(nextExam),
-        detail: nextExam.tier === "official" ? fmtDay(nextExam.date) : `${fmtDay(nextExam.date)} — announced date (via press reports)`,
+        detail: nextExam.tier === "official" ? fmtDay(nextExam.date) : `${fmtDay(nextExam.date)} — reported date, ${REPORTED_GLOSS}`,
         url: nextExam.url,
         linkLabel: nextExam.tier === "official" ? "official notice" : "source",
         at: now,

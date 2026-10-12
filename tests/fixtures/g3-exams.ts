@@ -29,6 +29,11 @@ export interface G3Exam {
 }
 
 let seq = 0;
+// 14 Oct 2026 (Release 2): an announced row here stands for a checked one (a
+// person read the notice) — the tests that use these rows are about titles
+// and leads, not provenance; AI-made rows are covered in
+// tests/unit/ai-made-date-tier.test.ts. The probe did not copy `source`.
+const CHECKED = "official-research:fixture";
 const r = (label: string, date: string, kind: string | null, confidence: string | null, url: string | null = null): TimelineInput => ({
   id: `r${++seq}`,
   label,
@@ -37,6 +42,7 @@ const r = (label: string, date: string, kind: string | null, confidence: string 
   kind,
   confidence,
   url,
+  source: confidence === "official" ? CHECKED : null,
 });
 
 const SSC_NOTICE = "https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/Important%20Notice%202026_cgle_2026_12092026.pdf";

@@ -95,6 +95,11 @@ export interface ExamHubCopy {
   coachTitle: string;
   coachBodyA: string;
   coachBodyB: string;
+  /** The same box on a kids' exam (12 Oct 2026, Release 2 review: src/lib/
+   *  signin-cta.ts under13ExamGuard). It offers no account and no guest
+   *  tutor (both are closed there), only the no-sign-in quiz beside it. */
+  coachTitleKids: string;
+  coachBodyKids: string;
   /** 28 Sep 2026: mocks need the free sign-in again, so the button says what
    *  it does — the 18 Sep wording ("start practising"). */
   /** Custom mock builder line. */
@@ -149,6 +154,9 @@ export const EXAM_HUB_COPY: Readonly<Record<HubCopyLocale, ExamHubCopy>> = {
     rehearsalOpen: "open now, closes {time} IST on exam eve",
     rehearsalSoon: "opens soon, closes {time} IST on exam eve",
     coachTitle: "Free {short} mock tests and previous year paper practice — start now.",
+    coachTitleKids: "Free {short} practice — start now.",
+    coachBodyKids:
+      "Start with a free 5-question quiz — no sign-in. Content is written with AI; dates marked Official link the conducting body's own site.",
     coachBodyA: "Full-length mocks with instant scoring and solutions, PYQ-pattern papers, topic-wise tests and Ask ",
     // 30 Sep 2026: no rank claim (en / hi / te). The box's sign-in now starts
     // the 5-question diagnostic, which has no rank — a rank exists only for a
@@ -205,6 +213,9 @@ export const EXAM_HUB_COPY: Readonly<Record<HubCopyLocale, ExamHubCopy>> = {
     rehearsalOpen: "अभी खुला है, परीक्षा से एक दिन पहले {time} IST पर बंद",
     rehearsalSoon: "जल्द खुलेगा, परीक्षा से एक दिन पहले {time} IST पर बंद",
     coachTitle: "मुफ़्त {short} मॉक टेस्ट और पिछले साल के पेपर का अभ्यास — अभी शुरू करें।",
+    coachTitleKids: "मुफ़्त {short} अभ्यास — अभी शुरू करें।",
+    coachBodyKids:
+      "5 सवालों के मुफ़्त क्विज़ से शुरू करें — साइन-इन की ज़रूरत नहीं। सामग्री AI से लिखी गई है; “आधिकारिक” चिह्न वाली तिथियाँ परीक्षा संस्था की अपनी साइट से लिंक हैं।",
     coachBodyA:
       "पूरी लंबाई के मॉक, तुरंत स्कोर और हल के साथ; PYQ-पैटर्न पेपर, टॉपिक-वार टेस्ट, और अटकने पर पूछिए ",
     coachBodyB:
@@ -253,6 +264,9 @@ export const EXAM_HUB_COPY: Readonly<Record<HubCopyLocale, ExamHubCopy>> = {
     rehearsalOpen: "ఇప్పుడు తెరిచి ఉంది, పరీక్ష ముందు రోజు {time} IST కి ముగుస్తుంది",
     rehearsalSoon: "త్వరలో తెరుచుకుంటుంది, పరీక్ష ముందు రోజు {time} IST కి ముగుస్తుంది",
     coachTitle: "ఉచిత {short} మాక్ టెస్టులు, గత సంవత్సరాల పేపర్ల సాధన — ఇప్పుడే మొదలుపెట్టండి.",
+    coachTitleKids: "ఉచిత {short} సాధన — ఇప్పుడే మొదలుపెట్టండి.",
+    coachBodyKids:
+      "5 ప్రశ్నల ఉచిత క్విజ్‌తో మొదలుపెట్టండి — సైన్-ఇన్ అవసరం లేదు. కంటెంట్ AI రాసినది; “అధికారిక” అని గుర్తించిన తేదీలు పరీక్ష నిర్వహించే సంస్థ సొంత సైట్‌కు లింక్ చేస్తాయి.",
     coachBodyA:
       "వెంటనే స్కోరు, పరిష్కారాలతో పూర్తి నిడివి మాక్‌లు, PYQ-ప్యాటర్న్ పేపర్లు, టాపిక్-వారీ టెస్టులు, ఆగిపోయినప్పుడు అడగడానికి ",
     coachBodyB:

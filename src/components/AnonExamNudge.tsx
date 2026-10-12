@@ -56,6 +56,7 @@ import { useEffect, useRef, useState } from "react";
 import { SignUpButton } from "@/components/SignUpButton";
 import { fetchSignedIn } from "@/lib/session-hint";
 import { signUpReason } from "@/lib/signup-cta-copy";
+import { under13ExamGuard } from "@/lib/signin-cta";
 
 function beacon(cta: string, extra?: Record<string, unknown>) {
   try {
@@ -143,9 +144,14 @@ export function AnonExamNudge({
         <span className="font-semibold text-ink-900">{headline}</span> {body || QUIZ_BODY}
       </p>
       <div className="flex shrink-0 flex-col items-start gap-1.5 sm:items-end">
-        <p data-su-reason className="text-xs text-ink-700">{signUpReason(locale, "fullMocks")}</p>
+        {/* 14 Oct 2026 (Release 2, under-13 rule): no sign-up on a kids' exam —
+            the quiz link stays (src/lib/signin-cta.ts under13ExamGuard). */}
+        {!under13ExamGuard(examCode) && (
+          <p data-su-reason className="text-xs text-ink-700">{signUpReason(locale, "fullMocks")}</p>
+        )}
         {/* side="top": the quiz link sits under the button, and the tooltip
             must not cover the pointer's way to it. */}
+        {!under13ExamGuard(examCode) && (
         <SignUpButton
           href={`/login?callbackUrl=${encodeURIComponent(`/exams/${examCode}`)}&from=cutoff-nudge`}
           surface="cutoff-nudge"
@@ -159,6 +165,7 @@ export function AnonExamNudge({
           beaconProps={{ examCode }}
           onSignInClick={() => beacon(`${surface}-signin-click`, { surface, examCode, target: "login" })}
         />
+        )}
         <a
           href={href}
           onClick={() => beacon(`${surface}-click`, { surface, examCode, target: "anon-quiz" })}

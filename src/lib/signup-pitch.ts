@@ -38,6 +38,7 @@
 // Pure: copy + path rules, imported by client islands and tests.
 
 import { signUpLabel } from "@/lib/signup-cta-copy";
+import { isKidsExamPath } from "@/lib/signin-cta";
 
 export type PitchLocale = "en" | "hi" | "te";
 
@@ -112,10 +113,14 @@ export function isChildSchoolPath(p: string | null | undefined): boolean {
   return /^\/schooling\/[^/]+\/class-[1-7](?:\/|$)/.test(path);
 }
 
-/** Where the site-wide offer (card and timed sheet) may show to a guest. */
+/** Where the site-wide offer (card and timed sheet) may show to a guest.
+ *  14 Oct 2026 (Release 2, under-13 rule): never on a kids' exam's pages —
+ *  SOF / Silverzone / NSTSE, PRIL, ZIO, JNVST (src/lib/signin-cta.ts
+ *  isKidsExamPath), /hi and /te twins included. */
 export function pitchAllowedPath(p: string | null | undefined): boolean {
   if (typeof p !== "string" || !p.startsWith("/")) return false;
   if (isChildSchoolPath(p)) return false;
+  if (isKidsExamPath(p)) return false;
   return !(
     p.startsWith("/login") ||
     p.startsWith("/logout") ||

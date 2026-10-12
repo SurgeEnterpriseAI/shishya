@@ -46,6 +46,7 @@ function r(kind: string | null, offset: number, o: { confidence?: string; url?: 
     isExamDay: o.isExamDay ?? kind === "EXAM",
     confidence: o.confidence ?? "official",
     url: o.url === undefined ? OFFICIAL : o.url,
+    source: (o.confidence ?? "official") === "official" ? "official-research:test" : null,
   };
 }
 const gates = (rows: TimelineInput[], officialUrl?: string | null) => examPageIndexGates(rows, officialUrl, NOW);

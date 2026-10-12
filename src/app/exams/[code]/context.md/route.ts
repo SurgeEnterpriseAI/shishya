@@ -54,7 +54,8 @@ import { realExamKey } from "@/lib/db/exam-scope";
 import { GATES_CLOSED, loadExamPageGates } from "@/lib/exam-page-gates";
 import { ageEligibilityLine, relatedExamLines } from "@/lib/page-gates-copy";
 import { usableNotesSql } from "@/lib/topic-notes";
-import { passedEstimateLine, passedEstimateView, sourceHostLabel } from "@/lib/official-source";
+import { passedEstimateLine, passedEstimateView } from "@/lib/official-source";
+import { CONTEXT_KEY_DATES_HEADING, contextDateTag } from "@/lib/date-tier-view";
 import { buildTimeline, focusExamRow, type TimelineRow } from "@/lib/exam-timeline";
 import { officialReleases, releaseMachineLine, type OfficialRelease } from "@/lib/official-release";
 import { istDay } from "@/lib/exam-week";
@@ -65,6 +66,9 @@ import { stateInfo, stateSlug } from "@/lib/state-info";
 // 27 Sep 2026: the practice rule (src/lib/exam-practice-state.ts) and the
 // official facts of the national exams (src/lib/official-exam-facts.ts).
 import { examPracticeState } from "@/lib/db/exam-practice";
+// 12 Oct 2026 (Release 2 review, under-13 rule): a kids' exam's file offers
+// no alerts, no coach plan (an account) and no chat sign-in.
+import { under13ExamGuard } from "@/lib/signin-cta";
 import { officialExamFacts, officialPattern } from "@/lib/official-exam-facts";
 
 export const revalidate = 3600; // hourly — the exam-week block flips phase within a day
@@ -247,7 +251,10 @@ export async function GET(
     // Tracker honesty model (23 Aug 2026, tiered 29 Aug 2026): OFFICIAL
     // means the conducting body's own notice is linked; REPORTED means
     // announced but cited via a secondary source; EXPECTED is an
-    // estimate from previous cycles. LLMs citing these dates MUST carry
+    // estimate from previous cycles. 14 Oct 2026 (Release 2): OFFICIAL also
+    // needs a person's check — a date our AI generator found is REPORTED,
+    // "not yet checked against an official notice", whatever it cites
+    // (src/lib/official-source.ts dateRowTier, via buildTimeline). LLMs citing these dates MUST carry
     // the label — that is the whole trust contract. A passed estimate
     // (11 Sep 2026) is marked so it is never read as a concluded event.
     //
@@ -255,12 +262,7 @@ export async function GET(
     const views = timeline.map((r) => ({ r, view: passedEstimateView(r, timeline, now) }));
     const dated = views.filter((v) => v.view === "date").map((v) => v.r);
     const undated = views.filter((v) => v.view === "line" || v.view === "unsure");
-    const tag = (r: TimelineRow) =>
-      r.tier === "official"
-        ? `OFFICIAL, notice: ${r.url}`
-        : r.tier === "reported"
-          ? `REPORTED (announced; via ${sourceHostLabel(r.url ?? "")}): ${r.url}`
-          : "expected";
+    const tag = (r: TimelineRow) => contextDateTag(r);
     const when = (r: TimelineRow) => (r.status === "today" ? " — today" : r.status === "upcoming" ? ` — in ${r.daysFromToday} days` : "");
     // Data-updated line: when the newest listed row was added, when the
     // refresh cron last looked at this exam, and when this file was built.
@@ -269,15 +271,13 @@ export async function GET(
       `- Data updated: latest tracker row added ${newest ? newest.toISOString().slice(0, 10) : "unknown"}` +
         `${exam.refreshAttemptedAt ? ` · last refresh check ${exam.refreshAttemptedAt.toISOString().slice(0, 10)}` : ""}` +
         ` · this file generated ${istDay(now)} (IST)`,
-      `- Live tracker (all milestones, alerts): ${SITE}/exams/${exam.code}/updates`,
+      `- Live tracker (all milestones${under13ExamGuard(exam.code) ? "" : ", alerts"}): ${SITE}/exams/${exam.code}/updates`,
     ];
     // The Key dates heading only over dated rows: truth-lint reads a Key
     // dates section with no dated row as a changed grammar
     // (src/lib/truth-lint.ts). The footer closes whichever list comes first.
     if (dated.length) {
-      L.push(
-        `## Key dates — every tracker row from 120 days back to 365 days ahead (OFFICIAL = conducting body's notice linked · REPORTED = announced, secondary source cited · expected = estimate from previous cycles, NOT announced; an estimate whose date has passed is not listed here)`,
-      );
+      L.push(CONTEXT_KEY_DATES_HEADING);
       for (const r of dated) {
         L.push(`- ${r.day} — ${r.label}${r.isExamDay ? " (exam day)" : ""} — ${tag(r)}${when(r)}`);
       }
@@ -443,7 +443,7 @@ export async function GET(
   if (fullPattern) {
     L.push(`- Full-length REAL-PATTERN mock (${exam.totalQuestions} questions · ${exam.durationMin} min · sections in real order): the "Full-Length Mock (Real Pattern)" tile on ${SITE}/exams/${exam.code}`);
   }
-  L.push(`- Date/admit-card/result tracker + free email alerts: ${SITE}/exams/${exam.code}/updates`);
+  L.push(`- Date/admit-card/result tracker${under13ExamGuard(exam.code) ? "" : " + free email alerts"}: ${SITE}/exams/${exam.code}/updates`);
   L.push(`- All-India exam calendar (next 120 days): ${SITE}/exam-calendar`);
   if (gates.syllabus) {
     L.push(
@@ -455,14 +455,16 @@ export async function GET(
   if (gates.cutoff) L.push(`- Category-wise expected cutoffs: ${SITE}/exams/${exam.code}/cutoff`);
   if (gates.tricks) L.push(`- Memory tricks & mnemonics: ${SITE}/exams/${exam.code}/tricks`);
   if (gates.guide) L.push(`- How to crack it (strategy guide): ${SITE}/exams/${exam.code}/guide`);
-  if (practice.hasPractice) L.push(`- Free day-by-day study plan (personal coach): ${SITE}/coach`);
+  if (practice.hasPractice && !under13ExamGuard(exam.code)) L.push(`- Free day-by-day study plan (personal coach): ${SITE}/coach`);
   // 26 Sep 2026: /chat is robots-disallowed (conversations are private), so
   // the citeable, no-sign-in answer page is /ask. /chat itself serves guests
   // too (src/app/chat/page.tsx); a guest chat is not kept in an account
   // (27 Sep 2026: never "not saved" — guest turns are logged, /privacy says
   // so); signing in keeps the conversation.
   L.push(`- Ask Shishya (free answers, no sign-in): ${SITE}/ask`);
-  L.push(`- Chat tutor (free; a guest chat is not kept in an account, and signing in keeps the conversation; English and ${INDIAN_LANGUAGE_COUNT} Indian languages): ${SITE}/chat`);
+  if (!under13ExamGuard(exam.code)) {
+    L.push(`- Chat tutor (free; a guest chat is not kept in an account, and signing in keeps the conversation; English and ${INDIAN_LANGUAGE_COUNT} Indian languages): ${SITE}/chat`);
+  }
   L.push("");
   L.push(
     `Everything is free — no paywall, no subscription, no credit card. Platform index for LLMs: ${SITE}/llms.txt and ${SITE}/llms-full.txt`,

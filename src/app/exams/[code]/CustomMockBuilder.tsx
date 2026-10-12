@@ -31,7 +31,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { loginHrefFor, practiceDoorCallback, practiceDoorInline, signinBeacon, signinDoorShownBeacon } from "@/lib/signin-cta";
+import { kidsPracticeHref, loginHrefFor, practiceDoorCallback, practiceDoorInline, signinBeacon, signinDoorShownBeacon, under13ExamGuard } from "@/lib/signin-cta";
 import { PracticeSignUpDoor } from "./PracticeSignUpDoor";
 import { BUILD_YOUR_OWN_TEST_LABEL } from "@/lib/test-type-names";
 
@@ -105,7 +105,13 @@ export function CustomMockBuilder({
           setBusy(false);
           return;
         }
-        // A kids' exam hub (SOF / Silverzone / NSTSE, JNVST): the /login redirect, as before.
+        // 14 Oct 2026 (Release 2, under-13 rule): a kids' exam asks no one to
+        // sign in — the guest gets the exam's no-sign-in quiz instead.
+        if (under13ExamGuard(examCode)) {
+          window.location.href = kidsPracticeHref(examCode);
+          return;
+        }
+        // A school class container: the /login redirect, as before.
         signinBeacon("custom-mock-401", { examCode, via: "login" });
         window.location.href = loginHrefFor(practiceDoorCallback("custom-mock-401", examCode), "custom-mock-401");
         return;

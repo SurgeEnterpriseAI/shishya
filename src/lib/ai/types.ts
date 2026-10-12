@@ -243,6 +243,10 @@ export interface TutorTrackerRow {
   kind: string | null;
   confidence: string | null;
   url: string | null;
+  /** The row's provenance (ExamImportantDate.source, 14 Oct 2026): an
+   *  AI-made row ("ai-generated…") is never "official" to the tutor either
+   *  (src/lib/official-source.ts dateRowTier). */
+  source: string | null;
 }
 
 /** The date-free input to buildTutorExamFacts, cached with the syllabus. */

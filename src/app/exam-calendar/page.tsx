@@ -3,6 +3,12 @@
 // by month, with official/expected honesty badges, plus this week's
 // notifications/admit cards/deadlines and the latest material updates.
 // English + Hindi (/hi/exam-calendar) + Telugu (/te/exam-calendar).
+//
+// Release 2 (14 Oct 2026): each row's tier is dateRowTier (src/lib/official-
+// source.ts) — an AI-made row is "Reported", never "Official", so it never
+// gets the gold badge or an Event in the JSON-LD. The legend under the count
+// says what Reported means (src/lib/date-tier-view.ts reportedNote; hi / te
+// new, for founder review), and a Reported badge carries it as its title.
 
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -15,7 +21,8 @@ import { inLanguage, languageAlternates, localizedPath, localizedUrl, ogLocale, 
 import { getCalendarTwinVerdict, loadTwinVerdicts } from "@/lib/twin-localisation";
 import { unstable_cache } from "next/cache";
 import { KIND_ICON, MATERIAL_NEWS_RE, buildTimeline, fmtDay, type DateKind, type TimelineRow } from "@/lib/exam-timeline";
-import { sourceTier } from "@/lib/official-source";
+import { calendarRows } from "@/lib/exam-calendar-rows";
+import { reportedGloss, reportedNote } from "@/lib/date-tier-view";
 import { istDayNumber } from "@/lib/exam-phase";
 import { LangTwinLinks } from "@/components/LangTwinLinks";
 import { SignupInline } from "@/components/SignupInline";
@@ -169,13 +176,11 @@ export default async function ExamCalendarPage() {
 
   const raw = await loadCalendarRaw();
 
-  const rows: Row[] = buildTimeline(raw).map((r) => {
-    const src = raw.find((x) => x.id === r.id)!;
-    // buildTimeline takes ONE officialUrl; this page spans every exam, so
-    // re-derive the tier per row with that exam's own portal.
-    const tier = sourceTier(src.confidence, r.url, src.exam.eligibility?.officialUrl);
-    return { ...r, tier, official: tier === "official", examCode: src.exam.code, examShort: src.exam.shortName, examId: src.exam.id };
-  }).filter((r) => r.daysFromToday >= 0);
+  // buildTimeline takes ONE officialUrl; this page spans every exam, so the
+  // tier is re-derived per row with that exam's own portal — and who stands
+  // behind the row: an AI-made row is at most "reported" (14 Oct 2026,
+  // src/lib/exam-calendar-rows.ts).
+  const rows: Row[] = calendarRows(raw, now);
 
   // Exam days grouped by IST month; one row per (exam, day) — prefer the
   // highest source tier (official > reported > expected).
@@ -270,7 +275,7 @@ export default async function ExamCalendarPage() {
     r.tier === "official" ? (
       <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-800">{t("tracker.official")}</span>
     ) : r.tier === "reported" ? (
-      <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-semibold text-sky-800">{t("tracker.reported")}</span>
+      <span title={reportedGloss(locale)} className="rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-semibold text-sky-800">{t("tracker.reported")}</span>
     ) : (
       <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">{t("tracker.expected")}</span>
     );
@@ -292,6 +297,7 @@ export default async function ExamCalendarPage() {
           {fill(t("calendar.count"), { n: distinctExams, d: HORIZON_DAYS })}
         </p>
         <p className="mt-2 text-xs text-ink-500">{t("tracker.expected.note")}</p>
+        <p className="mt-1 text-xs text-ink-500">{reportedNote(locale)}</p>
 
         {thisWeek.length > 0 && (
           <section className="mt-6">

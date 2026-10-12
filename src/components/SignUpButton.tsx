@@ -141,13 +141,16 @@
 //
 // Never rendered on a Class 1-7 school page or any under-13 context: that
 // rule stays with the callers (pitchAllowedPath / isUnder13SchoolPath /
-// schoolScope), exactly as for SignInLink.
+// schoolScope), exactly as for SignInLink. 14 Oct 2026 (Release 2): one net
+// here too — SignUpButton renders nothing for a kids' exam (its examCode, the
+// page its link returns to, or the page's own exam: src/lib/signin-cta.ts
+// under13ExamGuard), so a box a caller forgot still shows no button.
 
 import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import { SignInLink } from "@/components/SignInLink";
 import { ctaBeacon } from "@/lib/cta-beacon";
-import { callbackOfLoginHref, type SigninSurface } from "@/lib/signin-cta";
+import { callbackOfLoginHref, isKidsExamPath, under13ExamGuard, type SigninSurface } from "@/lib/signin-cta";
 import {
   SIGNUP_EXPLAIN_CTA,
   SIGNUP_EXPLAIN_HOVER_MS,
@@ -681,6 +684,12 @@ export function SignUpButton({
   const failed = useSignUpWordsFailed(locale);
   const text = words?.text ?? "";
   const short = words ? words.short : failed ? "" : SIGNUP_CAPTION_PENDING;
+  // 14 Oct 2026 (Release 2, under-13 rule): never for a kids' exam — the exam
+  // the caller names, the page the sign-in returns to, or the exam the page
+  // says it is about (src/lib/signin-cta.ts under13ExamGuard / isKidsExamPath).
+  // The callers hide their boxes; this is the net under them. After every
+  // hook, so the hook order never changes.
+  if (under13ExamGuard(examCode) || isKidsExamPath(callbackOfLoginHref(href)) || under13ExamGuard(page?.code)) return null;
   return (
     <SignUpShell
       text={text}

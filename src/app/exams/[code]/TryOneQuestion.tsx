@@ -20,7 +20,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { SignUpButton } from "@/components/SignUpButton";
-import { loginHrefFor } from "@/lib/signin-cta";
+import { loginHrefFor, under13ExamGuard } from "@/lib/signin-cta";
 import { signUpReason } from "@/lib/signup-cta-copy";
 
 interface Props {
@@ -135,9 +135,14 @@ export function TryOneQuestion({ examCode, examShortName, topicName, locale, que
                 reads it in its own language, and it is this button's ONE
                 reason (data-su-reason, explain="own") — the caption under
                 the button was a second one. */}
+            {/* 14 Oct 2026 (Release 2, under-13 rule): a kids' exam's hub
+                offers no sign-up — no reason line, no button; the no-sign-in
+                quiz link below stays (src/lib/signin-cta.ts under13ExamGuard). */}
+            {!under13ExamGuard(examCode) && (
             <p data-su-reason className="mt-1 text-xs text-ink-600">
               {signUpReason(locale, "tryOne")}
             </p>
+            )}
             {/* 2 Oct 2026 (founder, standing): the one shared "Sign up with
                 Google" button — Google's white button, the one look
                 everywhere — in the page's language, with the line above as
@@ -147,6 +152,7 @@ export function TryOneQuestion({ examCode, examShortName, topicName, locale, que
                 and the only button — the alternative under it is a small
                 text link. The tooltip opens ABOVE it — it used to cover that
                 link. */}
+            {!under13ExamGuard(examCode) && (
             <SignUpButton
               href={loginHref}
               surface="hub-try-one"
@@ -159,6 +165,7 @@ export function TryOneQuestion({ examCode, examShortName, topicName, locale, que
               className="mt-3"
               beaconProps={{ examCode }}
             />
+            )}
             {/* Lower-friction path — they just answered ONE question; 5 more
                 with no signup is the natural next step for the hesitant. */}
             <Link

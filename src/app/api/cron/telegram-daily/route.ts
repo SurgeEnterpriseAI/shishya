@@ -6,6 +6,12 @@
 // No-ops safely (sent:false) until TELEGRAM_BOT_TOKEN + TELEGRAM_CHANNEL_ID
 // are configured, so it's safe to ship before the channel exists.
 // Auth: Bearer ${CRON_SECRET}. Scheduled in vercel.json.
+//
+// Release 2 (14 Oct 2026): every date's mark comes from dateRowTier
+// (src/lib/official-source.ts) — an AI-made row ("ai-generated…" source) is
+// 📌 reported, never ✅ official, and the legend says what 📌 means: "not yet
+// checked against an official notice". The new-dates list links "official
+// notice" only for a checked official row; the rest say "(reported)".
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -16,7 +22,8 @@ import { REAL_EXAM_SQL, REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
 import { sendTelegramMessage, telegramConfigured, tgEscape, tgUrl, ensureTelegramWebhook } from "@/lib/telegram";
 import { liveTestEmailNotice } from "@/lib/live-test-today";
 import { buildTimeline, fmtDay } from "@/lib/exam-timeline";
-import { sourceTier } from "@/lib/official-source";
+import { dateRowTier } from "@/lib/official-source";
+import { REPORTED_GLOSS } from "@/lib/date-tier-view";
 import { INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
 
 function istDateStr(now = new Date()): string {
@@ -72,14 +79,14 @@ export async function GET(req: Request) {
     // secondary source) · 🟡 expected (estimate — labelled as such).
     // Tier re-derived per row: this list spans many exams, and each
     // exam's own portal widens its gold tier.
-    const tier = sourceTier(src.confidence, r.url, src.exam.eligibility?.officialUrl);
+    const tier = dateRowTier(src.confidence, r.url, src.exam.eligibility?.officialUrl, src.source);
     const mark = tier === "official" ? "✅" : tier === "reported" ? "📌" : "🟡";
     weekLines.push(`${mark} ${tgEscape(fmtDay(r.date))} — <a href="${tgUrl(`/exams/${src.exam.code}/updates`, "channel")}">${tgEscape(src.exam.shortName)}</a>${tier === "expected" ? " (expected)" : ""}`);
     if (weekLines.length >= 6) break;
   }
   const fresh = await prisma
-    .$queryRaw<{ label: string; date: Date; short: string; code: string; url: string | null; officialUrl: string | null }[]>`
-      SELECT d.label, d.date, e."shortName" AS short, e.code, d.url, el."officialUrl"
+    .$queryRaw<{ label: string; date: Date; short: string; code: string; url: string | null; source: string | null; officialUrl: string | null }[]>`
+      SELECT d.label, d.date, e."shortName" AS short, e.code, d.url, d.source, el."officialUrl"
       FROM "ExamImportantDate" d JOIN "Exam" e ON e.id = d."examId"
       LEFT JOIN "ExamEligibility" el ON el."examId" = e.id
       WHERE d."archivedAt" IS NULL AND d.confidence = 'official' AND ${REAL_EXAM_SQL}
@@ -117,7 +124,7 @@ export async function GET(req: Request) {
   }
   if (weekLines.length > 0) {
     lines.push(``);
-    lines.push(`<b>📅 Exam days this week</b> (✅ official · 📌 reported · 🟡 expected)`);
+    lines.push(`<b>📅 Exam days this week</b> (✅ official · 📌 reported — ${REPORTED_GLOSS} · 🟡 expected)`);
     lines.push(...weekLines);
     lines.push(`All dates: ${tgUrl("/exam-calendar", "channel")}`);
   }
@@ -125,11 +132,14 @@ export async function GET(req: Request) {
     lines.push(``);
     // "official notice" link text is gold-tier-only; press/coaching
     // citations link as "as reported" — announced, but say the provenance.
-    lines.push(`<b>🆕 New dates announced</b>`);
+    // 14 Oct 2026: gold also needs a person's check (dateRowTier); an
+    // AI-made row says "(reported)" beside its date. The heading no longer
+    // says "announced": a reported row is not yet checked.
+    lines.push(`<b>🆕 New dates on the tracker</b> (✅ official · 📌 reported — ${REPORTED_GLOSS})`);
     for (const f of fresh) {
-      const gold = sourceTier("official", f.url, f.officialUrl) === "official";
+      const gold = dateRowTier("official", f.url, f.officialUrl, f.source) === "official";
       const link = f.url ? ` · <a href="${f.url}">${gold ? "official notice" : "as reported"}</a>` : "";
-      lines.push(`• ${tgEscape(f.short)} — ${tgEscape(f.label)}: <b>${tgEscape(fmtDay(new Date(f.date)))}</b>${link} · <a href="${tgUrl(`/exams/${f.code}/updates`, "channel")}">tracker</a>`);
+      lines.push(`${gold ? "✅" : "📌"} ${tgEscape(f.short)} — ${tgEscape(f.label)}: <b>${tgEscape(fmtDay(new Date(f.date)))}</b>${gold ? "" : " (reported)"}${link} · <a href="${tgUrl(`/exams/${f.code}/updates`, "channel")}">tracker</a>`);
     }
   }
   lines.push(``);

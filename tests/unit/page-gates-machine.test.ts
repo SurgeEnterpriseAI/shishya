@@ -35,6 +35,7 @@ const raeo: ExamWeekExam = {
         kind: "EXAM",
         confidence: "official",
         url: "https://esb.mp.gov.in/notice.pdf",
+        source: "official-research:test",
       },
     ],
     "https://esb.mp.gov.in",

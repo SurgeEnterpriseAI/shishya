@@ -256,7 +256,7 @@ export function categoryFaq(cat: ExamCategory, list: readonly ExamLike[]): FaqIt
     };
   }
   const parts = announced.map((e) => `${e.shortName} — ${dayLabel(e.nextExam!.day)} (${e.nextExam!.tier})`);
-  return { q, a: `Announced on Shishya's tracker: ${parts.join("; ")}. Official dates come from the conducting body's own site; reported ones from a cited secondary source.` };
+  return { q, a: `Announced on Shishya's tracker: ${parts.join("; ")}. Official dates come from the conducting body's own notice, checked; reported ones are not yet checked against an official notice.` };
 }
 
 /** Sitemap rows for the live category hubs, given the loaded rows. No

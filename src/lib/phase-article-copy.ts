@@ -160,6 +160,11 @@ export interface ExamNightSummary {
   nextStage: boolean;
   /** The public-discussion article renders below the facts. */
   article: boolean;
+  /** The alert box renders. False on a kids' exam (12 Oct 2026, Release 2
+   *  review: src/lib/signin-cta.ts under13ExamGuard; ExamAlertBox renders
+   *  nothing there), so no "free email alerts" / "free alerts" phrase.
+   *  Absent = true (summaries built before 12 Oct 2026). */
+  alerts?: boolean;
 }
 
 function listJoin(parts: string[], and: string = "and"): string {
@@ -180,7 +185,7 @@ function onThisPage(phase: "LIVE" | "REACTIONS", sm: ExamNightSummary, t: PhaseC
   if (sm.nextStage) parts.push(t("phase.holds.nextStage"));
   if (sm.pyq) parts.push(t("phase.holds.pyq"));
   if (sm.article) parts.push(phase === "LIVE" ? t("phase.holds.articleLive") : t("phase.holds.articleReact"));
-  parts.push(t("phase.holds.alerts"));
+  if (sm.alerts !== false) parts.push(t("phase.holds.alerts"));
   return parts;
 }
 
@@ -191,7 +196,7 @@ function titleParts(phase: "LIVE" | "REACTIONS", sm: ExamNightSummary): string {
   if (sm.keyStatus) parts.push(phase === "LIVE" ? "answer key status" : "answer key & result status");
   if (sm.article) parts.push(phase === "LIVE" ? "shift-wise analysis" : "student verdict");
   if (sm.questionPaper) parts.push("official question paper");
-  if (parts.length === 0) parts.push("dates with source tier", "free alerts");
+  if (parts.length === 0) parts.push("dates with source tier", ...(sm.alerts !== false ? ["free alerts"] : []));
   return parts.slice(0, 3).join(", ");
 }
 
@@ -274,7 +279,10 @@ function examNightCopy(
   const dated = claim.dated ?? "";
   const f = (key: StringKey) => fillTemplate(t(key), { exam: s, dated });
   const noDate = f("phase.noTypedDateOf");
-  const holds = fillTemplate(t("phase.onThisPage"), { list: listJoin(onThisPage(phase, sm, t), t("phase.listAnd")) });
+  const held = onThisPage(phase, sm, t);
+  // A kids' exam with nothing else on the page lists nothing (no alert box):
+  // then no "On this page:" sentence at all (12 Oct 2026).
+  const holds = held.length ? fillTemplate(t("phase.onThisPage"), { list: listJoin(held, t("phase.listAnd")) }) : "";
   // With nothing above the article but the facts block, the empty state is
   // not rendered on these routes (hideEmpty); this text is only a fallback.
   const emptyBody = f("phase.night.empty");
@@ -285,7 +293,7 @@ function examNightCopy(
       badgeColor: claim.live ? "bg-rose-100 text-rose-900 border-rose-300" : "bg-ink-100 text-ink-800 border-ink-300",
       label: "Live — exam day",
       crumb: t("phase.label.live"),
-      tagline: `${lead} ${holds}`,
+      tagline: holds ? `${lead} ${holds}` : lead,
       fallbackTitle: claim.live
         ? f("phase.night.live.titleToday")
         : claim.dated
@@ -301,7 +309,7 @@ function examNightCopy(
     badgeColor: "bg-sky-100 text-sky-900 border-sky-300",
     label: "Post-exam reactions",
     crumb: t("phase.label.reactions"),
-    tagline: `${lead} ${holds}`,
+    tagline: holds ? `${lead} ${holds}` : lead,
     fallbackTitle: claim.held
       ? f("phase.night.react.titleHeld")
       : claim.dated
@@ -331,23 +339,26 @@ export function phaseArticleMeta(
   const s = exam.shortName;
   const paper = claim.dated ? ` — ${claim.dated} paper` : "";
   if (summary && (phase === "LIVE" || phase === "REACTIONS")) {
-    const holds = listJoin(onThisPage(phase, summary));
-    const holdsSentence = `On this page: ${holds}.`;
+    const held = onThisPage(phase, summary);
+    const holdsSentence = held.length ? `On this page: ${listJoin(held)}.` : "";
+    const withHolds = (lead: string) => (holdsSentence ? `${lead} ${holdsSentence}` : lead);
     if (phase === "LIVE") {
       const head = claim.live ? `${s} exam today` : `${s} exam day${paper}`;
+      const lead = claim.live ? `${exam.name} is being held today, ${claim.dated}.` : claim.dated ? `${exam.name}, ${claim.dated} paper.` : `${exam.name} exam day.`;
       return {
         title: `${head} — ${titleParts("LIVE", summary)} | Shishya`,
-        description: `${claim.live ? `${exam.name} is being held today, ${claim.dated}.` : claim.dated ? `${exam.name}, ${claim.dated} paper.` : `${exam.name} exam day.`} ${holdsSentence}`,
+        description: withHolds(lead),
         ogTitle: `${s} — ${claim.live ? "exam today" : `exam day${paper}`}`,
-        ogDescription: holdsSentence,
+        ogDescription: holdsSentence || lead,
       };
     }
     const head = claim.held ? `${s} after the paper, ${claim.dated}` : `${s} post-exam${paper}`;
+    const lead = claim.held ? `The ${exam.name} paper on ${claim.dated} has been held.` : claim.dated ? `${exam.name}, ${claim.dated} paper.` : `${exam.name}, after the paper.`;
     return {
       title: `${head} — ${titleParts("REACTIONS", summary)} | Shishya`,
-      description: `${claim.held ? `The ${exam.name} paper on ${claim.dated} has been held.` : claim.dated ? `${exam.name}, ${claim.dated} paper.` : `${exam.name}, after the paper.`} ${holdsSentence}`,
+      description: withHolds(lead),
       ogTitle: `${s} — ${claim.held ? "after the paper" : `post-exam${paper}`}`,
-      ogDescription: holdsSentence,
+      ogDescription: holdsSentence || lead,
     };
   }
   if (phase === "LIVE") {

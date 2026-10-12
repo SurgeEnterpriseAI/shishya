@@ -4,7 +4,13 @@ export default function MockLoading() {
   return (
     <main className="min-h-screen bg-ink-50/40">
       <div className="nav-progress" aria-hidden />
-      <Header />
+      {/* 12 Oct 2026 (Release 2 review, round 2; under-13 rule): the
+          skeleton cannot know the mock's exam, and a guest on a kids' exam's
+          mock is about to be sent to its no-sign-in quiz, so no guest sign-up
+          button here, for anyone. Members' header links are unchanged (the
+          signed-in branch ignores childSafe); the Ask chip and the
+          post-sign-in strips wait for the page's own header. */}
+      <Header childSafe />
       <section className="container-prose py-8">
         <div className="skel h-4 w-44" />
         <div className="skel mt-2 h-6 w-72" />

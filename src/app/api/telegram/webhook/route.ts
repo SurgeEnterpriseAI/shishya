@@ -34,8 +34,9 @@ import {
 import { checkRateLimit } from "@/lib/rate-limit";
 import { contextualExamFilter } from "@/lib/exam-aliases";
 import { buildTimeline, fmtDay, stageOf, upcomingOfKind, latestOfKind } from "@/lib/exam-timeline";
-import { sourceTier } from "@/lib/official-source";
-import { countdownQualifierWord } from "@/lib/date-tier-view";
+import { dateRowTier } from "@/lib/official-source";
+import { REPORTED_GLOSS, countdownQualifierWord } from "@/lib/date-tier-view";
+import { under13ExamGuard } from "@/lib/signin-cta";
 import { liveTestEmailNotice } from "@/lib/live-test-today";
 
 type Exam = { id: string; code: string; name: string; shortName: string; category: string; state: string | null; candidatesPerYear: number | null };
@@ -156,8 +157,9 @@ async function examCard(exam: Exam): Promise<{ text: string; buttons: InlineButt
   const line = (label: string, kind: Parameters<typeof upcomingOfKind>[1]) => {
     const r = upcomingOfKind(timeline, kind) ?? latestOfKind(timeline, kind);
     if (!r) return `• ${label}: not announced yet`;
-    // official = conducting-body notice · reported = per press reports ·
-    // expected = estimate (the footer explains "expected").
+    // official = conducting-body notice, checked by a person · reported =
+    // not yet checked against an official notice (press, or AI-made) ·
+    // expected = estimate (the footer explains both).
     const tag = r.tier === "official" ? "official" : r.tier === "reported" ? "reported" : "expected";
     // A passed estimate was never confirmed — it must not read as "done".
     const when = r.displayStatus === "passed-estimate"
@@ -186,12 +188,15 @@ async function examCard(exam: Exam): Promise<{ text: string; buttons: InlineButt
     line("Answer key", "ANSWER_KEY"),
     line("Result", "RESULT"),
     news ? `\n🆕 ${tgEscape(news.title)}${news.url ? ` — <a href="${news.url}">source</a>` : ""}` : "",
-    `\n<i>Reported = per press reports · expected = estimate from previous cycles, not an announcement. Always confirm on the official site.</i>`,
+    `\n<i>Reported = ${REPORTED_GLOSS} · expected = estimate from previous cycles, not an announcement. Always confirm on the official site.</i>`,
   ]
     .filter(Boolean)
     .join("\n");
   const buttons: InlineButton[][] = [
-    [{ text: "📅 Full tracker", url: tgUrl(`/exams/${exam.code}/updates`) }, { text: "🔔 Get alerts", url: tgUrl(`/exams/${exam.code}/updates#alerts`) }],
+    // 14 Oct 2026 (Release 2, under-13 rule): a kids' exam's tracker has no alert box — no button to it.
+    under13ExamGuard(exam.code)
+      ? [{ text: "📅 Full tracker", url: tgUrl(`/exams/${exam.code}/updates`) }]
+      : [{ text: "📅 Full tracker", url: tgUrl(`/exams/${exam.code}/updates`) }, { text: "🔔 Get alerts", url: tgUrl(`/exams/${exam.code}/updates#alerts`) }],
     [{ text: `📝 Free ${exam.shortName} mock`, url: tgUrl(`/exams/${exam.code}`) }, { text: "⚡ 5-Q quiz, no login", url: tgUrl(`/exams/${exam.code}/quiz`) }],
   ];
   return { text, buttons };
@@ -246,15 +251,17 @@ async function sendCalendar(chatId: number | string) {
     const key = `${src.exam.code}:${r.day}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    // ✅ official · 📌 reported (announced via press) · 🟡 expected.
-    // Tier per row: each exam's own portal widens its gold tier.
-    const tier = sourceTier(src.confidence, r.url, src.exam.eligibility?.officialUrl);
+    // ✅ official · 📌 reported (via press, or AI-made and not yet checked
+    // against an official notice — 14 Oct 2026) · 🟡 expected.
+    // Tier per row: each exam's own portal widens its gold tier; dateRowTier
+    // never calls an AI-made row official.
+    const tier = dateRowTier(src.confidence, r.url, src.exam.eligibility?.officialUrl, src.source);
     const mark = tier === "official" ? "✅" : tier === "reported" ? "📌" : "🟡";
     lines.push(`${mark} <b>${tgEscape(fmtDay(r.date))}</b> — ${tgEscape(src.exam.shortName)}${tier === "expected" ? " (expected)" : ""}`);
     if (lines.length > 16) break;
   }
   if (lines.length === 2) lines.push(`No dated exams in this window.`);
-  lines.push(``, `✅ official · 📌 reported · 🟡 expected. Full calendar: ${tgUrl("/exam-calendar")}`);
+  lines.push(``, `✅ official · 📌 reported — ${REPORTED_GLOSS} · 🟡 expected. Full calendar: ${tgUrl("/exam-calendar")}`);
   await sendTelegramMessage({ chatId, text: lines.join("\n"), disablePreview: true });
 }
 

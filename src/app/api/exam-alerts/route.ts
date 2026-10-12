@@ -13,6 +13,7 @@ import { prisma } from "@/lib/db/prisma";
 import { realExamKey } from "@/lib/db/exam-scope";
 import { checkRateLimit, rateLimited } from "@/lib/rate-limit";
 import { normaliseEmail } from "@/lib/exam-alerts";
+import { under13ExamGuard } from "@/lib/signin-cta";
 
 export const runtime = "nodejs";
 
@@ -32,6 +33,12 @@ export async function POST(req: NextRequest) {
     body = Body.parse(await req.json());
   } catch {
     return NextResponse.json({ error: "invalid request" }, { status: 400 });
+  }
+  // 14 Oct 2026 (Release 2, under-13 rule): no email is taken for a kids'
+  // exam (SOF / Silverzone / NSTSE, PRIL, ZIO, JNVST) — the page shows no
+  // box; this refuses a direct POST before anything is read or stored.
+  if (under13ExamGuard(body.examCode)) {
+    return NextResponse.json({ error: "Alerts are not offered for this exam." }, { status: 403 });
   }
 
   const session = await auth().catch(() => null);

@@ -10,6 +10,14 @@
 // truth-lint parser (src/lib/truth-lint.ts parseHubDates) counts the <p>
 // tags of each <li> to tell "no notes" from "notes it could not read".
 //
+// 14 Oct 2026 (Release 2): a Reported badge carries what the word means as
+// its title — "not yet checked against an official notice"
+// (src/lib/date-tier-view.ts reportedGloss): an AI-made date is never
+// "official" any more (src/lib/official-source.ts dateRowTier), and no person
+// has matched a reported date to the body's notice. Most announced rows are
+// reported now, so the visible sentence is one legend line under the list
+// (reportedNote), not a repeat on every row.
+//
 // Server component: no state, no client JS.
 
 import { dateTierView } from "@/lib/date-tier-view";
@@ -20,14 +28,22 @@ export interface HubDateTierProps {
   row: { tier: SourceTier; url?: string | null } | null | undefined;
   /** The badge words in the page's language: t("tracker.official") etc. */
   labels: Readonly<Record<SourceTier, string>>;
+  /** The Reported badge's title, in the page's language:
+   *  reportedGloss(locale). Optional; no title without it. */
+  reportedNote?: string;
 }
 
-export function HubDateTier({ row, labels }: HubDateTierProps) {
+export function HubDateTier({ row, labels, reportedNote }: HubDateTierProps) {
   if (!row) return null;
   const v = dateTierView(row);
   return (
     <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-ink-500">
-      <span className={`rounded-full px-2 py-0.5 font-semibold ${v.badgeClass}`}>{labels[v.tier]}</span>
+      <span
+        className={`rounded-full px-2 py-0.5 font-semibold ${v.badgeClass}`}
+        title={v.tier === "reported" && reportedNote ? reportedNote : undefined}
+      >
+        {labels[v.tier]}
+      </span>
       {v.sourceDisplay === "link" && v.sourceUrl && (
         <a href={v.sourceUrl} target="_blank" rel="noopener noreferrer" className="font-medium text-saffron-700 hover:text-saffron-800">
           {v.sourceHost} ↗

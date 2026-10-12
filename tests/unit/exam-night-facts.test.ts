@@ -51,12 +51,13 @@ function examRow(id: string, day: string, over: Partial<TimelineInput> = {}): Ti
     confidence: "official",
     url: "https://ssc.gov.in/notice/cgl-2026",
     notes: null,
+    source: "official-research:test",
     ...over,
   };
 }
 
 function row(id: string, kind: string, day: string, over: Partial<TimelineInput> = {}): TimelineInput {
-  return { id, label: kind, date: d(day), isExamDay: false, kind, confidence: "official", url: "https://ssc.gov.in/notice/x", notes: null, ...over };
+  return { id, label: kind, date: d(day), isExamDay: false, kind, confidence: "official", url: "https://ssc.gov.in/notice/x", notes: null, source: "official-research:test", ...over };
 }
 
 function input(over: Partial<ExamNightInput> = {}): ExamNightInput {

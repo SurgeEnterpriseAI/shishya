@@ -56,7 +56,12 @@ export interface NoPracticeCopy {
   factsNote: string;
   /** Without official research, when the body's site is linked. */
   siteNote: string;
-  /** Both cases: the dates are announced ones, each with its tier. */
+  /** Both cases: no estimates are listed in this box, and each date has its
+   *  tier (12 Oct 2026, Release 2 review: never "announced" — a Reported
+   *  date may be one our AI found that nobody has checked). Round 2, same
+   *  day: "in this box", because the hub's Important dates list on the
+   *  same page may show Expected rows; each language names the tier with
+   *  the word the box prints (ew.tier.*). */
   datesNote: string;
   conductedBy: string;
   pattern: string;
@@ -90,7 +95,9 @@ export const NO_PRACTICE_COPY: Readonly<Record<NoPracticeLocale, NoPracticeCopy>
     keyFactsTitle: "{exam} — key facts",
     factsNote: "Facts are read on the conducting body's own pages.",
     siteNote: "The conducting body's site is linked.",
-    datesNote: "Dates are announced ones only, each with its tier: official (the body's own notice) or reported (a secondary source).",
+    // 14 Oct 2026 (Release 2 review): "reported" is not yet checked against an
+    // official notice (it may be a date our AI found) — hi / te new, for founder review.
+    datesNote: "No estimated dates are listed in this box; each date shows its tier: official (the body's own notice, checked) or reported (not yet checked against an official notice).",
     conductedBy: "Conducting body",
     pattern: "Exam pattern",
     readOn: "read {date}",
@@ -115,7 +122,7 @@ export const NO_PRACTICE_COPY: Readonly<Record<NoPracticeLocale, NoPracticeCopy>
     keyFactsTitle: "{exam} — मुख्य जानकारी",
     factsNote: "जानकारी परीक्षा कराने वाली संस्था के अपने पेजों से पढ़ी गई है।",
     siteNote: "परीक्षा कराने वाली संस्था की साइट का लिंक दिया गया है।",
-    datesNote: "तारीख़ें सिर्फ़ घोषित वाली हैं, हर एक के साथ उसका स्तर: आधिकारिक (संस्था का अपना नोटिस) या रिपोर्टेड (दूसरा स्रोत)।",
+    datesNote: "इस बॉक्स में कोई अनुमानित तारीख़ नहीं दी गई है; हर तारीख़ के साथ उसका स्तर है: आधिकारिक (संस्था का अपना नोटिस, जाँचा हुआ) या रिपोर्टेड (अभी किसी आधिकारिक नोटिस से मिलाया नहीं गया)।",
     conductedBy: "परीक्षा कराने वाली संस्था",
     pattern: "परीक्षा पैटर्न",
     readOn: "{date} को पढ़ा गया",
@@ -140,7 +147,7 @@ export const NO_PRACTICE_COPY: Readonly<Record<NoPracticeLocale, NoPracticeCopy>
     keyFactsTitle: "{exam} — ముఖ్య వివరాలు",
     factsNote: "వివరాలు పరీక్ష నిర్వహించే సంస్థ సొంత పేజీల నుంచి చదివినవి.",
     siteNote: "పరీక్ష నిర్వహించే సంస్థ సైట్ లింక్ ఇచ్చాం.",
-    datesNote: "తేదీలు ప్రకటించినవే, ప్రతిదానికి దాని స్థాయి: అధికారిక (సంస్థ సొంత నోటీసు) లేదా రిపోర్టెడ్ (మరో మూలం).",
+    datesNote: "ఈ బాక్స్‌లో అంచనా తేదీలు లేవు; ప్రతి తేదీకి దాని స్థాయి ఉంది: అధికారిక (సంస్థ సొంత నోటీసు, సరిచూసినది) లేదా నివేదిత (ఇంకా అధికారిక నోటీసుతో సరిచూడలేదు).",
     conductedBy: "పరీక్ష నిర్వహించే సంస్థ",
     pattern: "పరీక్ష విధానం",
     readOn: "{date}న చదివినది",

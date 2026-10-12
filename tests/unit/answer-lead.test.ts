@@ -150,7 +150,7 @@ describe("hubLead — the title's decision, answer first", () => {
   it("a reported date carries its tier and host", () => {
     const e: G3Exam = {
       ...G3_EXAMS.JEE_MAIN,
-      rows: [{ id: "x", label: "JEE Main 2027 Session 1 exam", date: "2027-01-22T00:00:00.000Z", isExamDay: true, kind: "EXAM", confidence: "official", url: "https://www.adda247.com/jee" }],
+      rows: [{ id: "x", label: "JEE Main 2027 Session 1 exam", date: "2027-01-22T00:00:00.000Z", isExamDay: true, kind: "EXAM", confidence: "official", url: "https://www.adda247.com/jee", source: "official-research:test" }],
     };
     expect(hubFor(e).lead).toContain("JEE Main 2027 Session 1 exam: 22 Jan 2027 (reported — adda247.com).");
   });

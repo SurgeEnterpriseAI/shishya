@@ -8,11 +8,11 @@ const exam = { code: "SSC_CGL", shortName: "SSC CGL", name: "SSC Combined Gradua
 // 12 Sep 2026, 11:30 IST — the eve of an expected 13 Sep exam day.
 const now = new Date("2026-09-12T06:00:00Z");
 const rows = [
-  { id: "d1", label: "Tier 1", date: "2026-09-13T00:00:00.000Z", isExamDay: true, kind: "EXAM", confidence: "expected", url: null },
-  { id: "d2", label: "Answer key", date: "2026-09-20T00:00:00.000Z", isExamDay: false, kind: "ANSWER_KEY", confidence: "official", url: "https://ssc.gov.in/key" },
-  { id: "d3", label: "Result", date: "2026-11-01T00:00:00.000Z", isExamDay: false, kind: "RESULT", confidence: null, url: null },
+  { id: "d1", label: "Tier 1", date: "2026-09-13T00:00:00.000Z", isExamDay: true, kind: "EXAM", confidence: "expected", url: null, source: null },
+  { id: "d2", label: "Answer key", date: "2026-09-20T00:00:00.000Z", isExamDay: false, kind: "ANSWER_KEY", confidence: "official", url: "https://ssc.gov.in/key", source: "official-research:test" },
+  { id: "d3", label: "Result", date: "2026-11-01T00:00:00.000Z", isExamDay: false, kind: "RESULT", confidence: null, url: null, source: null },
   // Untyped legacy seed row — must never enter the calendar.
-  { id: "legacy", label: "Tier 1 exam date", date: "2026-09-14T00:00:00.000Z", isExamDay: true, kind: null, confidence: null, url: null },
+  { id: "legacy", label: "Tier 1 exam date", date: "2026-09-14T00:00:00.000Z", isExamDay: true, kind: null, confidence: null, url: null, source: null },
 ];
 
 const octets = (s: string) => new TextEncoder().encode(s).length;
@@ -40,8 +40,8 @@ describe("exam-week .ics", () => {
   it("marks only an official row CONFIRMED — a reported row is TENTATIVE (3 Oct 2026)", () => {
     // An exam day cited only to a coaching site: announced, but not by the body.
     const reported = [
-      { id: "r1", label: "Tier 1", date: "2026-09-13T00:00:00.000Z", isExamDay: true, kind: "EXAM", confidence: "official", url: "https://testbook.com/ssc-cgl-exam-date" },
-      { id: "r2", label: "Answer key", date: "2026-09-20T00:00:00.000Z", isExamDay: false, kind: "ANSWER_KEY", confidence: "official", url: "https://ssc.gov.in/key" },
+      { id: "r1", label: "Tier 1", date: "2026-09-13T00:00:00.000Z", isExamDay: true, kind: "EXAM", confidence: "official", url: "https://testbook.com/ssc-cgl-exam-date", source: "official-research:test" },
+      { id: "r2", label: "Answer key", date: "2026-09-20T00:00:00.000Z", isExamDay: false, kind: "ANSWER_KEY", confidence: "official", url: "https://ssc.gov.in/key", source: "official-research:test" },
     ];
     const events = examWeekCalendarRows(reported, "https://ssc.gov.in", now);
     expect(events.map((r) => [r.id, r.tier])).toEqual([

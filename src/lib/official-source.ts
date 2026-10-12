@@ -115,10 +115,14 @@ export function isOfficialSource(url: string | null | undefined, officialUrl?: s
   return false;
 }
 
-/** Tier of one date row. `confidence`/`url` come straight from the DB;
- *  rows written before the tracker fields existed classify as expected.
+/** Tier a citation alone supports. `confidence`/`url` come straight from the
+ *  DB; rows written before the tracker fields existed classify as expected.
  *  26 Sep 2026: a row cited only to a denylisted host (isUntrustedSource)
- *  is "expected" — nothing trustworthy announced it. */
+ *  is "expected" — nothing trustworthy announced it.
+ *  14 Oct 2026: this reads the citation only. A tracker DATE ROW
+ *  (ExamImportantDate) takes its tier from dateRowTier() below, which also
+ *  asks who stands behind the row; sourceTier() stays for citations that are
+ *  not date rows (cutoff sources, news links, a URL check). */
 export function sourceTier(
   confidence: string | null | undefined,
   url: string | null | undefined,
@@ -128,6 +132,75 @@ export function sourceTier(
   if (!announced) return "expected";
   if (isUntrustedSource(url)) return "expected";
   return isOfficialSource(url, officialUrl) ? "official" : "reported";
+}
+
+// ── Who stands behind a date row (Release 2, 14 Oct 2026) ────────────────
+// Why: the refresh generator — an AI model — writes its dates with source
+// "ai-generated:claude" (GEN_SOURCE, src/lib/exam-data-writer.ts) and the URL
+// it cited. sourceTier() reads only the citation, so every AI-made row that
+// cited a conducting body's site was labelled "official": 547 live rows on
+// 10 Oct 2026 (of 1,640 AI rows stored with confidence "official"), 52 of
+// them dated in the next 180 days (SSC CGL 30 Oct, TNPSC Group 2 1 Nov, KPSC
+// KAS 15 Nov, CAT 29 Nov, SSC CHSL 30 Nov, 24 on SOF / Silverzone olympiads
+// — scripts/measure-ai-official-dates.ts), though no person had matched any
+// of them to the notice. Founder rule: nothing is "official" unless a person
+// matched it to an official notice.
+//
+// So a date ROW is "official" only when its citation is official AND its
+// provenance (ExamImportantDate.source) is one of the CHECKED tags below —
+// an allowlist, so anything else fails closed:
+//   official-research:<day>, official-calendar:<cycle> — written by the
+//     person-run fix-tracker-dates / import-annual-calendars /
+//     apply-official-date-checks scripts, each date read on the body's own
+//     page;
+//   official-watch — our own fetch read the link on the body's page (a
+//     released answer key or result only; src/lib/answer-key-watch.ts).
+// An AI-made row ("ai-generated…"), a row with no provenance, a bare URL in
+// the source column (the 24 May 2026 bulk seed wrote those; no person
+// checked them), any other tag, and a row whose provenance the caller did not
+// load are at most "reported" — "not yet checked against an official notice"
+// (src/lib/date-tier-view.ts REPORTED_GLOSS). Fails closed: a loader that
+// forgets the source column shows "reported", never "official".
+//
+// A person marks a row checked by giving it a checked provenance tag (the
+// scripts' sticky PROVENANCE), never by editing confidence. On 10 Oct 2026
+// every live official row that was not AI-made carried one of the tags above
+// (164 rows: 114 official-research, 45 official-calendar, 5 official-watch);
+// none had a NULL or URL source.
+
+/** True when a date row's provenance says an AI model wrote it: any
+ *  "ai-generated…" tag (GEN_SOURCE, SUPPRESSED_SOURCE). Case-insensitive. */
+export function isAiMadeProvenance(source: string | null | undefined): boolean {
+  return typeof source === "string" && /^ai-generated(?::|$)/i.test(source.trim());
+}
+
+/** The provenance tags a person-run step writes (see above). "official-watch"
+ *  is OFFICIAL_WATCH_SOURCE (src/lib/exam-timeline.ts, which imports this
+ *  file — so the literal). A new person-run tag is added here on purpose. */
+const CHECKED_PROVENANCE_RE = /^(?:official-research:\S+|official-calendar:\S+|official-watch)$/;
+
+/** True when a person or a person-run step stands behind a date row: its
+ *  provenance is one of the checked tags (CHECKED_PROVENANCE_RE). `undefined`
+ *  (the caller did not select the column), null, an AI tag, a bare URL and any
+ *  other tag are not checked. */
+export function isCheckedProvenance(source: string | null | undefined): boolean {
+  return typeof source === "string" && !isAiMadeProvenance(source) && CHECKED_PROVENANCE_RE.test(source.trim());
+}
+
+/** Tier of one tracker DATE ROW: the citation's tier (sourceTier), capped at
+ *  "reported" unless the row's provenance is a checked one
+ *  (isCheckedProvenance). Every surface that prints a date row's tier, or
+ *  decides from it (gold badge, "official notice" link text, Event JSON-LD,
+ *  a bare countdown), takes it from here. All four arguments are required on
+ *  purpose — pass the row's `source` column, even when it is null. */
+export function dateRowTier(
+  confidence: string | null | undefined,
+  url: string | null | undefined,
+  officialUrl: string | null | undefined,
+  provenance: string | null | undefined,
+): SourceTier {
+  const tier = sourceTier(confidence, url, officialUrl);
+  return tier === "official" && !isCheckedProvenance(provenance) ? "reported" : tier;
 }
 
 // ── Passed estimates (24 Sep 2026) ───────────────────────────────────────

@@ -156,7 +156,7 @@ describe("TimelineRow.verified", () => {
       { ...row({ date: day("2026-09-22") }), id: "a" },
       { ...row({ date: day("2026-09-22"), source: "ai-generated:claude" }), id: "b" },
       { ...row({ date: day("2026-09-22"), url: "https://testbook.com/nda-key" }), id: "c" },
-    ].map((r) => ({ ...r, date: r.date as Date }));
+    ].map((r) => ({ ...r, date: r.date as Date, source: r.source ?? null }));
     const t = buildTimeline(rows, NOW, PORTAL);
     expect(Object.fromEntries(t.map((r) => [r.id, r.verified]))).toEqual({ a: true, b: false, c: false });
   });
@@ -168,7 +168,7 @@ describe("TimelineRow.verified", () => {
       { ...row({ date: day("2026-09-22"), notes: seen }), id: "a" },
       { ...row({ date: day("2026-09-22") }), id: "b" },
       { ...row({ date: day("2026-09-22"), notes: seen, source: "ai-generated:claude" }), id: "c" },
-    ].map((r) => ({ ...r, date: r.date as Date }));
+    ].map((r) => ({ ...r, date: r.date as Date, source: r.source ?? null }));
     const t = buildTimeline(rows, NOW, PORTAL);
     expect(Object.fromEntries(t.map((r) => [r.id, r.firstSeen]))).toEqual({ a: true, b: false, c: false });
   });

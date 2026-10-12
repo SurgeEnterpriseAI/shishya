@@ -56,7 +56,7 @@ import { fetchSignedIn } from "@/lib/session-hint";
 import { clientUiLocale, type CopyLocale } from "@/lib/ui-locale-copy";
 import { mockStartCopy } from "@/lib/quiz-entry-copy";
 import { SignUpButton } from "@/components/SignUpButton";
-import { hubAutoStart, loginHrefFor, practiceDoorCallback, practiceDoorInline, signinBeacon, signinDoorShownBeacon } from "@/lib/signin-cta";
+import { hubAutoStart, kidsPracticeHref, loginHrefFor, practiceDoorCallback, practiceDoorInline, signinBeacon, signinDoorShownBeacon, under13ExamGuard } from "@/lib/signin-cta";
 import { PracticeSignUpDoor } from "./PracticeSignUpDoor";
 
 /** The signed-out hub box's sign-up button (16 Sep 2026: it was the one hub
@@ -101,6 +101,10 @@ export function HubSignInLink({
   text?: string;
   short?: string;
 }) {
+  // 14 Oct 2026 (Release 2, under-13 rule): no sign-up on a kids' exam's hub
+  // (src/lib/signin-cta.ts under13ExamGuard). The box keeps its practice text
+  // and the no-sign-in quiz beside this slot.
+  if (under13ExamGuard(examCode)) return null;
   return <SignUpButton href={href} surface="hub-box" locale={locale} exam={exam} examCode={examCode} text={text} short={short} side="top" block className="sm:w-auto" beaconProps={{ examCode }} />;
 }
 
@@ -184,7 +188,13 @@ export function StartMockButton({
           setBusy(false);
           return;
         }
-        // A kids' exam hub (SOF / Silverzone / NSTSE, JNVST): the /login redirect, as before.
+        // 14 Oct 2026 (Release 2, under-13 rule): a kids' exam asks no one to
+        // sign in — the guest gets the exam's no-sign-in quiz instead.
+        if (under13ExamGuard(examCode)) {
+          window.location.href = kidsPracticeHref(examCode);
+          return;
+        }
+        // A school class container: the /login redirect, as before.
         signinBeacon("hub-start-401", { examCode, kind, via: "login" });
         window.location.href = loginHrefFor(practiceDoorCallback("hub-start-401", examCode), "hub-start-401");
         return;

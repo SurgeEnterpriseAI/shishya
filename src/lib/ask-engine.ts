@@ -53,7 +53,7 @@ import { ledgerFeature, withReserve } from "@/lib/ai/reserve";
 import { resolveAliases } from "@/lib/exam-aliases";
 import { GATES_CLOSED, examPageGates } from "@/lib/exam-page-gates";
 import { askAgeSummary } from "@/lib/page-gates-copy";
-import { sourceTier } from "@/lib/official-source";
+import { dateRowTier } from "@/lib/official-source";
 import { resolveQuery } from "@/lib/search/resolve";
 import { DIRECT_MIN, type PageLink, type Resolution, type SearchIndex, type SearchNotice } from "@/lib/search/types";
 import { PAGE_TOOLS, examPages, findPages, looseMatches, pageFacts, searchTopics } from "@/lib/search/ask-tools";
@@ -209,7 +209,7 @@ async function getExamDetails(input: { code: string }, ctx: ToolCtx | null) {
   if (!e) return { error: "exam not found — use search_exams or find_pages first" };
   const [dates, results, links] = await Promise.all([
     prisma.$queryRaw<any[]>`
-      SELECT label, date, confidence, url FROM "ExamImportantDate"
+      SELECT label, date, confidence, url, source FROM "ExamImportantDate"
       WHERE "examId" = ${e.id} AND "archivedAt" IS NULL AND date > NOW() - INTERVAL '30 days'
       ORDER BY date ASC LIMIT 6`,
     prisma.$queryRaw<any[]>`
@@ -235,14 +235,15 @@ async function getExamDetails(input: { code: string }, ctx: ToolCtx | null) {
     cutoffGuidance: e.cutoff ? String(e.cutoff).slice(0, 1200) : null,
     // 24 Sep 2026: each date carries its tier (same rule as the tracker), and a
     // passed estimate is dropped — it was never announced and its day is gone.
+    // 14 Oct 2026: dateRowTier — an AI-made row is never OFFICIAL.
     upcomingDates: dates.flatMap((d) => {
-      const tier = sourceTier(d.confidence, d.url, e.officialUrl);
+      const tier = dateRowTier(d.confidence, d.url, e.officialUrl, d.source);
       if (tier === "expected" && d.date.getTime() < Date.now()) return [];
       const tag =
         tier === "official"
           ? "OFFICIAL (announced by the conducting body)"
           : tier === "reported"
-            ? "REPORTED by a secondary source, not yet on the official site"
+            ? "REPORTED — not yet checked against an official notice; say so with the date"
             : "EXPECTED — Shishya's estimate, NOT announced; never state it as the date";
       return [`${d.date.toISOString().slice(0, 10)}: ${d.label} [${tag}]`];
     }),

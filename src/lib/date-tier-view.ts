@@ -92,6 +92,71 @@ export function countdownQualifierWord(tier: SourceTier): "reported" | "expected
   return tier === "official" ? null : tier;
 }
 
+// ── What "reported" means (Release 2, 14 Oct 2026) ─────────────────────
+// A reported date is one no person has matched to the conducting body's
+// notice: cited to a news or coaching site, or written by our AI generator
+// and not yet checked (src/lib/official-source.ts dateRowTier — AI-made rows
+// are never "official"). The tier word stays "Reported"; these say what it
+// means. hi / te are new on 14 Oct 2026 — for founder review.
+
+export type GlossLocale = "en" | "hi" | "te";
+
+/** The plain meaning, in English — for the surfaces with no dictionary
+ *  (mails, the Telegram bot, context.md, llms-full.txt). */
+export const REPORTED_GLOSS = "not yet checked against an official notice";
+
+const REPORTED_GLOSS_BY_LOCALE: Readonly<Record<GlossLocale, string>> = {
+  en: REPORTED_GLOSS,
+  hi: "अभी किसी आधिकारिक नोटिस से मिलाया नहीं गया",
+  te: "ఇంకా అధికారిక నోటీసుతో సరిచూడలేదు",
+};
+
+/** The legend line under a list of dated rows. */
+const REPORTED_NOTE_BY_LOCALE: Readonly<Record<GlossLocale, string>> = {
+  en: "Reported dates are not yet checked against an official notice. Confirm on the official website before you act.",
+  hi: "रिपोर्टेड तारीखें अभी किसी आधिकारिक नोटिस से मिलाई नहीं गई हैं। कुछ भी करने से पहले आधिकारिक वेबसाइट पर पुष्टि करें।",
+  te: "నివేదిత తేదీలను ఇంకా అధికారిక నోటీసుతో సరిచూడలేదు. ఏదైనా చేసే ముందు అధికారిక వెబ్‌సైట్‌లో నిర్ధారించుకోండి.",
+};
+
+const glossLocale = (locale: string | null | undefined): GlossLocale => (locale === "hi" || locale === "te" ? locale : "en");
+
+/** "not yet checked against an official notice" in the page's language
+ *  (en for any other UI language) — beside a Reported badge. */
+export function reportedGloss(locale: string | null | undefined): string {
+  return REPORTED_GLOSS_BY_LOCALE[glossLocale(locale)];
+}
+
+/** The legend sentence for a date list that may hold reported rows. */
+export function reportedNote(locale: string | null | undefined): string {
+  return REPORTED_NOTE_BY_LOCALE[glossLocale(locale)];
+}
+
+/** The words after the coach intake's "2 · Exam date" for a date prefilled
+ *  from the tracker (src/app/coach/CoachIntake.tsx): never "official" unless
+ *  the row is official tier — it said "from the official calendar" for every
+ *  row, AI-made estimates included, until 14 Oct 2026. English (the intake is). */
+export function coachPrefillDateNote(opt: { nextDate: string | null; nextDateTier?: SourceTier | null } | undefined): string {
+  if (!opt?.nextDate) return "";
+  if (opt.nextDateTier === "official") return "(from the official notice — confirm or change)";
+  if (opt.nextDateTier === "reported") return "(reported, not yet checked against an official notice — confirm or change)";
+  if (opt.nextDateTier === "expected") return "(expected — an estimate, not announced; confirm or change)";
+  return "(from our exam calendar — confirm or change)";
+}
+
+/** The per-exam context.md "Key dates" heading (src/app/exams/[code]/
+ *  context.md/route.ts). truth-lint (src/lib/truth-lint.ts) reads the rows
+ *  under "## Key dates", so the heading keeps that start. */
+export const CONTEXT_KEY_DATES_HEADING = `## Key dates — every tracker row from 120 days back to 365 days ahead (OFFICIAL = conducting body's notice linked and checked — by a person, or by our own read of the body's page · REPORTED = ${REPORTED_GLOSS} (a secondary source, or a date our AI found), source cited · expected = estimate from previous cycles, NOT announced; an estimate whose date has passed is not listed here)`;
+
+/** One context.md key-dates row's tag: "OFFICIAL, notice: {url}",
+ *  "REPORTED (not yet checked against an official notice; via {host}): {url}"
+ *  or "expected". truth-lint's CONTEXT_ROW_RE reads the first word. */
+export function contextDateTag(r: { tier: SourceTier; url?: string | null }): string {
+  if (r.tier === "official") return `OFFICIAL, notice: ${r.url}`;
+  if (r.tier === "reported") return `REPORTED (${REPORTED_GLOSS}; via ${sourceHostLabel(r.url ?? "")}): ${r.url}`;
+  return "expected";
+}
+
 /** The exam-alerts reminder for an exam day within 3 days (src/app/api/cron/
  *  exam-alerts/route.ts — the mail subject and the phone alert's title):
  *  "Exam in 2 days (reported) — PET 2026 exam - Day 1"; bare only for an

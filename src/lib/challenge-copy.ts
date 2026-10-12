@@ -26,12 +26,17 @@ export const CHALLENGE_I18N_KEYS = [
   "challenge.card.making",
   "challenge.card.fine",
   "challenge.card.fineName",
+  // 12 Oct 2026 (Release 2 review, round 2): a kids' exam, where a friend's
+  // score is never sent back (src/lib/signin-cta.ts under13ExamGuard).
+  "challenge.card.fineNoReplies",
+  "challenge.card.fineNameNoReplies",
   "challenge.card.error",
   "challenge.card.notEnough", // a 422 from a mock with too few playable questions (16 Sep 2026)
   "challenge.card.errorNet",
   "challenge.share.ready",
   "challenge.share.again",
   "challenge.share.desc",
+  "challenge.share.descNoReplies", // a kids' exam (12 Oct 2026, Release 2 review, round 2)
   "challenge.share.whatsapp",
   "challenge.share.copy",
   "challenge.share.copied",

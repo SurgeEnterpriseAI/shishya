@@ -1123,7 +1123,8 @@ export function groupReleases<T>(
 // ── due set ──────────────────────────────────────────────────────────────
 
 export interface TrackerRowLite extends TimelineInput {
-  source?: string | null;
+  /** Required (14 Oct 2026): buildTimeline's tier reads it (dateRowTier). */
+  source: string | null;
 }
 
 export interface DueExamInput {

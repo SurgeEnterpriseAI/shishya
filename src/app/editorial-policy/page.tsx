@@ -97,9 +97,10 @@ export default function EditorialPolicyPage() {
         <h2 className="mt-6 text-lg font-semibold text-ink-900">Official, reported or expected — always labelled</h2>
         <p className="mt-2">
           On every exam tracker, a date is marked <b>Official</b> only when it is cited from the
-          conducting body&apos;s own site — the link is right there. A date that was announced but
-          is cited through a secondary source, such as a news or coaching site, is marked{" "}
-          <b>Reported</b>: real, but worth confirming. Anything else is marked <b>Expected</b>: an
+          conducting body&apos;s own site and was checked there — by a person, or, for a released
+          answer key or result, by our own read of that page; the link is right there. A date cited through a secondary source, such as a news or coaching
+          site, or found by our AI and not yet checked by a person, is marked{" "}
+          <b>Reported</b>: not yet checked against an official notice, so confirm it. Anything else is marked <b>Expected</b>: an
           estimate from previous cycles, never presented as an announcement. We also show when each
           exam&apos;s data was last updated, and we always tell students to confirm on the
           conducting body&apos;s website before acting.

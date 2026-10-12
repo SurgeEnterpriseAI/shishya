@@ -143,7 +143,7 @@ import { NAV_TODAY, NAV_TODAY_TITLE } from "@/lib/study-day-copy";
 import { fetchSignedIn, hasSessionHint } from "@/lib/session-hint";
 import { isUnder13SchoolPath } from "@/lib/school/student-classes";
 import { asCopyLocale, clientUiLocale, type CopyLocale } from "@/lib/ui-locale-copy";
-import { callbackOfLoginHref } from "@/lib/signin-cta";
+import { callbackOfLoginHref, isKidsExamPath } from "@/lib/signin-cta";
 import { isChildSchoolPath } from "@/lib/signup-pitch";
 import { useSignUpPageData, useSignUpWords, wantSignUpWords } from "@/lib/use-signup-words";
 import { SignUpShell, SignUpStackedFace } from "./SignUpButton";
@@ -181,6 +181,10 @@ export function HeaderAuthControls({
   // (the common one for a marketing page) has no visible flicker.
   const [session, setSession] = useState<SessionLite | null>(null);
   const pathname = usePathname();
+  // 14 Oct 2026 (Release 2, under-13 rule): a kids' exam's pages are child-safe
+  // too — no guest sign-in there (src/lib/signin-cta.ts isKidsExamPath). Both
+  // branches below read childSafe.
+  childSafe = childSafe || isKidsExamPath(pathname);
   const [loginHref, setLoginHref] = useState("/login");
   // English on the server and first paint; the reader's language after mount.
   const [lang, setLang] = useState<CopyLocale>("en");

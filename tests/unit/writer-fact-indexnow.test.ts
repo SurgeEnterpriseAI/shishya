@@ -100,14 +100,17 @@ beforeEach(() => {
 
 describe("announcedFactKeys / announcedFactsChanged", () => {
   it("official and reported rows only; kind + IST day + tier; labels ignored", () => {
+    // A curated row (a person read the notice) is official; a generated row
+    // citing the same notice is reported — the tier the pages print (14 Oct 2026).
     const keys = announcedFactKeys([
-      priorRow({}),
-      priorRow({ id: "p2", label: "Group 4 written exam (reworded)" }),
+      priorRow({ source: "official-research:2026-09-27" }),
+      priorRow({ id: "p2", label: "Group 4 written exam (reworded)", source: "official-research:2026-09-27" }),
       priorRow({ id: "p3", kind: "RESULT", date: day("2027-02-01"), url: "https://testbook.com/x" }),
       priorRow({ id: "p4", kind: "ADMIT_CARD", confidence: "expected", url: null }),
       priorRow({ id: "p5", kind: "ANSWER_KEY", url: "https://sarkariresult.com.cm/k" }),
+      priorRow({ id: "p6", kind: "ADMIT_CARD", date: day("2026-11-20") }),
     ]);
-    expect([...keys].sort()).toEqual(["EXAM|2026-12-01|official", "RESULT|2027-02-01|reported"]);
+    expect([...keys].sort()).toEqual(["ADMIT_CARD|2026-11-20|reported", "EXAM|2026-12-01|official", "RESULT|2027-02-01|reported"]);
     expect(announcedFactsChanged(new Set(["a"]), new Set(["a"]))).toBe(false);
     expect(announcedFactsChanged(new Set(["a"]), new Set(["b"]))).toBe(true);
     expect(announcedFactsChanged(new Set(["a", "b"]), new Set(["a"]))).toBe(true);
@@ -133,9 +136,16 @@ describe("writeExamInfo → IndexNow on fact changes", () => {
     expect(submitted).toEqual([]);
   });
 
-  it("a tier upgrade (reported → official) is a change", async () => {
+  it("a generated row swapping a coaching citation for the body's site is no change: it is reported either way (14 Oct 2026)", async () => {
     const { db } = fakeDb({ prior: [priorRow({ url: "https://testbook.com/tnpsc" })] });
     const res = await writeExamInfo(db, "e1", info([gen({})]), NOW);
+    expect(res.factsChanged).toBe(false);
+    expect(submitted).toEqual([]);
+  });
+
+  it("a generated row moving to another day is a change", async () => {
+    const { db } = fakeDb({ prior: [priorRow({ url: "https://testbook.com/tnpsc" })] });
+    const res = await writeExamInfo(db, "e1", info([gen({ date: "2026-12-08" })]), NOW);
     expect(res.factsChanged).toBe(true);
     expect(submitted).toEqual([FACT_URLS]);
   });

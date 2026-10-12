@@ -31,6 +31,7 @@ import { isChallengeExpired } from "@/lib/challenge";
 import { challengeHeadlineText, challengeLabels, quizLabels } from "@/lib/challenge-copy";
 import { challengeQuiz, loadChallenge, type LoadedChallenge } from "@/lib/challenge-db";
 import { ChallengeLanding } from "./ChallengeLanding";
+import { under13ExamGuard } from "@/lib/signin-cta";
 
 export const dynamic = "force-dynamic";
 
@@ -106,7 +107,9 @@ export default async function ChallengePage({ params }: { params: Promise<Params
 
   return (
     <main className="min-h-screen bg-ink-50/40">
-      <Header />
+      {/* 12 Oct 2026 (Release 2 review, under-13 rule): a kids' exam's
+          challenge shows no guest sign-up in the header. */}
+      <Header childSafe={under13ExamGuard(ch.examCode)} />
       {/* What this page tells the sign-up buttons on it (2 Oct 2026): whether
           the challenge's exam can serve a mock and whether it is an olympiad.
           Renders nothing. */}

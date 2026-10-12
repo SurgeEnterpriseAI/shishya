@@ -37,6 +37,11 @@
 // to get). Only markTurnFailed below writes sentAt; a failed row 4 days old
 // or more is not reused (src/lib/chat-turn-dedupe.ts), so those 72 hours
 // always end before the run's 7-day hard stop.
+// 14 Oct 2026 (Release 2, founder decisions of 11 Oct): a guest's turn on a
+// kids' exam gets a fixed line with no model call and nothing logged
+// (src/lib/kids-tutor.ts), and a convicted crawler's auto-sent seed is held
+// with no model call and nothing logged (src/lib/guest-seed-hold.ts) — both
+// before the pre-filter, the DB and the model.
 
 // Tool-use loops + long Anthropic streams need more than the default 10s. We
 // keep this on Node runtime (not edge) because Prisma engines need it.
@@ -80,6 +85,11 @@ import { schoolCapFrames, schoolTutorCapReached, schoolUiLang } from "@/lib/scho
 import { isMinorBand, schoolBandOfProfile } from "@/lib/school/student-classes";
 import { chatScopeReply, chatScopeFrames, CHAT_SCOPE_CODE } from "@/lib/chat-scope";
 import { reviewSnapshot, shouldTouchSession, type ReviewTag } from "@/lib/recent-chats";
+import { kidsGuestTutorFrames, kidsGuestTutorOff, kidsGuestTutorText, kidsTutorLang } from "@/lib/kids-tutor";
+import { loadKidsTutorOffer } from "@/lib/db/kids-tutor-offer";
+import { guestSeedHold, hasAnonCookie, SEED_HELD_ERROR, seedHoldCandidate } from "@/lib/guest-seed-hold";
+import { loadConvictedAgents } from "@/lib/db/convicted-agents";
+import { uaFingerprint } from "@/lib/ua-fingerprint";
 
 const Body = z
   .object({
@@ -119,6 +129,14 @@ const Body = z
     // conversation is tagged with it (contextSnapshot), so the results page
     // can reopen the review later (src/lib/db/recent-chats.ts).
     reviewAttemptId: z.string().min(1).max(64).optional(),
+    // 14 Oct 2026: this turn is the /chat?seed=… prompt the chat sent by itself
+    // on page load (never a typed or tapped turn, never a Retry). Only such a
+    // turn can be held as a convicted crawler's (src/lib/guest-seed-hold.ts).
+    autoSeed: z.boolean().optional(),
+    // 11 Oct 2026 (review): the page was reached from a tagged link (utm) or
+    // another site (src/lib/guest-seed-hold.ts taggedLanding) — a walk-in,
+    // whose seed is never held (rule 5).
+    taggedLanding: z.boolean().optional(),
   })
   .refine((b) => b.general === true || (typeof b.examCode === "string" && b.examCode.length > 0), {
     message: "examCode is required when general is not true",
@@ -252,6 +270,57 @@ async function handleChat(req: Request, turn: TurnRow): Promise<Response> {
       status: 400,
       headers: { "content-type": "application/json" },
     });
+  }
+
+  // ── Kids' exams: no guest tutor (14 Oct 2026, Release 2) ──────────
+  // Founder, 11 Oct 2026: the guest AI tutor is off on a kids' exam (SOF /
+  // Silverzone / NSTSE olympiads, PRIL, ZIO, JNVST — src/lib/signin-cta.ts
+  // under13ExamGuard). Children sit them and give us no data, so a signed-out
+  // turn on one gets no model call and NOTHING is logged — this comes before
+  // the study-only pre-filter (which logs a guest turn), the exam read and
+  // every write. The fixed line names the exam's free practice and the body's
+  // sample papers (src/lib/kids-tutor.ts). A child in distress still gets the
+  // helplines (Tele-MANAS 14416, Childline 1098, 112) — the pre-filter's own
+  // reply, with nothing logged. A code no active exam has is 404, as before.
+  // Signed-in members are unchanged.
+  if (kidsGuestTutorOff({ signedIn: !!userId, general: body.general, examCode: body.examCode })) {
+    const uiLang = (await cookies()).get("shishya-lang")?.value;
+    const distress = chatScopeReply(body.message, schoolUiLang(uiLang));
+    if (distress?.code === CHAT_SCOPE_CODE.distress) return new Response(chatScopeFrames(distress), { headers: SSE_HEADERS });
+    const offer = await loadKidsTutorOffer(body.examCode!.trim());
+    if (!offer) {
+      return new Response(JSON.stringify({ error: "exam not found" }), {
+        status: 404,
+        headers: { "content-type": "application/json" },
+      });
+    }
+    return new Response(kidsGuestTutorFrames(kidsGuestTutorText(offer, kidsTutorLang(uiLang))), { headers: SSE_HEADERS });
+  }
+
+  // ── A convicted crawler's auto-sent seed (14 Oct 2026, Release 2) ──
+  // ~24 cookie-less guest turns a day were stealth browsers auto-firing our
+  // /chat?seed=… links. Held — no model call, nothing logged — only when the
+  // turn is signed out, is the seed the chat sent by itself (autoSeed), its
+  // landing had no utm tag or outside referrer (taggedLanding), it has no
+  // shishya_anon cookie AND its user agent is on the bot scrub's convicted
+  // list; the chat then keeps the seed in the box, unsent, and a person's
+  // Send is a typed turn, never held. Rule, data and the 14-day effect:
+  // src/lib/guest-seed-hold.ts. The list is read only for such a turn.
+  const anonCookie = hasAnonCookie(req.headers.get("cookie"));
+  if (seedHoldCandidate({ signedIn: !!userId, autoSeed: body.autoSeed === true, taggedLanding: body.taggedLanding === true, anonCookie })) {
+    const held = guestSeedHold({
+      signedIn: false,
+      autoSeed: true,
+      anonCookie,
+      uaHash: uaFingerprint(req.headers.get("user-agent")),
+      convicted: await loadConvictedAgents(),
+    });
+    if (held) {
+      return new Response(JSON.stringify({ error: SEED_HELD_ERROR }), {
+        status: 403,
+        headers: { "content-type": "application/json" },
+      });
+    }
   }
 
   // ── General mode (no exam scope) ──────────────────────────────────

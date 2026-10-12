@@ -15,7 +15,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { loginHrefFor, signinBeacon } from "@/lib/signin-cta";
+import { kidsPracticeHref, loginHrefFor, signinBeacon, under13ExamGuard } from "@/lib/signin-cta";
 import { topicTestHeading } from "@/lib/test-type-names";
 
 interface Props {
@@ -43,6 +43,12 @@ export function TopicQuizButton({ examCode, topicCode, topicName, examShort }: P
         }),
       });
       if (res.status === 401) {
+        // 14 Oct 2026 (Release 2, under-13 rule): a kids' exam asks no one to
+        // sign in — the topic's no-sign-in quiz instead.
+        if (under13ExamGuard(examCode)) {
+          window.location.href = kidsPracticeHref(examCode, topicCode);
+          return;
+        }
         // Not signed in — keep the intent: return them here after login.
         const cb = `/exams/${examCode}/topics/${topicCode}`;
         signinBeacon("topic-quiz-401", { examCode, via: "login" });

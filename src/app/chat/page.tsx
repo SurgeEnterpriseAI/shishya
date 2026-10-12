@@ -57,10 +57,23 @@
 // shown). A guest on a link that names a saved chat (the late-answer mail,
 // opened where they are not signed in) is told to sign in with the same
 // Google account, and the sign-in comes back to that chat.
+//
+// 14 Oct 2026 (Release 2, founder decisions of 11 Oct 2026):
+//   • a GUEST on a kids' exam (src/lib/kids-tutor.ts — SOF / Silverzone /
+//     NSTSE, PRIL, ZIO, JNVST) gets the short "the AI tutor is not open to
+//     guests here" line with the exam's free practice and the body's sample
+//     papers instead of the chat (src/app/chat/KidsGuestTutorOff.tsx): the
+//     island never mounts, so no seed is sent and nothing is logged. POST
+//     /api/chat refuses the same turn on the server. Members are unchanged.
+//   • a guest's seed waits in the box, unsent, when this browser has no
+//     shishya_anon cookie and a user agent the bot scrub convicted, and the
+//     landing had no utm tag or outside referrer (src/lib/guest-seed-hold.ts
+//     — the crawler hold; the route holds it too).
 
 import Link from "next/link";
 import { Header } from "@/components/Header";
 import { ExamSignUpContext } from "@/components/ExamSignUpContext";
+import { under13ExamGuard } from "@/lib/signin-cta";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { NOT_SCHOOL_WHERE, realExamKey } from "@/lib/db/exam-scope";
@@ -93,6 +106,13 @@ import { pickupFollowUpParam } from "@/lib/pickup-followup";
 import { loadPickupLateAnswer } from "@/lib/db/pickup";
 import { lateAnswerView, type PickupAnsweredView } from "@/lib/pickup";
 import { lateAnswerOpensChat } from "@/lib/late-answer-notice";
+import { cookies, headers } from "next/headers";
+import { kidsGuestTutorOff, kidsTutorLang, unknownKidsTutorOffer } from "@/lib/kids-tutor";
+import { loadKidsTutorOffer } from "@/lib/db/kids-tutor-offer";
+import { ANON_COOKIE, guestSeedHold, taggedLanding } from "@/lib/guest-seed-hold";
+import { loadConvictedAgents } from "@/lib/db/convicted-agents";
+import { uaFingerprint } from "@/lib/ua-fingerprint";
+import { KidsGuestTutorOff } from "./KidsGuestTutorOff";
 
 export default async function ChatPage({
   searchParams,
@@ -103,6 +123,28 @@ export default async function ChatPage({
   const sp = await searchParams;
   const { t, locale } = await getT();
   const generalMode = sp.general === "1";
+  /** 14 Oct 2026: a guest's seed is held when this is a convicted crawler with
+   *  no cookie (src/lib/guest-seed-hold.ts). Read only for a seeded guest page. */
+  const guestSeedHeld = async (): Promise<boolean> => {
+    if (session?.user?.id || !(typeof sp.seed === "string" && sp.seed.trim())) return false;
+    const [jar, h] = await Promise.all([cookies(), headers()]);
+    const anonCookie = !!jar.get(ANON_COOKIE)?.value;
+    if (anonCookie) return false;
+    // Rule 5 (11 Oct 2026 review): a walk-in from a tagged link or another site is never held.
+    const spAll = sp as Record<string, string | string[] | undefined>;
+    const param = (n: string) => {
+      const v = spAll[n];
+      return Array.isArray(v) ? v[0] : v;
+    };
+    if (taggedLanding({ param, referrer: h.get("referer"), host: h.get("host") })) return false;
+    return guestSeedHold({
+      signedIn: false,
+      autoSeed: true,
+      anonCookie,
+      uaHash: uaFingerprint(h.get("user-agent")),
+      convicted: await loadConvictedAgents(),
+    });
+  };
 
   // CHAT_OPENED is now fired client-side by <ChatOpenedBeacon> at the
   // point ChatInterface mounts, so bot crawls and router prefetches
@@ -202,6 +244,7 @@ export default async function ChatPage({
             examCode={examCode}
             topicFocus={focus ? { code: focus.code, name: focus.name, subjectName: focus.subjectName, examShortName: classLabel } : null}
             initialSeed={sp.seed ?? null}
+            seedHold={memberId == null ? await guestSeedHeld() : false}
             resume={schoolResume}
             recentChats={schoolRecent}
             school={{
@@ -255,6 +298,23 @@ export default async function ChatPage({
         anonExamShort = ex.shortName;
       }
     }
+    // 14 Oct 2026 (founder, 11 Oct): a kids' exam's guest gets no tutor — the
+    // short line instead of the chat (see the header). Judged on the URL's
+    // code, so an inactive one (JNVST) never falls through to the general chat.
+    if (kidsGuestTutorOff({ signedIn: false, general: generalMode, examCode: sp.examCode })) {
+      const kidsCode = sp.examCode!.trim();
+      const offer = (await loadKidsTutorOffer(kidsCode)) ?? unknownKidsTutorOffer(kidsCode.toUpperCase());
+      return (
+        <main className="min-h-screen bg-ink-50/40">
+          <Header childSafe />
+          <section className="container-prose py-6 sm:py-8">
+            <p className="text-xs text-ink-500">{t("nav.tutor").replace(" →", "")}</p>
+            <h1 className="mt-1 text-xl font-semibold text-ink-900">{`Ask Shishya — ${offer.exam}`}</h1>
+            <KidsGuestTutorOff offer={offer} lang={kidsTutorLang(locale)} />
+          </section>
+        </main>
+      );
+    }
     const anonStarters = anonExamShort
       ? [
           `Explain the ${anonExamShort} exam pattern and which topics carry the most marks.`,
@@ -278,7 +338,10 @@ export default async function ChatPage({
     )}`;
     return (
       <main className="min-h-screen bg-ink-50/40">
-        <Header />
+        {/* 14 Oct 2026 (Release 2 review, under-13 rule): a kids' exam's guest
+            chat is child-safe — no guest sign-in in the header
+            (src/lib/signin-cta.ts under13ExamGuard). */}
+        <Header childSafe={under13ExamGuard(anonExamCode)} />
         {/* What this page tells the sign-up buttons on it (2 Oct 2026): the
             exam this guest chat is about, whether it can serve a mock and
             whether it is an olympiad — so the line under the title, the save
@@ -314,6 +377,7 @@ export default async function ChatPage({
             examShortName={anonExamShort}
             topicFocus={null}
             initialSeed={sp.seed ?? null}
+            seedHold={await guestSeedHeld()}
             guestSignInHref={loginHref}
             guestBanner={{
               text: guestResumeId

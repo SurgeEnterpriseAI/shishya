@@ -62,9 +62,21 @@ const TS_PC: ExamFactsExam = {
 };
 
 let seq = 0;
+// An announced row here is a checked one (a person read the notice): its
+// provenance is a curated tag, as on the live tracker (14 Oct 2026). AI-made
+// rows are covered in tests/unit/ai-made-date-tier.test.ts.
 function row(day: string, label: string, confidence: string | null, url: string | null, kind = "EXAM"): TutorTrackerRow {
   seq += 1;
-  return { id: `r${String(seq).padStart(3, "0")}`, label, date: d(day), isExamDay: kind === "EXAM", kind, confidence, url };
+  return {
+    id: `r${String(seq).padStart(3, "0")}`,
+    label,
+    date: d(day),
+    isExamDay: kind === "EXAM",
+    kind,
+    confidence,
+    url,
+    source: confidence === "official" ? "official-research:2026-09-27" : null,
+  };
 }
 
 /** The date-free source getSyllabusContext caches. */
@@ -168,8 +180,12 @@ describe("tracker dates", () => {
     expect(block).not.toContain("2026-12-01");
   });
 
-  it("labels a reported row with its secondary source and its kind", () => {
-    expect(block).toContain("- 2026-09-10 · admit card · Admit card · past (14 days ago) · REPORTED by testbook.com — a secondary source, not the conducting body");
+  it("labels a reported row with what it means, the site it cites and its kind", () => {
+    expect(block).toContain("- 2026-09-10 · admit card · Admit card · past (14 days ago) · REPORTED — not yet checked against an official notice; cited: testbook.com");
+    // 14 Oct 2026: a reported row may cite the body's own site (AI-made, unchecked) — never "a secondary source, not the conducting body".
+    expect(block).not.toContain("a secondary source, not the conducting body");
+    const ai = examFactsBlock({ ...facts, dates: [{ day: "2026-10-30", kind: "EXAM", label: "Tier 1 exam ends", tier: "reported", host: "ssc.gov.in", status: "upcoming", daysFromToday: 36 }] }, { code: "SSC_GD", name: "SSC GD" });
+    expect(ai).toContain("- 2026-10-30 · exam · Tier 1 exam ends · upcoming (in 36 days) · REPORTED — not yet checked against an official notice; cited: ssc.gov.in");
   });
 
   it("labels an official row with the notice host and its kind", () => {
@@ -180,7 +196,7 @@ describe("tracker dates", () => {
     // 115 and 101 days back — outside the 60-day window, but the latest
     // notification / answer key on the tracker: the tutor must see them.
     expect(block).toContain("- 2026-06-01 · notification · Notification released · past (115 days ago) · OFFICIAL (notice on ssc.gov.in)");
-    expect(block).toContain("- 2026-06-15 · answer key · Provisional answer key released · past (101 days ago) · REPORTED by pw.live");
+    expect(block).toContain("- 2026-06-15 · answer key · Provisional answer key released · past (101 days ago) · REPORTED — not yet checked against an official notice; cited: pw.live");
     expect(facts.dates.map((r) => r.label)).toEqual([
       "Notification released",
       "Provisional answer key released",

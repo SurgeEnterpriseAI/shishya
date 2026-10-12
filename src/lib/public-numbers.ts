@@ -181,7 +181,8 @@ async function teamIds(): Promise<string[]> {
 const num = (v: unknown): number => Number(v ?? 0);
 
 function cached<T>(name: string, fn: () => Promise<T>): () => Promise<T | null> {
-  const c = unstable_cache(fn, ["public-numbers", name, "v1"], { revalidate: PUBLIC_NUMBERS_REVALIDATE, tags: [PUBLIC_NUMBERS_TAG] });
+  // v2 (14 Oct 2026, Release 2): the date-tier counts follow dateRowTier — no v1 count survives the deploy.
+  const c = unstable_cache(fn, ["public-numbers", name, "v2"], { revalidate: PUBLIC_NUMBERS_REVALIDATE, tags: [PUBLIC_NUMBERS_TAG] });
   return async () => {
     try {
       return await c();
@@ -690,14 +691,14 @@ async function readCoverage(): Promise<PublicNumber<CoverageGroup[]>> {
           label: `Exam dates in the next ${UPCOMING_DAYS} days marked Official`,
           value: tierRows.official,
           detail: onExams(tierExams.official.size),
-          definition: "Tracker dates announced and cited on the conducting body's own site (src/lib/official-source.ts). A date whose own label says expected, tentative or likely is left out, as on Shishya Pulse.",
+          definition: "Tracker dates cited on the conducting body's own site and checked there — by a person, or, for a released answer key or result, by our own read of that page (src/lib/official-source.ts dateRowTier); a date our AI found is never counted here until it is checked. A date whose own label says expected, tentative or likely is left out, as on Shishya Pulse.",
         },
         {
           id: "dates-reported",
           label: `Exam dates in the next ${UPCOMING_DAYS} days marked Reported`,
           value: tierRows.reported,
           detail: onExams(tierExams.reported.size),
-          definition: "Tracker dates that were announced but are cited through a secondary source such as a news or coaching site.",
+          definition: "Tracker dates not yet checked against an official notice: cited through a secondary source such as a news or coaching site, or found by our AI.",
         },
         {
           id: "dates-expected",

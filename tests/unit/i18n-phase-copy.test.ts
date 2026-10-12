@@ -38,6 +38,7 @@ const row = (id: string, day: string, confidence = "official", url: string | nul
   kind: "EXAM",
   confidence,
   url,
+  source: confidence === "official" ? "official-research:test" : null,
 });
 const SSC_URL = "https://ssc.gov.in";
 const TONIGHT = new Date("2026-09-13T13:00:00Z"); // 18:30 IST on exam day

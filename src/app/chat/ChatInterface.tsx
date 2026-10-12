@@ -93,6 +93,17 @@
 // the second answer on (guestOffer "save"): one invitation a screen. Never in
 // a school chat, after the under-13 line or on a kids' exam chat (the save
 // card stays as it was there).
+//
+// Crawler hold (14 Oct 2026, Release 2 — src/lib/guest-seed-hold.ts): the
+// seed's own turn is sent with autoSeed: true. A stealth crawler (no cookie,
+// a user agent the bot scrub convicted) gets it held: the page says so up
+// front (`seedHold`) or the route answers "seed-held", and either way the
+// seed waits in the box, unsent, with "press Send" — the webdriver hold's
+// pattern. A person's Send is a typed turn and is never held. 11 Oct 2026
+// (review): a landing from a tagged link (utm) or another site is a walk-in —
+// read here once, before the seed leaves the URL; its seed is never held by
+// the page's verdict and goes out with taggedLanding, which the route never
+// holds (rule 5).
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -157,6 +168,8 @@ import {
 import { SignUpButton } from "@/components/SignUpButton";
 import { signUpLabel } from "@/lib/signup-cta-copy";
 import { firstAnswerHref, firstQuestionOf, guestChatOffer } from "@/lib/chat-first-answer";
+import { under13ExamGuard } from "@/lib/signin-cta";
+import { SEED_HELD_ERROR, taggedLanding } from "@/lib/guest-seed-hold";
 import { FirstAnswerOffer } from "./FirstAnswerOffer";
 import type { PickupAnsweredView } from "@/lib/pickup";
 
@@ -313,6 +326,7 @@ const TURN_COPY = {
     incomplete: "Reply incomplete",
     retry: "Retry",
     seedHeld: "You asked this here a little while ago, so it was not sent again. Send it when you want to.",
+    seedReady: "Your question is ready in the box. Press Send to ask it.",
     unavailable: `The guest tutor isn't available in this browser. ${signUpLabel("en")} (free) to use the tutor.`,
     unavailablePlain: "The guest tutor isn't available in this browser.",
     stuck: "Still stuck after chatting with Shishya?",
@@ -322,6 +336,7 @@ const TURN_COPY = {
     incomplete: "जवाब अधूरा रह गया",
     retry: "फिर से भेजें",
     seedHeld: "आपने यह यहाँ कुछ देर पहले पूछा था, इसलिए इसे दोबारा नहीं भेजा गया। जब चाहें, भेज दें।",
+    seedReady: "आपका सवाल बॉक्स में तैयार है। पूछने के लिए “भेजें” दबाएँ।",
     unavailable: `इस ब्राउज़र में गेस्ट ट्यूटर उपलब्ध नहीं है। ट्यूटर के लिए ${signUpLabel("hi")} (मुफ़्त)।`,
     unavailablePlain: "इस ब्राउज़र में गेस्ट ट्यूटर उपलब्ध नहीं है।",
     stuck: "Shishya से बात करके भी अटके हैं?",
@@ -331,6 +346,7 @@ const TURN_COPY = {
     incomplete: "సమాధానం పూర్తి కాలేదు",
     retry: "మళ్లీ పంపండి",
     seedHeld: "మీరు ఇది ఇక్కడ కొద్దిసేపటి క్రితం అడిగారు, కాబట్టి మళ్లీ పంపలేదు. కావాలనుకున్నప్పుడు పంపండి.",
+    seedReady: "మీ ప్రశ్న బాక్స్‌లో సిద్ధంగా ఉంది. అడగడానికి “పంపించు” నొక్కండి.",
     unavailable: `ఈ బ్రౌజర్‌లో గెస్ట్ ట్యూటర్ అందుబాటులో లేదు. ట్యూటర్ కోసం ${signUpLabel("te")} (ఉచితం).`,
     unavailablePlain: "ఈ బ్రౌజర్‌లో గెస్ట్ ట్యూటర్ అందుబాటులో లేదు.",
     stuck: "Shishya తో మాట్లాడినా ఇంకా అర్థం కాలేదా?",
@@ -378,6 +394,7 @@ export function ChatInterface({
   topicFocus,
   initialSeed,
   seedScope,
+  seedHold,
   labels,
   guestSignInHref,
   guestBanner,
@@ -402,6 +419,10 @@ export function ChatInterface({
    *  of the seed's once-per-tab key, so the same seed text after another
    *  attempt still sends by itself (chat-seed-once.ts, 24 Sep 2026 review). */
   seedScope?: string | null;
+  /** Guest only (14 Oct 2026): the page found this browser to be a convicted
+   *  crawler with no cookie (src/lib/guest-seed-hold.ts) — the seed waits in
+   *  the box, unsent, as the webdriver hold keeps it. */
+  seedHold?: boolean;
   labels: ChatLabels;
   /** Guest (signed-out) chats only: the /login URL whose callback returns
    *  to this chat. When set, an inline save-this-conversation card appears
@@ -429,6 +450,12 @@ export function ChatInterface({
    *  yet, in another conversation — shown first, with a link to it. */
   lateAnswer?: PickupAnsweredView | null;
 }) {
+  // 14 Oct 2026 (Release 2 review, under-13 rule): a kids' exam's chat (SOF /
+  // Silverzone / NSTSE, PRIL, ZIO, JNVST — src/lib/signin-cta.ts
+  // under13ExamGuard) offers no sign-up: no guest banner here, no save card
+  // (guestChatOffer), no first-answer card or question door
+  // (chatQuestionDoorAllowed). The tutor itself stays.
+  if (under13ExamGuard(examCode)) guestBanner = null;
   const router = useRouter();
   const [sessionId, setSessionId] = useState<string | null>(resume?.sessionId ?? null);
   const [messages, setMessages] = useState<Message[]>(resume?.messages ?? []);
@@ -725,11 +752,21 @@ export function ChatInterface({
   // the same text after another attempt is not held at all.
   const seedFiredRef = useRef(false);
   const [seedHeld, setSeedHeld] = useState(false);
+  // 14 Oct 2026: a seed held as a crawler's (page or route) waits in the box with "press Send".
+  const [seedReady, setSeedReady] = useState(false);
+  // 11 Oct 2026 (review): this landing came from a tagged link or another site (rule 5).
+  const landingTaggedRef = useRef(false);
   useEffect(() => {
     if (seedFiredRef.current) return;
     const seed = initialSeed?.trim();
     if (!seed) return;
     seedFiredRef.current = true;
+    try {
+      const q = new URLSearchParams(window.location.search);
+      landingTaggedRef.current = taggedLanding({ param: (n) => q.get(n), referrer: document.referrer, host: window.location.host });
+    } catch {
+      /* read as untagged */
+    }
     try {
       const stripped = stripSeedParam(window.location.href);
       if (stripped) window.history.replaceState(window.history.state, "", stripped);
@@ -749,14 +786,19 @@ export function ChatInterface({
       /* storage blocked — the seed sends, as before */
     }
     const fp = seedFingerprint(seed, examCode, topicFocus?.code ?? null, seedScope);
-    if (automated || wasSeedFiredRecently(store, fp)) {
+    // 14 Oct 2026: the page's crawler verdict holds it the same way (src/lib/guest-seed-hold.ts)
+    // — never a walk-in's from a tagged link or another site (rule 5).
+    const pageHold = seedHold === true && !landingTaggedRef.current;
+    if (automated || pageHold || wasSeedFiredRecently(store, fp)) {
       setInput(seed);
-      if (!automated) setSeedHeld(true);
+      if (!automated && pageHold) setSeedReady(true);
+      else if (!automated) setSeedHeld(true);
       return;
     }
     markSeedFired(store, fp);
     // The results seed names the attempt it reviews on its own turn only.
-    void send(seed, reviewAttemptId ? { reviewAttemptId } : {});
+    // 14 Oct 2026: autoSeed — the route may hold a convicted crawler's (see the header).
+    void send(seed, reviewAttemptId ? { reviewAttemptId, autoSeed: true } : { autoSeed: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialSeed]);
 
@@ -813,11 +855,12 @@ export function ChatInterface({
     void send(turn.text, { retry: true, turnId: turn.turnId });
   }
 
-  async function send(text: string, opts: { retry?: boolean; turnId?: string; reviewAttemptId?: string } = {}) {
+  async function send(text: string, opts: { retry?: boolean; turnId?: string; reviewAttemptId?: string; autoSeed?: boolean } = {}) {
     if (!text.trim() || busy || capped || under13) return;
     sentRef.current = true;
     setImportedNote(null);
     setSeedHeld(false);
+    setSeedReady(false);
     setGuestRestored(false);
     setCarriedNote(false);
     setQuestionDoor(null);
@@ -861,6 +904,8 @@ export function ChatInterface({
           retry: opts.retry ? true : undefined,
           turnId,
           reviewAttemptId: opts.reviewAttemptId && !sessionId ? opts.reviewAttemptId : undefined,
+          autoSeed: opts.autoSeed && !opts.retry ? true : undefined,
+          taggedLanding: opts.autoSeed && !opts.retry && landingTaggedRef.current ? true : undefined,
         }),
       });
       if (!res.ok || !res.body) {
@@ -871,6 +916,16 @@ export function ChatInterface({
           code = j?.error;
           detail = j?.error ? ` — ${j.error}` : "";
         } catch {}
+        // 14 Oct 2026: the route held this auto-sent seed as a convicted
+        // crawler's — nothing was asked or logged. The seed goes back into the
+        // box, unsent, and the bubbles it opened close; no error is shown.
+        if (res.status === 403 && code === SEED_HELD_ERROR && opts.autoSeed) {
+          sentRef.current = false;
+          setMessages((m) => m.slice(0, -2));
+          setInput(text);
+          setSeedReady(true);
+          return;
+        }
         // The guest tutor declined this browser as a crawler (24 Sep 2026).
         // 2 Oct 2026 (review): no sign-up invitation in a school chat or once
         // the under-13 line has closed the chat — the plain line there.
@@ -1429,8 +1484,14 @@ export function ChatInterface({
           {TURN_COPY[navLang].seedHeld}
         </p>
       )}
+      {/* A seed held as a crawler's (14 Oct 2026): it waits in the box — say how to send it. */}
+      {seedReady && !seedHeld && !busy && (
+        <p className="border-t border-ink-200 bg-ink-50 px-3 py-2 text-xs text-ink-600">
+          {TURN_COPY[navLang].seedReady}
+        </p>
+      )}
       {/* A guest's question an outage left unanswered, back in the box (1 Oct 2026). */}
-      {guestRestored && !busy && !seedHeld && (
+      {guestRestored && !busy && !seedHeld && !seedReady && (
         <p className="border-t border-ink-200 bg-ink-50 px-3 py-2 text-xs text-ink-600">
           {GUEST_RESTORED_NOTE[navLang]}
         </p>

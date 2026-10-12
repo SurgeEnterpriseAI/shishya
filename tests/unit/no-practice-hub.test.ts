@@ -96,7 +96,7 @@ describe("the no-practice panel — CLAT (official research on file)", () => {
   it("official facts with their sources: body, pattern, syllabus, eligibility", () => {
     expect(model.title).toBe("CLAT — official facts");
     expect(model.note).toBe(
-      "Facts are read on the conducting body's own pages. Dates are announced ones only, each with its tier: official (the body's own notice) or reported (a secondary source).",
+      "Facts are read on the conducting body's own pages. No estimated dates are listed in this box; each date shows its tier: official (the body's own notice, checked) or reported (not yet checked against an official notice).",
     );
     expect(model.facts.map((f) => f.label)).toEqual(["Conducting body", "Exam pattern", "Official syllabus", "Eligibility"]);
     expect(body).toContain("Consortium of National Law Universities");
@@ -164,7 +164,7 @@ describe("the no-practice panel — NEET PG (live, no official research, no veri
   it("27 Sep 2026 (fixer): no official research → 'key facts', and no claim the facts were read on the body's pages", () => {
     expect(model.title).toBe("NEET PG — key facts");
     expect(model.note).toBe(
-      "The conducting body's site is linked. Dates are announced ones only, each with its tier: official (the body's own notice) or reported (a secondary source).",
+      "The conducting body's site is linked. No estimated dates are listed in this box; each date shows its tier: official (the body's own notice, checked) or reported (not yet checked against an official notice).",
     );
     expect(body).not.toMatch(/official facts|read on the conducting body/i);
     // No body site on file → the note promises only the dates.
@@ -360,7 +360,7 @@ describe("the sub-pages gate their practice boxes on the rule (source)", () => {
     expect(code("src/app/exams/[code]/news/[id]/page.tsx")).toContain("practice.hasPractice ? `Free ${row.exam.shortName} mock tests →` : `${row.exam.shortName} — exam facts and dates →`");
     expect(code("src/app/exams/[code]/opengraph-image.tsx")).toContain('practice ? "Free mocks · syllabus · PYQ pattern · AI tutor" : "Exam dates · key facts · AI tutor"');
     const ctx = code("src/app/exams/[code]/context.md/route.ts");
-    expect(ctx).toContain("if (practice.hasPractice) L.push(`- Free day-by-day study plan (personal coach): ${SITE}/coach`);");
+    expect(ctx).toContain("if (practice.hasPractice && !under13ExamGuard(exam.code)) L.push(`- Free day-by-day study plan (personal coach): ${SITE}/coach`);");
     expect(ctx).toContain("none on Shishya yet. Do not tell a student Shishya has ${exam.shortName} mocks.");
     expect(ctx).toContain('const researched = officialExamFacts(exam.code) != null;');
     expect(ctx).toContain('${researched ? "official facts with their sources" : "the conducting body\'s site"}');

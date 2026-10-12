@@ -65,7 +65,11 @@ const DOOR_FILE = "src/app/exams/[code]/PracticeSignUpDoor.tsx";
 // The Exam rows of category OLYMPIAD, read from production on 3 Oct 2026 (SELECT only,
 // scripts/tmp-doors-utm-read.ts). The kids' olympiads are SOF, Silverzone and NSTSE.
 const KIDS_OLYMPIADS = ["NSTSE", "SOF_ICO", "SOF_IEO", "SOF_IGKO", "SOF_IHO", "SOF_IMO", "SOF_NSO", "SZF_IOEL", "SZF_IOM", "SZF_IOS"];
-const OTHER_OLYMPIADS = ["IOQM", "NSEA", "NSEB", "NSEC", "NSEJS", "NSEP", "PRIL", "ZIO"];
+// 14 Oct 2026 (Release 2, under-13 rule): PRIL (grades 6-12) and ZIO (stored
+// eligibility unsure: "Class 8 to 12 (some sources mention Class 1-12)") start
+// below Class 8 — kids' exams now (src/lib/signin-cta.ts UNDER13_OLYMPIAD_CODES).
+const UNDER13_OTHER_OLYMPIADS = ["PRIL", "ZIO"];
+const OTHER_OLYMPIADS = ["IOQM", "NSEA", "NSEB", "NSEC", "NSEJS", "NSEP"];
 
 // ── 1. the rules ─────────────────────────────────────────────────────────
 
@@ -97,6 +101,11 @@ describe("1. which hubs open the inline door, and where its link returns", () =>
     expect(isKidsExamCode("JNVST")).toBe(true);
     expect(practiceDoorInline("JNVST")).toBe(false);
     for (const c of KIDS_OLYMPIADS) expect(isKidsExamCode(c), c).toBe(true);
+    for (const c of UNDER13_OTHER_OLYMPIADS) {
+      expect(isKidsOlympiadCode(c), c).toBe(false);
+      expect(isKidsExamCode(c), c).toBe(true);
+      expect(practiceDoorInline(c), c).toBe(false);
+    }
     // Exact code only: a code that merely contains it is not it.
     for (const c of ["JNVST_X", "XJNVST", "jnvst"]) expect(isKidsExamCode(c), c).toBe(false);
   });

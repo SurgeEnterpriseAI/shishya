@@ -49,6 +49,7 @@ const mainsRow: TimelineInput = {
   confidence: "official",
   url: "https://upsc.gov.in/examinations/cse-mains-2026",
   notes: "Mains scheduled: Aug 21, 22, 23, 29, 30 (9 papers over 5 days)",
+  source: "official-research:test",
 };
 const prelimsRow: TimelineInput = { ...mainsRow, id: "prelims", label: "Prelims exam", date: d("2026-05-24"), notes: null };
 const IBPS_URL = "https://www.ibps.in";
@@ -186,6 +187,7 @@ describe("examDoneState — an open-ended start row is not a finished exam", () 
     confidence: "official",
     url: "https://esb.mp.gov.in/rulebooks/RB_2026/x.pdf",
     notes: null,
+    source: "official-research:test",
   };
   it("not done for the week after the start row, done after that", () => {
     expect(examDoneState([raeo], "https://esb.mp.gov.in", ist("2026-09-18", 7)).done).toBe(false);

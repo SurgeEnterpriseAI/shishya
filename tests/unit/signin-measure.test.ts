@@ -309,11 +309,13 @@ describe("(a) every door is wired to its surface id", () => {
   it("the 401 redirects beacon their own surface and name the door on /login", () => {
     // The topic page's quiz button: still the /login redirect.
     const topic = read("src/app/exams/[code]/topics/[topicCode]/TopicQuizButton.tsx");
-    expect(topic).toMatch(/if \(res\.status === 401\) \{[\s\S]{0,400}?signinBeacon\("topic-quiz-401"[\s\S]{0,200}?window\.location\.href = loginHrefFor\([^\n]*"topic-quiz-401"\);/);
+    // 14 Oct 2026 (Release 2): a kids' exam's branch (the no-sign-in quiz) comes first.
+    expect(topic).toMatch(/if \(res\.status === 401\) \{[\s\S]{0,800}?signinBeacon\("topic-quiz-401"[\s\S]{0,200}?window\.location\.href = loginHrefFor\([^\n]*"topic-quiz-401"\);/);
     // 3 Oct 2026 (the 401 doors, src/lib/signin-cta.ts): the hub's three practice buttons open the inline
     // sign-up instead (one "signin-door" shown beacon; the button counts its own click) — and keep the old
     // redirect, beacon and door id exactly, where the door may not open (SOF / Silverzone / NSTSE and JNVST hubs).
-    // tests/unit/practice-401-doors.test.ts pins the rest.
+    // tests/unit/practice-401-doors.test.ts pins the rest. 14 Oct 2026 (Release 2): between the door and the
+    // redirect, a kids' exam goes to its no-sign-in quiz (tests/unit/under13-exam-guard.test.ts).
     for (const [file, surface] of [
       ["src/app/exams/[code]/StartMockButton.tsx", "hub-start-401"],
       ["src/app/exams/[code]/SubjectTestButton.tsx", "subject-test-401"],
@@ -322,7 +324,7 @@ describe("(a) every door is wired to its surface id", () => {
       const src = read(file);
       expect(src, file).toMatch(
         new RegExp(
-          `if \\(res\\.status === 401\\) \\{[\\s\\S]{0,400}?if \\(practiceDoorInline\\(examCode\\)\\) \\{\\s*signinDoorShownBeacon\\("${surface}"[\\s\\S]{0,120}?setDoor\\(true\\);[\\s\\S]{0,200}?signinBeacon\\("${surface}"[\\s\\S]{0,200}?window\\.location\\.href = loginHrefFor\\(practiceDoorCallback\\("${surface}", examCode\\), "${surface}"\\);`,
+          `if \\(res\\.status === 401\\) \\{[\\s\\S]{0,400}?if \\(practiceDoorInline\\(examCode\\)\\) \\{\\s*signinDoorShownBeacon\\("${surface}"[\\s\\S]{0,120}?setDoor\\(true\\);[\\s\\S]{0,700}?signinBeacon\\("${surface}"[\\s\\S]{0,200}?window\\.location\\.href = loginHrefFor\\(practiceDoorCallback\\("${surface}", examCode\\), "${surface}"\\);`,
         ),
       );
     }

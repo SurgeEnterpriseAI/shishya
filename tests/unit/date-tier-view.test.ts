@@ -70,7 +70,7 @@ describe("dateTierView", () => {
 
   it("takes the tier buildTimeline derives from the cited host", () => {
     const [row] = buildTimeline(
-      [{ id: "a", label: "PET 2026 exam - Day 1", date: "2026-10-23T00:00:00Z", isExamDay: true, kind: "EXAM", confidence: "official", url: "https://testbook.com/news/upsssc-pet-exam-date-2026-out/" }],
+      [{ id: "a", label: "PET 2026 exam - Day 1", date: "2026-10-23T00:00:00Z", isExamDay: true, kind: "EXAM", confidence: "official", url: "https://testbook.com/news/upsssc-pet-exam-date-2026-out/", source: "official-research:test" }],
       NOW,
       "https://upsssc.gov.in",
     );

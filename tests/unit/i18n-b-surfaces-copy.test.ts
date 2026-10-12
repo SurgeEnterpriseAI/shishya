@@ -123,7 +123,8 @@ describe("English output is unchanged", () => {
     ).toBe(
       "Shishya has 5 Maharashtra exam pages — PSC, Police. Each is free: mock tests in the real pattern, the syllabus, cutoffs and an exam tracker that labels every date official, reported or expected. Questions are in English and can be read in Hindi and other Indian languages inside any test.",
     );
-    expect(C.tierLegend).toBe("Official = the conducting body's own notice · reported = announced, cited via a secondary source.");
+    // 14 Oct 2026 (Release 2): "reported" = not yet checked against an official notice (AI-made dates are reported too).
+    expect(C.tierLegend).toBe("Official = the conducting body's own notice, checked · reported = not yet checked against an official notice.");
     expect(C.types.Other).toBe("Other exams");
     expect(C.types["Staff selection"]).toBe("Staff selection exams");
     expect(fillState(C.cardMeta, { n: 100, min: 90, langs: "English" })).toBe("100 questions · 90 min · English");
@@ -302,7 +303,7 @@ describe("review fixes (16 Sep 2026)", () => {
     ];
     const next = (lc: "en" | "hi" | "te") => stateFaq({ name: "Maharashtra", slug: "maharashtra" }, exams, upcoming, 120, lc)[1].a;
     expect(next("en")).toBe(
-      `MPSC: Prelims on ${formatDay("2026-09-20")} (official — the conducting body's notice). MPSC: Mains on ${formatDay("2026-11-08")} (reported — announced, cited via a secondary source).`,
+      `MPSC: Prelims on ${formatDay("2026-09-20")} (official — the conducting body's notice). MPSC: Mains on ${formatDay("2026-11-08")} (reported — not yet checked against an official notice).`,
     );
     expect(next("hi")).toContain(")। MPSC: ");
     expect(next("hi").endsWith(")।")).toBe(true);

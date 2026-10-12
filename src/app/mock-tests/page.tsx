@@ -130,7 +130,7 @@ export default async function MockTestsPage() {
         <p className="mt-3 max-w-3xl text-sm text-ink-700">{mockCatalogueLead(t)}</p>
         <p className="mt-2 max-w-3xl text-xs text-ink-500">
           Each exam links to its own mock tests. Dates come from that exam&apos;s tracker: <b>official</b> — cited on the conducting
-          body&apos;s website; <b>reported</b> — announced, cited from another source such as a news site; <b>expected</b> — an estimate from the usual cycle,
+          body&apos;s website; <b>reported</b> — not yet checked against an official notice (cited from a news or coaching site, or a date our AI found); <b>expected</b> — an estimate from the usual cycle,
           not announced. Apply only on the official website. For a ranked test with other students, try the{" "}
           <Link href="/live-test" className="font-medium text-saffron-700 hover:underline">weekly live test</Link>.
         </p>

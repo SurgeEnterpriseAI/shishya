@@ -61,6 +61,7 @@ function row(id: string, label: string, date: string, tier: "official" | "report
     kind: "EXAM",
     confidence: tier === "expected" ? "expected" : "official",
     url: tier === "official" ? "https://upsc.gov.in/notice.pdf" : tier === "reported" ? "https://www.adda247.com/exam" : null,
+    source: tier === "expected" ? null : "official-research:test",
     ...extra,
   };
 }

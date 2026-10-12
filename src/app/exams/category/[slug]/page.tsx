@@ -120,7 +120,7 @@ export default async function ExamCategoryPage({ params }: { params: Promise<Pag
         <h1 className="mt-1 text-3xl font-bold text-ink-900">{cat.heading}</h1>
         <p className="mt-3 max-w-3xl text-sm text-ink-700">{lead}</p>
         <p className="mt-2 max-w-3xl text-xs text-ink-500">
-          Who is listed: {cat.rule} Dates are marked official (the conducting body&apos;s own site), reported (a cited secondary source) or
+          Who is listed: {cat.rule} Dates are marked official (the conducting body&apos;s own notice, checked), reported (not yet checked against an official notice) or
           expected (an estimate, not announced). Age limit and qualification are marked &quot;checked&quot; where Shishya read them
           against the notification; otherwise they are an indicative summary. Confirm on the official website before applying.
         </p>

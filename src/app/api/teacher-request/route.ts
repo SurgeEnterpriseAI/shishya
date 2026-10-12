@@ -11,6 +11,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { sendTeacherRequestEmail } from "@/lib/email";
+import { under13ExamGuard } from "@/lib/signin-cta";
 
 export const runtime = "nodejs";
 
@@ -40,6 +41,12 @@ export async function POST(req: NextRequest) {
       { error: "Please add a short note (5+ chars) about what you need help with." },
       { status: 400 },
     );
+  }
+  // 14 Oct 2026 (Release 2 review, under-13 rule): no contact is taken for a
+  // kids' exam (SOF / Silverzone / NSTSE, PRIL, ZIO, JNVST) — the page shows
+  // no mentor card; this refuses a direct POST before anything is read or stored.
+  if (under13ExamGuard(body.examCode)) {
+    return NextResponse.json({ error: "Mentor requests are not taken for this exam." }, { status: 403 });
   }
 
   const session = await auth().catch(() => null);

@@ -75,7 +75,7 @@ import {
   stageMismatchReason,
   type MarkingReason,
 } from "@/lib/marking-scheme";
-import { sourceTier } from "@/lib/official-source";
+import { dateRowTier } from "@/lib/official-source";
 
 const IST_OFFSET_MS = 330 * 60_000;
 const DAY_MS = 86_400_000;
@@ -773,7 +773,8 @@ export function pickExamsStrip(rows: StripRowInput[], now: Date = new Date(), ma
     const date = r.date instanceof Date ? r.date : new Date(r.date);
     if (!Number.isFinite(date.getTime())) continue;
     const url = r.url && /^https?:\/\//i.test(r.url) ? r.url : r.source && /^https?:\/\//i.test(r.source) ? r.source : null;
-    const tier = sourceTier(r.confidence, url, r.officialUrl);
+    // 14 Oct 2026: dateRowTier — an AI-made row is at most "reported".
+    const tier = dateRowTier(r.confidence, url, r.officialUrl, r.source);
     if (tier === "expected") continue;
     const day = istDay(date);
     const daysTo = dayDiff(today, day);

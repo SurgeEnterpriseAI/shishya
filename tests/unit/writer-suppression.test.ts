@@ -170,7 +170,7 @@ describe("exam-timeline — answer key stored as OTHER", () => {
     expect(resolveKind({ kind: "OTHER", label: "Answer key (expected)", isExamDay: false })).toBe("ANSWER_KEY");
     expect(resolveKind({ kind: "OTHER", label: "Counselling round 1", isExamDay: false })).toBe("OTHER");
     const rows = buildTimeline(
-      [{ id: "r1", label: "Answer key (expected)", date: "2026-10-05T00:00:00Z", isExamDay: false, kind: "OTHER", confidence: "expected" }],
+      [{ id: "r1", label: "Answer key (expected)", date: "2026-10-05T00:00:00Z", isExamDay: false, kind: "OTHER", confidence: "expected", source: null }],
       now,
     );
     expect(rows).toHaveLength(0);

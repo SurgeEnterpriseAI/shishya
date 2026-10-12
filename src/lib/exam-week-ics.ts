@@ -22,7 +22,9 @@
 import { computeExamWeekState } from "@/lib/exam-week";
 import { buildTimeline, type TimelineInput, type TimelineRow } from "@/lib/exam-timeline";
 import { sourceHostLabel, type SourceTier } from "@/lib/official-source";
+import { REPORTED_GLOSS } from "@/lib/date-tier-view";
 import { tk, type StringKey } from "@/lib/i18n";
+import { under13ExamGuard } from "@/lib/signin-cta";
 
 const TIER_KEY: Record<SourceTier, StringKey> = {
   official: "ew.tier.official",
@@ -123,12 +125,13 @@ function descriptionOf(exam: IcsExam, row: TimelineRow): string {
     row.tier === "official"
       ? `Official — conducting body's notice: ${row.url ?? ""}`
       : row.tier === "reported"
-        ? `Reported — announced, cited via ${sourceHostLabel(row.url ?? "")}: ${row.url ?? ""}`
+        ? `Reported — ${REPORTED_GLOSS}; cited via ${sourceHostLabel(row.url ?? "")}: ${row.url ?? ""}`
         : "Expected — estimate from previous cycles, not announced. Confirm on the official website.";
   return [
     `${exam.name}: ${row.label}`,
     source,
-    `Tracker (every date with its source tier, free alerts): ${SITE}/exams/${exam.code}/updates`,
+    // 12 Oct 2026 (Release 2 review, under-13 rule): no alert offer for a kids' exam.
+    `Tracker (every date with its source tier${under13ExamGuard(exam.code) ? "" : ", free alerts"}): ${SITE}/exams/${exam.code}/updates`,
     `Shishya exam hub: ${SITE}/exams/${exam.code}`,
   ].join("\n");
 }

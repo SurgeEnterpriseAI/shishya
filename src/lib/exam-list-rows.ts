@@ -119,7 +119,9 @@ export async function loadExamListRows(now: Date = new Date()): Promise<ExamList
 /** Cached for page renders (hourly, busted with the exam catalog). */
 // v2 (27 Sep 2026): mockCount now follows the hub's rule — a new key so no
 // cached v1 row (live-test papers counted) is served after the deploy.
-export const getExamListRows = unstable_cache(() => loadExamListRows(), ["exam-list-rows-v2"], {
+// v3 (14 Oct 2026, Release 2): the cached rows carry each exam's date tier —
+// an AI-made date is never "official" now (dateRowTier); no v2 row survives.
+export const getExamListRows = unstable_cache(() => loadExamListRows(), ["exam-list-rows-v3"], {
   revalidate: 3600,
   tags: ["exam-catalog"],
 });

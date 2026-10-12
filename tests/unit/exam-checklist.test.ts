@@ -83,6 +83,7 @@ const examOfficial: TimelineInput = {
   confidence: "official",
   url: "https://ssc.gov.in/notices/cgl-2026-tier1",
   notes: "Shift 1: 9:00 AM to 10:00 AM; reporting 7:30 AM",
+  source: "official-research:test",
 };
 const admitOfficial: TimelineInput = {
   id: "a1",
@@ -93,6 +94,7 @@ const admitOfficial: TimelineInput = {
   confidence: "official",
   url: "https://ssc.gov.in/admit-card",
   notes: "Reporting 7:30 AM; gate closes 8:30 AM",
+  source: "official-research:test",
 };
 const keyExpected: TimelineInput = {
   id: "k1",
@@ -102,6 +104,7 @@ const keyExpected: TimelineInput = {
   kind: "ANSWER_KEY",
   confidence: "expected",
   url: null,
+  source: null,
 };
 const resultExpected: TimelineInput = {
   id: "r1",
@@ -111,6 +114,7 @@ const resultExpected: TimelineInput = {
   kind: "RESULT",
   confidence: "expected",
   url: null,
+  source: null,
 };
 const tier2Expected: TimelineInput = {
   id: "t2",
@@ -120,6 +124,7 @@ const tier2Expected: TimelineInput = {
   kind: "EXAM",
   confidence: "expected",
   url: null,
+  source: null,
 };
 
 const NOW = ist("2026-09-13", 10);
@@ -245,6 +250,7 @@ describe("buildExamChecklist — marking scheme only when statable", () => {
       kind: "EXAM",
       confidence: "official",
       url: "https://sbi.co.in/careers/po-mains",
+      source: "official-research:test",
     };
     const c = buildExamChecklist({ exam: SBI_PO, subjects: [], rows: [mains], officialUrl: null, now: NOW });
     expect(c.pattern.marking).toBeNull();
@@ -293,7 +299,7 @@ describe("buildExamChecklist — no facts invented", () => {
   });
 
   it("untyped legacy seed rows are ignored", () => {
-    const legacy: TimelineInput = { id: "seed", label: "Exam date", date: d("2026-09-20"), isExamDay: true, kind: null, confidence: null, url: null };
+    const legacy: TimelineInput = { id: "seed", label: "Exam date", date: d("2026-09-20"), isExamDay: true, kind: null, confidence: null, url: null, source: null };
     const c = buildExamChecklist({ exam: SSC_CGL, subjects: [], rows: [legacy], officialUrl: null, now: NOW });
     expect(c.examDay).toBeNull();
   });
@@ -492,6 +498,7 @@ describe("examChecklistMeta", () => {
       kind: "EXAM",
       confidence: "official",
       url: "https://sbi.co.in/careers/po-mains",
+      source: "official-research:test",
     };
     const c = buildExamChecklist({ exam: SBI_PO, subjects: [], rows: [mains], officialUrl: null, now: NOW });
     expect(c.pattern.stageMismatch).not.toBeNull();
@@ -524,6 +531,7 @@ const ksrpMorning: TimelineInput = {
   confidence: "official",
   url: "https://cetonline.karnataka.gov.in/keawebentry456/kisrpc2026/ksrpnkkkannada.pdf",
   notes: null,
+  source: "official-research:test",
 };
 const ksrpAfternoon: TimelineInput = {
   ...ksrpMorning,
@@ -570,6 +578,7 @@ describe("buildExamChecklist — open-ended start row (MP RAEO, 17 Sep 2026)", (
     confidence: "official",
     url: "https://esb.mp.gov.in/rulebooks/RB_2026/Group2_SG1_2026_ExamDateExtended_Rulebookpage_1_28__31072026.pdf",
     notes: null,
+    source: "official-research:test",
   };
 
   it("the morning after says the exam began and the end date is not announced — never 'the paper was held'", () => {
@@ -598,7 +607,8 @@ const strip = (over: Partial<StripRowInput>): StripRowInput => ({
   kind: "EXAM",
   confidence: "official",
   url: "https://ssc.gov.in/notice",
-  source: null,
+  // A checked row (a person read the notice); AI-made rows: see below.
+  source: "official-research:test",
   notes: null,
   officialUrl: SSC_URL,
   ...over,
@@ -622,6 +632,11 @@ describe("pickExamsStrip — announced exam days only", () => {
     expect(s.items.map((i) => i.tier)).toEqual(["official", "official", "reported"]);
     expect(s.items.every((i) => /\((official|reported)\)$/.test(i.dated))).toBe(true);
     expect(s.items.some((i) => i.examCode === "CDS")).toBe(false);
+  });
+
+  it("an AI-made row citing the body is Reported, never Official (14 Oct 2026, Release 2)", () => {
+    const s = pickExamsStrip([strip({ id: "ai", source: "ai-generated:claude" })], ist("2026-09-13", 9));
+    expect(s.items.map((i) => [i.id, i.tier, i.dated.endsWith("(reported)")])).toEqual([["ai", "reported", true]]);
   });
 
   it("no exam today → this week's next announced ones, soonest first, within 7 days", () => {

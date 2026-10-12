@@ -53,7 +53,7 @@ import type { DateKind, ExamInfoResult } from "@/lib/ai/exam-info";
 import { ANSWER_KEY_LABEL, SUPPRESSED_SOURCE, resolveKind, rowCitation } from "@/lib/exam-timeline";
 import { istDayNumber } from "@/lib/exam-phase";
 import { examWeekUrls, factUrlsForExam, submitIndexNow } from "@/lib/indexnow";
-import { sourceTier } from "@/lib/official-source";
+import { dateRowTier } from "@/lib/official-source";
 import { STATES, stateSlug } from "@/lib/state-info";
 import { planNewsWrites, sameStory, storyFeatures, STORY_LOOKBACK_DAYS, type NewsWritePlan } from "@/lib/news-dedupe";
 import { gateTwinUrls, loadTwinVerdicts } from "@/lib/twin-localisation";
@@ -97,11 +97,14 @@ export interface FactRow {
 /** The exam's announced facts: "KIND|YYYY-MM-DD|tier" for every row whose
  *  tier is official or reported (26 Sep 2026). Labels are left out on
  *  purpose — a reworded label is not a new fact. `officialUrl` = the exam's
- *  portal (ExamEligibility), the same widening every date surface uses. */
+ *  portal (ExamEligibility), the same widening every date surface uses.
+ *  14 Oct 2026: the tier is the one the pages print (dateRowTier) — a
+ *  generated row is "reported" whatever it cites, so a regeneration that only
+ *  swaps a coaching citation for the body's site changes no page. */
 export function announcedFactKeys(rows: readonly FactRow[], officialUrl?: string | null): Set<string> {
   const out = new Set<string>();
   for (const r of rows) {
-    const tier = sourceTier(r.confidence, rowCitation(r), officialUrl);
+    const tier = dateRowTier(r.confidence, rowCitation(r), officialUrl, r.source);
     if (tier === "expected") continue;
     const kind = resolveKind({ kind: r.kind, label: r.label, isExamDay: !!r.isExamDay });
     out.add(`${kind}|${r.date.toISOString().slice(0, 10)}|${tier}`);

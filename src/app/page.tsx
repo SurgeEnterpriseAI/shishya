@@ -71,7 +71,7 @@ import { findBoard } from "@/lib/schooling-data";
 import { Header } from "@/components/Header";
 import type { ExamCard } from "@/components/ExamPicker";
 import { computeExamTags } from "@/lib/exam-tags";
-import { isPassedEstimate, sourceTier } from "@/lib/official-source";
+import { dateRowTier, isPassedEstimate, sourceTier } from "@/lib/official-source";
 import type { UpcomingEvent, CalendarBucket } from "@/components/UpcomingExamsSidebar";
 import { loadVacancyExplorer, type VacancyExplorer } from "@/lib/vacancy-explorer";
 import { loadTodaysLiveTests } from "@/lib/live-test-today";
@@ -319,7 +319,9 @@ async function loadUpcomingEventsRaw(): Promise<{ events: UpcomingEvent[]; defau
 
     const events = rows.map((r) => {
       const phase = lookupPhaseFor(r);
-      const tier = sourceTier(r.confidence, r.url, r.exam.eligibility?.officialUrl);
+      // 14 Oct 2026 (Release 2): the tier the rail prints is dateRowTier — an
+      // AI-made row is at most "reported", never the gold Official chip.
+      const tier = dateRowTier(r.confidence, r.url, r.exam.eligibility?.officialUrl, r.source);
       return {
         id: r.id,
         examCode: r.exam.code,
@@ -368,7 +370,8 @@ const loadUpcomingEvents = unstable_cache(
   // v7: `official` tightened to gold source tier (conducting-body domain).
   // v8: `isExamDay` only for announced rows; `expectedExamDay` + `tier` added.
   // v9: past and today/future read apart (the 800-row cap hid every future date).
-  ["home-upcoming-v10"],
+  // v11 (14 Oct 2026): tier = dateRowTier — AI-made rows are never official.
+  ["home-upcoming-v11"],
   { revalidate: 300, tags: ["exam-dates"] },
 );
 

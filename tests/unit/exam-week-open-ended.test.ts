@@ -41,6 +41,7 @@ const RAEO_EXAM: TimelineInput = {
   confidence: "official",
   url: "https://esb.mp.gov.in/rulebooks/RB_2026/Group2_SG1_2026_ExamDateExtended_Rulebookpage_1_28__31072026.pdf",
   notes: null,
+  source: "official-research:test",
 };
 
 const KEA_URL = "https://cetonline.karnataka.gov.in";
@@ -53,6 +54,7 @@ const KSRP_MORNING: TimelineInput = {
   confidence: "official",
   url: "https://cetonline.karnataka.gov.in/keawebentry456/kisrpc2026/ksrpnkkkannada.pdf",
   notes: null,
+  source: "official-research:test",
 };
 const KSRP_AFTERNOON: TimelineInput = {
   id: "cmu1n5l7z005dhfwby22wojft",
@@ -63,6 +65,7 @@ const KSRP_AFTERNOON: TimelineInput = {
   confidence: "official",
   url: "https://cetonline.karnataka.gov.in/keawebentry456/kiskk2026/KSRP_KK_3-5_SCHDkannada.pdf",
   notes: null,
+  source: "official-research:test",
 };
 /** The time-less AI copy (karmasandhan.com → reported), archived on prod 16 Sep. */
 const KSRP_AI: TimelineInput = {
@@ -74,6 +77,7 @@ const KSRP_AI: TimelineInput = {
   confidence: "official",
   url: "https://www.karmasandhan.com/ksrp-police-constable-recruitment-2026/",
   notes: "Single OMR-based exam for all three cadres; 100 marks in 90 minutes",
+  source: "official-research:test",
 };
 
 describe("open-ended start row (MP RAEO, 17 Sep 2026)", () => {
@@ -223,6 +227,7 @@ describe("latestOfKind — best tier among the rows on the latest day", () => {
     confidence,
     url,
     notes: null,
+    source: confidence === "official" ? "official-research:test" : null,
   });
   it("prefers the official row over a reported / expected copy on the same day, in any input order", () => {
     const official = apply("zz-official", "official", "https://cetonline.karnataka.gov.in/notice.pdf");

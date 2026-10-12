@@ -73,7 +73,7 @@ import {
 } from "@/lib/exam-week";
 import { applyShiftDay, shiftableDays } from "@/lib/exam-week-student";
 import { buildTimeline, type SourceTier, type TimelineInput, type TimelineRow } from "@/lib/exam-timeline";
-import { passedEstimateLine, passedEstimateView, sourceHostLabel, sourceTier, supersedingRow } from "@/lib/official-source";
+import { dateRowTier, passedEstimateLine, passedEstimateView, sourceHostLabel, supersedingRow } from "@/lib/official-source";
 import { getVerdictTally, publicTally, VERDICT_MIN_N } from "@/lib/exam-verdict";
 import { fullPaperFitsSitting } from "@/lib/marking-scheme";
 import { sittingVerdict } from "@/lib/score-sitting";
@@ -634,7 +634,8 @@ export async function ExamWeekBlock({
 /** Next exam in the same category (and state, for STATE_LEVEL) with an
  *  exam day 7..60 IST days out — the "what next" pointer after a paper.
  *  Tier is derived exactly like the tracker's rows (source domain vs the
- *  target exam's own portal). */
+ *  target exam's own portal, and who stands behind the row — dateRowTier:
+ *  an AI-made row is at most "reported", 14 Oct 2026). */
 async function loadNextInTrack(
   exam: { id: string; category: string; state: string | null },
   now: Date,
@@ -667,6 +668,6 @@ async function loadNextInTrack(
     code: r.code,
     shortName: r.shortName,
     date: new Date(r.date),
-    tier: sourceTier(r.confidence, url, r.officialUrl),
+    tier: dateRowTier(r.confidence, url, r.officialUrl, r.source),
   };
 }

@@ -80,6 +80,7 @@ import {
   sittingStageLabel,
 } from "@/lib/marking-scheme";
 import { passesStrictArticleGate } from "@/lib/phase-article-strict-gate";
+import { under13ExamGuard } from "@/lib/signin-cta";
 import { alertPhase, getExamWeekInputs } from "@/lib/exam-week-inputs";
 import {
   datedWithTier,
@@ -365,6 +366,9 @@ export function buildExamNightFacts(input: ExamNightInput, fmt: ExamNightFormat)
       pyq: !!pyq,
       nextStage: !!nextStage,
       article: input.strictArticle[input.phase],
+      // 12 Oct 2026 (Release 2 review, under-13 rule): a kids' exam has no
+      // alert box, so no alert phrase in its tagline, meta or share text.
+      alerts: !under13ExamGuard(exam.code),
     },
   };
 }
@@ -385,7 +389,7 @@ export function examNightShareMessage(
   const parts: string[] = [];
   if (s.poll) parts.push(t("ew.night.share.poll"));
   if (s.keyStatus) parts.push(t("ew.night.share.key"));
-  if (parts.length === 0) parts.push(t("ew.night.share.default"));
+  if (parts.length === 0) parts.push(t(s.alerts === false ? "ew.night.share.defaultNoAlerts" : "ew.night.share.default"));
   const joined = parts.join(", ");
   if (!facts.examDay) return fillTemplate(t("ew.night.share.line"), { exam: examShort, parts: joined });
   const when = `${facts.examDay.dated}${facts.examDayStage ? ` ${facts.examDayStage}` : ""}`;

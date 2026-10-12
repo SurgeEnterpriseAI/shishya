@@ -111,6 +111,7 @@ export async function loadTutorExamFactsSource(exam: ExamRow): Promise<TutorExam
         kind: r.kind ?? null,
         confidence: r.confidence ?? null,
         url: rowCitation(r),
+        source: r.source ?? null,
       })),
       rowsComplete: rowsNewestFirst.length < TRACKER_ROW_LIMIT,
       officialUrl: elig?.officialUrl ?? null,

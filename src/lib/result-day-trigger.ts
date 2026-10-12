@@ -31,10 +31,17 @@
 // labels name no other stage or sitting (src/lib/sitting-markers.ts). The
 // route skips a student already mailed for any of them. Different stages
 // ("Graduate CBT-2" vs "Undergraduate CBT-1") never cover each other.
+//
+// Release 2 (14 Oct 2026): "official tier" is dateRowTier — a RESULT row the
+// AI generator wrote ("ai-generated…" source) is "reported" until a person
+// checks it, so it never fires the mail (the mail prints "the tracker's
+// official result date"). Until then such rows did fire; a student mailed for
+// one must not be mailed again for the same result, so coversDays still
+// counts the days that fired under the old, citation-only rule.
 
 import { OFFICIAL_WATCH_SOURCE, SUPPRESSED_SOURCE, resolveKind, rowCitation } from "@/lib/exam-timeline";
 import { istDayNumber } from "@/lib/exam-phase";
-import { sourceTier } from "@/lib/official-source";
+import { dateRowTier, sourceTier } from "@/lib/official-source";
 import { markerConflict, releaseVersion, sittingMarkers } from "@/lib/sitting-markers";
 
 export const RESULT_WINDOW_DAYS = 14;
@@ -62,7 +69,8 @@ export interface ResultDayFire {
   /** The row was seen on the conducting body's page (official-watch): the
    *  mail may say "published on {host}". */
   verified: boolean;
-  /** Earlier official-tier result days of the exam in the window whose
+  /** Earlier result days of the exam in the window that could have fired
+   *  (official citation; AI-made rows included, as before 14 Oct 2026) whose
    *  labels name no other stage / sitting than this one's — the same result
    *  under another date. A student mailed for any of them is not mailed
    *  again. ISO days, newest first. */
@@ -72,6 +80,15 @@ export interface ResultDayFire {
 const isoOf = (day: number) => new Date(day * 86_400_000).toISOString().slice(0, 10);
 
 function officialResult(r: ResultTriggerRow, officialUrl: string | null | undefined): boolean {
+  if ((r.source ?? "") === SUPPRESSED_SOURCE) return false;
+  if (resolveKind(r) !== "RESULT") return false;
+  // 14 Oct 2026: dateRowTier — an AI-made result row never fires the mail.
+  return dateRowTier(r.confidence, rowCitation(r), officialUrl, r.source) === "official";
+}
+
+/** A RESULT row that could fire the mail before 14 Oct 2026 (citation tier
+ *  only) — read for coversDays alone, never to fire. */
+function citedResult(r: ResultTriggerRow, officialUrl: string | null | undefined): boolean {
   if ((r.source ?? "") === SUPPRESSED_SOURCE) return false;
   if (resolveKind(r) !== "RESULT") return false;
   return sourceTier(r.confidence, rowCitation(r), officialUrl) === "official";
@@ -88,10 +105,13 @@ export function resultDayFires(
 ): ResultDayFire[] {
   const today = istDayNumber(now);
   const byDay = new Map<number, ResultTriggerRow[]>();
+  // Days a mail may already have gone out for (the pre-Release-2 rule).
+  const coverByDay = new Map<number, ResultTriggerRow[]>();
   for (const r of rows) {
-    if (!officialResult(r, officialUrl)) continue;
     const d = istDayNumber(r.date);
     if (d < today - RESULT_WINDOW_DAYS || d > today) continue;
+    if (citedResult(r, officialUrl)) coverByDay.set(d, [...(coverByDay.get(d) ?? []), r]);
+    if (!officialResult(r, officialUrl)) continue;
     const list = byDay.get(d) ?? [];
     list.push(r);
     byDay.set(d, list);
@@ -115,7 +135,7 @@ export function resultDayFires(
       const v = releaseVersion("RESULT", o.label);
       return !(myVersion && v && myVersion !== v); // a written result never covers the final one
     };
-    const coversDays = [...byDay.entries()]
+    const coversDays = [...coverByDay.entries()]
       .filter(([d, other]) => d < day && other.some(sameResult))
       .map(([d]) => d)
       .sort((a, b) => b - a)

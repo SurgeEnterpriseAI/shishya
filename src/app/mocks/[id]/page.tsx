@@ -39,6 +39,7 @@ import { loadGuestPaper } from "@/lib/guest-paper-db";
 import { GUEST_WHOLE_PAPER_OPEN } from "@/lib/guest-paper";
 import { guestPaperCopy } from "@/lib/guest-paper-copy";
 import { OLYMPIAD_CATEGORY } from "@/lib/school-age";
+import { kidsPracticeHref, under13ExamGuard } from "@/lib/signin-cta";
 
 // 25 Sep 2026: a guest now gets a real page here (the sign-in gate) instead
 // of a redirect, so the page says noindex itself, like /login — on top of
@@ -89,6 +90,12 @@ export default async function MockPlayerPage({
       getT(),
     ]);
     if (!guestMock) notFound();
+    // 12 Oct 2026 (Release 2 review, under-13 rule): a kids' exam's mock is
+    // never a sign-in page for a guest (no Google button, no header sign-up,
+    // no /login bounce). The guest goes to the exam's 5-question quiz, which
+    // needs no account, as every other practice press on these exams does
+    // (src/lib/signin-cta.ts kidsPracticeHref). Members are unchanged.
+    if (under13ExamGuard(guestMock.exam.code)) redirect(kidsPracticeHref(guestMock.exam.code));
     if (guestMock.userId) redirect(gateLoginRedirectPath(guestMock.id, sp));
     // 27 Sep 2026 (founder, content first): a guest takes the WHOLE shared
     // paper here — timer, palette, submit, score and every answer — with no

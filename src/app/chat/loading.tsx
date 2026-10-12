@@ -4,7 +4,13 @@ export default function ChatLoading() {
   return (
     <main className="min-h-screen bg-ink-50/40">
       <div className="nav-progress" aria-hidden />
-      <Header />
+      {/* 12 Oct 2026 (Release 2 review, round 2; under-13 rule): the
+          skeleton cannot read ?examCode=, and a guest on a kids' exam is about
+          to get the tutor-off line (KidsGuestTutorOff), so no guest sign-up
+          button here, for anyone. Members' header links are unchanged (the
+          signed-in branch ignores childSafe); the Ask chip and the
+          post-sign-in strips wait for the page's own header. */}
+      <Header childSafe />
       <section className="container-prose py-6 sm:py-8" style={{ minHeight: "calc(100vh - 64px)" }}>
         <div className="skel h-3 w-32" />
         <div className="skel mt-2 h-6 w-44" />

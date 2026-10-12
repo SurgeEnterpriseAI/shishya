@@ -7,6 +7,7 @@
 // student lands on a half-filled 30-second form, not a blank one.
 
 import Link from "next/link";
+import { under13ExamGuard } from "@/lib/signin-cta";
 
 export function CoachEntry({
   examCode,
@@ -18,6 +19,9 @@ export function CoachEntry({
   /** Tunes the sentence to the moment the student is in. */
   variant?: "default" | "syllabus" | "results" | "cutoff" | "guide" | "finder";
 }) {
+  // 14 Oct 2026 (Release 2, under-13 rule): the plan needs an account, and a
+  // kids' exam asks no one to sign up (src/lib/signin-cta.ts under13ExamGuard).
+  if (under13ExamGuard(examCode)) return null;
   const line =
     variant === "syllabus"
       ? `This whole syllabus, split into daily doses — free.`
