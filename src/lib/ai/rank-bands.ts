@@ -11,6 +11,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { recordAiUsage } from "@/lib/ai/usage";
 import { anthropic, MODEL } from "./client";
+import { createLocalFirst, ledgerModel } from "@/lib/ai/local-llm";
 
 export interface RankBandInput {
   examCode: string;
@@ -82,13 +83,13 @@ Category:    ${input.category}
 
 Return STRICT JSON per the schema in the system prompt. 5-8 bands, full 0-100 score coverage, no gaps.`;
 
-  const response = await anthropic.messages.create({
+  const response = await createLocalFirst("rank-bands", anthropic, {
     model: MODEL,
     max_tokens: 3500,
     system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
     messages: [{ role: "user", content: userPrompt }],
   });
-  recordAiUsage("rank-bands", response, { model: MODEL, ref: input.examCode });
+  recordAiUsage("rank-bands", response, { model: ledgerModel(response, MODEL), ref: input.examCode });
 
   const text = response.content
     .filter((b): b is Anthropic.Messages.TextBlock => b.type === "text")

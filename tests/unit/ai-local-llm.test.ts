@@ -118,3 +118,46 @@ describe("cost", () => {
     expect(usageCostUsd("local:qwen3.5-9b", { input_tokens: 5000, output_tokens: 800 }).cost).toBe(0);
   });
 });
+
+describe("bulk route (12 Oct 2026)", () => {
+  const BULK = { ...ON, LOCAL_LLM_BULK_URL: "https://surgeai.example.ts.net/bulk/v1", LOCAL_LLM_BULK_FEATURES: "bank-solve,daily-brief" };
+  const ok = () => vi.fn().mockResolvedValue(new Response(JSON.stringify({ choices: [{ message: { content: "ok" }, finish_reason: "stop" }] }), { status: 200 }));
+  const req = { system: sys("Persona"), messages: user("Solve: 2+2"), maxTokens: 50 };
+  const claudeMsg = { content: [{ type: "text", text: "claude" }], model: "claude", usage: { input_tokens: 1, output_tokens: 1 } } as any;
+
+  it("sends a bulk feature to the bulk server and a live feature to the live server", async () => {
+    const f = ok(); vi.stubGlobal("fetch", f);
+    const m = await load(BULK);
+    await m.localFirst("bank-solve", req, vi.fn());
+    await m.localFirst("explain", req, vi.fn());
+    expect(f.mock.calls[0][0]).toBe("https://surgeai.example.ts.net/bulk/v1/chat/completions");
+    expect(f.mock.calls[1][0]).toBe("https://surgeai.example.ts.net/v1/chat/completions");
+  });
+
+  it("keeps an unlisted bulk feature (bank-verify) on Claude", async () => {
+    const f = ok(); vi.stubGlobal("fetch", f);
+    const m = await load(BULK);
+    const claude = vi.fn().mockResolvedValue(claudeMsg);
+    const { local } = await m.localFirst("bank-verify", req, claude);
+    expect(local).toBe(false);
+    expect(f).not.toHaveBeenCalled();
+  });
+
+  it("falls back to the live server address when no bulk URL is set", async () => {
+    const f = ok(); vi.stubGlobal("fetch", f);
+    const m = await load({ ...ON, LOCAL_LLM_BULK_FEATURES: "daily-brief" });
+    await m.localFirst("daily-brief", req, vi.fn());
+    expect(f.mock.calls[0][0]).toBe("https://surgeai.example.ts.net/v1/chat/completions");
+  });
+
+  it("createLocalFirst takes a string system prompt and labels the ledger model", async () => {
+    const f = ok(); vi.stubGlobal("fetch", f);
+    const m = await load(BULK);
+    const client = { messages: { create: vi.fn() } } as any;
+    const r = await m.createLocalFirst("daily-brief", client, { model: "claude-x", max_tokens: 50, system: "Brief writer", messages: user("Write a note") });
+    expect(client.messages.create).not.toHaveBeenCalled();
+    expect(JSON.parse(f.mock.calls[0][1].body).messages[0]).toEqual({ role: "system", content: "Brief writer" });
+    expect(m.ledgerModel(r, "claude-x")).toBe("local:qwen3.5-9b");
+    expect(m.ledgerModel({ model: "claude-sonnet" }, "claude-x")).toBe("claude-x");
+  });
+});

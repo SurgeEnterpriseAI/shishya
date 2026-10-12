@@ -26,6 +26,7 @@
 
 import { anthropic, MODEL } from "./client";
 import { recordAiUsage } from "./usage";
+import { createLocalFirst, ledgerModel } from "./local-llm";
 
 /** The one name AI replies are stored and rendered under. */
 export const AI_REPLY_AUTHOR = "Shishya AI";
@@ -99,7 +100,7 @@ export async function generateAiReply(ctx: ReplyContext): Promise<AiReply | null
     .join("\n\n");
 
   try {
-    const res = await anthropic.messages.create({
+    const res = await createLocalFirst("discussion-reply", anthropic, {
       model: MODEL,
       max_tokens: 250,
       system: SYSTEM_PROMPT,
@@ -111,7 +112,7 @@ export async function generateAiReply(ctx: ReplyContext): Promise<AiReply | null
       ],
     });
 
-    recordAiUsage("discussion-reply", res, { model: MODEL });
+    recordAiUsage("discussion-reply", res, { model: ledgerModel(res, MODEL) });
 
     const block = res.content.find((b) => b.type === "text");
     if (!block || block.type !== "text") return null;

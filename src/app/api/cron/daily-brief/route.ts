@@ -51,6 +51,7 @@ import { createSpendGuard } from "@/lib/ai/spend-guard";
 import { briefSittingName, buildFallbackBrief, rankWeakTopics, RULE_BRIEF_SOURCE, type BriefFacts } from "@/lib/brief-fallback";
 import { buildTimeline } from "@/lib/exam-timeline";
 import { hubDateLead } from "@/lib/hub-title";
+import { createLocalFirst, ledgerModel } from "@/lib/ai/local-llm";
 
 const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-sonnet-4-5-20250929";
 
@@ -284,7 +285,7 @@ Output ONLY the note, no quotes, no formatting markers.`;
       if (!aiDown && !(await guard.allow("daily-brief")).allow) aiDown = true;
       if (!aiDown) {
         try {
-          const response = await client.messages.create({
+          const response = await createLocalFirst("daily-brief", client, {
             model: MODEL,
             max_tokens: 300,
             system: "You are Shishya, a free AI study companion for students in India. For this student's exam you write tight, personal daily notes that respect their time.",
@@ -294,7 +295,7 @@ Output ONLY the note, no quotes, no formatting markers.`;
           stats.out += response.usage.output_tokens;
           stats.cacheW += response.usage.cache_creation_input_tokens ?? 0;
           stats.cacheR += response.usage.cache_read_input_tokens ?? 0;
-          recordAiUsage("daily-brief", response, { model: MODEL, ref: enr.exam.code });
+          recordAiUsage("daily-brief", response, { model: ledgerModel(response, MODEL), ref: enr.exam.code });
           aiReflection = response.content
             .filter((b): b is Anthropic.TextBlock => b.type === "text")
             .map((b) => b.text).join("\n").trim();

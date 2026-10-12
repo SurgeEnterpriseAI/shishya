@@ -10,6 +10,11 @@
 //   LOCAL_LLM_KEY       bearer key the vLLM server was started with
 //   LOCAL_LLM_MODEL     served model name (default "qwen3.5-9b")
 //   LOCAL_LLM_FEATURES  comma list of ledger features allowed to go local, e.g. "explain,tutor-anon"
+//   LOCAL_LLM_BULK_URL / LOCAL_LLM_BULK_FEATURES (12 Oct 2026): background and
+//     bulk jobs (mocks, question generation, bank solving, coach, briefs) go to
+//     a second copy of the model on the other GPU, so a 5,000-question run
+//     never queues ahead of a student. Bulk calls wait longer
+//     (LOCAL_LLM_BULK_TIMEOUT_MS, default 120 s) before falling back.
 // A call goes local only when its feature is listed, it carries no tools,
 // and nothing in it is in an Indian-language script or asks for a non-English
 // reply. Any local failure (down, slow, empty) falls back to Claude, so the
@@ -20,10 +25,20 @@ import type Anthropic from "@anthropic-ai/sdk";
 const URL_BASE = process.env.LOCAL_LLM_URL?.replace(/\/+$/, "") ?? "";
 const KEY = process.env.LOCAL_LLM_KEY ?? "";
 export const LOCAL_MODEL = process.env.LOCAL_LLM_MODEL ?? "qwen3.5-9b";
-const FEATURES = new Set(
-  (process.env.LOCAL_LLM_FEATURES ?? "").split(",").map((s) => s.trim()).filter(Boolean),
-);
+const list = (v: string | undefined) => new Set((v ?? "").split(",").map((s) => s.trim()).filter(Boolean));
+const FEATURES = list(process.env.LOCAL_LLM_FEATURES);
+const BULK_FEATURES = list(process.env.LOCAL_LLM_BULK_FEATURES);
+const BULK_URL = process.env.LOCAL_LLM_BULK_URL?.replace(/\/+$/, "") || URL_BASE;
 const TIMEOUT_MS = Number(process.env.LOCAL_LLM_TIMEOUT_MS ?? 25_000);
+const BULK_TIMEOUT_MS = Number(process.env.LOCAL_LLM_BULK_TIMEOUT_MS ?? 120_000);
+
+/** Which local endpoint serves this feature, or null when it stays on Claude. */
+function routeFor(feature: string | undefined): { url: string; timeoutMs: number } | null {
+  if (!KEY || !feature) return null;
+  if (FEATURES.has(feature) && URL_BASE) return { url: URL_BASE, timeoutMs: TIMEOUT_MS };
+  if (BULK_FEATURES.has(feature) && BULK_URL) return { url: BULK_URL, timeoutMs: BULK_TIMEOUT_MS };
+  return null;
+}
 
 // Devanagari, Bengali, Gurmukhi, Gujarati, Oriya, Tamil, Telugu, Kannada,
 // Malayalam (U+0900–U+0D7F) and Urdu/Arabic.
@@ -69,7 +84,7 @@ export function isEnglishOnly(system: Block[], messages: Msg[]): boolean {
 
 /** Whether this call may try the local server first. */
 export function localEligible(feature: string | undefined, req: { system: Block[]; messages: Msg[]; tools?: unknown }): boolean {
-  if (!URL_BASE || !KEY || !feature || !FEATURES.has(feature)) return false;
+  if (!routeFor(feature)) return false;
   if (req.tools) return false;
   return isEnglishOnly(req.system, req.messages);
 }
@@ -79,12 +94,15 @@ export function localEligible(feature: string | undefined, req: { system: Block[
  * so extractText / recordAiUsage work unchanged. Throws on any failure; the
  * caller falls back to Claude.
  */
-export async function callLocal(req: {
-  system: Block[];
-  messages: Msg[];
-  maxTokens: number;
-  temperature?: number;
-}): Promise<Anthropic.Messages.Message> {
+export async function callLocal(
+  req: {
+    system: Block[];
+    messages: Msg[];
+    maxTokens: number;
+    temperature?: number;
+  },
+  route: { url: string; timeoutMs: number } = { url: URL_BASE, timeoutMs: TIMEOUT_MS },
+): Promise<Anthropic.Messages.Message> {
   const body = {
     model: LOCAL_MODEL,
     max_tokens: req.maxTokens,
@@ -96,11 +114,11 @@ export async function callLocal(req: {
     // Qwen hybrid models: answer directly, no hidden reasoning pass.
     chat_template_kwargs: { enable_thinking: false },
   };
-  const res = await fetch(`${URL_BASE}/chat/completions`, {
+  const res = await fetch(`${route.url}/chat/completions`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${KEY}` },
     body: JSON.stringify(body),
-    signal: AbortSignal.timeout(TIMEOUT_MS),
+    signal: AbortSignal.timeout(route.timeoutMs),
   });
   if (!res.ok) throw new Error(`local-llm ${res.status}: ${(await res.text()).slice(0, 200)}`);
   const data = await res.json();
@@ -133,12 +151,39 @@ export async function localFirst<T extends Anthropic.Messages.Message>(
   req: { system: Block[]; messages: Msg[]; maxTokens: number; temperature?: number; tools?: unknown },
   claude: () => Promise<T>,
 ): Promise<{ value: Anthropic.Messages.Message; local: boolean }> {
-  if (localEligible(feature, req)) {
+  const route = routeFor(feature);
+  if (route && localEligible(feature, req)) {
     try {
-      return { value: await callLocal(req), local: true };
+      return { value: await callLocal(req, route), local: true };
     } catch (err) {
       console.warn(`[local-llm] ${feature}: fell back to Claude (${String((err as Error)?.message ?? err).slice(0, 160)})`);
     }
   }
   return { value: await claude(), local: false };
+}
+
+/**
+ * localFirst for the call sites that use client.messages.create directly
+ * (daily brief, rank bands, demand mining, discussion replies): takes the
+ * same request body, accepts a string system prompt, and runs the Claude
+ * call unchanged when the local route is off or fails.
+ */
+export async function createLocalFirst(
+  feature: string,
+  client: Anthropic,
+  params: Anthropic.Messages.MessageCreateParamsNonStreaming,
+): Promise<Anthropic.Messages.Message> {
+  const system: Block[] =
+    typeof params.system === "string" ? [{ type: "text", text: params.system }] : (params.system ?? []);
+  const { value } = await localFirst(
+    feature,
+    { system, messages: params.messages, maxTokens: params.max_tokens, temperature: params.temperature, tools: params.tools },
+    () => client.messages.create(params),
+  );
+  return value;
+}
+
+/** The model name for the spend ledger: the local label when the local server answered. */
+export function ledgerModel(response: { model?: string }, claudeModel: string): string {
+  return response.model?.startsWith("local:") ? response.model : claudeModel;
 }

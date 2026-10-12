@@ -37,6 +37,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { anthropic, MODEL } from "@/lib/ai/client";
 import { recordAiUsage } from "@/lib/ai/usage";
 import { isOurTutorPrompt } from "@/lib/tutor-templates";
+import { createLocalFirst, ledgerModel } from "@/lib/ai/local-llm";
 
 // Fixed taxonomy — the heatmap's row groups. The model must pick one
 // per signal; "other" is the escape hatch we review weekly.
@@ -226,13 +227,13 @@ async function classify(
   let results: Verdict[] | null = null;
   let why = "";
   try {
-    const resp = await anthropic.messages.create({
+    const resp = await createLocalFirst("demand-mine", anthropic, {
       model: MODEL,
       max_tokens: 8000,
       system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
       messages: [{ role: "user", content: user }],
     });
-    recordAiUsage("demand-mine", resp, { model: MODEL });
+    recordAiUsage("demand-mine", resp, { model: ledgerModel(resp, MODEL) });
     const text = resp.content
       .filter((b): b is Anthropic.Messages.TextBlock => b.type === "text")
       .map((b) => b.text)
@@ -345,7 +346,7 @@ export async function consolidateDemand(db: PrismaClient, gate?: MineGate): Prom
   if (gate && !(await gate.allow())) return { merges: 0, digest: null, held: true };
 
   const listing = rows.map((r) => `${r.key} | ${r.label} | ${r.category} | total=${Number(r.n)} | last7d=${Number(r.wk)}`).join("\n");
-  const resp = await anthropic.messages.create({
+  const resp = await createLocalFirst("demand-consolidate", anthropic, {
     model: MODEL,
     max_tokens: 1800,
     messages: [
@@ -358,7 +359,7 @@ export async function consolidateDemand(db: PrismaClient, gate?: MineGate): Prom
     await gate?.failed(err);
     throw err;
   });
-  recordAiUsage("demand-consolidate", resp, { model: MODEL });
+  recordAiUsage("demand-consolidate", resp, { model: ledgerModel(resp, MODEL) });
   const text = resp.content
     .filter((b): b is Anthropic.Messages.TextBlock => b.type === "text")
     .map((b) => b.text)
