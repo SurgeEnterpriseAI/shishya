@@ -85,7 +85,7 @@ import { schoolCapFrames, schoolTutorCapReached, schoolUiLang } from "@/lib/scho
 import { isMinorBand, schoolBandOfProfile } from "@/lib/school/student-classes";
 import { chatScopeReply, chatScopeFrames, CHAT_SCOPE_CODE } from "@/lib/chat-scope";
 import { reviewSnapshot, shouldTouchSession, type ReviewTag } from "@/lib/recent-chats";
-import { kidsGuestTutorFrames, kidsGuestTutorOff, kidsGuestTutorText, kidsTutorLang } from "@/lib/kids-tutor";
+import { kidsExamNamedInConversation, kidsGuestTutorFrames, kidsGuestTutorOff, kidsGuestTutorText, kidsTutorLang, unknownKidsTutorOffer } from "@/lib/kids-tutor";
 import { loadKidsTutorOffer } from "@/lib/db/kids-tutor-offer";
 import { guestSeedHold, hasAnonCookie, SEED_HELD_ERROR, seedHoldCandidate } from "@/lib/guest-seed-hold";
 import { loadConvictedAgents } from "@/lib/db/convicted-agents";
@@ -295,6 +295,28 @@ async function handleChat(req: Request, turn: TurnRow): Promise<Response> {
       });
     }
     return new Response(kidsGuestTutorFrames(kidsGuestTutorText(offer, kidsTutorLang(uiLang))), { headers: SSE_HEADERS });
+  }
+  // 12 Oct 2026: the same for a guest whose conversation NAMES a kids' exam
+  // in the general chat or another exam's chat ("Quiz me on my weakest SOF
+  // NSO topic" was answered and logged in the general chat at 12:22 IST) —
+  // this message or an earlier turn (the kids' line names the exam, so a
+  // follow-up after it is held too): the same line for that exam, no model
+  // call, nothing logged (src/lib/kids-tutor.ts kidsExamNamedInConversation).
+  // The pre-filter's helplines and its under-13 line come first, unlogged —
+  // the under-13 line closes the chat on the page. A family named alone
+  // (SOF, Silverzone) links the exam list. Signed-in members are unchanged.
+  if (!userId) {
+    const named = kidsExamNamedInConversation(body.message, body.history);
+    if (named) {
+      const uiLang = (await cookies()).get("shishya-lang")?.value;
+      const scope = chatScopeReply(body.message, schoolUiLang(uiLang));
+      if (scope?.code === CHAT_SCOPE_CODE.distress || scope?.code === CHAT_SCOPE_CODE.under13) {
+        return new Response(chatScopeFrames(scope), { headers: SSE_HEADERS });
+      }
+      const offer =
+        "code" in named ? ((await loadKidsTutorOffer(named.code)) ?? unknownKidsTutorOffer(named.code)) : unknownKidsTutorOffer(named.family);
+      return new Response(kidsGuestTutorFrames(kidsGuestTutorText(offer, kidsTutorLang(uiLang))), { headers: SSE_HEADERS });
+    }
   }
 
   // ── A convicted crawler's auto-sent seed (14 Oct 2026, Release 2) ──

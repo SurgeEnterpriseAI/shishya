@@ -51,6 +51,107 @@ export function kidsGuestTutorOff(t: { signedIn: boolean; general?: boolean | nu
   return under13ExamGuard(code) || under13ExamGuard(code.toUpperCase());
 }
 
+// ── A kids' exam NAMED in a guest's question (12 Oct 2026) ─────────────
+// The rule above keys on the chat's exam. A guest in the general chat (or on
+// another exam's chat) who asks about a kids' exam by name got the AI and an
+// AnonTutorLog row: 12 Oct 2026 12:22 IST, "Quiz me on my weakest SOF NSO
+// topic" (the hub seed's own words) in the general chat, answered and logged.
+// So any signed-out turn whose message names a kids' exam gets the same fixed
+// line for that exam — no model call, nothing logged (the chat route checks
+// it right after the exam-code rule, before anything is written).
+// What counts as naming one — the catalogue's own names, and a short name
+// only where the message is clearly about a children's olympiad (review,
+// 12 Oct 2026: a bare "NSO" is also the National Statistics Office of GDP and
+// PLFS questions, "Navodaya" also the NVS teacher recruitment):
+//   • SOF / Silverzone with the olympiad's letters, any case ("SOF NSO",
+//     "sof_imo", "Silverzone IOM", "SZF-IOS"), and SOF's / Silverzone's full
+//     names ("National Science Olympiad", "International English Olympiad",
+//     "International Olympiad of Mathematics" …);
+//   • NSTSE / "Science Talent Search Exam(ination)" / Unified Council, PRIL /
+//     "Panini Linguistics Olympiad", ZIO / "Zonal Informatics Olympiad",
+//     JNVST, IGKO (all unique);
+//   • a short name alone — nso, ieo, ico, iho, ios, iom, ioel, nco, isso, any
+//     case — only beside "olympiad", "class 1-7" / "grade 1-7" / "1st-7th
+//     class" or "level 1/2", and never beside GDP, PLFS, CPI, IIP, NSSO,
+//     MoSPI, statistics, survey or "NSO Group";
+//   • IMO and "International Mathematics Olympiad" only beside SOF, class /
+//     grade 1-7 or level 1/2 — never beside IOQM, INMO or "Mathematical"
+//     (the International Mathematical Olympiad of older students);
+//   • Navodaya / JNV only beside entrance, admission, selection test or
+//     class 6 / 9 — never beside Samiti, NVS, recruitment, TGT, PGT,
+//     teacher, staff or vacancy;
+//   • SOF / Silverzone alone, any case ("sof olympiad", "Science Olympiad
+//     Foundation"): no one exam, so the line names the family and links the
+//     exam list.
+// "sofa", "software", "pril" inside a word, a bare "IMO" are not names.
+
+const KIDS_CONTEXT = /\bolympiads?\b|\b(?:class|grade|std|standard)\s*[1-7](?:st|nd|rd|th)?\b|\b[1-7](?:st|nd|rd|th)\s+(?:class|grade|std|standard)\b|\blevel\s*[12]\b/i;
+const KIDS_CLASS_CONTEXT = /\bSOF\b|\b(?:class|grade|std|standard)\s*[1-7](?:st|nd|rd|th)?\b|\b[1-7](?:st|nd|rd|th)\s+(?:class|grade|std|standard)\b|\blevel\s*[12]\b/i;
+const ADULT_STATS = /\b(?:GDP|PLFS|CPI|IIP|NSSO|MoSPI|statistics?|statistical|survey|NSO\s+Group|Pegasus|spyware)\b/i;
+const REAL_IMO = /\b(?:IOQM|INMO|RMO|Mathematical)\b/i;
+const NAVODAYA_ENTRY = /\b(?:entrance|admission|selection\s+test|lateral\s+entry|class\s*(?:6|vi|9|ix)(?:th)?|6th\s+class|9th\s+class)\b/i;
+const NAVODAYA_JOBS = /\b(?:samiti|NVS|recruit\w*|TGT|PGT|teachers?|staff|vacanc\w*|non[-\s]teaching|policy|established|set\s+up)\b/i;
+
+type NamedRule = { re: RegExp; code: string | ((m: RegExpMatchArray) => string); when?: (msg: string) => boolean };
+const KIDS_NAMED: ReadonlyArray<NamedRule> = [
+  { re: /\bSOF[\s_-]*(IMO|NSO|IEO|IGKO|ICO|IHO)\b/i, code: (m) => `SOF_${m[1].toUpperCase()}` },
+  { re: /\b(?:SZF|Silver\s?zone)[\s_-]*(IOS|IOEL|IOM)\b/i, code: (m) => `SZF_${m[1].toUpperCase()}` },
+  { re: /\bInternational English Olympiad\b/i, code: "SOF_IEO" },
+  { re: /\bNational Science Olympiad\b/i, code: "SOF_NSO" },
+  { re: /\bInternational General Knowledge Olympiad\b/i, code: "SOF_IGKO" },
+  { re: /\bInternational Commerce Olympiad\b/i, code: "SOF_ICO" },
+  { re: /\bInternational Hindi Olympiad\b/i, code: "SOF_IHO" },
+  { re: /\bInternational Olympiad of Science\b/i, code: "SZF_IOS" },
+  { re: /\bInternational Olympiad of Mathematics\b/i, code: "SZF_IOM" },
+  { re: /\bInternational Olympiad of English Language\b/i, code: "SZF_IOEL" },
+  { re: /\bNSTSE\b|\bScience Talent Search Exam(?:ination)?\b|\bUnified Council\b/i, code: "NSTSE" },
+  { re: /\bPRIL\b|\bPanini Linguistics Olympiad\b/, code: "PRIL" },
+  { re: /\bZIO\b|\bZonal Informatics Olympiad\b/, code: "ZIO" },
+  { re: /\bJNVST\b/i, code: "JNVST" },
+  { re: /\bIGKO\b/i, code: "SOF_IGKO" },
+  { re: /\b(NSO|IEO|ICO|IHO)\b/i, code: (m) => `SOF_${m[1].toUpperCase()}`, when: (msg) => KIDS_CONTEXT.test(msg) && !ADULT_STATS.test(msg) },
+  { re: /\b(IOS|IOM|IOEL)\b/i, code: (m) => `SZF_${m[1].toUpperCase()}`, when: (msg) => KIDS_CONTEXT.test(msg) && !ADULT_STATS.test(msg) },
+  { re: /\bIMO\b|\bInternational Mathematics Olympiad\b/i, code: "SOF_IMO", when: (msg) => KIDS_CLASS_CONTEXT.test(msg) && !REAL_IMO.test(msg) },
+  { re: /\bNavodaya\b|\bJNV\b/i, code: "JNVST", when: (msg) => NAVODAYA_ENTRY.test(msg) && !NAVODAYA_JOBS.test(msg) },
+];
+
+const KIDS_FAMILY_NAMED: ReadonlyArray<{ re: RegExp; family: string; when?: (msg: string) => boolean }> = [
+  { re: /\bSOF\b|\bScience Olympiad Foundation\b/i, family: "SOF olympiads" },
+  { re: /\bSZF\b|\bSilver\s?zone\b/i, family: "Silverzone olympiads" },
+  { re: /\b(?:NCO|ISSO)\b/i, family: "SOF olympiads", when: (msg) => KIDS_CONTEXT.test(msg) && !ADULT_STATS.test(msg) },
+];
+
+/** The kids' exam a message names: `{ code }` for one exam (a code the
+ *  under-13 guard covers), `{ family }` for SOF or Silverzone named alone,
+ *  or null. Pure; reads only the message. */
+export function kidsExamNamedIn(message: string | null | undefined): { code: string } | { family: string } | null {
+  if (typeof message !== "string" || !message.trim()) return null;
+  for (const n of KIDS_NAMED) {
+    const m = message.match(n.re);
+    if (!m || (n.when && !n.when(message))) continue;
+    const code = typeof n.code === "string" ? n.code : n.code(m);
+    if (under13ExamGuard(code)) return { code };
+  }
+  for (const f of KIDS_FAMILY_NAMED) if (f.re.test(message) && (!f.when || f.when(message))) return { family: f.family };
+  return null;
+}
+
+/** The first kids' exam named in a guest's conversation: this message, then
+ *  its earlier turns (both sides — the kids' line itself names the exam), so
+ *  a follow-up after the line is held too (review, 12 Oct 2026). */
+export function kidsExamNamedInConversation(
+  message: string | null | undefined,
+  history: ReadonlyArray<{ role?: string; content?: unknown }> | null | undefined,
+): { code: string } | { family: string } | null {
+  const now = kidsExamNamedIn(message);
+  if (now) return now;
+  for (const h of history ?? []) {
+    const hit = typeof h?.content === "string" ? kidsExamNamedIn(h.content) : null;
+    if (hit) return hit;
+  }
+  return null;
+}
+
 export type KidsTutorLang = "en" | "hi" | "te";
 
 /** hi / te lines are for founder review (14 Oct 2026). {exam} = the exam's short name.

@@ -169,6 +169,7 @@ import { SignUpButton } from "@/components/SignUpButton";
 import { signUpLabel } from "@/lib/signup-cta-copy";
 import { firstAnswerHref, firstQuestionOf, guestChatOffer } from "@/lib/chat-first-answer";
 import { under13ExamGuard } from "@/lib/signin-cta";
+import { KIDS_GUEST_TUTOR_CODE } from "@/lib/kids-tutor";
 import { SEED_HELD_ERROR, taggedLanding } from "@/lib/guest-seed-hold";
 import { FirstAnswerOffer } from "./FirstAnswerOffer";
 import type { PickupAnsweredView } from "@/lib/pickup";
@@ -477,6 +478,12 @@ export function ChatInterface({
   // line (code "scope-under13", src/lib/chat-scope.ts). The chat closes — no
   // composer, no starters, no sign-in card — and points to the class pages.
   const [under13, setUnder13] = useState(false);
+  // 12 Oct 2026: the server answered a guest's question that named a kids'
+  // exam with its fixed "not open to guests" line (code "kids-guest-off",
+  // src/lib/kids-tutor.ts kidsExamNamedIn) — a child may be asking. From
+  // then on this chat offers no sign-up (no card, no banner) and keeps
+  // nothing for an account, as for the under-13 line; the chat stays open.
+  const [kidsOff, setKidsOff] = useState(false);
   const [messagesLeft, setMessagesLeft] = useState<number | null>(school ? school.messagesLeft : null);
   // This island's own lines in the site UI language (16 Sep 2026). Read after
   // mount — the server cannot see the shishya-lang cookie, and the guest save
@@ -541,7 +548,7 @@ export function ChatInterface({
   const messagesRef = useRef<Message[]>([]);
   messagesRef.current = messages;
   const under13Ref = useRef(false);
-  under13Ref.current = under13;
+  under13Ref.current = under13 || kidsOff;
   function keepGuestChatForSignIn() {
     if (!guestSignInHref || school || under13Ref.current) return;
     keepGuestChat(examCode ?? null, messagesRef.current);
@@ -579,8 +586,8 @@ export function ChatInterface({
 
   // A chat the under-13 line closed is never carried into an account.
   useEffect(() => {
-    if (under13) dropKeptGuestChat();
-  }, [under13]);
+    if (under13 || kidsOff) dropKeptGuestChat();
+  }, [under13, kidsOff]);
 
   // A guest's question an outage left unanswered (1 Oct 2026): this browser
   // kept it for this chat's scope, so it goes back in the box, unsent, with a
@@ -595,9 +602,9 @@ export function ChatInterface({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
-    if (under13) dropGuestUnanswered(localStore());
-    if (under13) dropGuestQuestionCarry();
-  }, [under13]);
+    if (under13 || kidsOff) dropGuestUnanswered(localStore());
+    if (under13 || kidsOff) dropGuestQuestionCarry();
+  }, [under13, kidsOff]);
   // 1 Oct 2026 review: a member's general or exam chat lets go of any guest's
   // kept question in this browser — on a shared device (a cyber-café PC) it
   // must not wait in the box for the next person. (A school chat takes no
@@ -991,6 +998,7 @@ export function ChatInterface({
               // School chat: the cap line came instead of a reply, or one
               // more of today's messages was used (a replayed reply used none).
               if (parsed?.code === "scope-under13") setUnder13(true);
+              if (parsed?.code === KIDS_GUEST_TUTOR_CODE) setKidsOff(true);
               if (parsed?.code === SCHOOL_CAP_CODE) setCapped(true);
               // A pre-filtered reply (src/lib/chat-scope.ts, "scope-…" code) is not stored, so it used none either.
               else if (school && !parsed?.replayed && !String(parsed?.code ?? "").startsWith("scope-")) setMessagesLeft((n) => (n == null ? n : Math.max(0, n - 1)));
@@ -1107,7 +1115,7 @@ export function ChatInterface({
   const guestOffer = guestChatOffer({
     guest: !!guestSignInHref,
     school: !!school,
-    under13,
+    under13: under13 || kidsOff,
     busy,
     questionDoorUp,
     examCode: examCode ?? null,
@@ -1126,7 +1134,7 @@ export function ChatInterface({
         listener above). Never in a school chat; gone — sentence and button —
         once a guest says they are under 13; and the button steps aside once
         the save card below offers the same thing (one invitation a screen). */}
-    {guestBanner && guestSignInHref && !school && !under13 && (
+    {guestBanner && guestSignInHref && !school && !under13 && !kidsOff && (
       <div className="mt-2 rounded-md bg-saffron-50 px-3 py-2 ring-1 ring-saffron-200">
         <p data-su-reason className="text-xs text-ink-600">{guestBanner.text}</p>
         {!guestHasReply && !questionDoorUp && (

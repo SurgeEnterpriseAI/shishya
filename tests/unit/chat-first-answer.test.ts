@@ -387,7 +387,7 @@ describe("D. the chat island holds one invitation a screen; the card's own file"
 
   it("the island decides through the shared rule, with the B6 door's state", () => {
     expect(flat(chat)).toContain(
-      "const guestOffer = guestChatOffer({ guest: !!guestSignInHref, school: !!school, under13, busy, questionDoorUp, examCode: examCode ?? null, messages, });",
+      "const guestOffer = guestChatOffer({ guest: !!guestSignInHref, school: !!school, under13: under13 || kidsOff, busy, questionDoorUp, examCode: examCode ?? null, messages, });",
     );
     expect(chat.indexOf("const guestOffer = guestChatOffer(")).toBeGreaterThan(chat.indexOf("const questionDoorUp ="));
   });

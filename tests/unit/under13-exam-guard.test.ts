@@ -237,7 +237,7 @@ describe("3. the components hide themselves for a kids' exam", () => {
     const chat = read("src/app/chat/ChatInterface.tsx");
     const net = chat.indexOf("if (under13ExamGuard(examCode)) guestBanner = null;");
     expect(net).toBeGreaterThan(0);
-    expect(net).toBeLessThan(chat.indexOf("{guestBanner && guestSignInHref && !school && !under13 && ("));
+    expect(net).toBeLessThan(chat.indexOf("{guestBanner && guestSignInHref && !school && !under13 && !kidsOff && ("));
     // The save card and the first-answer card come from guestChatOffer (null on a kids' exam — tests/unit/chat-first-answer.test.ts).
     expect(chat).toContain('{guestSignInHref && !school && !under13 && !busy && guestOffer === "save" && (');
     expect(read("src/lib/chat-first-answer.ts")).toContain("if (under13ExamGuard(a.examCode)) return null;");

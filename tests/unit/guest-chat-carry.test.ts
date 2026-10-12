@@ -137,7 +137,7 @@ describe("the chat island keeps the chat on any sign-in (source)", () => {
 
   it("never for a school chat or after the under-13 line; the under-13 line drops a kept one", () => {
     expect(src).toContain("if (!guestSignInHref || school || under13Ref.current) return;");
-    expect(src).toContain("if (under13) dropKeptGuestChat();");
+    expect(src).toContain("if (under13 || kidsOff) dropKeptGuestChat();");
   });
 
   it("the save card: a full-width button once the tutor has answered — from the second answer on, the first-answer card before it", () => {

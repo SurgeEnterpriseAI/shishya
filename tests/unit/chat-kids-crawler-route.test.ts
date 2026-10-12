@@ -366,3 +366,83 @@ describe("POST /api/chat — the crawler hold (convicted user agent, no cookie, 
     nothingKept();
   });
 });
+
+describe("POST /api/chat — a kids' exam NAMED in a guest's question (12 Oct 2026)", () => {
+  it("the general chat's 'Quiz me on my weakest SOF NSO topic' gets the SOF NSO line — no model, no row", async () => {
+    state.offers.SOF_NSO = { examCode: "SOF_NSO", exam: "SOF NSO", hasQuestions: true, hasSamplePapers: false };
+    const res = await post({ general: true, message: "Quiz me on my weakest SOF NSO topic", history: [] }, { ua: OTHER_UA });
+    expect(res.status).toBe(200);
+    const text = await res.text();
+    expect(text).toContain(`"code":"${KIDS_GUEST_TUTOR_CODE}"`);
+    expect(text).toContain("The AI tutor is not open to guests on SOF NSO");
+    expect(text).toContain("https://shishya.in/exams/SOF_NSO/quiz");
+    expect(text).not.toMatch(/sign (in|up)|google/i);
+    nothingKept();
+    expect(state.offerReads).toEqual(["SOF_NSO"]);
+  });
+
+  it("another exam's chat (SSC CGL) naming a kids' exam is refused the same way", async () => {
+    const res = await post({ examCode: "SSC_CGL", message: "Is NSTSE harder than SSC CGL?", history: [] }, { ua: OTHER_UA });
+    expect(await res.text()).toContain(`"code":"${KIDS_GUEST_TUTOR_CODE}"`);
+    nothingKept();
+    expect(state.offerReads).toEqual(["NSTSE"]);
+  });
+
+  it("an exam no active row has (JNVST) and a family named alone link the exam list", async () => {
+    let text = await (await post({ general: true, message: "Navodaya class 6 entrance tips" }, { ua: OTHER_UA })).text();
+    expect(text).toContain("not open to guests on JNVST");
+    expect(text).toContain("https://shishya.in/exams/browse");
+    text = await (await post({ general: true, message: "Is SOF olympiad worth it?" }, { ua: OTHER_UA })).text();
+    expect(text).toContain("not open to guests on SOF olympiads");
+    expect(text).toContain("https://shishya.in/exams/browse");
+    nothingKept();
+  });
+
+  it("distress first: the helplines, nothing logged", async () => {
+    const text = await (await post({ general: true, message: "SOF IMO result came, I want to die" }, { ua: OTHER_UA })).text();
+    expect(text).toContain("14416");
+    expect(text).not.toContain(KIDS_GUEST_TUTOR_CODE);
+    nothingKept();
+  });
+
+  it("a follow-up after the kids' line (no name in it) is held too: no model, no row", async () => {
+    state.offers.SOF_NSO = { examCode: "SOF_NSO", exam: "SOF NSO", hasQuestions: true, hasSamplePapers: false };
+    const history = [
+      { role: "user", content: "Quiz me on my weakest SOF NSO topic" },
+      { role: "assistant", content: "The AI tutor is not open to guests on SOF NSO, because children sit this exam." },
+    ];
+    const text = await (await post({ general: true, message: "ok, start with an easy one", history }, { ua: OTHER_UA })).text();
+    expect(text).toContain(`"code":"${KIDS_GUEST_TUTOR_CODE}"`);
+    nothingKept();
+  });
+
+  it("a child who gives their age gets the under-13 line (it closes the chat), not the kids' line — nothing logged", async () => {
+    const text = await (await post({ general: true, message: "I am 10 years old. Quiz me on my weakest SOF IMO topic" }, { ua: OTHER_UA })).text();
+    expect(text).toContain('"code":"scope-under13"');
+    expect(text).not.toContain(KIDS_GUEST_TUTOR_CODE);
+    nothingKept();
+  });
+
+  it("an adult's NSO (GDP) or Navodaya-recruitment question is answered as before", async () => {
+    await (await post({ general: true, message: "What did the NSO say about GDP growth in Q1?" }, { ua: OTHER_UA })).text();
+    await (await post({ general: true, message: "Navodaya teacher recruitment 2026 syllabus" }, { ua: OTHER_UA })).text();
+    expect(state.tutorCalls).toHaveLength(2);
+    expect(state.offerReads).toHaveLength(0);
+  });
+
+  it("a question for older students (IOQM, the IMO it leads to) is answered and logged as before", async () => {
+    const res = await post({ general: true, message: "How do I go from IOQM to the IMO?", history: [] }, { ua: OTHER_UA });
+    expect(await res.text()).not.toContain(KIDS_GUEST_TUTOR_CODE);
+    expect(state.tutorCalls).toHaveLength(1);
+    expect(state.anonLogs).toHaveLength(1);
+    expect(state.offerReads).toHaveLength(0);
+  });
+
+  it("a signed-in member who names a kids' exam is unchanged", async () => {
+    state.session = { user: { id: "u1" } };
+    const res = await post({ examCode: "SSC_CGL", message: "Is NSTSE harder than SSC CGL?" });
+    expect(await res.text()).not.toContain(KIDS_GUEST_TUTOR_CODE);
+    expect(state.tutorCalls).toHaveLength(1);
+    expect(state.offerReads).toHaveLength(0);
+  });
+});

@@ -768,7 +768,7 @@ describe("F. minors: no newly converted placement can show on a Class 1-7 page o
 
   it("the guest tutor's line: never in a school chat, gone (sentence and button) once a guest says they are under 13", () => {
     const chat = code("src/app/chat/ChatInterface.tsx");
-    expect(chat).toContain("{guestBanner && guestSignInHref && !school && !under13 && (");
+    expect(chat).toContain("{guestBanner && guestSignInHref && !school && !under13 && !kidsOff && (");
     // The server page no longer renders the sentence itself (it could not take it away).
     const page = code("src/app/chat/page.tsx");
     expect(page).not.toMatch(/<Link href=\{loginHref\}/);

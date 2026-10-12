@@ -1285,7 +1285,7 @@ describe("8. never on a Class 1-7 page or in an under-13 context", () => {
     expect(card).toContain("{guestSignInHref && !school && !under13 && !busy &&");
     // … and the line under the page title (door "chat-banner", 2 Oct 2026): the same three conditions.
     const bannerAt = chat.lastIndexOf("<SignUpButton", chat.indexOf('surface="chat-banner"'));
-    expect(chat.slice(chat.lastIndexOf("{guestBanner &&", bannerAt), bannerAt)).toContain("{guestBanner && guestSignInHref && !school && !under13 && (");
+    expect(chat.slice(chat.lastIndexOf("{guestBanner &&", bannerAt), bannerAt)).toContain("{guestBanner && guestSignInHref && !school && !under13 && !kidsOff && (");
     expect(chat.match(/<SignUpButton\b/g)).toHaveLength(2);
   });
 
