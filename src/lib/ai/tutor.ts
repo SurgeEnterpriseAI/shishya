@@ -26,7 +26,7 @@ import {
 } from "./prompts";
 import type { TutorInput, TutorOutput } from "./types";
 import { tutorTools, executeTool, type ToolContext } from "./tools";
-import { localFirst, localRouteFor, streamLocal, ReplyStreamFilter, LOCAL_MODEL, type LocalToolCall } from "./local-llm";
+import { localRouteFor, streamLocal, ReplyStreamFilter, LOCAL_MODEL, type LocalToolCall } from "./local-llm";
 import { siteFeaturesBlock } from "./site-facts";
 import { buildTutorExamFacts, examFactsBlock } from "./exam-facts";
 import { SCHOOL_TUTOR_STATIC_PROMPT, schoolClassBlock, schoolTurnContext, type SchoolTurn, type SchoolTutorScope } from "@/lib/school/tutor-persona";
@@ -264,10 +264,8 @@ export async function* tutorStream(
   const LOCAL_TOOL_RULES =
     "Tool rules: when you need a tool, call it FIRST, before writing anything to the student, and make all the calls you need before you start the answer. " +
     "Any practice question you show must come from find_questions_on_topic, shown exactly as returned with its options A-D; never write your own question.";
-  let triedLocal = false;
   const route = localRouteFor(feature, { system: systemBlocks, messages, tools: ctx ? tutorTools : undefined }, { allowTools: true });
   if (route) {
-    triedLocal = true;
     const start = Date.now();
     const filter = new ReplyStreamFilter();
     // The local turn works on its own copy of the conversation: if it falls
@@ -365,27 +363,35 @@ export async function* tutorStream(
     }
   }
 
+  // 13 Oct 2026: Claude's answer streams too, piece by piece as it is
+  // written (it used to arrive whole, then be cut into ~80-char chunks).
+  // Text of every turn — before a tool call, after it, the wrap — joins
+  // exactly as finalText does, through the same filter as the local route,
+  // so the pieces add up to the reply that is stored.
+  const filter = new ReplyStreamFilter();
+  let streamed = "";
+  const show = function* (piece: string): Generator<{ delta: string }> {
+    streamed += piece;
+    const out = filter.push(piece);
+    if (out) yield { delta: out };
+  };
+
   while (true) {
     const start = Date.now();
     // 7 Oct 2026: an empty main balance is retried once on the reserve key
     // for a student's turn (src/lib/ai/reserve.ts); "tutor-late" never is.
-    // 12 Oct 2026: a tools-off English turn (guest or school chat) whose
-    // feature is in LOCAL_LLM_FEATURES tries Surge's own server first
-    // (ai/local-llm.ts); a signed-in turn with tools always stays on Claude.
-    let reserve = false;
+    // The retry still works with streaming: the credit error comes back on
+    // the request itself, before any piece of the answer.
     const tools = ctx ? tutorTools : undefined;
-    const { value: response, local } = await localFirst(
-      triedLocal ? undefined : feature,
-      { system: systemBlocks, messages, maxTokens: TOKEN_LIMITS.tutor, tools },
-      async () => {
-        const r = await withReserve(feature, anthropic, (client) =>
-          client.messages.create({ model: MODEL, max_tokens: TOKEN_LIMITS.tutor, system: systemBlocks, messages, tools }),
-        );
-        reserve = r.reserve;
-        return r.value;
-      },
+    const { value: res, reserve } = await withReserve(feature, anthropic, (client) =>
+      client.messages.create({ model: MODEL, max_tokens: TOKEN_LIMITS.tutor, system: systemBlocks, messages, tools, stream: true }),
     );
-    const cost = recordAiUsage(ledgerFeature(feature, reserve), response, { model: local ? response.model : MODEL, ref: input.syllabus?.examCode ?? null, latencyMs: Date.now() - start });
+    let response!: Anthropic.Messages.Message;
+    for await (const ev of claudeTurn(res)) {
+      if ("message" in ev) response = ev.message;
+      else yield* show(ev.newBlock && streamed ? `\n${ev.delta}` : ev.delta);
+    }
+    const cost = recordAiUsage(ledgerFeature(feature, reserve), response, { model: MODEL, ref: input.syllabus?.examCode ?? null, latencyMs: Date.now() - start });
     input.usage?.onCost?.(cost);
 
     // Append the assistant message to the conversation history (full content blocks
@@ -426,7 +432,7 @@ export async function* tutorStream(
       // (tools → system) is byte-identical to the loop's requests and the
       // call is a cache HIT; omitting tools re-wrote ~4k tokens per wrap.
       const wrapFeature = input.usage?.feature ? `${input.usage.feature}-wrap` : "tutor-wrap";
-      const { value: wrap, reserve: wrapReserve } = await withReserve(wrapFeature, anthropic, (client) =>
+      const { value: wrapRes, reserve: wrapReserve } = await withReserve(wrapFeature, anthropic, (client) =>
         client.messages.create({
           model: MODEL,
           max_tokens: TOKEN_LIMITS.tutor,
@@ -434,8 +440,14 @@ export async function* tutorStream(
           messages,
           tools: tutorTools,
           tool_choice: { type: "none" },
+          stream: true,
         }),
       );
+      let wrap!: Anthropic.Messages.Message;
+      for await (const ev of claudeTurn(wrapRes)) {
+        if ("message" in ev) wrap = ev.message;
+        else yield* show(ev.newBlock && streamed ? `\n${ev.delta}` : ev.delta);
+      }
       input.usage?.onCost?.(recordAiUsage(ledgerFeature(wrapFeature, wrapReserve), wrap, { model: MODEL, ref: input.syllabus?.examCode ?? null }));
       for (const block of wrap.content) {
         if (block.type === "text") finalText += (finalText ? "\n" : "") + block.text;
@@ -467,12 +479,68 @@ export async function* tutorStream(
     void start; // (latency telemetry consumer can be added later)
   }
 
-  // Stream the final text out as ~80-char chunks for SSE feel.
+  // The pieces shown so far are the reply up to the end; whatever the final
+  // trim leaves over (normally nothing) goes out last.
   const { reply, suggestedActions, citedTopics } = splitActions(finalText);
-  for (const piece of chunkForStream(reply)) {
-    yield { delta: piece };
-  }
+  if (streamed !== finalText) console.warn("[tutor] streamed text differs from the stored reply");
+  const rest = filter.finish(reply);
+  if (rest) yield { delta: rest };
   yield { done: { reply, suggestedActions, citedTopics } };
+}
+
+/**
+ * One Claude turn requested with stream: true, as text pieces and then the
+ * whole message (13 Oct 2026). newBlock marks the first piece of each text
+ * block, which finalText joins with "\n". A finished message (a client or a
+ * test that does not stream) passes through as its text blocks, whole.
+ */
+async function* claudeTurn(
+  res: unknown,
+): AsyncGenerator<{ delta: string; newBlock: boolean } | { message: Anthropic.Messages.Message }> {
+  if (!res || typeof (res as any)[Symbol.asyncIterator] !== "function") {
+    const message = res as Anthropic.Messages.Message;
+    for (const b of message.content) if (b.type === "text" && b.text) yield { delta: b.text, newBlock: true };
+    yield { message };
+    return;
+  }
+  let message: any = null;
+  const blocks: any[] = [];
+  const json: string[] = [];
+  const started = new Set<number>();
+  for await (const ev of res as AsyncIterable<Anthropic.Messages.RawMessageStreamEvent>) {
+    switch (ev.type) {
+      case "message_start":
+        message = { ...ev.message, content: [] };
+        break;
+      case "content_block_start":
+        blocks[ev.index] = { ...ev.content_block };
+        if (ev.content_block.type === "tool_use") json[ev.index] = "";
+        if (ev.content_block.type === "text" && ev.content_block.text) {
+          yield { delta: ev.content_block.text, newBlock: true };
+          started.add(ev.index);
+        }
+        break;
+      case "content_block_delta":
+        if (ev.delta.type === "text_delta") {
+          blocks[ev.index].text = (blocks[ev.index].text ?? "") + ev.delta.text;
+          yield { delta: ev.delta.text, newBlock: !started.has(ev.index) };
+          started.add(ev.index);
+        } else if (ev.delta.type === "input_json_delta") {
+          json[ev.index] += ev.delta.partial_json;
+        }
+        break;
+      case "content_block_stop":
+        if (blocks[ev.index]?.type === "tool_use") blocks[ev.index].input = json[ev.index] ? JSON.parse(json[ev.index]) : {};
+        break;
+      case "message_delta":
+        message.stop_reason = ev.delta.stop_reason;
+        message.stop_sequence = ev.delta.stop_sequence ?? null;
+        message.usage = { ...message.usage, ...ev.usage };
+        break;
+    }
+  }
+  message.content = blocks.filter(Boolean);
+  yield { message: message as Anthropic.Messages.Message };
 }
 
 /** Non-streaming version (one-shot). Useful for tests / batch processing. */
@@ -488,22 +556,6 @@ export async function tutorReply(input: TutorInput & { ctx?: ToolContext }): Pro
 // ─────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────
-
-function* chunkForStream(text: string): Generator<string> {
-  if (!text) return;
-  // Break on word boundaries every ~80 chars so tokens stay coherent.
-  let i = 0;
-  while (i < text.length) {
-    const next = Math.min(text.length, i + 80);
-    let cut = next;
-    if (next < text.length) {
-      const ws = text.lastIndexOf(" ", next);
-      if (ws > i + 20) cut = ws + 1;
-    }
-    yield text.slice(i, cut);
-    i = cut;
-  }
-}
 
 function splitActions(text: string): TutorOutput {
   const re = /<<ACTIONS>>([\s\S]*?)<<END>>/;
