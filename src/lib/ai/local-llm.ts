@@ -187,3 +187,135 @@ export async function createLocalFirst(
 export function ledgerModel(response: { model?: string }, claudeModel: string): string {
   return response.model?.startsWith("local:") ? response.model : claudeModel;
 }
+
+/**
+ * The local endpoint for this call when it may go local (listed feature,
+ * no tools, English conversation), else null. For callers that stream.
+ */
+export function localRouteFor(
+  feature: string | undefined,
+  req: { system: Block[]; messages: Msg[]; tools?: unknown },
+): { url: string; timeoutMs: number } | null {
+  return localEligible(feature, req) ? routeFor(feature) : null;
+}
+
+/** Longest silence allowed between two streamed pieces once the answer has started. */
+const STREAM_IDLE_MS = Number(process.env.LOCAL_LLM_STREAM_IDLE_MS ?? 30_000);
+
+/**
+ * Stream one chat from the local server (12 Oct 2026): yields text pieces as
+ * the model writes them, then one { usage } at the end. route.timeoutMs bounds
+ * the wait for the FIRST piece only, so a long answer is never cut off by its
+ * length — Qwen 27B writes ~20 tokens/s and a full explanation runs ~70 s.
+ * Throws on any failure; the caller falls back to Claude only when nothing
+ * has been shown yet.
+ */
+export async function* streamLocal(
+  req: { system: Block[]; messages: Msg[]; maxTokens: number; temperature?: number },
+  route: { url: string; timeoutMs: number },
+): AsyncGenerator<{ delta: string } | { usage: { input_tokens: number; output_tokens: number } }> {
+  const ctrl = new AbortController();
+  let timer = setTimeout(() => ctrl.abort(new Error("local-llm: no first token in time")), route.timeoutMs);
+  const idle = () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => ctrl.abort(new Error("local-llm: stream went silent")), STREAM_IDLE_MS);
+  };
+  try {
+    const res = await fetch(`${route.url}/chat/completions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${KEY}` },
+      body: JSON.stringify({
+        model: LOCAL_MODEL,
+        max_tokens: req.maxTokens,
+        temperature: req.temperature ?? 0.3,
+        stream: true,
+        stream_options: { include_usage: true },
+        messages: [
+          { role: "system", content: req.system.map((b) => b.text).join("\n\n") },
+          ...req.messages.map((m) => ({ role: m.role, content: textOf(m.content) ?? "" })),
+        ],
+        chat_template_kwargs: { enable_thinking: false },
+      }),
+      signal: ctrl.signal,
+    });
+    if (!res.ok || !res.body) throw new Error(`local-llm ${res.status}: ${(await res.text()).slice(0, 200)}`);
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let pending = "";
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      pending += decoder.decode(value, { stream: true });
+      let nl: number;
+      while ((nl = pending.indexOf("\n")) >= 0) {
+        const line = pending.slice(0, nl).trim();
+        pending = pending.slice(nl + 1);
+        if (!line.startsWith("data:")) continue;
+        const payload = line.slice(5).trim();
+        if (payload === "[DONE]") return;
+        const data = JSON.parse(payload);
+        const piece: string | undefined = data?.choices?.[0]?.delta?.content;
+        if (piece) {
+          idle();
+          yield { delta: piece };
+        }
+        if (data?.usage) {
+          yield { usage: { input_tokens: data.usage.prompt_tokens ?? 0, output_tokens: data.usage.completion_tokens ?? 0 } };
+        }
+      }
+    }
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+const ACTIONS_MARK = "<<ACTIONS>>";
+
+/**
+ * Turns the model's raw text pieces into what the student may see while it
+ * is still writing (12 Oct 2026): nothing from the <<ACTIONS>> block on, no
+ * leading whitespace, and trailing whitespace only once more text follows —
+ * so the pieces add up to the same reply splitActions() keeps at the end.
+ */
+export class ReplyStreamFilter {
+  private buf = "";
+  private start = -1; // index of the first non-space character
+  private end = 0; // everything in buf[start, end) has been shown
+  private stopped = false;
+
+  push(piece: string): string {
+    if (this.stopped) return "";
+    this.buf += piece;
+    let safe = this.buf.length;
+    const mark = this.buf.indexOf(ACTIONS_MARK);
+    if (mark >= 0) {
+      this.stopped = true;
+      safe = mark;
+    } else {
+      // Hold back a tail that could be the start of the marker.
+      for (let k = Math.min(ACTIONS_MARK.length - 1, this.buf.length); k > 0; k--) {
+        if (ACTIONS_MARK.startsWith(this.buf.slice(-k))) {
+          safe = this.buf.length - k;
+          break;
+        }
+      }
+    }
+    if (this.start < 0) {
+      const first = this.buf.slice(0, safe).search(/\S/);
+      if (first < 0) return "";
+      this.start = first;
+      this.end = first;
+    }
+    const upto = this.start + this.buf.slice(this.start, safe).replace(/\s+$/, "").length;
+    if (upto <= this.end) return "";
+    const out = this.buf.slice(this.end, upto);
+    this.end = upto;
+    return out;
+  }
+
+  /** What is left to show once the final reply is known (normally the empty string). */
+  finish(reply: string): string {
+    const shown = this.start < 0 ? "" : this.buf.slice(this.start, this.end);
+    return reply.startsWith(shown) ? reply.slice(shown.length) : "";
+  }
+}

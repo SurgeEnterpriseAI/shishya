@@ -26,7 +26,7 @@ import {
 } from "./prompts";
 import type { TutorInput, TutorOutput } from "./types";
 import { tutorTools, executeTool, type ToolContext } from "./tools";
-import { localFirst } from "./local-llm";
+import { localFirst, localRouteFor, streamLocal, ReplyStreamFilter, LOCAL_MODEL } from "./local-llm";
 import { siteFeaturesBlock } from "./site-facts";
 import { buildTutorExamFacts, examFactsBlock } from "./exam-facts";
 import { SCHOOL_TUTOR_STATIC_PROMPT, schoolClassBlock, schoolTurnContext, type SchoolTurn, type SchoolTutorScope } from "@/lib/school/tutor-persona";
@@ -249,19 +249,61 @@ export async function* tutorStream(
 
   let finalText = "";
   let toolTurns = 0;
+  const feature = input.usage?.feature ?? (school ? "tutor-school" : ctx ? "tutor" : "tutor-anon");
+
+  // 12 Oct 2026: a tools-off English turn on Surge's own server streams the
+  // answer piece by piece as the model writes it — Qwen 27B writes ~20
+  // tokens/s, so a long explanation took ~70 s behind a spinner. The wait
+  // limit covers the first piece only. If the server fails before anything
+  // is shown, the turn runs on Claude below as before; a failure after the
+  // student has seen text is thrown (the route's honest unavailable line).
+  let triedLocal = false;
+  const route = localRouteFor(feature, { system: systemBlocks, messages, tools: ctx ? tutorTools : undefined });
+  if (route) {
+    triedLocal = true;
+    const start = Date.now();
+    const filter = new ReplyStreamFilter();
+    let raw = "";
+    let shown = false;
+    let usage = { input_tokens: 0, output_tokens: 0 };
+    try {
+      for await (const ev of streamLocal({ system: systemBlocks, messages, maxTokens: TOKEN_LIMITS.tutor }, route)) {
+        if ("usage" in ev) {
+          usage = ev.usage;
+          continue;
+        }
+        raw += ev.delta;
+        const out = filter.push(ev.delta);
+        if (out) {
+          shown = true;
+          yield { delta: out };
+        }
+      }
+      if (!raw.trim()) throw new Error("local-llm: empty reply");
+      const final = splitActions(raw);
+      const rest = filter.finish(final.reply);
+      if (rest) yield { delta: rest };
+      const cost = recordAiUsage(feature, { usage, model: `local:${LOCAL_MODEL}` }, { model: `local:${LOCAL_MODEL}`, ref: input.syllabus?.examCode ?? null, latencyMs: Date.now() - start });
+      input.usage?.onCost?.(cost);
+      yield { done: final };
+      return;
+    } catch (err) {
+      if (shown) throw err;
+      console.warn(`[local-llm] ${feature}: stream fell back to Claude (${String((err as Error)?.message ?? err).slice(0, 160)})`);
+    }
+  }
 
   while (true) {
     const start = Date.now();
     // 7 Oct 2026: an empty main balance is retried once on the reserve key
     // for a student's turn (src/lib/ai/reserve.ts); "tutor-late" never is.
-    const feature = input.usage?.feature ?? (school ? "tutor-school" : ctx ? "tutor" : "tutor-anon");
     // 12 Oct 2026: a tools-off English turn (guest or school chat) whose
     // feature is in LOCAL_LLM_FEATURES tries Surge's own server first
     // (ai/local-llm.ts); a signed-in turn with tools always stays on Claude.
     let reserve = false;
     const tools = ctx ? tutorTools : undefined;
     const { value: response, local } = await localFirst(
-      feature,
+      triedLocal ? undefined : feature,
       { system: systemBlocks, messages, maxTokens: TOKEN_LIMITS.tutor, tools },
       async () => {
         const r = await withReserve(feature, anthropic, (client) =>

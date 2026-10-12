@@ -14,6 +14,7 @@ async function load(env: Record<string, string>) {
   return import("../../src/lib/ai/local-llm");
 }
 
+const BULK_ENV = { LOCAL_LLM_URL: "https://surgeai.example.ts.net/v1/", LOCAL_LLM_KEY: "k", LOCAL_LLM_FEATURES: "explain, tutor-anon" };
 const ON = { LOCAL_LLM_URL: "https://surgeai.example.ts.net/v1/", LOCAL_LLM_KEY: "k", LOCAL_LLM_FEATURES: "explain, tutor-anon" };
 
 beforeEach(() => vi.unstubAllEnvs());
@@ -159,5 +160,61 @@ describe("bulk route (12 Oct 2026)", () => {
     expect(JSON.parse(f.mock.calls[0][1].body).messages[0]).toEqual({ role: "system", content: "Brief writer" });
     expect(m.ledgerModel(r, "claude-x")).toBe("local:qwen3.5-9b");
     expect(m.ledgerModel({ model: "claude-sonnet" }, "claude-x")).toBe("claude-x");
+  });
+});
+
+describe("streaming (12 Oct 2026)", () => {
+  const sse = (frames: string[]) =>
+    new Response(new ReadableStream({
+      start(c) {
+        const enc = new TextEncoder();
+        for (const f of frames) c.enqueue(enc.encode(f));
+        c.close();
+      },
+    }), { status: 200 });
+  const piece = (t: string) => `data: ${JSON.stringify({ choices: [{ delta: { content: t } }] })}\n\n`;
+
+  it("ReplyStreamFilter shows the reply as it arrives and never the ACTIONS block", async () => {
+    const { ReplyStreamFilter } = await load(ON);
+    const f = new ReplyStreamFilter();
+    const raw = ["\n  Article", " 32 gives", " the right.\n\n<<ACT", "IONS>>{\"actions\":[]}<<END>>"];
+    const shown = raw.map((p) => f.push(p)).join("");
+    expect(shown).toBe("Article 32 gives the right.");
+    expect(f.finish("Article 32 gives the right.")).toBe("");
+  });
+
+  it("ReplyStreamFilter holds a '<' that turns out to be ordinary text, then shows it", async () => {
+    const { ReplyStreamFilter } = await load(ON);
+    const f = new ReplyStreamFilter();
+    expect(f.push("x <")).toBe("x");
+    expect(f.push(" y")).toBe(" < y");
+    expect(f.finish("x < y")).toBe("");
+  });
+
+  it("streamLocal yields pieces then usage, from split SSE frames", async () => {
+    const usage = `data: ${JSON.stringify({ choices: [], usage: { prompt_tokens: 7, completion_tokens: 3 } })}\n\n`;
+    const frames = [piece("Art"), piece("icle").slice(0, 10), piece("icle").slice(10), piece(" 32"), usage, "data: [DONE]\n\n"];
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(sse(frames)));
+    const m = await load(ON);
+    const out: any[] = [];
+    for await (const ev of m.streamLocal({ system: sys("P"), messages: user("Q"), maxTokens: 50 }, { url: "https://x/v1", timeoutMs: 5000 })) out.push(ev);
+    expect(out.filter((e) => "delta" in e).map((e) => e.delta).join("")).toBe("Article 32");
+    expect(out.at(-1)).toEqual({ usage: { input_tokens: 7, output_tokens: 3 } });
+    const body = JSON.parse((fetch as any).mock.calls[0][1].body);
+    expect(body.stream).toBe(true);
+  });
+
+  it("streamLocal throws on a server error so the tutor can fall back", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("busy", { status: 503 })));
+    const m = await load(ON);
+    const it = m.streamLocal({ system: sys("P"), messages: user("Q"), maxTokens: 50 }, { url: "https://x/v1", timeoutMs: 5000 });
+    await expect(it.next()).rejects.toThrow(/503/);
+  });
+
+  it("localRouteFor gives the route only for an eligible call", async () => {
+    const m = await load(BULK_ENV);
+    expect(m.localRouteFor("tutor-anon", { system: sys("P"), messages: user("Hi") })?.url).toBe("https://surgeai.example.ts.net/v1");
+    expect(m.localRouteFor("tutor-anon", { system: sys("P"), messages: user("नमस्ते") })).toBeNull();
+    expect(m.localRouteFor("tutor", { system: sys("P"), messages: user("Hi"), tools: [] })).toBeNull();
   });
 });
