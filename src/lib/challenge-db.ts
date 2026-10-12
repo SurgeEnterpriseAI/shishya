@@ -327,18 +327,22 @@ export async function recordChallengePlay(
     choices,
   );
   const playerKeyHash = hashChallengeKey(input.playerKey);
-  // 12 Oct 2026 (Release 2 review, round 2; under-13 rule): a kids'
-  // exam's challenge keeps no player's name. Its pages never ask for one
-  // (AnonQuizPlayer sends nothing there); this is the net under a direct POST
-  // to /api/challenge/{token}/play. src/lib/signin-cta.ts under13ExamGuard.
-  const playerName = under13ExamGuard(ch.examCode) ? null : input.name;
+  const base = { total: ch.questionCount, creatorCorrect: ch.creatorCorrect, creatorName: ch.creatorName };
+  // 12 Oct 2026 (Release 2 follow-up; under-13 rule): a kids' exam's
+  // challenge keeps no play at all — no row, no name, and so no "a friend
+  // played" push or email (the route notifies only when stored). Its pages
+  // never send one (AnonQuizPlayer skips the send step there, and the
+  // creator's copy says scores are not sent back); this is the net under a
+  // direct POST or a tab still running pre-release code. The player still
+  // gets their own grade back. src/lib/signin-cta.ts under13ExamGuard.
+  if (under13ExamGuard(ch.examCode)) return { ok: true, stored: false, correct, ...base };
+  const playerName = input.name;
   const rows = await prisma.$queryRaw<{ id: string }[]>`
     INSERT INTO "ChallengePlay" (id, "challengeId", "playerUserId", "playerAnonId", "playerKeyHash", "playerName", choices, correct, "createdAt")
     VALUES (${crypto.randomUUID()}, ${ch.id}, ${who.userId}, ${who.anonId}, ${playerKeyHash}, ${playerName},
       ${JSON.stringify(choices)}::jsonb, ${correct}, NOW())
     ON CONFLICT ("challengeId", "playerKeyHash") DO NOTHING
     RETURNING id`;
-  const base = { total: ch.questionCount, creatorCorrect: ch.creatorCorrect, creatorName: ch.creatorName };
   if (rows.length > 0) return { ok: true, stored: true, correct, ...base };
   const prev = await prisma.$queryRaw<{ correct: number }[]>`
     SELECT correct FROM "ChallengePlay" WHERE "challengeId" = ${ch.id} AND "playerKeyHash" = ${playerKeyHash} LIMIT 1`;

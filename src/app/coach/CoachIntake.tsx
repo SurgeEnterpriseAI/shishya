@@ -13,7 +13,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CoachRolloverCard, type CoachRolloverLabels } from "@/components/CoachRolloverCard";
-import { coachPrefillDateNote } from "@/lib/date-tier-view";
+import { coachPrefillDateNote } from "@/lib/coach-prefill-note";
 
 export interface ExamOption {
   code: string;

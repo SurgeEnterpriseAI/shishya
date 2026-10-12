@@ -131,17 +131,9 @@ export function reportedNote(locale: string | null | undefined): string {
   return REPORTED_NOTE_BY_LOCALE[glossLocale(locale)];
 }
 
-/** The words after the coach intake's "2 · Exam date" for a date prefilled
- *  from the tracker (src/app/coach/CoachIntake.tsx): never "official" unless
- *  the row is official tier — it said "from the official calendar" for every
- *  row, AI-made estimates included, until 14 Oct 2026. English (the intake is). */
-export function coachPrefillDateNote(opt: { nextDate: string | null; nextDateTier?: SourceTier | null } | undefined): string {
-  if (!opt?.nextDate) return "";
-  if (opt.nextDateTier === "official") return "(from the official notice — confirm or change)";
-  if (opt.nextDateTier === "reported") return "(reported, not yet checked against an official notice — confirm or change)";
-  if (opt.nextDateTier === "expected") return "(expected — an estimate, not announced; confirm or change)";
-  return "(from our exam calendar — confirm or change)";
-}
+/** The coach intake's prefilled-date words live in src/lib/coach-prefill-note.ts
+ *  (a client component imports them; this module's imports are server-side). */
+export { coachPrefillDateNote } from "@/lib/coach-prefill-note";
 
 /** The per-exam context.md "Key dates" heading (src/app/exams/[code]/
  *  context.md/route.ts). truth-lint (src/lib/truth-lint.ts) reads the rows

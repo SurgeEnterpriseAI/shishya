@@ -513,7 +513,7 @@ describe("B1 (round 2). the challenger's copy on a kids' exam says friends' scor
     }
   });
 
-  it("/api/challenge/{token}/play (recordChallengePlay): no name stored on a kids' exam; SSC CGL stores it", async () => {
+  it("/api/challenge/{token}/play (recordChallengePlay): nothing stored on a kids' exam (so no notify); SSC CGL stores the play with its name", async () => {
     const challengeRow = (examCode: string) => ({
       id: KIDS_TOKEN,
       examId: "e1",
@@ -536,16 +536,24 @@ describe("B1 (round 2). the challenger's copy on a kids' exam says friends' scor
       lastEmailAt: null,
       lastPushAt: null,
     });
-    for (const [examCode, stored] of [["SOF_IEO", null], ["SOF_IGKO", null], ["SSC_CGL", "Ravi"]] as const) {
+    for (const examCode of ["SOF_IEO", "SOF_IGKO"]) {
       db.challenge = challengeRow(examCode);
       db.inserted = [];
       const r = await recordChallengePlay(KIDS_TOKEN, { playerKey: "p".repeat(32), choices: ["A", "B", null, null, null], name: "Ravi" }, { userId: null, anonId: null });
-      expect(r.ok && r.stored, examCode).toBe(true);
-      expect(db.inserted, examCode).toHaveLength(1);
-      // VALUES (id, challengeId, playerUserId, playerAnonId, playerKeyHash, playerName, choices, correct)
-      expect(db.inserted[0][5], examCode).toBe(stored);
-      expect(db.inserted[0][7], examCode).toBe(2);
+      // graded for the player, but no row: the route's notify runs only when stored
+      expect(r.ok, examCode).toBe(true);
+      expect(r.ok && r.stored, examCode).toBe(false);
+      expect(r.ok && r.correct, examCode).toBe(2);
+      expect(db.inserted, examCode).toHaveLength(0);
     }
+    db.challenge = challengeRow("SSC_CGL");
+    db.inserted = [];
+    const adult = await recordChallengePlay(KIDS_TOKEN, { playerKey: "p".repeat(32), choices: ["A", "B", null, null, null], name: "Ravi" }, { userId: null, anonId: null });
+    expect(adult.ok && adult.stored).toBe(true);
+    expect(db.inserted).toHaveLength(1);
+    // VALUES (id, challengeId, playerUserId, playerAnonId, playerKeyHash, playerName, choices, correct)
+    expect(db.inserted[0][5]).toBe("Ravi");
+    expect(db.inserted[0][7]).toBe(2);
     db.challenge = null;
   });
 });
