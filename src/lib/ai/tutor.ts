@@ -26,7 +26,7 @@ import {
 } from "./prompts";
 import type { TutorInput, TutorOutput } from "./types";
 import { tutorTools, executeTool, type ToolContext } from "./tools";
-import { localFirst, localRouteFor, streamLocal, ReplyStreamFilter, LOCAL_MODEL } from "./local-llm";
+import { localFirst, localRouteFor, streamLocal, ReplyStreamFilter, LOCAL_MODEL, type LocalToolCall } from "./local-llm";
 import { siteFeaturesBlock } from "./site-facts";
 import { buildTutorExamFacts, examFactsBlock } from "./exam-facts";
 import { SCHOOL_TUTOR_STATIC_PROMPT, schoolClassBlock, schoolTurnContext, type SchoolTurn, type SchoolTutorScope } from "@/lib/school/tutor-persona";
@@ -258,26 +258,80 @@ export async function* tutorStream(
   // is shown, the turn runs on Claude below as before; a failure after the
   // student has seen text is thrown (the route's honest unavailable line).
   let triedLocal = false;
-  const route = localRouteFor(feature, { system: systemBlocks, messages, tools: ctx ? tutorTools : undefined });
+  const route = localRouteFor(feature, { system: systemBlocks, messages, tools: ctx ? tutorTools : undefined }, { allowTools: true });
   if (route) {
     triedLocal = true;
     const start = Date.now();
     const filter = new ReplyStreamFilter();
+    // The local turn works on its own copy of the conversation: if it falls
+    // back before showing anything, the Claude loop below starts clean.
+    const convo: Anthropic.Messages.MessageParam[] = [...messages];
     let raw = "";
     let shown = false;
-    let usage = { input_tokens: 0, output_tokens: 0 };
+    let localTurns = 0;
+    const usage = { input_tokens: 0, output_tokens: 0 };
     try {
-      for await (const ev of streamLocal({ system: systemBlocks, messages, maxTokens: TOKEN_LIMITS.tutor }, route)) {
-        if ("usage" in ev) {
-          usage = ev.usage;
-          continue;
+      // 12 Oct 2026: the signed-in tutor's tool loop runs here too — each
+      // turn streams; when the model calls tools (read-only lookups of the
+      // student's own data) they run and the next turn streams on, the same
+      // MAX_TOOL_TURNS budget as the Claude loop, then tools are switched off
+      // so the model must answer.
+      for (;;) {
+        let turnText = "";
+        let calls: LocalToolCall[] = [];
+        const toolsOff = !ctx || localTurns >= MAX_TOOL_TURNS;
+        for await (const ev of streamLocal(
+          {
+            system: systemBlocks,
+            messages: convo,
+            maxTokens: TOKEN_LIMITS.tutor,
+            tools: ctx ? tutorTools : undefined,
+            toolChoice: toolsOff ? "none" : "auto",
+          },
+          route,
+        )) {
+          if ("usage" in ev) {
+            usage.input_tokens += ev.usage.input_tokens;
+            usage.output_tokens += ev.usage.output_tokens;
+            continue;
+          }
+          if ("toolCalls" in ev) {
+            calls = ev.toolCalls;
+            continue;
+          }
+          // Text of a later turn joins the earlier turns' text the way the
+          // Claude loop joins its turns (finalText, "\n").
+          const piece = !turnText && raw ? `\n${ev.delta}` : ev.delta;
+          turnText += ev.delta;
+          raw += piece;
+          const out = filter.push(piece);
+          if (out) {
+            shown = true;
+            yield { delta: out };
+          }
         }
-        raw += ev.delta;
-        const out = filter.push(ev.delta);
-        if (out) {
-          shown = true;
-          yield { delta: out };
+        if (!ctx || toolsOff || !calls.length) break;
+        convo.push({
+          role: "assistant",
+          content: [
+            ...(turnText ? [{ type: "text" as const, text: turnText }] : []),
+            ...calls.map((c) => ({ type: "tool_use" as const, id: c.id, name: c.name, input: c.input })),
+          ],
+        });
+        const results: Anthropic.Messages.ToolResultBlockParam[] = [];
+        for (const c of calls) {
+          const tStart = Date.now();
+          const result = await executeTool(ctx, c.name, c.input);
+          yield { tool: { name: c.name, args: c.input, ok: result.ok, ms: Date.now() - tStart } };
+          results.push({
+            type: "tool_result",
+            tool_use_id: c.id,
+            content: JSON.stringify(result.ok ? result.data : { error: result.error }),
+            is_error: !result.ok,
+          });
         }
+        convo.push({ role: "user", content: results });
+        localTurns += 1;
       }
       if (!raw.trim()) throw new Error("local-llm: empty reply");
       const final = splitActions(raw);

@@ -49,12 +49,22 @@ const REPLY_LANG = /Reply language:\s*([A-Za-z]+)/g;
 type Block = Anthropic.Messages.TextBlockParam;
 type Msg = Anthropic.Messages.MessageParam;
 
-function textOf(content: Msg["content"]): string | null {
+/**
+ * Readable text of a message for the language check, tool calls and tool
+ * results included (12 Oct 2026, the signed-in tutor's tool loop). Null for
+ * anything the local route cannot carry (images, documents).
+ */
+function convoTextOf(content: Msg["content"]): string | null {
   if (typeof content === "string") return content;
   const parts: string[] = [];
   for (const b of content) {
-    if (b.type !== "text") return null; // images, tool blocks → not for the local route
-    parts.push(b.text);
+    if (b.type === "text") parts.push(b.text);
+    else if (b.type === "tool_use") parts.push(JSON.stringify(b.input ?? {}));
+    else if (b.type === "tool_result") {
+      const c = b.content;
+      if (typeof c === "string") parts.push(c);
+      else if (Array.isArray(c)) for (const x of c) if (x.type === "text") parts.push(x.text);
+    } else return null;
   }
   return parts.join("\n");
 }
@@ -69,7 +79,7 @@ function textOf(content: Msg["content"]): string | null {
 export function isEnglishOnly(system: Block[], messages: Msg[]): boolean {
   const convo: string[] = [];
   for (const m of messages) {
-    const t = textOf(m.content);
+    const t = convoTextOf(m.content);
     if (t == null) return false;
     convo.push(t);
   }
@@ -83,9 +93,13 @@ export function isEnglishOnly(system: Block[], messages: Msg[]): boolean {
 }
 
 /** Whether this call may try the local server first. */
-export function localEligible(feature: string | undefined, req: { system: Block[]; messages: Msg[]; tools?: unknown }): boolean {
+export function localEligible(
+  feature: string | undefined,
+  req: { system: Block[]; messages: Msg[]; tools?: unknown },
+  opts: { allowTools?: boolean } = {},
+): boolean {
   if (!routeFor(feature)) return false;
-  if (req.tools) return false;
+  if (req.tools && !opts.allowTools) return false;
   return isEnglishOnly(req.system, req.messages);
 }
 
@@ -107,10 +121,7 @@ export async function callLocal(
     model: LOCAL_MODEL,
     max_tokens: req.maxTokens,
     temperature: req.temperature ?? 0.3,
-    messages: [
-      { role: "system", content: req.system.map((b) => b.text).join("\n\n") },
-      ...req.messages.map((m) => ({ role: m.role, content: textOf(m.content) ?? "" })),
-    ],
+    messages: toOpenAiMessages(req.system, req.messages),
     // Qwen hybrid models: answer directly, no hidden reasoning pass.
     chat_template_kwargs: { enable_thinking: false },
   };
@@ -195,8 +206,61 @@ export function ledgerModel(response: { model?: string }, claudeModel: string): 
 export function localRouteFor(
   feature: string | undefined,
   req: { system: Block[]; messages: Msg[]; tools?: unknown },
+  opts: { allowTools?: boolean } = {},
 ): { url: string; timeoutMs: number } | null {
-  return localEligible(feature, req) ? routeFor(feature) : null;
+  return localEligible(feature, req, opts) ? routeFor(feature) : null;
+}
+
+type OpenAiToolCall = { id: string; type: "function"; function: { name: string; arguments: string } };
+type OpenAiMsg =
+  | { role: "system" | "user"; content: string }
+  | { role: "assistant"; content: string; tool_calls?: OpenAiToolCall[] }
+  | { role: "tool"; tool_call_id: string; content: string };
+
+/**
+ * Anthropic messages -> OpenAI chat messages (12 Oct 2026). An assistant
+ * turn's tool_use blocks become tool_calls; a user turn's tool_result blocks
+ * become one "tool" message each, followed by any text in that turn.
+ */
+export function toOpenAiMessages(system: Block[], messages: Msg[]): OpenAiMsg[] {
+  const out: OpenAiMsg[] = [{ role: "system", content: system.map((b) => b.text).join("\n\n") }];
+  for (const m of messages) {
+    if (typeof m.content === "string") {
+      out.push({ role: m.role, content: m.content });
+      continue;
+    }
+    const text: string[] = [];
+    if (m.role === "assistant") {
+      const calls: OpenAiToolCall[] = [];
+      for (const b of m.content) {
+        if (b.type === "text") text.push(b.text);
+        else if (b.type === "tool_use") calls.push({ id: b.id, type: "function", function: { name: b.name, arguments: JSON.stringify(b.input ?? {}) } });
+      }
+      out.push({ role: "assistant", content: text.join("\n"), ...(calls.length ? { tool_calls: calls } : {}) });
+      continue;
+    }
+    for (const b of m.content) {
+      if (b.type === "text") text.push(b.text);
+      else if (b.type === "tool_result") {
+        const c = b.content;
+        const body = typeof c === "string" ? c : Array.isArray(c) ? c.map((x) => (x.type === "text" ? x.text : "")).join("\n") : "";
+        out.push({ role: "tool", tool_call_id: b.tool_use_id, content: b.is_error ? `ERROR: ${body}` : body });
+      }
+    }
+    if (text.length) out.push({ role: "user", content: text.join("\n") });
+  }
+  return out;
+}
+
+/** Anthropic tool definitions -> OpenAI function tools. */
+export function toOpenAiTools(tools: Anthropic.Messages.Tool[]) {
+  return tools.map((t) => ({ type: "function" as const, function: { name: t.name, description: t.description ?? "", parameters: t.input_schema } }));
+}
+
+export interface LocalToolCall {
+  id: string;
+  name: string;
+  input: Record<string, unknown>;
 }
 
 /** Longest silence allowed between two streamed pieces once the answer has started. */
@@ -211,9 +275,18 @@ const STREAM_IDLE_MS = Number(process.env.LOCAL_LLM_STREAM_IDLE_MS ?? 30_000);
  * has been shown yet.
  */
 export async function* streamLocal(
-  req: { system: Block[]; messages: Msg[]; maxTokens: number; temperature?: number },
+  req: {
+    system: Block[];
+    messages: Msg[];
+    maxTokens: number;
+    temperature?: number;
+    tools?: Anthropic.Messages.Tool[];
+    toolChoice?: "auto" | "none";
+  },
   route: { url: string; timeoutMs: number },
-): AsyncGenerator<{ delta: string } | { usage: { input_tokens: number; output_tokens: number } }> {
+): AsyncGenerator<
+  { delta: string } | { usage: { input_tokens: number; output_tokens: number } } | { toolCalls: LocalToolCall[] }
+> {
   const ctrl = new AbortController();
   let timer = setTimeout(() => ctrl.abort(new Error("local-llm: no first token in time")), route.timeoutMs);
   const idle = () => {
@@ -230,10 +303,8 @@ export async function* streamLocal(
         temperature: req.temperature ?? 0.3,
         stream: true,
         stream_options: { include_usage: true },
-        messages: [
-          { role: "system", content: req.system.map((b) => b.text).join("\n\n") },
-          ...req.messages.map((m) => ({ role: m.role, content: textOf(m.content) ?? "" })),
-        ],
+        messages: toOpenAiMessages(req.system, req.messages),
+        ...(req.tools?.length ? { tools: toOpenAiTools(req.tools), tool_choice: req.toolChoice ?? "auto" } : {}),
         chat_template_kwargs: { enable_thinking: false },
       }),
       signal: ctrl.signal,
@@ -242,9 +313,21 @@ export async function* streamLocal(
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let pending = "";
+    // Tool calls arrive in pieces keyed by index: id and name first, then
+    // the JSON arguments a fragment at a time. They are handed over whole
+    // when the stream ends.
+    const calls: { id: string; name: string; args: string }[] = [];
+    const whole = (): { toolCalls: LocalToolCall[] } | null =>
+      calls.length
+        ? { toolCalls: calls.map((c, i) => ({ id: c.id || `local_call_${i}`, name: c.name, input: c.args.trim() ? JSON.parse(c.args) : {} })) }
+        : null;
     for (;;) {
       const { value, done } = await reader.read();
-      if (done) break;
+      if (done) {
+        const tc = whole();
+        if (tc) yield tc;
+        break;
+      }
       pending += decoder.decode(value, { stream: true });
       let nl: number;
       while ((nl = pending.indexOf("\n")) >= 0) {
@@ -252,12 +335,24 @@ export async function* streamLocal(
         pending = pending.slice(nl + 1);
         if (!line.startsWith("data:")) continue;
         const payload = line.slice(5).trim();
-        if (payload === "[DONE]") return;
+        if (payload === "[DONE]") {
+          const tc = whole();
+          if (tc) yield tc;
+          return;
+        }
         const data = JSON.parse(payload);
-        const piece: string | undefined = data?.choices?.[0]?.delta?.content;
+        const delta = data?.choices?.[0]?.delta;
+        const piece: string | undefined = delta?.content;
         if (piece) {
           idle();
           yield { delta: piece };
+        }
+        for (const tc of delta?.tool_calls ?? []) {
+          idle();
+          const c = (calls[tc.index ?? 0] ??= { id: "", name: "", args: "" });
+          if (tc.id) c.id = tc.id;
+          if (tc.function?.name) c.name += tc.function.name;
+          if (tc.function?.arguments) c.args += tc.function.arguments;
         }
         if (data?.usage) {
           yield { usage: { input_tokens: data.usage.prompt_tokens ?? 0, output_tokens: data.usage.completion_tokens ?? 0 } };

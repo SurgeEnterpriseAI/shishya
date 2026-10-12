@@ -40,10 +40,14 @@ describe("isEnglishOnly", () => {
     const m = await load(ON);
     expect(m.isEnglishOnly(sys("Persona"), user("Article 21 kya hai?\nReply language: HI"))).toBe(false);
   });
-  it("rejects tool and image blocks", async () => {
+  it("reads tool results (the signed-in tool loop) but rejects images", async () => {
     const m = await load(ON);
-    const msgs = [{ role: "user" as const, content: [{ type: "tool_result" as const, tool_use_id: "t", content: "{}" }] }];
-    expect(m.isEnglishOnly(sys("Persona"), msgs)).toBe(false);
+    const tool = [{ role: "user" as const, content: [{ type: "tool_result" as const, tool_use_id: "t", content: "{}" }] }];
+    expect(m.isEnglishOnly(sys("Persona"), tool)).toBe(true);
+    const hindiTool = [{ role: "user" as const, content: [{ type: "tool_result" as const, tool_use_id: "t", content: "छात्र" }] }];
+    expect(m.isEnglishOnly(sys("Persona"), hindiTool)).toBe(false);
+    const image = [{ role: "user" as const, content: [{ type: "image" as const, source: { type: "base64" as const, media_type: "image/png" as const, data: "" } }] }];
+    expect(m.isEnglishOnly(sys("Persona"), image as any)).toBe(false);
   });
 });
 
@@ -216,5 +220,54 @@ describe("streaming (12 Oct 2026)", () => {
     expect(m.localRouteFor("tutor-anon", { system: sys("P"), messages: user("Hi") })?.url).toBe("https://surgeai.example.ts.net/v1");
     expect(m.localRouteFor("tutor-anon", { system: sys("P"), messages: user("नमस्ते") })).toBeNull();
     expect(m.localRouteFor("tutor", { system: sys("P"), messages: user("Hi"), tools: [] })).toBeNull();
+  });
+});
+
+describe("tool loop on the local server (12 Oct 2026)", () => {
+  const sse = (frames: string[]) =>
+    new Response(new ReadableStream({ start(c) { const e = new TextEncoder(); for (const f of frames) c.enqueue(e.encode(f)); c.close(); } }), { status: 200 });
+  const frame = (delta: unknown) => `data: ${JSON.stringify({ choices: [{ delta }] })}\n\n`;
+
+  it("toOpenAiMessages carries tool calls and tool results across", async () => {
+    const m = await load(ON);
+    const out = m.toOpenAiMessages(sys("Persona"), [
+      { role: "user", content: "My weak topics?" },
+      { role: "assistant", content: [{ type: "text", text: "Checking." }, { type: "tool_use", id: "c1", name: "get_my_mastery", input: { limit: 3 } }] },
+      { role: "user", content: [{ type: "tool_result", tool_use_id: "c1", content: "[{\"t\":\"Syllogism\"}]" }] },
+    ] as any);
+    expect(out[0]).toEqual({ role: "system", content: "Persona" });
+    expect(out[2]).toEqual({ role: "assistant", content: "Checking.", tool_calls: [{ id: "c1", type: "function", function: { name: "get_my_mastery", arguments: "{\"limit\":3}" } }] });
+    expect(out[3]).toEqual({ role: "tool", tool_call_id: "c1", content: "[{\"t\":\"Syllogism\"}]" });
+  });
+
+  it("toOpenAiTools maps the Anthropic schema to function tools", async () => {
+    const m = await load(ON);
+    expect(m.toOpenAiTools([{ name: "get_my_mastery", description: "d", input_schema: { type: "object", properties: {} } }] as any)).toEqual([
+      { type: "function", function: { name: "get_my_mastery", description: "d", parameters: { type: "object", properties: {} } } },
+    ]);
+  });
+
+  it("streamLocal assembles a tool call that arrives in fragments", async () => {
+    const frames = [
+      frame({ tool_calls: [{ index: 0, id: "call_9", function: { name: "get_my_mastery", arguments: "" } }] }),
+      frame({ tool_calls: [{ index: 0, function: { arguments: "{\"lim" } }] }),
+      frame({ tool_calls: [{ index: 0, function: { arguments: "it\": 3}" } }] }),
+      "data: [DONE]\n\n",
+    ];
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(sse(frames)));
+    const m = await load(ON);
+    const out: any[] = [];
+    for await (const ev of m.streamLocal({ system: sys("P"), messages: user("Q"), maxTokens: 50, tools: [{ name: "get_my_mastery", input_schema: { type: "object" } }] as any }, { url: "https://x/v1", timeoutMs: 5000 })) out.push(ev);
+    expect(out).toEqual([{ toolCalls: [{ id: "call_9", name: "get_my_mastery", input: { limit: 3 } }] }]);
+    const body = JSON.parse((fetch as any).mock.calls[0][1].body);
+    expect(body.tool_choice).toBe("auto");
+    expect(body.tools[0].function.name).toBe("get_my_mastery");
+  });
+
+  it("a signed-in turn with tools is eligible only when the caller allows tools", async () => {
+    const m = await load({ ...ON, LOCAL_LLM_FEATURES: "tutor" });
+    const req = { system: sys("P"), messages: user("Hi"), tools: [{}] };
+    expect(m.localRouteFor("tutor", req)).toBeNull();
+    expect(m.localRouteFor("tutor", req, { allowTools: true })).not.toBeNull();
   });
 });
