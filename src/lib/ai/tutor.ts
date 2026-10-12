@@ -257,6 +257,13 @@ export async function* tutorStream(
   // limit covers the first piece only. If the server fails before anything
   // is shown, the turn runs on Claude below as before; a failure after the
   // student has seen text is thrown (the route's honest unavailable line).
+  // Two habits of the local model with tools (12 Oct 2026 checks): it wrote
+  // part of the answer, looked something up, then wrote it all again; and it
+  // sometimes wrote its own practice question instead of fetching a checked
+  // one from the bank. Claude does neither, so these rules go to Qwen only.
+  const LOCAL_TOOL_RULES =
+    "Tool rules: when you need a tool, call it FIRST, before writing anything to the student, and make all the calls you need before you start the answer. " +
+    "Any practice question you show must come from find_questions_on_topic, shown exactly as returned with its options A-D; never write your own question.";
   let triedLocal = false;
   const route = localRouteFor(feature, { system: systemBlocks, messages, tools: ctx ? tutorTools : undefined }, { allowTools: true });
   if (route) {
@@ -282,7 +289,7 @@ export async function* tutorStream(
         const toolsOff = !ctx || localTurns >= MAX_TOOL_TURNS;
         for await (const ev of streamLocal(
           {
-            system: systemBlocks,
+            system: ctx ? [...systemBlocks, { type: "text" as const, text: LOCAL_TOOL_RULES }] : systemBlocks,
             messages: convo,
             maxTokens: TOKEN_LIMITS.tutor,
             tools: ctx ? tutorTools : undefined,
@@ -330,7 +337,18 @@ export async function* tutorStream(
             is_error: !result.ok,
           });
         }
-        convo.push({ role: "user", content: results });
+        // Whatever this turn already wrote has been shown; Qwen tends to
+        // start its answer over after a tool result, which showed the same
+        // question twice (12 Oct 2026). The note asks it to carry on instead.
+        convo.push({
+          role: "user",
+          content: [
+            ...results,
+            ...(turnText.trim()
+              ? [{ type: "text" as const, text: "(The student has already seen what you wrote above. Continue from where you stopped; do not repeat it.)" }]
+              : []),
+          ],
+        });
         localTurns += 1;
       }
       if (!raw.trim()) throw new Error("local-llm: empty reply");

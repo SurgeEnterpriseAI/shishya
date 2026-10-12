@@ -62,7 +62,7 @@ export const tutorTools: Anthropic.Messages.Tool[] = [
   {
     name: "find_questions_on_topic",
     description:
-      "Find 1-3 validated practice questions to walk through IN THE CHAT for teaching purposes — e.g. 'show me an example of a percentage word problem' or 'illustrate this concept with a question'. Returned questions include body, options, and correct answer, which you discuss conversationally. Do NOT call this when the student wants to actually take a timed mock — for that, use start_adaptive_quiz instead. Never recite the answer to the student before they attempt.",
+      "Find 1-3 validated practice questions to walk through IN THE CHAT for teaching purposes — e.g. 'show me an example of a percentage word problem' or 'illustrate this concept with a question'. Returned questions include body, options, and correct answer, which you discuss conversationally. Show each question as returned, with all its options labelled A–D, so the student can pick one. Do NOT call this when the student wants to actually take a timed mock — for that, use start_adaptive_quiz instead. Never recite the answer to the student before they attempt.",
     input_schema: {
       type: "object",
       properties: {
