@@ -356,6 +356,8 @@ const STUBS: Record<string, unknown> = {
   "@/lib/direct-signin-ab": directMod,
   "@/lib/content-signup": contentSignupMod,
   "@/lib/google-handoff": { goToGoogle: async () => {}, warmGoogleHandoff: async () => {} },
+  // A server render has no cookie: every visitor is new, so the doors say "Sign up".
+  "@/lib/use-returning-member": { useReturningMember: () => false, markMember: () => {} },
 };
 const loaded = new Map<string, { exports: Record<string, unknown> }>();
 function load(relPath: string): Record<string, unknown> {

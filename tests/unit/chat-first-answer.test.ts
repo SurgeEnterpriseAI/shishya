@@ -455,6 +455,7 @@ describe("D. the chat island holds one invitation a screen; the card's own file"
       "@/lib/in-app-browser": inAppMod,
       "@/lib/direct-signin-ab": directMod,
       "@/lib/google-handoff": { goToGoogle: async () => {}, warmGoogleHandoff: async () => {} },
+      "@/lib/use-returning-member": { useReturningMember: () => false, markMember: () => {} },
       "@/lib/content-signup": contentSignupMod,
       "@/lib/chat-first-answer": firstMod,
     };

@@ -29,6 +29,10 @@ import {
 import type { TutorInput, TutorOutput } from "./types";
 import { tutorTools, executeTool, type ToolContext } from "./tools";
 import { localRouteFor, streamLocal, ReplyStreamFilter, LOCAL_MODEL, type LocalToolCall } from "./local-llm";
+import { routeTutorTurn, unsupportedFacts } from "./tutor-router";
+import { groundFromBank, groundingBlock } from "./grounding";
+import { cleanActions, gateUnit, takeSentences, type GateStats } from "./sentence-gate";
+import { prisma } from "@/lib/db/prisma";
 import { siteFeaturesBlock } from "./site-facts";
 import { buildTutorExamFacts, examFactsBlock } from "./exam-facts";
 import { SCHOOL_TUTOR_STATIC_PROMPT, schoolClassBlock, schoolTurnContext, type SchoolTurn, type SchoolTutorScope } from "@/lib/school/tutor-persona";
@@ -269,7 +273,39 @@ export async function* tutorStream(
   const LOCAL_TOOL_RULES =
     "Tool rules: when you need a tool, call it FIRST, before writing anything to the student, and make all the calls you need before you start the answer. " +
     "Any practice question you show must come from find_questions_on_topic, shown exactly as returned with its options A-D; never write your own question.";
-  const route = localRouteFor(feature, { system: systemBlocks, messages, tools: ctx ? tutorTools : undefined }, { allowTools: true });
+  let route = localRouteFor(feature, { system: systemBlocks, messages, tools: ctx ? tutorTools : undefined }, { allowTools: true });
+  // 13 Oct 2026 (founder: "local server first; Claude only where it cannot do
+  // it or errors; quality not compromised"). Each turn is sorted first
+  // (ai/tutor-router.ts, from the 13 Oct audit): kinds the local model loses on
+  // go to Claude; a turn that leans on a specific fact is answered locally only
+  // with verified bank entries in its prompt (ai/grounding.ts) and is held back
+  // until the fact check passes; any other turn streams, one checked sentence at
+  // a time (ai/sentence-gate.ts). On whenever the tutor goes local
+  // (LOCAL_LLM_FEATURES); LOCAL_LLM_TUTOR_ROUTER=0 turns it off.
+  // Router eval, blind Opus judge vs fresh Claude: signed-in 15 wins, 1 tie,
+  // 0 losses of 16, criticals Claude 10 vs local 0; guest 5/14 → guest stays
+  // on Claude (leave tutor-anon out of LOCAL_LLM_FEATURES).
+  const ROUTER_ON = process.env.LOCAL_LLM_TUTOR_ROUTER !== "0";
+  let grounding = "";
+  let hold = false;
+  if (route && ROUTER_ON) {
+    const turn = routeTutorTurn(input.userMessage);
+    if (turn.route === "claude") {
+      console.info(`[local-llm] ${feature}: router → Claude (${turn.reasons.join(", ")})`);
+      route = null;
+    } else if (turn.route === "fact") {
+      const g = await groundFromBank(prisma as never, input.userMessage).catch(() => null);
+      if (!g?.items.length) {
+        console.info(`[local-llm] ${feature}: router → Claude (a fact turn with no verified bank match)`);
+        route = null;
+      } else {
+        grounding = groundingBlock(g);
+        hold = true;
+      }
+    } else if (turn.route === "check") {
+      hold = true;
+    }
+  }
   if (route) {
     const start = Date.now();
     const filter = new ReplyStreamFilter();
@@ -280,6 +316,42 @@ export async function* tutorStream(
     let shown = false;
     let localTurns = 0;
     const usage = { input_tokens: 0, output_tokens: 0 };
+    // What the checks compare a reply against: the prompt, the grounding, and
+    // every message so far — tool results included.
+    const contextText = () =>
+      [
+        ...systemBlocks.map((b) => b.text),
+        grounding,
+        ...convo.map((m) =>
+          typeof m.content === "string"
+            ? m.content
+            : m.content.map((b: any) => (b.type === "text" ? b.text : b.type === "tool_result" ? (typeof b.content === "string" ? b.content : JSON.stringify(b.content)) : "")).join("\n"),
+        ),
+      ].join("\n");
+    const gate: GateStats = { sentences: 0, dropped: [], repairedLinks: 0 };
+    let gateBuf = "";
+    let shownText = "";
+    const examCode = input.syllabus?.examCode ?? null;
+    // A streamed turn under the router: whole sentences only, each checked.
+    const release = function* (piece: string, flush = false): Generator<{ delta: string }> {
+      if (!ROUTER_ON) {
+        if (piece) {
+          shownText += piece;
+          yield { delta: piece };
+        }
+        return;
+      }
+      gateBuf += piece;
+      const { done, rest } = flush ? { done: [gateBuf], rest: "" } : takeSentences(gateBuf);
+      gateBuf = rest;
+      for (const unit of done) {
+        const out = gateUnit(unit, contextText(), examCode, gate);
+        if (out) {
+          shownText += out;
+          yield { delta: out };
+        }
+      }
+    };
     try {
       // 12 Oct 2026: the signed-in tutor's tool loop runs here too — each
       // turn streams; when the model calls tools (read-only lookups of the
@@ -292,7 +364,10 @@ export async function* tutorStream(
         const toolsOff = !ctx || localTurns >= MAX_TOOL_TURNS;
         for await (const ev of streamLocal(
           {
-            system: ctx ? [...systemBlocks, { type: "text" as const, text: LOCAL_TOOL_RULES }] : systemBlocks,
+            system: [
+              ...systemBlocks,
+              ...(ctx ? [{ type: "text" as const, text: LOCAL_TOOL_RULES }] : []),
+              ...(grounding ? [{ type: "text" as const, text: grounding }] : []),            ],
             messages: convo,
             maxTokens: TOKEN_LIMITS.tutor,
             tools: ctx ? tutorTools : undefined,
@@ -315,9 +390,12 @@ export async function* tutorStream(
           turnText += ev.delta;
           raw += piece;
           const out = filter.push(piece);
-          if (out) {
-            shown = true;
-            yield { delta: out };
+          // A held (fact) turn shows nothing until the whole reply is checked.
+          if (out && !hold) {
+            for (const d of release(out)) {
+              shown = true;
+              yield d;
+            }
           }
         }
         if (!ctx || toolsOff || !calls.length) break;
@@ -355,9 +433,25 @@ export async function* tutorStream(
         localTurns += 1;
       }
       if (!raw.trim()) throw new Error("local-llm: empty reply");
-      const final = splitActions(raw);
-      const rest = filter.finish(final.reply);
-      if (rest) yield { delta: rest };
+      let final = splitActions(raw);
+      if (hold) {
+        // The fact check on the whole reply: anything unsupported → Claude, nothing shown.
+        const bad = unsupportedFacts(final.reply, contextText());
+        if (bad.length) throw new Error(`fact check: ${bad.slice(0, 3).join(" | ")}`);
+        shown = true;
+        shownText = final.reply;
+        yield { delta: final.reply };
+      } else {
+        const rest = filter.finish(final.reply);
+        for (const d of release(rest, false)) yield d;
+        for (const d of release("", true)) yield d;
+      }
+      if (ROUTER_ON) {
+        final = { ...final, reply: shownText.trim(), suggestedActions: cleanActions(final.suggestedActions, contextText()) };
+        if (gate.dropped.length || gate.repairedLinks) {
+          console.warn(`[local-llm] ${feature}: gate dropped ${gate.dropped.length} of ${gate.sentences} sentences, repaired ${gate.repairedLinks} links`);
+        }
+      }
       const cost = recordAiUsage(feature, { usage, model: `local:${LOCAL_MODEL}` }, { model: `local:${LOCAL_MODEL}`, ref: input.syllabus?.examCode ?? null, latencyMs: Date.now() - start });
       input.usage?.onCost?.(cost);
       yield { done: final };
