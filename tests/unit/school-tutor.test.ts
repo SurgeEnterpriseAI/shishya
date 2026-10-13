@@ -356,10 +356,16 @@ describe("the exam tutor's shared 1-hour prefix is byte-identical to before scho
   // the {OPTION} placeholder line and the /career-map line (Class 1 to
   // working life). Before: signedIn 30f34719…, guest 65de703d…, general
   // 67425908….
+  // 13 Oct 2026 (quality audit, Claude's own guest answers): re-pinned ON
+  // PURPOSE for TUTOR_FACT_RULES after ANSWER_FORMAT_RULES in all three modes
+  // and the stricter no-live-data line in GENERAL_MODE_NOTE
+  // (src/lib/ai/prompts.ts). The worktree had no other prefix change: the
+  // failing run expected exactly the previous pins. Before: signedIn
+  // 4fef5e77…, guest b0a0f34b…, general 1e90807a….
   const PINNED = {
-    signedIn: "4fef5e778f8555b29834b57d2a67dc40f3986b521b3dfcfbf9fcb08f07c40129",
-    guest: "b0a0f34bb625831465813a07578e62e2afcecdb70643e0d7fb05fd8d1db5df3c",
-    general: "1e90807a37bca6ef7e8a6ce83427db414be0fdaa11455fd129f1a1d5fe4026c4",
+    signedIn: "82b7a62db0e84fb0973fbb57499139695ebe1b7cac9363257f6d6027629f5f77",
+    guest: "46f804b71934c59c50600aff57a687fbd72f555edf298d9635a74610557b1e76",
+    general: "f0fcffbdb8a2f7dfa178a89dfd86be83c8ee0ae850b6ce1b2b0912912c3e3eef",
   };
 
   it("signed-in (tools on), guest (tools off) and general mode", () => {

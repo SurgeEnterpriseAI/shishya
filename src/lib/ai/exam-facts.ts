@@ -304,6 +304,12 @@ export function examFactsBlock(facts: TutorExamFacts, exam: { code: string; name
     `\n## Pattern — Shishya's exam record for ${exam.name}. Use these numbers for any question about the paper's size, marks, time or negative marking; never replace them with figures from memory or from another exam. The official notification is final: if the student quotes different numbers from the notification, tell them to go by the notification.`,
   );
   L.push(...patternLines(facts.pattern));
+  // 13 Oct 2026 (quality audit): asked "which topics carry the most marks",
+  // the tutor split SSC MTS's 90 questions into "22-23 per section" and gave
+  // RPSC RAS a per-subject marks table and a cut-off. The record has neither.
+  L.push(
+    `- Not in this record: how the questions or marks split across sections, subjects or topics, and any cut-off. Asked for them or for "weightage", name the sections and the core topics in words and say the split${facts.pages?.cutoff ? ` is in the official notification and past cut-offs are on ${site}/cutoff` : " is in the official notification and cut-offs are published with each result"}; never give a count or marks for a section or topic, not even an approximate one you remember.`,
+  );
   L.push(
     `A mock the student took may be shorter than the real paper (a subject test, a short set, a PYQ year set) — say so; never treat its size or total as the exam's. For a stage or paper this record does not describe, say Shishya's record covers ${exam.name} only and point to the official notification.`,
   );
@@ -327,6 +333,14 @@ export function examFactsBlock(facts: TutorExamFacts, exam: { code: string; name
   L.push(
     `- Use the day counts in brackets as they are — never work out a count yourself — and read each count from its own row (the \"starts\" row for when an exam begins, the \"ends\" row for when it ends). When an exam runs over a window (a starts row and an ends row), say both — it starts in N days and runs until the end date — and that each student's own date and shift are on their admit card or exam city slip — never guess how candidates are spread across the window. If a student asks for a plan longer than the days left before their exam, say how many days are actually left before it starts and fit the plan to that, offering a longer version only for a student whose own date is later in the window.`,
   );
+  // 13 Oct 2026 (quality audit): told "my IBPS Clerk exam is in 3 days" while
+  // both exam rows had passed, the tutor planned a 3-day countdown on the
+  // student's word. Only when rows are listed: with none, nothing is ruled out.
+  if (facts.dates.length > 0) {
+    L.push(
+      `- If the student's message assumes a date these rows rule out (an exam "in 3 days" whose exam rows have all passed, or a day outside its exam window), first say gently what the tracker shows and that their own date and shift are on their admit card, then help with what they asked.`,
+    );
+  }
   // 14 Oct 2026 (Release 2): a REPORTED row may cite the body's own site — a date the AI generator
   // found that no person has checked (src/lib/official-source.ts dateRowTier) — so it is never "a site
   // reported it" alone.

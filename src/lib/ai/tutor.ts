@@ -16,6 +16,8 @@ import { ledgerFeature, withReserve } from "./reserve";
 import {
   PLATFORM_PERSONA,
   ANSWER_FORMAT_RULES,
+  TUTOR_FACT_RULES,
+  TURN_FACT_REMINDER,
   SAFETY_RULES,
   SCOPE_RULES,
   SIGNIN_NUDGE,
@@ -113,9 +115,10 @@ export function tutorSystemBlocks(args: {
   // gets GENERAL_MODE_NOTE and never the sign-in nudge: signing in unlocks no
   // tools there (27 Sep 2026). SITE_FEATURES too (24 Sep 2026): a guest or
   // general-mode student asking "is there an app?" gets the same truth.
+  // TUTOR_FACT_RULES (13 Oct 2026, prompts.ts): no exam numbers from memory.
   const STATIC_PROMPT = generalMode
-    ? `${PLATFORM_PERSONA}\n\n${SCOPE_RULES}\n\n${SAFETY_RULES}\n\n${ANSWER_FORMAT_RULES}\n\n${SITE_FEATURES}\n\n${GENERAL_MODE_NOTE}`
-    : `${PLATFORM_PERSONA}\n\n${SCOPE_RULES}\n\n${SAFETY_RULES}\n\n${ANSWER_FORMAT_RULES}\n\n${SITE_FEATURES}${toolsOn ? `\n\n${TOOL_USE_GUIDE}` : `\n\n${SIGNIN_NUDGE}`}`;
+    ? `${PLATFORM_PERSONA}\n\n${SCOPE_RULES}\n\n${SAFETY_RULES}\n\n${ANSWER_FORMAT_RULES}\n\n${TUTOR_FACT_RULES}\n\n${SITE_FEATURES}\n\n${GENERAL_MODE_NOTE}`
+    : `${PLATFORM_PERSONA}\n\n${SCOPE_RULES}\n\n${SAFETY_RULES}\n\n${ANSWER_FORMAT_RULES}\n\n${TUTOR_FACT_RULES}\n\n${SITE_FEATURES}${toolsOn ? `\n\n${TOOL_USE_GUIDE}` : `\n\n${SIGNIN_NUDGE}`}`;
   // The static prompt is the same for every exam, but quiet hours leave 5-60
   // minutes between tutor calls (week to 14 Sep 2026: 95 of 540 signed-in and
   // 114 of 246 signed-out calls), and each of those re-wrote it. It keeps a
@@ -167,9 +170,11 @@ export function tutorTurnContext(args: {
   const journeyText = journey ? journeyBlock(journey) : "";
   // In general mode we don't show studentStateBlock either — there's no
   // useful exam-scoped data to reference.
-  if (generalMode) return `${journeyText ? `${journeyText}\n\n` : ""}Reply language: ${language}.`;
+  // TURN_FACT_REMINDER (13 Oct 2026, prompts.ts): exam numbers only from the blocks.
+  if (generalMode) return `${journeyText ? `${journeyText}\n\n` : ""}${TURN_FACT_REMINDER}\nReply language: ${language}.`;
   return `${studentStateBlock(studentState)}
 ${journeyText ? `\n${journeyText}\n` : ""}${focusBlock ? `\n${focusBlock}\n` : ""}
+${TURN_FACT_REMINDER}
 Reply language: ${language}.
 
 If you suggest follow-up actions to the student, append a single line in this format:

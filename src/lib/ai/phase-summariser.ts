@@ -39,6 +39,7 @@
 import type { ExamPhase } from "@prisma/client";
 import { anthropic, MODEL } from "./client";
 import { recordAiUsage } from "./usage";
+import { webSearchTool } from "./web-search";
 import { classifyTutorFailure } from "./tutor-failure";
 import type { ScrapedSnippet } from "@/lib/scrape/types";
 import { istDay } from "@/lib/exam-week";
@@ -278,7 +279,7 @@ ${inputBundle}
       // decline (end its turn without publishing) when the sources are not
       // there — a forced tool call is how the hollow placeholders were born.
       tools: webGrounded
-        ? ([{ type: "web_search_20250305", name: "web_search", max_uses: 6 }, SUMMARY_TOOL] as any)
+        ? ([webSearchTool(6), SUMMARY_TOOL] as any) // the shared tool (13 Oct 2026, ./web-search.ts)
         : [SUMMARY_TOOL],
     });
 

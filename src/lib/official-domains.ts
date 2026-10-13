@@ -21,7 +21,7 @@
 // the two never disagree about a host it knows.
 // PURE: no DB, no model. Tests: tests/unit/official-domains.test.ts.
 
-import { isOfficialSource } from "@/lib/official-source";
+import { isNeverOfficial, isOfficialSource, isUntrustedSource } from "@/lib/official-source";
 import { normUrl, urlsIn, type WebSource } from "@/lib/ask-links";
 
 type Locale = "en" | "hi" | "te";
@@ -142,10 +142,15 @@ function bodyKey(host: string): string | null {
  * True when the URL is an official source: a regulated government / academic
  * domain, a listed body, or on the host of an official URL a tool of this run
  * returned (`toolOfficial` — e.g. get_exam_details' official portal).
+ * 13 Oct 2026: a coaching company or college blog on an academic domain
+ * (aakash.ac.in, allen.ac.in, motion.ac.in …), a denylisted copycat and
+ * shishya.in itself are never official here, whatever list or tool portal
+ * would otherwise pass them (official-source.ts isNeverOfficial).
  */
 export function isOfficialUrl(url: string | null | undefined, toolOfficial: Iterable<string> = []): boolean {
   const host = hostOf(url);
   if (!host) return false;
+  if (isNeverOfficial(url) || isUntrustedSource(url)) return false;
   if (isOfficialSource(url)) return true;
   if ([...FOREIGN_OFFICIAL_SUFFIXES, ...INDIAN_EXTRA_SUFFIXES].some((s) => onDomain(host, s))) return true;
   if (bodyKey(host)) return true;
@@ -243,14 +248,18 @@ const SHISHYA = /^https?:\/\/(?:www\.)?shishya\.in(?=[/?#]|$)/i;
  * Commission](url)" — whose URL is NOT an official source (isOfficialUrl,
  * with this run's tool portals) is relabelled "[Other source — <site>](url)"
  * in the label's language. The link itself stays (nothing is blocked); only
- * the false claim goes. Official links, other labels and Shishya links are
- * left exactly as written.
+ * the false claim goes. Official links and other labels are left exactly as
+ * written. 13 Oct 2026: a Shishya link is never "Official" either — "[Official
+ * — SSC CGL page](https://shishya.in/exams/SSC_CGL)" keeps its link and loses
+ * only the claim ("[SSC CGL page](…)"); it was left as written before.
  */
+const OFFICIAL_LEAD = /^\s*(?:official|आधिकारिक|అధికారిక)(?:\s+(?:source|site|website|portal|स्रोत|वेबसाइट|మూలం|వెబ్‌సైట్))?\s*(?:[—–:-]\s*)?/i;
 export function relabelOfficialClaims(md: string, toolOfficial: Iterable<string> = []): string {
   const tools = [...toolOfficial];
   return String(md ?? "").replace(MD_LINK, (whole: string, label: string, url: string) => {
     const m = OFFICIAL_LABEL.exec(label);
-    if (!m || !/^https?:\/\//i.test(url) || SHISHYA.test(url)) return whole;
+    if (!m || !/^https?:\/\//i.test(url)) return whole;
+    if (SHISHYA.test(url)) return `[${label.replace(OFFICIAL_LEAD, "").trim() || "Shishya"}](${url})`;
     if (isOfficialUrl(url, tools)) return whole;
     const lang: Locale = /[ऀ-ॿ]/.test(m[1]) ? "hi" : /[ఀ-౿]/.test(m[1]) ? "te" : "en";
     return `[${sourceTag(false, lang)} — ${sourceName(url)}](${url})`;

@@ -531,9 +531,46 @@ async function personaPacket(ctx: PlanContext): Promise<string> {
     }`,
     `Unfinished mocks last 3 days: ${abandoned[0]?.n ?? 0}`,
     `Recently asked the AI tutor about: ${tutorAsks.length ? tutorAsks.map((t) => `"${t.c.replace(/\n/g, " ")}"`).join("; ") : "nothing recently"}`,
-    `Weakest topics (priority order): ${ctx.pool.slice(0, 8).map((t) => `${t.name} [${t.code}] mastery ${Math.round((t.mastery ?? 0) * 100)}%`).join("; ")}`,
+    `Weakest topics (priority order): ${ctx.pool.slice(0, 8).map((t) => `${t.name} [${t.code}] mastery ${masteryText(t.mastery)}`).join("; ")}`,
   ];
   return lines.join("\n");
+}
+
+/**
+ * A topic's mastery as the model reads it (13 Oct 2026). A topic with no
+ * WeaknessMap row was never measured; printing it as "0%" made both models
+ * tell students "your 0% Tamil comprehension score" in the 12-13 Oct audit
+ * (Claude 3 critical notes of 31, Qwen 4).
+ */
+export function masteryText(mastery: number | null): string {
+  return mastery == null ? "not measured yet" : `${Math.round(mastery * 100)}%`;
+}
+
+/**
+ * Quality guard on a coach-day reply from Surge's own server (13 Oct 2026).
+ * The 12-13 Oct audit (31 real plan-holders, blind judge) found Qwen 27B's
+ * critical notes were a quoted "0%" presented as the student's score, and a
+ * hint that study notes are coming ("build the right study notes next"),
+ * which breaks "Never promise when notes will be ready". On those 31 cases
+ * this check fired 8 times and caught all 5 local criticals. A reply the app
+ * could not use (no JSON, no MENU id, a note the 400-character cut would
+ * break mid-sentence) goes to Claude too, rather than to the rule plan with
+ * no note. Null = keep the local reply.
+ */
+export function coachDayLocalCheck(text: string, menuIds: string[]): string | null {
+  let out: { taskIds?: unknown; note?: unknown };
+  try {
+    out = parseJson<{ taskIds?: unknown; note?: unknown }>(text);
+  } catch {
+    return "not JSON";
+  }
+  const ids = Array.isArray(out?.taskIds) ? out.taskIds : [];
+  if (!ids.some((id) => typeof id === "string" && menuIds.includes(id))) return "no MENU id";
+  const note = typeof out.note === "string" ? out.note : "";
+  if (/(^|[^\d.])0\s*%/.test(note)) return "note quotes 0%";
+  if (/\bnotes?\b[^.]*\b(next|soon|will be|coming)\b/i.test(note)) return "note promises notes";
+  if (note.length > 400) return "note over 400 characters";
+  return null;
 }
 
 const COACH_SYSTEM = `You are Shishya's personal coach planning ONE student's study day for a competitive Indian government/entrance exam. You are the kind of coach a student loves: specific, warm, honest, zero guilt. You will receive the student's persona (recent scores, what they asked the tutor, whether yesterday happened) and a MENU of valid task ids.
@@ -568,7 +605,7 @@ export async function generateCoachDay(
   menu.push({ id: "daily5", desc: "Daily 5 quick questions (streak keeper, 5 min)" });
   for (const t of ctx.pool.slice(0, 8)) {
     if (t.hasNotes) {
-      menu.push({ id: `read:${t.code}`, desc: `Study ${t.name} — notes + 10-question topic test (mastery ${Math.round((t.mastery ?? 0) * 100)}%)` });
+      menu.push({ id: `read:${t.code}`, desc: `Study ${t.name} — notes + 10-question topic test (mastery ${masteryText(t.mastery)})` });
       menu.push({ id: `revise:${t.code}`, desc: `Re-test ${t.name} without re-reading` });
     } else {
       // No usable notes → the only honest offer is the question drill;
@@ -577,7 +614,7 @@ export async function generateCoachDay(
       if (!d) continue;
       menu.push({
         id: `test:${t.code}`,
-        desc: `Drill ${d.n} validated ${d.scope === "topic" ? "" : d.scope === "subject" ? `${t.subjectName} ` : `mixed ${ctx.examShort} `}questions for ${t.name} (study notes not ready yet; mastery ${Math.round((t.mastery ?? 0) * 100)}%)`,
+        desc: `Drill ${d.n} validated ${d.scope === "topic" ? "" : d.scope === "subject" ? `${t.subjectName} ` : `mixed ${ctx.examShort} `}questions for ${t.name} (study notes not ready yet; mastery ${masteryText(t.mastery)})`,
       });
     }
   }
@@ -595,6 +632,11 @@ export async function generateCoachDay(
       ],
       maxTokens: 400,
       model: MODEL,
+      acceptLocal: (msg) =>
+        coachDayLocalCheck(
+          msg.content.map((b) => (b.type === "text" ? b.text : "")).join(""),
+          menu.map((m) => m.id),
+        ),
     });
     const text = res.response.content.map((b) => (b.type === "text" ? b.text : "")).join("");
     const out = parseJson<{ taskIds: string[]; note: string }>(text);

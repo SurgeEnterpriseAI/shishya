@@ -49,6 +49,7 @@ import { NOT_SCHOOL_SQL, REAL_EXAM_SQL } from "@/lib/db/exam-scope";
 import { SUPPRESSED_SOURCE } from "@/lib/exam-timeline";
 import { anthropic, MODEL, cachedSystem } from "@/lib/ai/client";
 import { recordAiUsage } from "@/lib/ai/usage";
+import { webSearchTool } from "@/lib/ai/web-search";
 import { ledgerFeature, withReserve } from "@/lib/ai/reserve";
 import { resolveAliases } from "@/lib/exam-aliases";
 import { GATES_CLOSED, examPageGates } from "@/lib/exam-page-gates";
@@ -773,8 +774,10 @@ export async function runAsk(question: string, opts: AskOptions = {}): Promise<A
   const messages: Anthropic.Messages.MessageParam[] = [{ role: "user", content: first }];
   // any[]: the installed SDK's Tool union predates the server-side
   // web_search tool type (same workaround as exam-info.ts) — the API
-  // itself accepts and executes it.
-  const tools: any[] = [...ASK_TOOLS, { type: "web_search_20250305", name: "web_search", max_uses: ASK_WEB_MAX_USES }];
+  // itself accepts and executes it. 13 Oct 2026: the shared tool
+  // (src/lib/ai/web-search.ts, no blocked_domains by default) — our own pages
+  // reach the answer through the page tools.
+  const tools: any[] = [...ASK_TOOLS, webSearchTool(ASK_WEB_MAX_USES)];
   const system = cachedSystem(askSystemPrompt());
   // Only a caller with a person waiting may fall back to the reserve (AskOptions.reserve).
   const reserveFeature = opts.reserve ? "ask" : null;

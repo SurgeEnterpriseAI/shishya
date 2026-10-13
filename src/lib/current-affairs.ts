@@ -39,6 +39,7 @@ import type { Prisma } from "@prisma/client";
 import { recordAiUsageAwaited } from "@/lib/ai/usage";
 import { anthropic } from "./ai/client";
 import { parseJson } from "./ai/client";
+import { webSearchTool } from "./ai/web-search";
 import { prisma } from "./db/prisma";
 
 const MODEL = "claude-sonnet-4-5-20250929";
@@ -242,9 +243,8 @@ export async function generateDailyCurrentAffairs(opts: {
   istDate: string; // "YYYY-MM-DD"
   tx?: DigestTx;
 } ): Promise<{ items: CurrentAffairItem[]; written: number; inputTokens: number; outputTokens: number }> {
-  const tools: Anthropic.Messages.Tool[] = [
-    { type: "web_search_20250305", name: "web_search", max_uses: 6 } as unknown as Anthropic.Messages.Tool,
-  ];
+  // The shared web_search tool (13 Oct 2026, ./ai/web-search.ts).
+  const tools: Anthropic.Messages.Tool[] = [webSearchTool(6) as unknown as Anthropic.Messages.Tool];
   const res = await anthropic.messages.create(
     {
       model: MODEL,

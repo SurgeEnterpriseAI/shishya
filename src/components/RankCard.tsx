@@ -34,13 +34,17 @@ function pickBand(scorePct: number, bands: RankBandRow[]): RankBandRow | null {
   })[0];
 }
 
+// 13 Oct 2026: a rank window is the AI's estimate, so it says "Est."; and no
+// window says only that — "Post-based exam" was wrong for BITSAT, CAT and
+// CUET, which have no rank because they publish a score or percentile
+// (src/lib/ai/rank-bands.ts publishesNoRank).
 function renderRank(b: RankBandRow): string {
-  if (b.rankMin == null && b.rankMax == null) return "Post-based exam (no numeric rank)";
+  if (b.rankMin == null && b.rankMax == null) return "No rank estimate";
   if (b.rankMin != null && b.rankMax != null) {
-    return `Rank ${b.rankMin.toLocaleString("en-IN")} – ${b.rankMax.toLocaleString("en-IN")}`;
+    return `Est. rank ${b.rankMin.toLocaleString("en-IN")} – ${b.rankMax.toLocaleString("en-IN")}`;
   }
-  if (b.rankMin != null) return `Rank ${b.rankMin.toLocaleString("en-IN")}+`;
-  if (b.rankMax != null) return `Rank up to ${b.rankMax.toLocaleString("en-IN")}`;
+  if (b.rankMin != null) return `Est. rank ${b.rankMin.toLocaleString("en-IN")}+`;
+  if (b.rankMax != null) return `Est. rank up to ${b.rankMax.toLocaleString("en-IN")}`;
   return "—";
 }
 
@@ -106,7 +110,7 @@ export function RankCard({
       </div>
       {source === "ai-generated:claude" && (
         <p className="mt-3 text-[10px] text-ink-400">
-          AI-curated based on historic cut-off patterns. Verify with the official notification before making decisions.
+          AI estimate, not an official figure. Verify with the official notification before making decisions.
         </p>
       )}
     </section>
@@ -179,7 +183,7 @@ export function RankLadder({
       </ul>
       {source === "ai-generated:claude" && (
         <p className="mt-3 text-[10px] text-ink-400">
-          AI-curated from historic cut-off patterns. Always verify with the latest official notification before making decisions.
+          AI estimate, not an official figure. Always verify with the latest official notification before making decisions.
         </p>
       )}
     </section>

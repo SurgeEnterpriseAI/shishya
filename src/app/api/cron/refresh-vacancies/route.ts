@@ -34,6 +34,7 @@ import { prisma } from "@/lib/db/prisma";
 import { notSchoolSqlText } from "@/lib/db/exam-scope";
 import { recordAiUsage } from "@/lib/ai/usage";
 import { createSpendGuard } from "@/lib/ai/spend-guard";
+import { webSearchTool } from "@/lib/ai/web-search";
 
 const MODEL = "claude-sonnet-4-5-20250929";
 const BATCH = 5;
@@ -76,7 +77,8 @@ export async function GET(req: Request) {
      LIMIT ${BATCH}`,
   );
 
-  const tools = [{ type: "web_search_20250305", name: "web_search", max_uses: 2 }] as any[];
+  // The shared web_search tool (13 Oct 2026, src/lib/ai/web-search.ts).
+  const tools = [webSearchTool(2)] as any[];
   const guard = createSpendGuard();
   let updated = 0, failed = 0, held = 0;
   for (const ex of exams) {

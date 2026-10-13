@@ -186,38 +186,124 @@ export async function buildStudent360(
   return profile;
 }
 
+// 13 Oct 2026: the packet's field meanings and a length limit. The 12-13 Oct
+// audit (25 real students, blind judge) found both models reading the old
+// "studyHours" field (counts of app events by time of day) as hours studied —
+// "477 hours of your best work", "your 4-hour afternoon study block" — and a
+// score trend read backwards. Claude also ran past maxTokens 220 on 7 of 25
+// reads (cut off mid-sentence on the student's own report), often after
+// headings or a table.
+const COACH_READ_DATA =
+  "Field meanings: attempts = mocks submitted; avgPct = their average mock score in %; scoreTrend = mock scores in %, oldest first and newest last; subjects[].mastery runs 0 to 1 (0.42 means 42%); subjects[].attempts = questions answered in that subject; appEventsByTimeOfDay = how many app events (page views and clicks) fell in each part of the day over the last 30 days — counts of events, NOT hours, NOT sessions and NOT a study habit; activeDays30 = days with any activity in the last 30; daysToExam null = exam date not known (never guess one). Quote numbers exactly as they appear in the data: never work out new percentages, ranges or totals from them.";
+const COACH_READ_SHAPE =
+  "Write ONE paragraph of 3-4 short sentences, under 90 words. Plain text only: no headings, no bullets, no bold, no tables.";
+
 const COACH_READ_SYSTEM: Record<"self" | "mentor", string> = {
   self:
-    "You are the student's own exam-prep coach writing 3-4 sentences DIRECTLY TO THEM (second person: 'you'). Name their single biggest strength, their single biggest opportunity, and the one next step to take today. Ground every claim in the data given — never invent numbers. Encouraging and specific, never guilt: gaps are framed as 'your opportunity'. Plain English, no headings, no bullets.",
+    `You are the student's own exam-prep coach writing 3-4 sentences DIRECTLY TO THEM (second person: 'you'). Name their single biggest strength, their single biggest opportunity, and the one next step to take today. Ground every claim in the data given — never invent numbers. Encouraging and specific, never guilt: gaps are framed as 'your opportunity'. ${COACH_READ_SHAPE}\n\n${COACH_READ_DATA}`,
   mentor:
-    "You are an exam-prep counsellor writing a 3-4 sentence professional read of ONE aspirant for a human mentor about to counsel them. Name the single biggest strength, the single biggest risk, and the one next step you would push. Ground every claim in the data given — never invent numbers. Never guilt language: gaps are framed as 'the opportunity'. Plain English, no headings, no bullets.",
+    `You are an exam-prep counsellor writing a 3-4 sentence professional read of ONE aspirant for a human mentor about to counsel them. Write about the aspirant in the third person ('they', 'the aspirant'), never to them. Name the single biggest strength, the single biggest risk, and the one next step you would push. Ground every claim in the data given — never invent numbers. Never guilt language: gaps are framed as 'the opportunity'. ${COACH_READ_SHAPE}\n\n${COACH_READ_DATA}`,
 };
+
+/**
+ * The coach's read request (13 Oct 2026: pure, so the prompt can be tested
+ * and evaluated outside Next). The packet's key for p.studyHours is
+ * appEventsByTimeOfDay: the counts are app events, not hours.
+ */
+export function coachReadRequest(p: Student360, audience: "self" | "mentor") {
+  const packet = JSON.stringify({
+    exam: p.exam?.short, daysToExam: p.daysToExam, joinedDaysAgo: p.joinedDaysAgo,
+    attempts: p.totals.submitted, avgPct: p.totals.avgPct,
+    activeDays30: p.totals.activeDaysLast30, lastActiveDaysAgo: p.lastActiveDaysAgo,
+    scoreTrend: p.scoreTrend.map((s) => s.pct), subjects: p.subjects,
+    weakTopics: p.weakTopics.map((t) => t.name), appEventsByTimeOfDay: p.studyHours,
+    recentTutorAsks: p.tutorThemes.slice(0, 4), planDay: p.plan?.dayNumber ?? null,
+  });
+  return {
+    system: [{ type: "text" as const, text: COACH_READ_SYSTEM[audience] }],
+    messages: [{ role: "user" as const, content: packet }],
+    // 220 cut 7 of 25 Claude reads mid-sentence; 90 words is ~130 tokens.
+    maxTokens: 400,
+  };
+}
+
+const STRUCTURE_LINE = /^\s*(#|[-*•]\s|\d+\.\s|\||-{3,}\s*$)/;
+
+/**
+ * The read as stored and shown (13 Oct 2026). Only the leading paragraph is
+ * kept when a heading, bullet or table follows it, and bold markers are
+ * dropped. A reply that stopped at max_tokens, or was cut at a heading, keeps
+ * its full sentences only, never a half one. Null when fewer than 2 full
+ * sentences survive a cut: nothing is stored, and the next view asks again.
+ */
+export function finishCoachRead(text: string, stopReason: string | null | undefined): string | null {
+  const lines = text.trim().split("\n");
+  const firstStructure = lines.findIndex((l) => STRUCTURE_LINE.test(l));
+  const cut = stopReason === "max_tokens" || firstStructure >= 0;
+  let t = (firstStructure >= 0 ? lines.slice(0, firstStructure) : lines)
+    .join(" ")
+    .replace(/\*\*|__/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!cut) return t || null;
+  const lastEnd = t.match(/^[\s\S]*[.!?]["'”’)]?(?=\s|$)/);
+  t = lastEnd ? lastEnd[0].trim() : "";
+  return t.split(/(?<=[.!?]["'”’)]?)\s+/).filter(Boolean).length >= 2 ? t : null;
+}
+
+/**
+ * Quality guard on a coach's read from Surge's own server (13 Oct 2026).
+ * The 12-13 Oct audit's local critical reads were: app-event counts stated
+ * as hours ("16 hours per day", "196 evening study hours"), a mentor brief
+ * written to the student, and a "consistent study block" claimed for a
+ * student active 1 day in 30. Each of those, and a reply cut off at
+ * max_tokens, goes to Claude instead. Null = serve the local read.
+ */
+export function coachReadLocalCheck(
+  text: string,
+  audience: "self" | "mentor",
+  activeDays30: number,
+  stopReason?: string | null,
+): string | null {
+  if (stopReason === "max_tokens") return "cut off";
+  // A read the store step would drop (it opens with a heading or list) would
+  // leave the student with no read and every view retrying locally.
+  if (!finishCoachRead(text, stopReason)) return "no plain paragraph";
+  if (audience === "mentor" && /\byou(r)?\b/i.test(text)) return "mentor brief speaks to the student";
+  if (/\b\d+[- ]?hours?\b/i.test(text) || /\b\d+\s+(?:[a-z-]+\s+){1,2}hours?\b/i.test(text)) return "states hours";
+  if (activeDays30 < 7 && /\b(consistent|regular|existing|proven|established)\s+(?:[\w-]+\s+){0,2}(block|habit|routine|focus|schedule)\b/i.test(text))
+    return "claims a study habit";
+  return null;
+}
 
 const cachedCoachRead = (userId: string, day: string, p: Student360, audience: "self" | "mentor") =>
   unstable_cache(
     async () => {
-      const packet = JSON.stringify({
-        exam: p.exam?.short, daysToExam: p.daysToExam, joinedDaysAgo: p.joinedDaysAgo,
-        attempts: p.totals.submitted, avgPct: p.totals.avgPct,
-        activeDays30: p.totals.activeDaysLast30, lastActiveDaysAgo: p.lastActiveDaysAgo,
-        scoreTrend: p.scoreTrend.map((s) => s.pct), subjects: p.subjects,
-        weakTopics: p.weakTopics.map((t) => t.name), studyHours: p.studyHours,
-        recentTutorAsks: p.tutorThemes.slice(0, 4), planDay: p.plan?.dayNumber ?? null,
-      });
+      const req = coachReadRequest(p, audience);
       const res = await callClaude({
         feature: "student-360",
-        system: [{ type: "text" as const, text: COACH_READ_SYSTEM[audience] }],
-        messages: [{ role: "user", content: packet }],
-        maxTokens: 220,
+        ...req,
         model: MODEL,
+        acceptLocal: (msg) =>
+          coachReadLocalCheck(
+            msg.content.map((b) => (b.type === "text" ? b.text : "")).join(""),
+            audience,
+            p.totals.activeDaysLast30,
+            msg.stop_reason,
+          ),
       });
-      const text = res.response.content
+      const raw = res.response.content
         .map((b: any) => (b.type === "text" ? b.text : ""))
         .join("")
         .trim();
-      if (!text) throw new Error("empty coach read");
+      if (!raw) throw new Error("empty coach read");
+      // A read cut off with no full sentences left is not stored (throwing
+      // keeps it out of the cache, so the next view asks again).
+      const text = finishCoachRead(raw, res.response.stop_reason);
+      if (!text) throw new Error("coach read cut off");
       return text;
     },
-    ["student-360-read", userId, day, audience],
+    // v2 (13 Oct 2026): reads cached under the old prompt are not reused.
+    ["student-360-read-v2", userId, day, audience],
     { revalidate: 86_400 },
   )();

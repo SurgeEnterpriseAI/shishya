@@ -4,7 +4,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { recordAiUsage, PRICING } from "@/lib/ai/usage";
 import { ledgerFeature, withReserve } from "@/lib/ai/reserve";
-import { localFirst } from "@/lib/ai/local-llm";
+import { localFirst, type LocalAccept } from "@/lib/ai/local-llm";
 
 const apiKey = process.env.ANTHROPIC_API_KEY;
 if (!apiKey) {
@@ -66,6 +66,11 @@ export interface CallClaudeOpts {
   feature?: string;
   /** Optional reference for the ledger row (exam code, user id …). */
   ref?: string | null;
+  /**
+   * (13 Oct 2026) The feature's check on a LOCAL server reply only: null
+   * serves it, a reason runs the call on Claude instead (ai/local-llm.ts).
+   */
+  acceptLocal?: LocalAccept;
 }
 
 /** A messages.create body whose system prompt is the block array every Shishya call site sends. */
@@ -129,6 +134,7 @@ export async function callClaude(opts: CallClaudeOpts) {
       reserve = r.reserve;
       return r.value;
     },
+    opts.acceptLocal,
   );
   const latencyMs = Date.now() - start;
   const servedBy = local ? response.model : model;

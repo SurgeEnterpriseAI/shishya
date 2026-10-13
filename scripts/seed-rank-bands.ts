@@ -18,7 +18,7 @@
 //   --dry-run
 
 import { PrismaClient } from "@prisma/client";
-import { generateRankBands } from "../src/lib/ai/rank-bands";
+import { generateRankBands, loadRankBandFacts } from "../src/lib/ai/rank-bands";
 
 const GEN_SOURCE = "ai-generated:claude";
 const COST_PER_EXAM_USD = 0.06;
@@ -132,11 +132,21 @@ async function main() {
     }
 
     try {
+      // Grounded on what Shishya stores for the exam, as the cron is (13 Oct
+      // 2026, src/lib/ai/rank-bands.ts). Null = no real exam row (gone, or a
+      // school container): skipped before any AI call.
+      const facts = await loadRankBandFacts(p, exam.id);
+      if (!facts) {
+        console.log(`     ✗ no real exam row — skipped`);
+        failed += 1;
+        continue;
+      }
       const { bands, inputTokens, outputTokens } = await generateRankBands({
         examCode: exam.code,
         examName: exam.name,
         examShortName: exam.shortName,
         category: String(exam.category),
+        facts,
       });
       if (bands.length === 0) {
         console.log(`     ✗ empty bands — Claude returned no usable rows`);

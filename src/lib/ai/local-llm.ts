@@ -154,6 +154,13 @@ export async function callLocal(
 }
 
 /**
+ * A feature's own check on a LOCAL reply (13 Oct 2026, from the Qwen-vs-Claude
+ * audit): null serves it; a short reason discards it and runs the Claude path.
+ * Never applied to Claude's reply. A check that throws counts as a failure.
+ */
+export type LocalAccept = (msg: Anthropic.Messages.Message) => string | null;
+
+/**
  * Try the local server when eligible; on any failure log one line and run
  * the Claude path. Returns which path served the call.
  */
@@ -161,11 +168,15 @@ export async function localFirst<T extends Anthropic.Messages.Message>(
   feature: string | undefined,
   req: { system: Block[]; messages: Msg[]; maxTokens: number; temperature?: number; tools?: unknown },
   claude: () => Promise<T>,
+  accept?: LocalAccept,
 ): Promise<{ value: Anthropic.Messages.Message; local: boolean }> {
   const route = routeFor(feature);
   if (route && localEligible(feature, req)) {
     try {
-      return { value: await callLocal(req, route), local: true };
+      const value = await callLocal(req, route);
+      const rejected = accept ? accept(value) : null;
+      if (rejected == null) return { value, local: true };
+      console.warn(`[local-llm] ${feature}: rejected (${rejected.slice(0, 160)}), Claude`);
     } catch (err) {
       console.warn(`[local-llm] ${feature}: fell back to Claude (${String((err as Error)?.message ?? err).slice(0, 160)})`);
     }
@@ -183,6 +194,7 @@ export async function createLocalFirst(
   feature: string,
   client: Anthropic,
   params: Anthropic.Messages.MessageCreateParamsNonStreaming,
+  opts: { acceptLocal?: LocalAccept } = {},
 ): Promise<Anthropic.Messages.Message> {
   const system: Block[] =
     typeof params.system === "string" ? [{ type: "text", text: params.system }] : (params.system ?? []);
@@ -190,6 +202,7 @@ export async function createLocalFirst(
     feature,
     { system, messages: params.messages, maxTokens: params.max_tokens, temperature: params.temperature, tools: params.tools },
     () => client.messages.create(params),
+    opts.acceptLocal,
   );
   return value;
 }

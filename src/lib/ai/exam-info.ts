@@ -35,6 +35,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { recordAiUsage } from "@/lib/ai/usage";
 import { isOfficialSource } from "@/lib/official-source";
 import { anthropic, MODEL } from "./client";
+import { isOwnSiteUrl, webSearchTool } from "./web-search";
 
 export interface ExamInfoInput {
   examCode: string;
@@ -167,16 +168,27 @@ ${opts.useWebSearch ? `IMPORTANT: use your web_search tool to look up the LATEST
   // generation so news items reference real, recent notifications rather
   // than training-knowledge approximations. Falls back gracefully on
   // older SDK versions or when the tool fails — the underlying call still
-  // returns text and our JSON parser handles either path.
-  const tools: any[] | undefined = opts.useWebSearch
-    ? [{ type: "web_search_20250305", name: "web_search", max_uses: 5 }]
-    : undefined;
+  // returns text and our JSON parser handles either path. 13 Oct 2026: the
+  // shared tool (./web-search.ts); our own exam page is never kept as a
+  // source for a date we then show as "official" (isOwnSiteUrl below).
+  const tools: any[] | undefined = opts.useWebSearch ? [webSearchTool(5)] : undefined;
 
   const startedAt = Date.now();
   const response = await anthropic.messages.create({
     model: MODEL,
-    max_tokens: 3000,
-    system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
+    // 4500 (13 Oct 2026): NDA's reply hit 3000 mid-JSON in the harness eval, the
+    // parse failed and the exam was not refreshed. Billed only when used.
+    max_tokens: 4500,
+    // No cache_control (13 Oct 2026). Any cache marker makes the API add its
+    // own breakpoint after the web_search results. This call sends all its
+    // searches in one go, so the loop runs twice and the second pass writes
+    // the whole prefix, search results included (~33k tokens), to the cache
+    // at 1.25x the input price — and nothing ever reads it back. Without a
+    // marker those tokens bill once at the plain price; the ~3k system prefix
+    // the cache used to save is re-billed instead. About $0.009 a call
+    // cheaper on 96 calls of AiUsage (-$0.12 to -0.16/day). Caching never
+    // changes what the model reads, so the reply is the same.
+    system: SYSTEM,
     messages: [{ role: "user", content: userPrompt }],
     ...(tools ? { tools } : {}),
   } as any);
@@ -193,9 +205,14 @@ ${opts.useWebSearch ? `IMPORTANT: use your web_search tool to look up the LATEST
     throw new Error(`exam-info JSON parse failed for ${input.examCode}: ${text.slice(0, 200)}`);
   }
 
+  // Our own page is never a source (13 Oct 2026): a news item that cites
+  // shishya.in is our earlier generation coming back, so it is dropped; a
+  // date citing it loses the source and so can only be "expected" (below).
+  // Free, and it also catches a URL the model writes from memory, which no
+  // search filter can stop (blocked_domains is off: ./web-search.ts).
   const news: NewsItem[] = Array.isArray(parsed.news)
     ? parsed.news
-        .filter((n: any) => typeof n?.title === "string" && typeof n?.body === "string")
+        .filter((n: any) => typeof n?.title === "string" && typeof n?.body === "string" && !isOwnSiteUrl(httpUrl(n.source)))
         .map((n: any) => ({
           title: String(n.title).slice(0, 160),
           body: String(n.body).slice(0, 1200),
@@ -220,7 +237,8 @@ ${opts.useWebSearch ? `IMPORTANT: use your web_search tool to look up the LATEST
           } else {
             daysFromNow = NaN;
           }
-          const source = httpUrl(d.source);
+          const cited = httpUrl(d.source);
+          const source = isOwnSiteUrl(cited) ? null : cited;
           const kind = normaliseKind(d.kind, String(d.label), Boolean(d.isExamDay));
           // A row can only be official if it can be cited AND carries an
           // absolute calendar date — an "official" offset would be stored

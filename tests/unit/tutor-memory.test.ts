@@ -36,7 +36,7 @@ import {
   type MemorySession,
   type TutorJourney,
 } from "@/lib/tutor-memory";
-import { journeyBlock } from "@/lib/ai/prompts";
+import { journeyBlock, TURN_FACT_REMINDER } from "@/lib/ai/prompts";
 import { tutorTurnContext } from "@/lib/ai/tutor";
 
 const NOW = Date.now();
@@ -256,8 +256,9 @@ describe("tutorTurnContext — which chats carry the memory", () => {
     expect(ctx).not.toContain("# Student state");
     expect(ctx).not.toContain("<<ACTIONS>>");
   });
-  it("a general chat with no journey is exactly the language line (guests, as before)", () => {
-    expect(tutorTurnContext({ school: null, generalMode: true, studentState: state, journey: undefined, focusBlock: "", language: "HI" })).toBe("Reply language: HI.");
+  it("a general chat with no journey is exactly the facts reminder and the language line (guests)", () => {
+    // 13 Oct 2026: the facts reminder (prompts.ts TURN_FACT_REMINDER) joined the language line.
+    expect(tutorTurnContext({ school: null, generalMode: true, studentState: state, journey: undefined, focusBlock: "", language: "HI" })).toBe(`${TURN_FACT_REMINDER}\nReply language: HI.`);
   });
   it("an exam chat keeps its shape: state, journey, language, actions", () => {
     const ctx = tutorTurnContext({ school: null, generalMode: false, studentState: state, journey: { ...journey, examCode: "SSC_CGL" }, focusBlock: "", language: "EN" });

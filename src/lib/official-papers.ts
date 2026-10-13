@@ -10,6 +10,8 @@
 // from the body's listing page, and finds its year beside that link or on the
 // file's first page. The pure rules the importer and the pages share live here.
 
+import { isNeverOfficial } from "@/lib/never-official-hosts";
+
 export const PAPER_KINDS = ["question paper", "question paper with answer key", "answer key", "listing page", "sample paper"] as const;
 export type PaperKind = (typeof PAPER_KINDS)[number];
 
@@ -61,10 +63,13 @@ export function baseDomain(host: string): string {
 }
 
 /** Official when the host is an Indian government / public academic domain, or shares its
- *  domain with the exam's official portal (a body such as TSLPRB publishing from its own .in). */
+ *  domain with the exam's official portal (a body such as TSLPRB publishing from its own .in).
+ *  13 Oct 2026: never a coaching company or college blog on an academic domain (aakash.ac.in,
+ *  allen.ac.in …) or our own site (src/lib/never-official-hosts.ts). */
 export function isOfficialHost(host: string | null, officialPortalHost: string | null): boolean {
   if (!host) return false;
   const h = host.toLowerCase();
+  if (isNeverOfficial(`https://${h}/`)) return false;
   if (OFFICIAL_SUFFIXES.some((s) => h === s || h.endsWith(`.${s}`))) return true;
   return !!officialPortalHost && baseDomain(h) === baseDomain(officialPortalHost);
 }

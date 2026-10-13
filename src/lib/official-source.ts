@@ -21,6 +21,12 @@
 
 import { istDayNumber } from "@/lib/exam-phase";
 import { sameStage, stageMarkers } from "@/lib/hub-title";
+import { isNeverOfficial, isSelfSource, SELF_HOSTS } from "@/lib/never-official-hosts";
+
+// Coaching companies on academic domains (aakash.ac.in, allen.ac.in …) and our
+// own site are never official (13 Oct 2026): the lists live in
+// src/lib/never-official-hosts.ts, re-exported here for the callers of this file.
+export { isNeverOfficial, isSelfSource, NEVER_OFFICIAL_HOSTS, SELF_HOSTS } from "@/lib/never-official-hosts";
 
 export type SourceTier = "official" | "reported" | "expected";
 
@@ -76,14 +82,21 @@ const suffixHit = (h: string, s: string) => h === s || h.endsWith("." + s);
 //     conducting body, court or newspaper we cite publishes on them.
 export const SOURCE_DENYLIST_HOSTS: readonly string[] = ["gngroup.org", "fastjobsearchers.com", "ukexamalert.in", "aryacollegejpr.com"];
 export const SOURCE_DENYLIST_SUFFIXES: readonly string[] = ["cm", "com.im", "co.im", "com.co", "om"];
-/** Both lists, for surfaces that print them (editorial notes, tests). */
-export const SOURCE_DENYLIST: readonly string[] = [...SOURCE_DENYLIST_HOSTS, ...SOURCE_DENYLIST_SUFFIXES.map((s) => `*.${s}`)];
 
-/** True when `url`'s host is on the source denylist. A missing or unparsable
- *  URL is not "untrusted" — it is simply not a citation. */
+// 13 Oct 2026: our own site (shishya.in) is untrusted too — a row "cited" to
+// it is our own earlier claim coming back, neither official nor an
+// independent report (src/lib/never-official-hosts.ts isSelfSource).
+
+/** Both lists and our own site, for surfaces that print them (editorial notes, tests). */
+export const SOURCE_DENYLIST: readonly string[] = [...SOURCE_DENYLIST_HOSTS, ...SELF_HOSTS, ...SOURCE_DENYLIST_SUFFIXES.map((s) => `*.${s}`)];
+
+/** True when `url`'s host is on the source denylist, or is our own site
+ *  (isSelfSource). A missing or unparsable URL is not "untrusted" — it is
+ *  simply not a citation. */
 export function isUntrustedSource(url: string | null | undefined): boolean {
   const host = hostOf(url);
   if (!host) return false;
+  if (isSelfSource(url)) return true;
   return SOURCE_DENYLIST_HOSTS.some((s) => suffixHit(host, s)) || SOURCE_DENYLIST_SUFFIXES.some((s) => host.endsWith("." + s));
 }
 
@@ -103,11 +116,13 @@ export function sourceHostLabel(url: string): string {
 /** True when `url` is on the conducting body's own site or a regulated
  *  government/academic domain. `officialUrl` (from ExamEligibility) adds
  *  the exam's specific portal even when it's on a commercial TLD. A
- *  denylisted host is never official (26 Sep 2026). */
+ *  denylisted host is never official (26 Sep 2026), nor is a coaching /
+ *  college-blog host or our own site — not even as the exam's portal
+ *  (isNeverOfficial, 13 Oct 2026). */
 export function isOfficialSource(url: string | null | undefined, officialUrl?: string | null): boolean {
   const host = hostOf(url);
   if (!host) return false;
-  if (isUntrustedSource(url)) return false;
+  if (isUntrustedSource(url) || isNeverOfficial(url)) return false;
   if (OFFICIAL_SUFFIXES.some((s) => suffixHit(host, s))) return true;
   if (OFFICIAL_HOSTS.some((s) => suffixHit(host, s))) return true;
   const own = hostOf(officialUrl);

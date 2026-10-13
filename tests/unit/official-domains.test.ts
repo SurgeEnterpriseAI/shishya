@@ -153,13 +153,13 @@ describe("relabelOfficialClaims", () => {
     expect(relabelOfficialClaims("[Official source — SSC](https://jagranjosh.com/a)")).toBe("[Other source — jagranjosh.com](https://jagranjosh.com/a)");
   });
 
-  it("keeps official links, this run's tool portals, other labels and Shishya links exactly as written", () => {
+  it("keeps official links, this run's tool portals and other labels exactly as written", () => {
     const same = [
       "[Official — Staff Selection Commission](https://ssc.gov.in/notice)",
       "[Official — CISCE](https://cisce.org/x)",
       "[Official notification PDF](https://www.sarkariresult.com/ssc/cgl)",
       "[Other source — jagranjosh.com](https://jagranjosh.com/a)",
-      "[Official — SSC CGL page](https://shishya.in/exams/SSC_CGL)",
+      "[SSC CGL page](https://shishya.in/exams/SSC_CGL)",
       "Official — SSC at https://www.sarkariresult.com/ssc (a bare URL is not a label)",
     ];
     for (const md of same) expect(relabelOfficialClaims(md)).toBe(md);

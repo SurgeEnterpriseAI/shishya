@@ -59,6 +59,7 @@ Style for stepByStep:
     system: systemBlocks,
     messages: [{ role: "user", content: userPrompt }],
     maxTokens: TOKEN_LIMITS.explainer,
+    acceptLocal: (msg) => explainLocalCheck(extractText(msg)),
   });
 
   const raw = extractText(response);
@@ -86,6 +87,25 @@ Style for stepByStep:
         ? parsed.keyDisputeReason.trim()
         : undefined,
   };
+}
+
+/**
+ * Quality guard on an explanation from Surge's own server (13 Oct 2026). In
+ * the 12-13 Oct audit (36 real questions, blind judge) Qwen 27B matched
+ * Claude on the steps, and its one English critical was in the dispute path:
+ * a "the answer key may be wrong" reason with a false sentence ("QPRS ... is
+ * not listed among the options" when option C is QPRS). The student sees that
+ * reason and it is pre-filled into the report box, and disputes are rare (0
+ * on 30 verified keys), so a disputed local reply is asked of Claude instead.
+ * A local reply the app cannot read, or one with no step left, would show an
+ * empty explanation, so it goes to Claude too. Null = serve the local reply.
+ */
+export function explainLocalCheck(text: string): string | null {
+  const parsed = safeParseJson(text);
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed) || !Object.keys(parsed).length) return "not JSON";
+  if (parsed.keyDisputed === true) return "key disputed";
+  if (!sanitiseSteps(parsed.stepByStep).length) return "no steps";
+  return null;
 }
 
 // Drops chain-of-thought leakage. The model sometimes ignores the

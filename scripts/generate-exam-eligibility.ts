@@ -14,6 +14,7 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { PrismaClient } from "@prisma/client";
+import { webSearchTool } from "@/lib/ai/web-search";
 
 const prisma = new PrismaClient();
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? "" });
@@ -66,7 +67,8 @@ async function main() {
   `);
   console.log(`Eligibility backlog: ${exams.length} exams · budget $${BUDGET}`);
 
-  const tools = [{ type: "web_search_20250305", name: "web_search", max_uses: 3 }] as any[];
+  // The shared web_search tool (13 Oct 2026, src/lib/ai/web-search.ts).
+  const tools = [webSearchTool(3)] as any[];
   let cursor = 0, stop = false;
   const worker = async () => {
     while (!stop) {

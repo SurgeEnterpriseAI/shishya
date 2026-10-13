@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/db/prisma";
 import { REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
-import { generateRankBands } from "@/lib/ai/rank-bands";
+import { generateRankBands, loadRankBandFacts } from "@/lib/ai/rank-bands";
 import { createSpendGuard } from "@/lib/ai/spend-guard";
 
 const GEN_SOURCE = "ai-generated:claude";
@@ -78,11 +78,19 @@ export async function GET(req: Request) {
       break;
     }
     try {
+      // 13 Oct 2026: the call is grounded on what Shishya stores for the
+      // exam (src/lib/ai/rank-bands.ts loadRankBandFacts). A failed read
+      // only drops the grounding; the bands' own checks still run.
+      const facts = await loadRankBandFacts(prisma, exam.id).catch((err) => {
+        console.warn(`[refresh-rank-bands] facts read failed for ${exam.code}:`, (err as Error)?.message ?? err);
+        return null;
+      });
       const { bands } = await generateRankBands({
         examCode: exam.code,
         examName: exam.name,
         examShortName: exam.shortName,
         category: String(exam.category),
+        facts,
       });
       if (bands.length === 0) {
         log.push({ code: exam.code, ok: false, err: "empty bands" });

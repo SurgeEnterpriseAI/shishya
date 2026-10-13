@@ -203,7 +203,7 @@ const DAY_PART_RE =
   /\b(?:day|shift|session)\s*[-:]?\s*(\d+|iv|v|i{1,3})\b|\b(?:date|option)\s*[-:]?\s*([1-9])(?![\d/.:])(?!\s*(?:st|nd|rd|th)\b)(?!\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec))/i;
 // The label hedges its own date: "KAS Prelims Exam (tentative)" (reported
 // tier) is never stated as held.
-const TENTATIVE_RE = /\b(?:tentative(?:ly)?|provisional(?:ly)?|probable|likely|expected|tbc|to be confirmed)\b/i;
+const TENTATIVE_RE = /\b(?:tentative(?:ly)?|provisional(?:ly)?|probable|likely|expected|proposed|tbc|to be confirmed)\b/i;
 // Notes giving a multi-day window ("conducted from September 7-11", "held
 // on September 2, 5, 7, and 9", "3-6, 9-14, 17-21, 25 Aug") — clock times
 // ("9-11 AM", "10:00–12:30") and single dates ("December 22, 2025") do not.
