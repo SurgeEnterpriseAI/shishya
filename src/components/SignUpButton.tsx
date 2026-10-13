@@ -157,10 +157,14 @@ import {
   explainBeaconDue,
   googleButtonLabel,
   isSignUpLocale,
+  signInLabel,
+  signInLabelParts,
   signUpLabel,
   signUpLabelParts,
+  welcomeBack,
   type SignUpContext,
 } from "@/lib/signup-cta-copy";
+import { useReturningMember } from "@/lib/use-returning-member";
 import type { SignUpPlace, SignUpPractice, SignUpVars } from "@/lib/signup-place";
 import { placeSignUpTip } from "@/lib/signup-tip-place";
 import { useSignUpPageData, useSignUpWords, useSignUpWordsFailed, wantSignUpWords } from "@/lib/use-signup-words";
@@ -565,7 +569,9 @@ export function SignUpFace({ label }: { label: string }) {
  *  it, two lines at every width (the timed bar). The button itself also
  *  takes "su-google-compact" (the smaller size, below sm only). */
 export function SignUpStackedFace({ locale, joinFromSm }: { locale: string | null | undefined; joinFromSm?: boolean }) {
-  const [a, b] = signUpLabelParts(locale);
+  // 13 Oct 2026: a returning member's browser reads "Sign in" over "with Google".
+  const member = useReturningMember();
+  const [a, b] = member ? signInLabelParts(locale) : signUpLabelParts(locale);
   return (
     <>
       <GoogleG />
@@ -666,8 +672,16 @@ export function SignUpButton({
 }: SignUpButtonProps) {
   // What the page said about itself (null on the server and until its island mounts).
   const page = useSignUpPageData();
+  // 13 Oct 2026 (founder: sign up and sign in separated): a browser that has
+  // had an account (src/lib/member-cookie.ts) is welcomed back to SIGN IN —
+  // "Sign in with Google" and a welcome-back line instead of the pitch.
+  const member = useReturningMember();
   const cls = `${googleButtonClass()}${stack ? " su-google-compact" : ""}${block ? " w-full" : ""}${buttonClassName ? ` ${buttonClassName}` : ""}`;
-  const label = continueLabel ? googleButtonLabel(locale, continueLabel) : signUpLabel(locale);
+  const label = continueLabel
+    ? googleButtonLabel(locale, continueLabel, member)
+    : member
+      ? signInLabel(locale)
+      : signUpLabel(locale);
   // The caption's words exist in en / hi / te: on a 22-language page another
   // language gets none (English small print under a Tamil button helps no one).
   const mode: SignUpExplainMode = explain === "both" && continueLabel && !isSignUpLocale(locale ?? "en") ? "own" : explain;
@@ -682,8 +696,9 @@ export function SignUpButton({
   );
   // The fetch of the words failed (a weak signal): the caption's line is let go until a retry brings them.
   const failed = useSignUpWordsFailed(locale);
-  const text = words?.text ?? "";
-  const short = words ? words.short : failed ? "" : SIGNUP_CAPTION_PENDING;
+  const back = member && isSignUpLocale(locale ?? "en") ? welcomeBack(locale) : null;
+  const text = back ? back.text : (words?.text ?? "");
+  const short = back ? back.short : words ? words.short : failed ? "" : SIGNUP_CAPTION_PENDING;
   // 14 Oct 2026 (Release 2, under-13 rule): never for a kids' exam — the exam
   // the caller names, the page the sign-in returns to, or the exam the page
   // says it is about (src/lib/signin-cta.ts under13ExamGuard / isKidsExamPath).
@@ -704,7 +719,7 @@ export function SignUpButton({
       onWant={typeof givenText === "string" ? undefined : () => wantSignUpWords(locale)}
     >
       {(describedBy) => (
-        <SignInLink href={href} surface={surface} className={cls} beaconProps={beaconProps} onSignInClick={onSignInClick} rel={rel} describedBy={describedBy}>
+        <SignInLink href={href} surface={surface} className={cls} beaconProps={member ? { ...beaconProps, member: true } : beaconProps} onSignInClick={onSignInClick} rel={rel} describedBy={describedBy}>
           {stack ? <SignUpStackedFace locale={locale} /> : <SignUpFace label={label} />}
         </SignInLink>
       )}

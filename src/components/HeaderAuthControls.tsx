@@ -147,6 +147,8 @@ import { callbackOfLoginHref, isKidsExamPath } from "@/lib/signin-cta";
 import { isChildSchoolPath } from "@/lib/signup-pitch";
 import { useSignUpPageData, useSignUpWords, wantSignUpWords } from "@/lib/use-signup-words";
 import { SignUpShell, SignUpStackedFace } from "./SignUpButton";
+import { markMember, useReturningMember } from "@/lib/use-returning-member";
+import { isSignUpLocale, welcomeBack } from "@/lib/signup-cta-copy";
 
 // Re-exported so any import of fetchSignedIn from this file keeps working.
 // Resolves true (signed in) / false (guest) / null (probe failed).
@@ -223,6 +225,13 @@ export function HeaderAuthControls({
   }, [pathname]);
 
   const signedIn = session?.signedIn ?? false;
+  // 13 Oct 2026 (founder: sign up and sign in separated): a signed-in page
+  // remembers this browser as a member's, so when it is signed out later every
+  // Google button reads "Sign in with Google" (src/lib/member-cookie.ts).
+  useEffect(() => {
+    if (signedIn) markMember();
+  }, [signedIn]);
+  const member = useReturningMember();
   const safeLocale: Locale = (locales as readonly string[]).includes(locale)
     ? (locale as Locale)
     : "en";
@@ -247,6 +256,7 @@ export function HeaderAuthControls({
       { surface: "header", callback: callbackOfLoginHref(loginHref), page: pageData },
       { off: !guestButton || isChildSchoolPath(pathname) || (session === null && hasSessionHint()) },
     )?.text ?? "";
+  const headerTip = member && isSignUpLocale(lang) ? welcomeBack(lang).text : signUpTip;
   useLayoutEffect(() => {
     if (!guestButton || (session === null && hasSessionHint())) return;
     const root = document.documentElement;
@@ -283,7 +293,7 @@ export function HeaderAuthControls({
           <SignUpStackedFace locale={lang} joinFromSm />
         </Link>
       ) : (
-        <SignUpShell text={signUpTip} surface="header" explain="tooltip" align="end" deferText onWant={wantTip}>
+        <SignUpShell text={headerTip} surface="header" explain="tooltip" align="end" deferText onWant={wantTip}>
           {(describedBy) => (
             <Link rel="nofollow" href={loginHref} aria-describedby={describedBy} className={GUEST_BUTTON_CLASS} data-signin-surface="header">
               <SignUpStackedFace locale={lang} joinFromSm />

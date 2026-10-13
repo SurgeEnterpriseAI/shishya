@@ -285,7 +285,7 @@ describe("(a) every door is wired to its surface id", () => {
   it("the shared SignUpButton is the shared SignInLink underneath (href, surface, beacon props passed through)", () => {
     const btn = read("src/components/SignUpButton.tsx");
     expect(btn).toContain('import { SignInLink } from "@/components/SignInLink";');
-    expect(btn).toMatch(/<SignInLink href=\{href\} surface=\{surface\} className=\{cls\} beaconProps=\{beaconProps\} onSignInClick=\{onSignInClick\} rel=\{rel\} describedBy=\{describedBy\}>/);
+    expect(btn).toMatch(/<SignInLink href=\{href\} surface=\{surface\} className=\{cls\} beaconProps=\{member \? \{ \.\.\.beaconProps, member: true \} : beaconProps\} onSignInClick=\{onSignInClick\} rel=\{rel\} describedBy=\{describedBy\}>/);
   });
 
   it("in-page buttons use the shared SignUpButton", () => {
@@ -672,7 +672,7 @@ describe("(d) the header's guest button", () => {
     expect(compact).not.toMatch(/min-height|max-height|(?<!-)height:/);
     // Hidden on Class 1-7 pages and wherever the page says a child may be reading (childSafe).
     expect(controls).toMatch(/\) : childSafe \|\| isUnder13SchoolPath\(pathname\) \? null : /);
-    expect(controls).toMatch(/\) : \(\s*<SignUpShell text=\{signUpTip\} surface="header" explain="tooltip" align="end" deferText onWant=\{wantTip\}>/);
+    expect(controls).toMatch(/\) : \(\s*<SignUpShell text=\{headerTip\} surface="header" explain="tooltip" align="end" deferText onWant=\{wantTip\}>/);
   });
 });
 

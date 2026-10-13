@@ -108,6 +108,51 @@ export function signUpLabel(locale: string | null | undefined): string {
   return LABEL_PARTS[loc(locale)].join(" ");
 }
 
+// ── The returning member's label (13 Oct 2026) ─────────────────────────
+// Founder: "for all already signed-up people we are always showing Sign up
+// with Google — make sure sign up and sign in are separated." A browser that
+// has had an account (src/lib/member-cookie.ts) gets "Sign in with Google"
+// on every Google button — also an approved Google wording — and a welcome
+// back instead of the sign-up pitch. A new browser keeps "Sign up with Google".
+
+const SIGNIN_LABEL_PARTS: Readonly<Record<SignUpLocale, readonly [string, string]>> = {
+  en: ["Sign in", "with Google"],
+  hi: ["Google से", "साइन इन करें"],
+  te: ["Google తో", "సైన్ ఇన్ చేయండి"],
+};
+
+/** The sign-in label's two halves (a phone header stacks them). */
+export function signInLabelParts(locale: string | null | undefined): readonly [string, string] {
+  return SIGNIN_LABEL_PARTS[loc(locale)];
+}
+
+/** "Sign in with Google" in the reader's language (en / hi / te; anything else is English). */
+export function signInLabel(locale: string | null | undefined): string {
+  return SIGNIN_LABEL_PARTS[loc(locale)].join(" ");
+}
+
+/** The welcome back a returning member sees instead of the sign-up pitch:
+ *  `short` under the button, `text` in its tooltip. Claims only what every
+ *  account has: the practice and progress it saved. */
+export const WELCOME_BACK: Readonly<Record<SignUpLocale, { text: string; short: string }>> = {
+  en: {
+    short: "Welcome back — pick up where you left off.",
+    text: "Welcome back. Sign in to continue with your saved practice and progress.",
+  },
+  hi: {
+    short: "वापसी पर स्वागत है — जहाँ छोड़ा था, वहीं से शुरू करें।",
+    text: "वापसी पर स्वागत है। अपनी सेव की हुई प्रैक्टिस और प्रगति के साथ आगे बढ़ने के लिए साइन इन करें।",
+  },
+  te: {
+    short: "తిరిగి స్వాగతం — ఆపిన చోటు నుంచే కొనసాగించండి.",
+    text: "తిరిగి స్వాగతం. మీ సేవ్ చేసిన ప్రాక్టీస్, ప్రోగ్రెస్‌తో కొనసాగడానికి సైన్ ఇన్ చేయండి.",
+  },
+};
+
+export function welcomeBack(locale: string | null | undefined): { text: string; short: string } {
+  return WELCOME_BACK[loc(locale)];
+}
+
 /** English, for the cached server HTML of the header (it switches after mount). */
 export const SIGNUP_LABEL_EN = "Sign up with Google";
 
@@ -116,10 +161,12 @@ export const SIGNUP_LABEL_EN = "Sign up with Google";
  *  keeps its own translation of "Continue with Google" (`continueLabel`,
  *  login.continue) — also an approved Google wording — instead of falling
  *  back to English. `returning`: a member coming back ("Welcome back" card)
- *  is not signing up, so that card keeps "Continue with Google" too. */
+ *  is not signing up: "Sign in with Google" in en / hi / te (13 Oct 2026). */
 export function googleButtonLabel(locale: string | null | undefined, continueLabel: string, returning = false): string {
-  if (returning || !isSignUpLocale(locale)) return continueLabel;
-  return signUpLabel(locale);
+  if (!isSignUpLocale(locale)) return continueLabel;
+  // 13 Oct 2026: a returning member signs IN — "Sign in with Google" in en /
+  // hi / te (it was "Continue with Google" on the "Welcome back" card).
+  return returning ? signInLabel(locale) : signUpLabel(locale);
 }
 
 // ── The explanation's context ──────────────────────────────────────────

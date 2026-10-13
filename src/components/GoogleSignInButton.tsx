@@ -60,7 +60,8 @@ import { ctaBeacon } from "@/lib/cta-beacon";
 import { goToGoogle, warmGoogleHandoff } from "@/lib/google-handoff";
 import { inAppBrowser } from "@/lib/in-app-browser";
 import { cleanFrom, LOGIN_GOOGLE_CTA, loginCallbackFamily } from "@/lib/signin-cta";
-import { googleButtonLabel, isSignUpLocale, signUpLabel } from "@/lib/signup-cta-copy";
+import { googleButtonLabel, isSignUpLocale, signInLabel, signUpLabel, welcomeBack } from "@/lib/signup-cta-copy";
+import { useReturningMember } from "@/lib/use-returning-member";
 import type { SignUpPractice } from "@/lib/signup-place";
 import { useSignUpPageData, useSignUpWords, useSignUpWordsFailed, wantSignUpWords } from "@/lib/use-signup-words";
 import { SIGNUP_CAPTION_PENDING, SignUpFace, SignUpShell, googleButtonClass, type SignUpExplainMode } from "@/components/SignUpButton";
@@ -127,7 +128,10 @@ export function GoogleSignInButton({
     return () => window.removeEventListener("pageshow", onShow);
   }, []);
 
-  const label = continueLabel ? googleButtonLabel(locale, continueLabel, returning) : signUpLabel(locale);
+  // 13 Oct 2026: a returning member's browser (src/lib/member-cookie.ts) signs IN too.
+  const member = useReturningMember();
+  const back = !!returning || member;
+  const label = continueLabel ? googleButtonLabel(locale, continueLabel, back) : back ? signInLabel(locale) : signUpLabel(locale);
   // The words exist in en / hi / te: another language gets no caption (the
   // page's own text above the button, in that language, is the reason).
   const mode: SignUpExplainMode = isSignUpLocale(locale ?? "en") || explain !== "both" ? explain : "own";
@@ -142,8 +146,9 @@ export function GoogleSignInButton({
   );
   // The fetch of the words failed (a weak signal): the caption's line is let go until a retry brings them.
   const failed = useSignUpWordsFailed(locale);
-  const text = words?.text ?? "";
-  const short = words ? words.short : failed ? "" : SIGNUP_CAPTION_PENDING;
+  const welcome = member && isSignUpLocale(locale ?? "en") ? welcomeBack(locale) : null;
+  const text = welcome ? welcome.text : (words?.text ?? "");
+  const short = welcome ? welcome.short : words ? words.short : failed ? "" : SIGNUP_CAPTION_PENDING;
 
   return (
     <SignUpShell

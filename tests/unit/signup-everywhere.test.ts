@@ -54,6 +54,7 @@ import * as copyMod from "@/lib/signup-cta-copy";
 import * as claimsMod from "@/lib/signup-cta-claims";
 import * as placeMod from "@/lib/signup-place";
 import * as hooksMod from "@/lib/use-signup-words";
+import * as memberMod from "@/lib/use-returning-member";
 import { signUpPlaceWords, signUpWords } from "@/lib/signup-place-words";
 import * as signinCtaMod from "@/lib/signin-cta";
 import * as ctaBeaconMod from "@/lib/cta-beacon";
@@ -143,6 +144,9 @@ const STUBS: Record<string, unknown> = {
   "@/lib/signup-cta-copy": copyMod,
   "@/lib/signup-place": placeMod,
   "@/lib/use-signup-words": hooksMod,
+  // 13 Oct 2026: a returning member's browser reads "Sign in with Google";
+  // a static render is never one (the server snapshot is false).
+  "@/lib/use-returning-member": memberMod,
   "@/lib/signin-cta": signinCtaMod,
   "@/lib/cta-beacon": ctaBeaconMod,
   "@/lib/session-hint": sessionHintMod,
@@ -306,9 +310,11 @@ describe("B. every clickable call to a guest to sign in is the shared button", (
     // string, so it is (rightly) not in the list; no other file renders SignInLink by hand.
     const users = TSX.filter((f) => /<SignInLink\b/.test(code(f)));
     expect(users).toEqual(["src/components/SignUpButton.tsx"]);
-    // The straight-to-Google hand-off (no /login page) has two callers: the /login button and the shared link.
+    // The straight-to-Google hand-off (no /login page) has three callers: the /login button, the shared link, and
+    // (13 Oct 2026) /login's quieter second way in under the button — "Already have an account? Sign in with
+    // Google" / "New here? Sign up with Google" (src/components/LoginAltLine.tsx).
     const handoff = [...walk(path.join(ROOT, "src"), /\.tsx?$/)].map(rel).filter((f) => /goToGoogle\(/.test(code(f)) && f !== "src/lib/google-handoff.ts");
-    expect(handoff.sort()).toEqual(["src/components/GoogleSignInButton.tsx", "src/components/SignInLink.tsx"]);
+    expect(handoff.sort()).toEqual(["src/components/GoogleSignInButton.tsx", "src/components/LoginAltLine.tsx", "src/components/SignInLink.tsx"]);
     // And next-auth's signIn() is called in one module only.
     const signIn = [...walk(path.join(ROOT, "src"), /\.tsx?$/)].map(rel).filter((f) => /\bsignIn\(\s*["']google["']/.test(code(f)));
     expect(signIn).toEqual(["src/lib/google-handoff.ts"]);

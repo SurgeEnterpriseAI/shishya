@@ -36,6 +36,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 import { InAppBrowserHint } from "@/components/InAppBrowserHint";
+import { LoginAltLine } from "@/components/LoginAltLine";
 import { getT } from "@/lib/i18n-server";
 import { fillTemplate } from "@/lib/i18n";
 import { getExamCatalog } from "@/lib/db/exam-cache";
@@ -235,9 +236,17 @@ export default async function LoginPage({
             back" card (its button reads "Continue with Google" and its body
             already says "Sign in"), and not on another language's default
             card, whose own heading still says sign in. */}
-        {li.kind !== "return" && (isSignUpLocale(locale) || intent !== null) && (
-          <p className="mt-1.5 text-xs text-ink-600">{t("login.member")}</p>
-        )}
+        {/* 13 Oct 2026 (founder: sign up and sign in separated): the second
+            way in, quieter, under the main button — "Already have an account?
+            Sign in with Google" for a new browser, "New here? Sign up with
+            Google" for a returning member's (src/components/LoginAltLine.tsx).
+            A language without those words keeps the old one-line note. */}
+        <LoginAltLine
+          callbackUrl={cb}
+          locale={locale}
+          returning={li.kind === "return"}
+          fallback={li.kind !== "return" && intent !== null ? t("login.member") : null}
+        />
         {/* The alternative comes AFTER the main action (30 Sep 2026): Google
             first, then "not ready? try 5 questions first". */}
         {examCode && li.tryFirst && (

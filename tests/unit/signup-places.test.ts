@@ -62,6 +62,7 @@ import * as copyMod from "@/lib/signup-cta-copy";
 import * as placeMod from "@/lib/signup-place";
 import * as loadMod from "@/lib/signup-place-load";
 import * as hooksMod from "@/lib/use-signup-words";
+import * as memberMod from "@/lib/use-returning-member";
 import * as signinCtaMod from "@/lib/signin-cta";
 import * as ctaBeaconMod from "@/lib/cta-beacon";
 import * as sessionHintMod from "@/lib/session-hint";
@@ -500,6 +501,9 @@ const STUBS: Record<string, unknown> = {
   "@/lib/signup-cta-copy": copyMod,
   "@/lib/signup-place": placeMod,
   "@/lib/use-signup-words": hooksMod,
+  // 13 Oct 2026: a returning member's browser reads "Sign in with Google";
+  // a static render is never one (the server snapshot is false).
+  "@/lib/use-returning-member": memberMod,
   "@/lib/signin-cta": signinCtaMod,
   "@/lib/cta-beacon": ctaBeaconMod,
   "@/lib/session-hint": sessionHintMod,
@@ -836,7 +840,7 @@ describe("A2. the wiring: server pages resolve their words; client doors pass wh
       /useSignUpWords\(\s*lang,\s*\{ surface: "header", callback: callbackOfLoginHref\(loginHref\), page: pageData \},\s*\{ off: !guestButton \|\| isChildSchoolPath\(pathname\) \|\| \(session === null && hasSessionHint\(\)\) \},\s*\)\?\.text \?\? ""/,
     );
     // Nothing is added under the header button: still tooltip only, after mount.
-    expect(header).toMatch(/<SignUpShell text=\{signUpTip\} surface="header" explain="tooltip" align="end" deferText onWant=\{wantTip\}>/);
+    expect(header).toMatch(/<SignUpShell text=\{headerTip\} surface="header" explain="tooltip" align="end" deferText onWant=\{wantTip\}>/);
     // The site card: its button decides from the card's own link (this page) — a page-wide surface.
     const card = code("src/components/SignupPitch.tsx").match(/<SignUpButton\b[\s\S]*?\/>/)?.[0] ?? "";
     expect(card).toContain('surface="signup-pitch"');
@@ -1718,7 +1722,8 @@ describe("H. review: a caption stands alone, the bar's line is not cut, a failed
     for (const f of ["src/components/SignUpButton.tsx", "src/components/GoogleSignInButton.tsx"]) {
       const src = code(f);
       expect(src, f).toContain("const failed = useSignUpWordsFailed(locale);");
-      expect(src, f).toContain('const short = words ? words.short : failed ? "" : SIGNUP_CAPTION_PENDING;');
+      // 13 Oct 2026: a returning member's welcome back comes first; otherwise the same rule.
+      expect(src, f).toMatch(/const short = (back|welcome) \? \1\.short : words \? words\.short : failed \? "" : SIGNUP_CAPTION_PENDING;/);
       expect(src, f).toContain('onWant={typeof givenText === "string" ? undefined : () => wantSignUpWords(locale)}');
     }
     // The frame renders no caption element for an empty caption.

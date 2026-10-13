@@ -107,6 +107,7 @@ import * as copyMod from "@/lib/signup-cta-copy";
 import * as claimsMod from "@/lib/signup-cta-claims";
 import * as placeMod from "@/lib/signup-place";
 import * as hooksMod from "@/lib/use-signup-words";
+import * as memberMod from "@/lib/use-returning-member";
 import { signUpPlaceWords, signUpWords } from "@/lib/signup-place-words";
 import * as signinCtaMod from "@/lib/signin-cta";
 import * as ctaBeaconMod from "@/lib/cta-beacon";
@@ -192,6 +193,9 @@ const STUBS: Record<string, unknown> = {
   // The hooks: in a static render they answer "nothing yet" (the server
   // snapshot), so a button without `text` renders without its words.
   "@/lib/use-signup-words": hooksMod,
+  // 13 Oct 2026: a returning member's browser reads "Sign in with Google";
+  // a static render is never one (the server snapshot is false).
+  "@/lib/use-returning-member": memberMod,
   "@/lib/signin-cta": signinCtaMod,
   "@/lib/cta-beacon": ctaBeaconMod,
   "@/lib/session-hint": sessionHintMod,
@@ -266,12 +270,16 @@ describe("1. the label: one wording, one module", () => {
     }
   });
 
-  it("/login and the mock gate (22 languages): en / hi / te sign up; another language and a returning member keep 'Continue with Google'", () => {
+  it("/login and the mock gate (22 languages): en / hi / te sign up; another language keeps 'Continue with Google'; a returning member signs IN (13 Oct 2026)", () => {
     expect(googleButtonLabel("en", "Continue with Google")).toBe("Sign up with Google");
     expect(googleButtonLabel("hi", "Google से जारी रखें")).toBe("Google से साइन अप करें");
     expect(googleButtonLabel("te", "Google తో కొనసాగించండి")).toBe("Google తో సైన్ అప్ చేయండి");
     expect(googleButtonLabel("ta", "Google உடன் தொடரவும்")).toBe("Google உடன் தொடரவும்");
-    expect(googleButtonLabel("en", "Continue with Google", true)).toBe("Continue with Google");
+    // 13 Oct 2026 (founder: sign up and sign in separated): a returning member reads "Sign in with Google".
+    expect(googleButtonLabel("en", "Continue with Google", true)).toBe("Sign in with Google");
+    expect(googleButtonLabel("hi", "Google से जारी रखें", true)).toBe("Google से साइन इन करें");
+    expect(googleButtonLabel("te", "Google తో కొనసాగించండి", true)).toBe("Google తో సైన్ ఇన్ చేయండి");
+    expect(googleButtonLabel("ta", "Google உடன் தொடரவும்", true)).toBe("Google உடன் தொடரவும்");
     const login = read("src/app/login/page.tsx");
     expect(login).toMatch(/<GoogleSignInButton\s+callbackUrl=\{cb\}\s+locale=\{locale\}\s+continueLabel=\{t\("login\.continue"\)\}\s+returning=\{li\.kind === "return"\}/);
   });
@@ -364,15 +372,19 @@ describe("2. every primary guest button is the one shared component", () => {
 
   it("the straight-to-Google button (/login, the gates) takes its words from the one module and wears Google's button", () => {
     const src = code("src/components/GoogleSignInButton.tsx");
-    expect(src).toContain("const label = continueLabel ? googleButtonLabel(locale, continueLabel, returning) : signUpLabel(locale);");
+    // 13 Oct 2026: the "Welcome back" card or a returning member's browser (src/lib/member-cookie.ts) signs IN.
+    expect(src).toContain("const back = !!returning || member;");
+    expect(src).toContain("const label = continueLabel ? googleButtonLabel(locale, continueLabel, back) : back ? signInLabel(locale) : signUpLabel(locale);");
     // Its entry of the table: decided from its door and its callback (src/lib/signup-place.ts); the words are
     // handed in by a server page, or the reader's language is loaded on demand.
     expect(src).toMatch(
       /const words = useSignUpWords\(\s*locale,\s*\{ surface, callback: callbackUrl, exam, examCode, practice, olympiad, page, returning \},\s*\{ given: typeof givenText === "string" \? \{ text: givenText, short: givenShort \?\? "" \} : null, now: mode === "both" \},\s*\);/,
     );
-    expect(src).toContain('const text = words?.text ?? "";');
+    // 13 Oct 2026: a returning member's browser gets the welcome back instead of the sign-up words.
+    expect(src).toContain('const welcome = member && isSignUpLocale(locale ?? "en") ? welcomeBack(locale) : null;');
+    expect(src).toContain('const text = welcome ? welcome.text : (words?.text ?? "");');
     // The caption's line is held open while the words load, and let go once their fetch has failed (review, 2 Oct 2026).
-    expect(src).toContain('const short = words ? words.short : failed ? "" : SIGNUP_CAPTION_PENDING;');
+    expect(src).toContain('const short = welcome ? welcome.short : words ? words.short : failed ? "" : SIGNUP_CAPTION_PENDING;');
     // Neither the words nor the rules that choose them are imported: only a type.
     expect(src).not.toMatch(/signUpExplain|signup-place-words|signUpPlaceFor/);
     expect(src).toContain('import type { SignUpPractice } from "@/lib/signup-place";');
@@ -811,7 +823,8 @@ describe("5. the rendered button: label, Google's mark, tooltip and caption", ()
     expect(shared).toMatch(/export function googleButtonClass\(\): string \{\s*return "su-google";\s*\}/);
     expect(shared).not.toMatch(/\btheme\b|su-google-dark/);
     // The label: the one module's words; a 22-language page's own "Continue with Google" for a language beyond en / hi / te.
-    expect(shared).toContain("const label = continueLabel ? googleButtonLabel(locale, continueLabel) : signUpLabel(locale);");
+    // 13 Oct 2026: a returning member's browser reads the sign-in label (same module, same look).
+    expect(shared).toMatch(/const label = continueLabel\s*\? googleButtonLabel\(locale, continueLabel, member\)\s*: member\s*\? signInLabel\(locale\)\s*: signUpLabel\(locale\);/);
     expect(shared).toContain("{stack ? <SignUpStackedFace locale={locale} /> : <SignUpFace label={label} />}");
     expect(shared).not.toContain("btn-primary");
     expect(shared).not.toMatch(/saffron/);
@@ -837,9 +850,9 @@ describe("5. the rendered button: label, Google's mark, tooltip and caption", ()
     expect(attr(above.match(/<button\b[^>]*>/)?.[0] ?? "", "class")).toBe("su-google w-full");
     expect(above).toMatch(/^<span class="su-wrap su-block mt-6" data-su-explain="both" data-su-side="top">/);
     expect(code("src/components/GoogleSignInButton.tsx")).not.toMatch(/\btheme\b|su-google-dark/);
-    // A returning member and a language beyond en / hi / te keep "Continue with Google".
+    // A returning member signs IN (13 Oct 2026); a language beyond en / hi / te keeps "Continue with Google".
     const back = render(googleBtn.GoogleSignInButton, { callbackUrl: "/me/report", locale: "en", continueLabel: "Continue with Google", returning: true });
-    expect(textOf(back.slice(back.indexOf("<button"), back.indexOf("</button>")))).toBe("Continue with Google");
+    expect(textOf(back.slice(back.indexOf("<button"), back.indexOf("</button>")))).toBe("Sign in with Google");
     const ta = render(googleBtn.GoogleSignInButton, { callbackUrl: "/dashboard", locale: "ta", continueLabel: "Google உடன் தொடரவும்" });
     expect(textOf(ta.slice(ta.indexOf("<button"), ta.indexOf("</button>")))).toBe("Google உடன் தொடரவும்");
     // A language the words do not exist in: NO caption (English small print under a Tamil button); the tooltip stays,
@@ -868,7 +881,7 @@ describe("5. the rendered button: label, Google's mark, tooltip and caption", ()
     });
     expect(shell).toBe('<span class="su-wrap" data-su-explain="tooltip" data-su-align="end"><a href="/login">x</a></span>');
     const controls = code("src/components/HeaderAuthControls.tsx");
-    expect(controls).toMatch(/<SignUpShell text=\{signUpTip\} surface="header" explain="tooltip" align="end" deferText onWant=\{wantTip\}>/);
+    expect(controls).toMatch(/<SignUpShell text=\{headerTip\} surface="header" explain="tooltip" align="end" deferText onWant=\{wantTip\}>/);
     // On a touch screen there is NO tooltip (the frame that holds the full sentence is never displayed there), and
     // explain="tooltip" renders no caption — nothing can take the tap.
     const css = read("src/app/globals.css");

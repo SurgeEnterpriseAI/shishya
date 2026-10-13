@@ -47,7 +47,7 @@ const VIZ_CSS = `
   --series-1: #2a78d6; --series-2: #eb6834; --good: #006300;
 }
 @media (prefers-color-scheme: dark) {
-  :root:where(:not([data-theme="light"])) .viz-root {
+  :root:where(:not([data-theme='light'])) .viz-root {
     color-scheme: dark;
     --page: #0d0d0d; --surface-1: #1a1a19; --surface-2: #232321;
     --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
@@ -55,7 +55,7 @@ const VIZ_CSS = `
     --series-1: #3987e5; --series-2: #d95926; --good: #0ca30c;
   }
 }
-:root[data-theme="dark"] .viz-root {
+:root[data-theme='dark'] .viz-root {
   color-scheme: dark;
   --page: #0d0d0d; --surface-1: #1a1a19; --surface-2: #232321;
   --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;

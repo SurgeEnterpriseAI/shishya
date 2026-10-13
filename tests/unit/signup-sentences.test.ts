@@ -114,7 +114,13 @@ const SCANNED = [
 /** Lines of the scanned modules that still say "sign in", deliberately. The
  *  scan skips a line of `file` that starts with `starts`; `count` such lines
  *  must exist and each must still say it (no stale entry). */
-const SCANNED_LEFT: { file: string; starts: string; count: number; why: string }[] = [
+const SCANNED_LEFT: { file: string; starts: string; count: number; why: string; oneEach?: false }[] = [
+  // 13 Oct 2026 (founder: "for already signed-up people we always show Sign up with Google — separate sign up
+  // and sign in"): a returning member's browser (src/lib/member-cookie.ts) is invited to SIGN IN.
+  { file: "src/lib/signup-cta-copy.ts", starts: 'en: ["Sign in", "with Google"]', count: 1, why: "a returning member's label", oneEach: false },
+  { file: "src/lib/signup-cta-copy.ts", starts: 'hi: ["Google से", "साइन इन करें"]', count: 1, why: "a returning member's label", oneEach: false },
+  { file: "src/lib/signup-cta-copy.ts", starts: 'te: ["Google తో", "సైన్ ఇన్ చేయండి"]', count: 1, why: "a returning member's label", oneEach: false },
+  { file: "src/lib/signup-cta-copy.ts", starts: 'text: "', count: 3, why: "the welcome back to a returning member" },
   // Above a button that reads "Continue with Google" — /login's "Welcome back" card (a returning member is not
   // signing up) and a language other than en / hi / te — the in-app line keeps its older ending.
   { file: "src/lib/in-app-browser.ts", starts: 'bodySignIn: "', count: 3, why: "the in-app line above a 'Continue with Google' button" },
@@ -167,7 +173,7 @@ describe("A. no sentence in the reworded modules invites a guest to 'sign in'", 
         .filter((line) => line.trim().startsWith(x.starts));
       expect(lines, `${x.file}: ${x.why}`).toHaveLength(x.count);
       for (const line of lines) expect(INVITES[scriptOf(line)].test(line), line.trim().slice(0, 80)).toBe(true);
-      expect(lines.map(scriptOf).sort(), x.file).toEqual(["en", "hi", "te"]);
+      if (x.oneEach !== false) expect(lines.map(scriptOf).sort(), x.file).toEqual(["en", "hi", "te"]);
     }
   });
 
@@ -411,7 +417,10 @@ describe("D. /login: the headings invite sign-up; one line tells a returning mem
     // school cards exist in en / hi / te only, so another language reads their English "Sign up with Google once …"
     // over its own "Continue with Google" button — the line shows there too (`intent !== null`). Not on another
     // language's default card: its own heading still says sign in.
-    expect(page).toMatch(/\{li\.kind !== "return" && \(isSignUpLocale\(locale\) \|\| intent !== null\) && \(\s*<p className="mt-1\.5 text-xs text-ink-600">\{t\("login\.member"\)\}<\/p>\s*\)\}/);
+    // 13 Oct 2026 (founder: sign up and sign in separated): en / hi / te get a separate second way in under the
+    // button (src/components/LoginAltLine.tsx: "Already have an account? Sign in with Google", or for a returning
+    // member "New here? Sign up with Google"); another language keeps this line where it showed before.
+    expect(page).toMatch(/<LoginAltLine\s+callbackUrl=\{cb\}\s+locale=\{locale\}\s+returning=\{li\.kind === "return"\}\s+fallback=\{li\.kind !== "return" && intent !== null \? t\("login\.member"\) : null\}\s*\/>/);
     // Under the button, before the "try 5 questions first" alternative.
     expect(page.indexOf('t("login.member")')).toBeGreaterThan(page.indexOf("<GoogleSignInButton"));
     expect(page.indexOf('t("login.member")')).toBeLessThan(page.indexOf("{examCode && li.tryFirst && ("));
@@ -486,8 +495,10 @@ describe("D. /login: the headings invite sign-up; one line tells a returning mem
     // /login: the "Welcome back" card and a language other than en / hi / te — exactly where googleButtonLabel()
     // returns "Continue with Google".
     expect(page).toContain('<InAppBrowserHint signIn={li.kind === "return" || !isSignUpLocale(locale)} />');
+    // 13 Oct 2026: the returning card's button reads "Sign in with Google" (en / hi / te) — still not the sign-up
+    // label, so the line above it still ends "then sign in with Google".
     for (const [l, returning, signIn] of [["en", false, false], ["hi", false, false], ["te", false, false], ["en", true, true], ["ta", false, true], ["bn", true, true]] as const) {
-      expect(googleButtonLabel(l, "CONTINUE", returning) === "CONTINUE", `${l}/${returning}`).toBe(signIn);
+      expect(googleButtonLabel(l, "CONTINUE", returning) !== signUpLabel(l), `${l}/${returning}`).toBe(signIn);
       expect(returning || !isSignUpLocale(l), `${l}/${returning}`).toBe(signIn);
     }
     // The gates (no "Welcome back" there): another language only, and only where the button was given its words.
