@@ -72,8 +72,14 @@ export default async function AdminHome() {
 
         <div className="mt-10 flex flex-wrap gap-3">
           <Link
-            href="/admin/analytics"
+            href="/admin/stats"
             className="btn-primary !py-2 !px-4 text-sm"
+          >
+            Stats: AI, tokens, cost, people →
+          </Link>
+          <Link
+            href="/admin/analytics"
+            className="btn-secondary !py-2 !px-4 text-sm"
           >
             Analytics dashboard →
           </Link>
