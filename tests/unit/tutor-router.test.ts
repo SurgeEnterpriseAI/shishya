@@ -127,3 +127,10 @@ describe("links, topic codes and marking claims (router eval 13 Oct)", () => {
     expect(factTokens("A shopkeeper sells a watch for ₹4,000 at a discount of 20%. Find the marked price.")).toHaveLength(0);
   });
 });
+
+describe("which tutor features may go local", () => {
+  it("a guest turn goes local only as tutor-anon; batch features take signed-in turns only", () => {
+    const src = require("node:fs").readFileSync("src/lib/ai/tutor.ts", "utf8");
+    expect(src).toContain('if (route && !ctx && feature !== "tutor-anon") route = null;');
+  });
+});

@@ -274,6 +274,10 @@ export async function* tutorStream(
     "Tool rules: when you need a tool, call it FIRST, before writing anything to the student, and make all the calls you need before you start the answer. " +
     "Any practice question you show must come from find_questions_on_topic, shown exactly as returned with its options A-D; never write your own question.";
   let route = localRouteFor(feature, { system: systemBlocks, messages, tools: ctx ? tutorTools : undefined }, { allowTools: true });
+  // A guest turn goes local only under its own name, "tutor-anon": the router
+  // eval (13 Oct) had Qwen lose 9 of 14 guest turns, so a listed batch feature
+  // such as "tutor-late" (answer-later, hourly) takes only its signed-in turns.
+  if (route && !ctx && feature !== "tutor-anon") route = null;
   // 13 Oct 2026 (founder: "local server first; Claude only where it cannot do
   // it or errors; quality not compromised"). Each turn is sorted first
   // (ai/tutor-router.ts, from the 13 Oct audit): kinds the local model loses on
