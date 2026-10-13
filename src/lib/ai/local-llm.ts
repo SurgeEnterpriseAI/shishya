@@ -92,6 +92,43 @@ export function isEnglishOnly(system: Block[], messages: Msg[]): boolean {
   return true;
 }
 
+// Features that may also go local for a HINDI reply (13 Oct 2026, the Indian-
+// language eval, blind Opus judge vs Claude: Hindi-script explanations 6 of 9
+// won, criticals 1 vs Claude 1; Marathi lost 3 of 3, so only Hindi). The
+// caller must reject a local reply that is not in Devanagari (Qwen answered
+// in English or romanised Hindi 3 of 8 times) — explainer.ts does.
+const HINDI_FEATURES = list(process.env.LOCAL_LLM_HINDI_FEATURES);
+const OTHER_INDIC = /[ঀ-ൿ؀-ۿ]/;
+
+/**
+ * True when every "Reply language" line asks for Hindi and the conversation
+ * holds no Indian script other than Devanagari.
+ */
+export function isHindiOnly(system: Block[], messages: Msg[]): boolean {
+  const convo: string[] = [];
+  for (const m of messages) {
+    const t = convoTextOf(m.content);
+    if (t == null) return false;
+    convo.push(t);
+  }
+  if (OTHER_INDIC.test(convo.join("\n"))) return false;
+  const all = [...system.map((b) => b.text), ...convo].join("\n");
+  let langs = 0;
+  for (const m of all.matchAll(REPLY_LANG)) {
+    const lang = m[1].toUpperCase();
+    if (lang !== "HI" && lang !== "HINDI") return false;
+    langs++;
+  }
+  return langs > 0;
+}
+
+/** Share of the letters in `text` that are Devanagari (0..1). */
+export function devanagariShare(text: string): number {
+  const letters = text.replace(/[\s\d\p{P}\p{S}]/gu, "");
+  if (!letters.length) return 0;
+  return (letters.match(/[ऀ-ॿ]/g) ?? []).length / letters.length;
+}
+
 /** Whether this call may try the local server first. */
 export function localEligible(
   feature: string | undefined,
@@ -100,7 +137,8 @@ export function localEligible(
 ): boolean {
   if (!routeFor(feature)) return false;
   if (req.tools && !opts.allowTools) return false;
-  return isEnglishOnly(req.system, req.messages);
+  if (isEnglishOnly(req.system, req.messages)) return true;
+  return !!feature && HINDI_FEATURES.has(feature) && isHindiOnly(req.system, req.messages);
 }
 
 /**

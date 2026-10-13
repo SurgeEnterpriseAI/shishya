@@ -12,6 +12,7 @@
 import { callClaude, cachedSystem, extractText, TOKEN_LIMITS } from "./client";
 import { PLATFORM_PERSONA, ANSWER_FORMAT_RULES, SAFETY_RULES } from "./prompts";
 import type { ExplainInput, ExplainOutput } from "./types";
+import { devanagariShare } from "./local-llm";
 
 export async function explainSolution(input: ExplainInput): Promise<ExplainOutput> {
   const { question, studentChosen, language, detailLevel = "STANDARD" } = input;
@@ -59,7 +60,7 @@ Style for stepByStep:
     system: systemBlocks,
     messages: [{ role: "user", content: userPrompt }],
     maxTokens: TOKEN_LIMITS.explainer,
-    acceptLocal: (msg) => explainLocalCheck(extractText(msg)),
+    acceptLocal: (msg) => explainLocalCheck(extractText(msg), language),
   });
 
   const raw = extractText(response);
@@ -99,12 +100,21 @@ Style for stepByStep:
  * on 30 verified keys), so a disputed local reply is asked of Claude instead.
  * A local reply the app cannot read, or one with no step left, would show an
  * empty explanation, so it goes to Claude too. Null = serve the local reply.
+ *
+ * A Hindi reader's explanation (Reply language hi, LOCAL_LLM_HINDI_FEATURES)
+ * must be in Devanagari: in the 13 Oct Indian-language eval Qwen answered 3 of
+ * 8 such students in English or romanised Hindi.
  */
-export function explainLocalCheck(text: string): string | null {
+export function explainLocalCheck(text: string, language?: string): string | null {
   const parsed = safeParseJson(text);
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed) || !Object.keys(parsed).length) return "not JSON";
   if (parsed.keyDisputed === true) return "key disputed";
-  if (!sanitiseSteps(parsed.stepByStep).length) return "no steps";
+  const steps = sanitiseSteps(parsed.stepByStep);
+  if (!steps.length) return "no steps";
+  if (/^(?:hi|hindi)$/i.test(String(language ?? ""))) {
+    const shown = [...steps, typeof parsed.whyChosenIsWrong === "string" ? parsed.whyChosenIsWrong : ""].join(" ");
+    if (devanagariShare(shown) < 0.6) return "not in Hindi";
+  }
   return null;
 }
 
