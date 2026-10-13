@@ -10,6 +10,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { recordAiUsage } from "@/lib/ai/usage";
 import { anthropic, MODEL } from "./client";
 import { ledgerFeature, withReserve } from "./reserve";
+import { callLocal, localRouteFor } from "./local-llm";
 import type { Locale } from "@/lib/i18n";
 import { localeNames } from "@/lib/i18n";
 
@@ -120,19 +121,7 @@ export async function translateBatch(
     };
   }
 
-  const targetName = localeNames[input.locale] ?? input.locale;
-  const userBlock = `Translate the following questions to ${targetName} (${input.locale}).\n\nQUESTIONS_JSON:\n${JSON.stringify(
-    {
-      questions: input.questions.map((q) => ({
-        id: q.id,
-        body: q.body,
-        options: q.options,
-        solution: q.solution,
-      })),
-    },
-    null,
-    2,
-  )}`;
+  const userBlock = userBlockFor(input);
 
   // Non-streaming call. Switched from streaming after observing in
   // production that anthropic.messages.stream + AbortController hangs
@@ -153,8 +142,6 @@ export async function translateBatch(
   // was truncating mid-options on Kannada batches; bumping to 1500/q +
   // 2000 (capped at the 8192 model limit). The user sees the truncation
   // as "translator returned malformed JSON: ```json {...".
-  const indicScripts = new Set(["hi", "te", "kn", "ta", "ml", "bn", "gu", "pa", "or", "as", "mr", "sa", "mai", "ne", "kok", "ks", "sd"]);
-  const tokenBudgetPerQ = indicScripts.has(input.locale) ? 1500 : 700;
   const start = Date.now();
   // 7 Oct 2026: an empty main balance is retried once on the reserve key
   // (src/lib/ai/reserve.ts). Inside the app only: the prewarm/backfill
@@ -162,7 +149,7 @@ export async function translateBatch(
   const { value: finalMessage, reserve } = await withReserve("translate", anthropic, (client) =>
     client.messages.create({
       model: TRANSLATION_MODEL,
-      max_tokens: Math.min(8192, tokenBudgetPerQ * input.questions.length + 2000),
+      max_tokens: maxTokensFor(input),
       system: [
         { type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } },
       ] as Anthropic.Messages.TextBlockParam[],
@@ -233,6 +220,127 @@ export async function translateBatch(
     outputTokens: finalMessage.usage.output_tokens,
     latencyMs,
   };
+}
+
+function userBlockFor(input: TranslateBatchInput): string {
+  const targetName = localeNames[input.locale] ?? input.locale;
+  return `Translate the following questions to ${targetName} (${input.locale}).\n\nQUESTIONS_JSON:\n${JSON.stringify(
+    {
+      questions: input.questions.map((q) => ({
+        id: q.id,
+        body: q.body,
+        options: q.options,
+        solution: q.solution,
+      })),
+    },
+    null,
+    2,
+  )}`;
+}
+
+const INDIC_LOCALES = new Set(["hi", "te", "kn", "ta", "ml", "bn", "gu", "pa", "or", "as", "mr", "sa", "mai", "ne", "kok", "ks", "sd"]);
+function maxTokensFor(input: TranslateBatchInput): number {
+  const tokenBudgetPerQ = INDIC_LOCALES.has(input.locale) ? 1500 : 700;
+  return Math.min(8192, tokenBudgetPerQ * input.questions.length + 2000);
+}
+
+// ── Night pre-translation on Surge's server (13 Oct 2026) ─────────────────
+// Founder: "local server first, Claude only where it cannot". The 13 Oct
+// Indian-language eval (blind Opus judge vs Haiku, 24 real questions in
+// Tamil, Telugu, Gujarati, Kannada) had Qwen 27B win 5 of 6 batches, but
+// each batch took 78-113 s — too slow for a student waiting on Vercel's 60 s
+// limit. So the server translates the most-served questions at night
+// (api/cron/pretranslate) and students get them from the cache; live misses
+// stay on Haiku. Each question is checked on its own and only clean ones
+// are stored; nothing here ever calls Claude.
+
+/** Letters of each target script (the check's "is it really in this language"). */
+const SCRIPT: Record<string, RegExp> = {
+  hi: /[ऀ-ॿ]/g, mr: /[ऀ-ॿ]/g, bn: /[ঀ-৿]/g, as: /[ঀ-৿]/g, pa: /[਀-੿]/g, gu: /[઀-૿]/g,
+  or: /[଀-୿]/g, ta: /[஀-௿]/g, te: /[ఀ-౿]/g, kn: /[ಀ-೿]/g, ml: /[ഀ-ൿ]/g,
+};
+// Chinese / Japanese / Korean characters: both models leaked a few ("从左",
+// "打け") into Tamil in the eval.
+const CJK = /[぀-ヿ㐀-鿿가-힯]/;
+const nums = (s: string) => (s.match(/\d+(?:\.\d+)?/g) ?? []).sort().join(",");
+
+/**
+ * Why a local translation of one question must not be stored, or null when
+ * it is clean: every option key kept in order, the same numbers in the body
+ * and options, at least 60% of the letters in the target script, no other
+ * Indian script, no CJK characters, nothing empty.
+ */
+export function translationProblem(
+  src: { body: string; options: Array<{ key: string; text: string }>; solution: string },
+  t: TranslatedQuestion | undefined,
+  locale: string,
+): string | null {
+  if (!t) return "missing";
+  if (!t.body.trim() || t.options.some((o) => !o.text.trim())) return "empty text";
+  if (t.options.map((o) => o.key).join("|") !== src.options.map((o) => o.key).join("|")) return "option keys changed";
+  const shown = [t.body, ...t.options.map((o) => o.text)].join(" ");
+  if (nums(shown) !== nums([src.body, ...src.options.map((o) => o.text)].join(" "))) return "numbers changed";
+  const all = `${shown} ${t.solution}`;
+  if (CJK.test(all)) return "foreign characters";
+  const script = SCRIPT[locale];
+  if (script) {
+    const letters = all.replace(/[\s\d\p{P}\p{S}]/gu, "");
+    const share = letters.length ? (all.match(script) ?? []).length / letters.length : 0;
+    if (share < 0.6) return "not in the target script";
+    for (const [other, re] of Object.entries(SCRIPT)) {
+      if (re.source === script.source) continue;
+      if ((all.match(re) ?? []).length > 0 && other !== locale) return `${other} script mixed in`;
+    }
+  }
+  return null;
+}
+
+export interface LocalTranslateResult {
+  accepted: TranslatedQuestion[];
+  rejected: Array<{ id: string; reason: string }>;
+  latencyMs: number;
+}
+
+/**
+ * One batch on Surge's server (the night pre-translation). Throws when the
+ * server is not set up for "pretranslate", fails or returns no JSON; the
+ * caller just moves on — a question left untranslated is translated live
+ * by Haiku when a student asks for it.
+ */
+export async function translateBatchLocal(input: TranslateBatchInput, opts: { timeoutMs?: number } = {}): Promise<LocalTranslateResult> {
+  const route = localRouteFor("pretranslate", { system: [], messages: [] });
+  if (!route) throw new Error("pretranslate is not a local feature (LOCAL_LLM_BULK_FEATURES)");
+  if (input.questions.length > MAX_BATCH_SIZE) throw new Error(`translateBatchLocal: max ${MAX_BATCH_SIZE} questions`);
+  const start = Date.now();
+  const msg = await callLocal(
+    {
+      system: [{ type: "text", text: SYSTEM_PROMPT }],
+      messages: [{ role: "user", content: userBlockFor(input) }],
+      maxTokens: maxTokensFor(input),
+      temperature: 0.2,
+    },
+    { url: route.url, timeoutMs: opts.timeoutMs ?? Math.max(route.timeoutMs, 200_000) },
+  );
+  const latencyMs = Date.now() - start;
+  recordAiUsage("pretranslate", msg, { model: msg.model, ref: input.locale, latencyMs });
+  const text = msg.content.map((b: any) => (b.type === "text" ? b.text : "")).join("\n");
+  const parsed = extractJson(text);
+  if (!parsed || !Array.isArray(parsed.translations)) throw new Error(`local translation: no JSON (${msg.stop_reason})`);
+  const accepted: TranslatedQuestion[] = [];
+  const rejected: Array<{ id: string; reason: string }> = [];
+  for (const q of input.questions) {
+    const raw = parsed.translations.find((x: any) => x?.id === q.id);
+    const t: TranslatedQuestion | undefined = raw && {
+      id: q.id,
+      body: String(raw.body ?? ""),
+      options: Array.isArray(raw.options) ? raw.options.map((o: any) => ({ key: String(o?.key ?? ""), text: String(o?.text ?? "") })) : [],
+      solution: String(raw.solution ?? ""),
+    };
+    const problem = translationProblem(q, t, input.locale);
+    if (problem) rejected.push({ id: q.id, reason: problem });
+    else accepted.push(t!);
+  }
+  return { accepted, rejected, latencyMs };
 }
 
 function extractJson(text: string): any | null {

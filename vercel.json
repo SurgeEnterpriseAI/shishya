@@ -17,6 +17,10 @@
   ],
   "crons": [
     {
+      "path": "/api/cron/pretranslate",
+      "schedule": "*/10 16-23,0-1 * * *"
+    },
+    {
       "path": "/api/cron/demand-mine",
       "schedule": "0 20 * * *"
     },
