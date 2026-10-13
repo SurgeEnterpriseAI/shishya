@@ -1,0 +1,20 @@
+[Unit]
+Description=Surge tools gateway (web search via SearXNG + page/PDF fetch) for Shishya local research, 127.0.0.1:8100
+After=network-online.target searxng.service
+Wants=network-online.target
+
+[Service]
+EnvironmentFile=/etc/surge/vllm.env
+Environment=SURGE_TOOLS_PORT=8100
+Environment=SEARXNG_URL=http://127.0.0.1:8888
+ExecStart=/usr/bin/python3 /opt/surge-tools/surge_tools.py
+DynamicUser=yes
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

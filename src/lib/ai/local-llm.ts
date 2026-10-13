@@ -192,6 +192,54 @@ export async function callLocal(
 }
 
 /**
+ * One raw, non-streaming chat-completions call to the local server with
+ * OpenAI-format messages and (optionally) tools: the research loop in
+ * ai/local-research.ts. Throws on any failure.
+ */
+export async function localChatCompletion(
+  body: { messages: unknown[]; tools?: unknown[]; toolChoice?: "auto" | "none"; maxTokens: number; temperature?: number },
+  route: { url: string; timeoutMs: number },
+): Promise<{ message: { content?: string | null; tool_calls?: Array<{ id: string; function: { name: string; arguments: string } }> }; finish: string; usage: { in: number; out: number } }> {
+  const res = await fetch(`${route.url}/chat/completions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${KEY}` },
+    body: JSON.stringify({
+      model: LOCAL_MODEL,
+      max_tokens: body.maxTokens,
+      temperature: body.temperature ?? 0.2,
+      messages: body.messages,
+      ...(body.tools?.length ? { tools: body.tools, tool_choice: body.toolChoice ?? "auto" } : {}),
+      chat_template_kwargs: { enable_thinking: false },
+    }),
+    signal: AbortSignal.timeout(route.timeoutMs),
+  });
+  if (!res.ok) throw new Error(`local-llm ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  const data = await res.json();
+  const choice = data?.choices?.[0];
+  return {
+    message: choice?.message ?? {},
+    finish: choice?.finish_reason ?? "",
+    usage: { in: data?.usage?.prompt_tokens ?? 0, out: data?.usage?.completion_tokens ?? 0 },
+  };
+}
+
+/**
+ * The tools gateway on Surge's server (search through SearXNG, page/PDF
+ * fetch): LOCAL_TOOLS_URL, else LOCAL_LLM_URL with its "/v1" swapped for
+ * "/tools" (the Tailscale Funnel mount). Same key as the model. "" when off.
+ */
+export function localToolsBase(): string {
+  const explicit = process.env.LOCAL_TOOLS_URL?.replace(/\/+$/, "");
+  if (explicit) return explicit;
+  return URL_BASE ? URL_BASE.replace(/\/v1$/, "/tools") : "";
+}
+
+/** The key for the model and the tools gateway (never logged). */
+export function localKey(): string {
+  return KEY;
+}
+
+/**
  * A feature's own check on a LOCAL reply (13 Oct 2026, from the Qwen-vs-Claude
  * audit): null serves it; a short reason discards it and runs the Claude path.
  * Never applied to Claude's reply. A check that throws counts as a failure.

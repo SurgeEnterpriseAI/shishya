@@ -21,6 +21,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { recordAiUsage, recordAiUsageAwaited } from "@/lib/ai/usage";
 import { AI_CHECK_TIMEOUT_MS } from "@/lib/answer-key-watch";
 import { anthropic, MODEL } from "./client";
+import { localResearch, localResearchOn, normUrl } from "./local-research";
 
 export type CheckKind = "ANSWER_KEY" | "RESULT";
 
@@ -103,6 +104,32 @@ Sitting: ${input.stage} — first exam day ${input.examDay}; cycle year ${input.
 Find: the official ${what} for this sitting, if the conducting body has published it.
 Official domains you may search: ${input.officialHosts.join(", ")}
 ${input.listingUrls.length ? `Known official listing pages: ${input.listingUrls.join(" , ")}\n` : ""}Return STRICT JSON per the system rules.`;
+  const feature = opts.usageFeature ?? "akr-check";
+  // 13 Oct 2026: Surge's server first (ai/local-research.ts, search and fetch
+  // on the official hosts only). A URL the loop never saw is dropped; when it
+  // proposed URLs and none survives, or anything fails, the Claude path runs.
+  // Every candidate still goes through releaseGate after this.
+  if (localResearchOn(feature)) {
+    try {
+      const r = await localResearch({
+        system: SYSTEM,
+        prompt,
+        allowedDomains: input.officialHosts,
+        maxSearches: 3,
+        maxFetches: 4,
+        maxTokens: 1200,
+        deadlineMs: AI_CHECK_TIMEOUT_MS * 2,
+        expectJson: true,
+      });
+      recordAiUsage(feature, { usage: r.usage, model: r.model }, { model: r.model, ref: `${input.examCode}:${input.kind}`, latencyMs: r.latencyMs });
+      const proposed = parseCheckCandidates(r.text, input.kind);
+      const candidates = proposed.filter((c) => r.seen.has(normUrl(c.url)) && (!c.listingUrl || r.seen.has(normUrl(c.listingUrl))));
+      if (candidates.length || !proposed.length) return { candidates, costUsd: 0 };
+      console.warn(`[akr] ${input.examCode}: local proposed ${proposed.length} URL(s) it never saw → Claude`);
+    } catch (err) {
+      console.warn(`[akr] ${input.examCode}: local research failed → Claude: ${String((err as Error)?.message ?? err).slice(0, 160)}`);
+    }
+  }
   // Server-side web search restricted to the official hosts (subdomains are
   // covered). The installed SDK types predate allowed_domains, hence the cast.
   const tools = [{ type: "web_search_20250305", name: "web_search", max_uses: 3, allowed_domains: [...input.officialHosts] }];
@@ -122,7 +149,6 @@ ${input.listingUrls.length ? `Known official listing pages: ${input.listingUrls.
     { timeout: AI_CHECK_TIMEOUT_MS, maxRetries: 0 },
   );
   const usageOpts = { model: MODEL, ref: `${input.examCode}:${input.kind}`, latencyMs: Date.now() - startedAt };
-  const feature = opts.usageFeature ?? "akr-check";
   const costUsd = opts.awaitUsage
     ? await recordAiUsageAwaited(feature, response, usageOpts)
     : recordAiUsage(feature, response, usageOpts);
