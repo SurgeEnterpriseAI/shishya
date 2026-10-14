@@ -497,7 +497,7 @@ export const NOT_LIST: readonly { title: string; body: string }[] = [
   },
   {
     title: "An account is not a student",
-    body: "One person can hold more than one account and many study signed out, so account counts are not student counts. The home page's 'learners' counter counts people who came, which proves a visit, not learning.",
+    body: "One person can hold more than one account and many study signed out, so account counts are not student counts. The home page's 'guests' counter counts people who came, one-page visitors included, which proves a visit, not learning.",
   },
   {
     title: "No outcome or ranking claims",

@@ -18,7 +18,7 @@
 //     values, and a failed API left them on screen.
 //   • Every label describes exactly what LIVE_COUNT_DEFINITIONS
 //     (src/lib/live-counts-server.ts) says the field counts; the people
-//     counter reads "learners" (founder's word, 26 Sep 2026).
+//     counter reads "guests" (founder, 14 Oct 2026; "learners" from 26 Sep).
 //   • Labels come from the caller (i18n live.*) with English defaults;
 //     the pre-26-Sep label fields are accepted but no longer rendered
 //     (/for/[persona] passed present-tense words for all-time counts).
@@ -229,7 +229,7 @@ function LivePulse() {
 interface BlockLabels {
   /** "Real activity on Shishya" title (i18n key live.block.title) */
   title: string;
-  /** "learners" (i18n key live.block.online) */
+  /** "guests" (i18n key live.block.online) */
   online: string;
   /** "mock exams taken" (i18n key live.block.inMock) */
   inMock: string;

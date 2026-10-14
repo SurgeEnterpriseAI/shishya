@@ -6,7 +6,7 @@
 // Rules the table implements (founder brief, 26 Sep 2026):
 //   • every label describes exactly what LIVE_COUNT_DEFINITIONS
 //     (src/lib/live-counts-server.ts) says the field counts — the people
-//     counter reads "learners" (founder's word, 26 Sep 2026) and counts
+//     counter reads "guests" (founder, 14 Oct 2026; "learners" from 26 Sep) and counts
 //     the people LIVE_COUNT_DEFINITIONS.uniqueVisitors defines;
 //   • nothing typed: values come from the poll reply only;
 //   • a counter that reads wrong at 0 ("0 active now") is hidden only at 0.
@@ -97,8 +97,8 @@ export interface StripLabels {
   activeNow?: string;
   /** "page views" — live.pageViews */
   pageViews?: string;
-  /** "learners" — live.visitors (distinct people who came to Shishya;
-   *  the founder's word, 26 Sep 2026) */
+  /** "guests" — live.visitors (distinct people who came to Shishya,
+   *  one-page visitors included; founder, 14 Oct 2026) */
   visitors?: string;
   /** "mock exams taken" — live.mocksTaken */
   mocksTaken?: string;
@@ -157,7 +157,7 @@ export type LabelKey = Exclude<keyof StripLabels, "preparingNow" | "inMockNow" |
 export const STRIP_DEFAULT_LABELS: Record<LabelKey, string> = {
   activeNow: "active now",
   pageViews: "page views",
-  visitors: "learners",
+  visitors: "guests",
   mocksTaken: "mock exams taken",
   signedUp: "signed up",
   tutorQuestions: "AI tutor questions",

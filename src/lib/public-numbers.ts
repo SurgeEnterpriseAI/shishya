@@ -486,7 +486,7 @@ export interface CounterRow {
  *  "not shown") and signupsLast7Days (the weekly table covers it). */
 export const COUNTER_ROWS: readonly { key: keyof LiveCounts; label: string; people: boolean }[] = [
   { key: "totalSignups", label: "Accounts", people: true },
-  { key: "uniqueVisitors", label: "People who came (the home page strip's 'learners')", people: true },
+  { key: "uniqueVisitors", label: "People who came (the home page strip's 'guests')", people: true },
   // 30 Sep 2026: the strip's third row, learners by section — each learner in one group.
   { key: "learnersGovt", label: "Learners by section: govt exam aspirants", people: true },
   { key: "learnersSchool", label: "Learners by section: school students", people: true },

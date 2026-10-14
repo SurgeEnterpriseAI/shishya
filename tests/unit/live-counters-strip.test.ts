@@ -216,7 +216,7 @@ const EXPECTED: LiveCounts = {
  *  the table agreed on 26 Sep 2026; change it only with the founder. */
 const TABLE: Array<{ key: keyof LiveCounts; label: string; row: 1 | 2 | 3; phone: boolean }> = [
   { key: "activeNow", label: "active now", row: 1, phone: false },
-  { key: "uniqueVisitors", label: "learners", row: 1, phone: true },
+  { key: "uniqueVisitors", label: "guests", row: 1, phone: true },
   { key: "mocksTaken", label: "mock exams taken", row: 1, phone: true },
   { key: "tutorQuestions", label: "AI tutor questions", row: 1, phone: true },
   { key: "totalSignups", label: "signed up", row: 1, phone: true },
@@ -420,7 +420,7 @@ describe("i18n live.* — en, hi, te", () => {
       }
     }
     // The legacy keys carry the honest words too (en/hi/te).
-    expect(dict.en["live.preparingNow"]).toBe("learners");
+    expect(dict.en["live.preparingNow"]).toBe("guests");
     expect(dict.en["live.inMockNow"]).toBe("mock exams taken");
     expect(dict.en["live.block.inMock"]).toBe("mock exams taken");
     expect(raw("hi", "live.totalEver")).toBe(raw("hi", "live.signedUp"));

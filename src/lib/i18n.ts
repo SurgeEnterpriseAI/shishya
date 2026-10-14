@@ -333,12 +333,13 @@ export const dict = {
     // 26 Sep 2026: the whole-platform strip — one key per counter, each
     // label describing exactly what LIVE_COUNT_DEFINITIONS
     // (src/lib/live-counts-server.ts) says the field counts. The people
-    // counter reads "learners" — the founder's word (26 Sep 2026) for
-    // everyone who came to Shishya to study. The three legacy keys keep it for
+    // counter reads "guests" (founder, 14 Oct 2026; "learners" from 26 Sep):
+    // it counts everyone who came, one-page visitors included, which is a
+    // visit, not learning. The three legacy keys keep it for
     // any older caller (en/hi/te; other locales fall back to English).
     "live.activeNow": "active now",
     "live.pageViews": "page views",
-    "live.visitors": "learners",
+    "live.visitors": "guests",
     "live.mocksTaken": "mock exams taken",
     "live.signedUp": "signed up",
     "live.tutorQuestions": "AI tutor questions",
@@ -360,11 +361,11 @@ export const dict = {
     "live.sec.graduate": "PG entrance aspirants",
     "live.sec.postgraduate": "NET aspirants",
     "live.sec.exploring": "general pages only",
-    "live.preparingNow": "learners",
+    "live.preparingNow": "guests",
     "live.inMockNow": "mock exams taken",
     "live.totalEver": "signed up",
     "live.block.title": "Real activity on Shishya",
-    "live.block.online": "learners",
+    "live.block.online": "guests",
     "live.block.inMock": "mock exams taken",
     "live.block.todaysMocks": "submitted today",
 
@@ -1569,7 +1570,7 @@ export const dict = {
     // 26 Sep 2026: whole-platform strip labels (the rule is in en).
     "live.activeNow": "अभी सक्रिय",
     "live.pageViews": "पेज व्यू",
-    "live.visitors": "शिक्षार्थी",
+    "live.visitors": "मेहमान",
     "live.mocksTaken": "मॉक परीक्षाएँ दीं",
     "live.signedUp": "साइन अप हुए",
     "live.tutorQuestions": "AI ट्यूटर से सवाल",
@@ -1591,11 +1592,11 @@ export const dict = {
     "live.sec.graduate": "PG प्रवेश अभ्यर्थी",
     "live.sec.postgraduate": "NET अभ्यर्थी",
     "live.sec.exploring": "सिर्फ़ सामान्य पेज",
-    "live.preparingNow": "शिक्षार्थी",
+    "live.preparingNow": "मेहमान",
     "live.inMockNow": "मॉक परीक्षाएँ दीं",
     "live.totalEver": "साइन अप हुए",
     "live.block.title": "Shishya पर लाइव",
-    "live.block.online": "शिक्षार्थी",
+    "live.block.online": "मेहमान",
     "live.block.inMock": "मॉक परीक्षाएँ दीं",
     "live.block.todaysMocks": "आज मॉक दिए गए",
 
@@ -3182,7 +3183,7 @@ export const dict = {
     // 26 Sep 2026: whole-platform strip labels (the rule is in en).
     "live.activeNow": "ఇప్పుడు యాక్టివ్",
     "live.pageViews": "పేజీ వ్యూలు",
-    "live.visitors": "అభ్యాసకులు",
+    "live.visitors": "అతిథులు",
     "live.mocksTaken": "మాక్ పరీక్షలు రాశారు",
     "live.signedUp": "సైన్ అప్ అయ్యారు",
     "live.tutorQuestions": "AI ట్యూటర్ ప్రశ్నలు",
@@ -3204,11 +3205,11 @@ export const dict = {
     "live.sec.graduate": "PG ప్రవేశ పరీక్షల అభ్యర్థులు",
     "live.sec.postgraduate": "NET అభ్యర్థులు",
     "live.sec.exploring": "సాధారణ పేజీలు మాత్రమే",
-    "live.preparingNow": "అభ్యాసకులు",
+    "live.preparingNow": "అతిథులు",
     "live.inMockNow": "మాక్ పరీక్షలు రాశారు",
     "live.totalEver": "సైన్ అప్ అయ్యారు",
     "live.block.title": "Shishya లో లైవ్",
-    "live.block.online": "అభ్యాసకులు",
+    "live.block.online": "అతిథులు",
     "live.block.inMock": "మాక్ పరీక్షలు రాశారు",
     "live.block.todaysMocks": "ఈరోజు తీసుకున్న mocks",
     "timeline.news.title": "తాజా వార్తలు",
