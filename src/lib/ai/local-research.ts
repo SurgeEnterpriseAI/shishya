@@ -129,9 +129,21 @@ const RULES = (o: { maxSearches: number; maxFetches: number; allowedDomains?: re
 - State a fact only if a page you fetched says it; otherwise say it is not found.
 - When you have enough, stop calling tools and give the final answer in exactly the format the task asks.`;
 
-/** Rough tokens of a message list (3 characters a token; Indian scripts run heavier, hence the margin). */
-function approxTokens(messages: any[]): number {
-  return Math.ceil(messages.reduce((n, m) => n + String(m.content ?? "").length + JSON.stringify(m.tool_calls ?? "").length, 0) / 2.6) + 400;
+/**
+ * Rough tokens of a message list: Latin text ~3 characters a token, Indian
+ * and other non-Latin scripts ~1 (14 Oct: Gujarati and Hindi pages overflowed
+ * the window under a flat 2.6 characters a token).
+ */
+export function approxTokens(messages: any[]): number {
+  let latin = 0;
+  let other = 0;
+  for (const m of messages) {
+    const t = String(m.content ?? "") + JSON.stringify(m.tool_calls ?? "");
+    const nonLatin = (t.match(/[^\u0000-\u024f]/g) ?? []).length;
+    other += nonLatin;
+    latin += t.length - nonLatin;
+  }
+  return Math.ceil(latin / 3 + other * 1.1) + 400;
 }
 
 /**

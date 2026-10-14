@@ -36,6 +36,7 @@ import { recordAiUsage } from "@/lib/ai/usage";
 import { isOfficialSource } from "@/lib/official-source";
 import { anthropic, MODEL } from "./client";
 import { isOwnSiteUrl, webSearchTool } from "./web-search";
+import { localResearch, localResearchOn, normUrl, type ResearchResult } from "./local-research";
 
 export interface ExamInfoInput {
   examCode: string;
@@ -172,6 +173,43 @@ ${opts.useWebSearch ? `IMPORTANT: use your web_search tool to look up the LATEST
   // shared tool (./web-search.ts); our own exam page is never kept as a
   // source for a date we then show as "official" (isOwnSiteUrl below).
   const tools: any[] | undefined = opts.useWebSearch ? [webSearchTool(5)] : undefined;
+  const feature = opts.usageFeature ?? "exam-info";
+
+  // 14 Oct 2026 (founder: local server first): with the feature in
+  // LOCAL_LLM_RESEARCH_FEATURES, Surge's server researches first. Fail
+  // closed: an "official" date survives only when its cited page was opened
+  // and the date is printed on it, a news item only when its page was
+  // opened. Fewer than 2 dates left, or any error → the Claude call below.
+  if (opts.useWebSearch && localResearchOn(feature)) {
+    try {
+      const r = await localResearch({
+        system: SYSTEM.replace(/web_search tool/g, "web_search and fetch_page tools"),
+        prompt: `${userPrompt}
+Open each notice or page with fetch_page before you cite it: an "official" date must be printed on the page you cite.`,
+        allowedDomains: undefined,
+        maxSearches: 5,
+        maxFetches: 6,
+        maxTokens: 3500,
+        deadlineMs: 170_000,
+        pageChars: 9_000,
+        expectJson: true,
+      });
+      recordAiUsage(feature, { usage: r.usage, model: r.model }, { model: r.model, ref: input.examCode, latencyMs: r.latencyMs });
+      const local = parseExamInfoText(r.text, input, today);
+      if (local) {
+        const checked = checkAgainstPages(local, r);
+        // At least 2 page-verified OFFICIAL dates (14 Oct truth-set eval: with
+        // "any 2 rows" the local answer was accepted on exams where it had only
+        // estimates, and the site showed 42 of 94 true dates against Claude's 54).
+        if (checked.dates.filter((d) => d.confidence === "official").length >= 2) {
+          return { ...checked, dates: enforceQuestionPaperRule(enforceAnswerKeyRule(checked.dates), input.officialUrl), inputTokens: r.usage.input_tokens, outputTokens: r.usage.output_tokens };
+        }
+        console.warn(`[exam-info] ${input.examCode}: local kept ${checked.dates.filter((d) => d.confidence === "official").length} official date(s) after the page check → Claude`);
+      } else console.warn(`[exam-info] ${input.examCode}: local reply did not parse → Claude`);
+    } catch (err) {
+      console.warn(`[exam-info] ${input.examCode}: local research failed → Claude: ${String((err as Error)?.message ?? err).slice(0, 160)}`);
+    }
+  }
 
   const startedAt = Date.now();
   const response = await anthropic.messages.create({
@@ -192,7 +230,7 @@ ${opts.useWebSearch ? `IMPORTANT: use your web_search tool to look up the LATEST
     messages: [{ role: "user", content: userPrompt }],
     ...(tools ? { tools } : {}),
   } as any);
-  recordAiUsage(opts.usageFeature ?? "exam-info", response, { model: MODEL, ref: input.examCode, latencyMs: Date.now() - startedAt });
+  recordAiUsage(feature, response, { model: MODEL, ref: input.examCode, latencyMs: Date.now() - startedAt });
 
   const text = response.content
     .filter((b): b is Anthropic.Messages.TextBlock => b.type === "text")
@@ -200,10 +238,24 @@ ${opts.useWebSearch ? `IMPORTANT: use your web_search tool to look up the LATEST
     .join("\n")
     .trim();
 
-  const parsed = extractJson(text);
-  if (!parsed) {
+  const parsedInfo = parseExamInfoText(text, input, today);
+  if (!parsedInfo) {
     throw new Error(`exam-info JSON parse failed for ${input.examCode}: ${text.slice(0, 200)}`);
   }
+  const { news, dates } = parsedInfo;
+
+  return {
+    news,
+    dates: enforceQuestionPaperRule(enforceAnswerKeyRule(dates), input.officialUrl),
+    inputTokens: response.usage.input_tokens,
+    outputTokens: response.usage.output_tokens,
+  };
+}
+
+/** News + dates from a model reply (Claude's or Surge's server's); null when it holds no JSON. */
+function parseExamInfoText(text: string, input: ExamInfoInput, today: Date): { news: NewsItem[]; dates: ImportantDate[] } | null {
+  const parsed = extractJson(text);
+  if (!parsed) return null;
 
   // Our own page is never a source (13 Oct 2026): a news item that cites
   // shishya.in is our earlier generation coming back, so it is dropped; a
@@ -260,13 +312,43 @@ ${opts.useWebSearch ? `IMPORTANT: use your web_search tool to look up the LATEST
         })
         .filter((d: ImportantDate) => Number.isFinite(d.daysFromNow) && d.daysFromNow >= -400 && d.daysFromNow <= 600)
     : [];
+  return { news, dates };
+}
 
-  return {
-    news,
-    dates: enforceQuestionPaperRule(enforceAnswerKeyRule(dates), input.officialUrl),
-    inputTokens: response.usage.input_tokens,
-    outputTokens: response.usage.output_tokens,
-  };
+/** Day / month forms a page prints a date in: 12-10-2026, 12.10.2026, 12/10/2026, 2026-10-12, 12 October 2026, October 12, 2026, 12th Oct 2026… */
+export function dateOnPage(iso: string, page: string): boolean {
+  const [y, m, d] = iso.split("-").map(Number);
+  if (!y || !m || !d) return false;
+  const months = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
+  const mon = months[m - 1];
+  const dd = String(d).padStart(2, "0");
+  const mm = String(m).padStart(2, "0");
+  const text = page.toLowerCase().replace(/\s+/g, " ");
+  const numeric = new RegExp(`(^|[^0-9])0?${d}[-./ ]0?${m}[-./ ](${y}|${String(y).slice(2)})([^0-9]|$)`);
+  if (numeric.test(text) || text.includes(`${y}-${mm}-${dd}`)) return true;
+  const word = `(${mon}|${mon.slice(0, 3)}\\.?|${mon.slice(0, 4)}\\.?)`;
+  const dayWord = `0?${d}(st|nd|rd|th)?`;
+  return new RegExp(`(^|[^0-9])${dayWord}[ ,-]*(of )?${word}[ ,-]*${y}`).test(text) || new RegExp(`${word}[ ,-]*${dayWord}[ ,-]+${y}`).test(text);
+}
+
+/**
+ * The page check on Surge's server's reply (fail closed): an "official" date
+ * stays only when its cited page was opened and prints the date; a news item
+ * only when its page was opened. "expected" rows without a source stay
+ * (typical-cycle estimates, shown as such), as on the Claude path.
+ */
+export function checkAgainstPages(
+  info: { news: NewsItem[]; dates: ImportantDate[] },
+  r: Pick<ResearchResult, "opened" | "pages">,
+): { news: NewsItem[]; dates: ImportantDate[] } {
+  const pageOf = (u: string | null | undefined) => (u ? r.pages.get(normUrl(u)) : undefined);
+  const dates = info.dates.filter((d) => {
+    if (d.confidence !== "official") return !d.source || !!pageOf(d.source);
+    const page = pageOf(d.source);
+    return !!page && !!d.date && dateOnPage(d.date, page);
+  });
+  const news = info.news.filter((n) => !n.source || r.opened.has(normUrl(n.source)));
+  return { news, dates };
 }
 
 /**

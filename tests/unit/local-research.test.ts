@@ -105,3 +105,12 @@ describe("fitContext", () => {
     expect(msgs[3].content.length).toBe(20_000);
   });
 });
+
+describe("approxTokens", () => {
+  it("counts Indian scripts much heavier than English", async () => {
+    const m = await load();
+    const en = m.approxTokens([{ role: "tool", content: "a".repeat(3000) }]);
+    const gu = m.approxTokens([{ role: "tool", content: "ગ".repeat(3000) }]);
+    expect(gu).toBeGreaterThan(en * 2.5);
+  });
+});
