@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db/prisma";
 import { requireAdmin } from "@/lib/admin";
 import { bad, forbidden, notFound, ok, parseBody, serverError } from "@/lib/http";
 import { tagsAfterAdminEdit, WITHDRAWN_TAG, type AdminQuestionAction } from "@/lib/question-withdrawn";
+import { changedTranslatedFields, clearQuestionTranslations } from "@/lib/question-translation-cache";
 
 const Patch = z.object({
   body: z.string().optional(),
@@ -97,8 +98,18 @@ export async function PATCH(
       data.validated = false;
     }
 
-    const updated = await prisma.question.update({ where: { id }, data });
-    return ok({ question: updated });
+    // A changed stem, option, key or solution: the cached translations are of
+    // the old text, so they go in the same transaction (14 Oct 2026,
+    // src/lib/question-translation-cache.ts). The editor sends every field on
+    // every save, so only a real change counts; an unchanged save or a plain
+    // Validate keeps them.
+    const textChanged = changedTranslatedFields(existing, data);
+    const { updated, translationsCleared } = await prisma.$transaction(async (tx) => {
+      const updated = await tx.question.update({ where: { id }, data });
+      const translationsCleared = textChanged.length > 0 ? await clearQuestionTranslations(tx, id) : 0;
+      return { updated, translationsCleared };
+    });
+    return ok({ question: updated, translationsCleared });
   } catch (err: any) {
     if (err?.status === 403) return forbidden();
     if (err?.status === 400) return bad(err.message);

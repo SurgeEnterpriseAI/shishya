@@ -12,16 +12,38 @@
 //      - Claude says no option is correct, or low confidence → invalidate the
 //        question (validated=false pulls it from all live pools) — safe default.
 //   3. Mark the report resolved (resolvedBy "claude:key-sweep").
+//   A key fix clears the question's cached translations in the same
+//   transaction (14 Oct 2026, src/lib/question-translation-cache.ts): every
+//   one translates the old solution, which argues for the old key.
 //
 // USAGE: npx tsx scripts/fix-reported-questions.ts [--dry-run]
+//
+// Tests: tests/unit/question-translation-cache.test.ts (writeKeyFix;
+// importing the module runs nothing) and
+// tests/unit/question-translation-cache-writers.test.ts.
 
 import Anthropic from "@anthropic-ai/sdk";
 import { PrismaClient } from "@prisma/client";
+import { clearQuestionTranslations, type TranslationCacheTx } from "../src/lib/question-translation-cache";
 
-const prisma = new PrismaClient();
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? "" });
 const MODEL = "claude-sonnet-4-5-20250929";
 const DRY = process.argv.includes("--dry-run");
+let prisma: PrismaClient;
+let client: Anthropic;
+
+/** The part of the Prisma client writeKeyFix uses. */
+export interface KeyFixDb {
+  $transaction<T>(fn: (tx: TranslationCacheTx & { question: { update(args: { where: { id: string }; data: { answerKey: string; solution: string } }): PromiseLike<unknown> } }) => Promise<T>): Promise<T>;
+}
+
+/** The key fix and the question's cached translations, in one transaction.
+ *  Returns how many cache rows went. */
+export async function writeKeyFix(db: KeyFixDb, questionId: string, answerKey: string, solution: string): Promise<number> {
+  return db.$transaction(async (tx) => {
+    await tx.question.update({ where: { id: questionId }, data: { answerKey, solution } });
+    return clearQuestionTranslations(tx, questionId);
+  });
+}
 
 interface Verdict {
   correctKey: string | null; // option key, or null if none of the options is correct
@@ -56,6 +78,8 @@ Rules: work the problem fully before choosing. If your computed answer is not am
 }
 
 async function main() {
+  prisma = new PrismaClient();
+  client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? "" });
   const reports = await prisma.questionReport.findMany({
     where: { resolved: false },
     include: { question: { select: { id: true, body: true, options: true, answerKey: true, solution: true, validated: true } } },
@@ -91,13 +115,15 @@ async function main() {
     } else if (v.confidence === "HIGH" && v.correctKey && opts.some((o) => o.key === v.correctKey)) {
       action = `KEY FIXED ${q.answerKey} → ${v.correctKey}`;
       if (!DRY) {
-        await prisma.question.update({
-          where: { id: qid },
-          data: {
-            answerKey: v.correctKey,
-            solution: q.solution + `\n\n[Correction ${new Date().toISOString().slice(0, 10)}: answer key corrected to ${v.correctKey} after student report + independent re-verification. ${v.reasoning}]`,
-          },
-        });
+        const cleared = await writeKeyFix(
+          prisma as unknown as KeyFixDb,
+          qid,
+          v.correctKey,
+          q.solution + `\n\n[Correction ${new Date().toISOString().slice(0, 10)}: answer key corrected to ${v.correctKey} after student report + independent re-verification. ${v.reasoning}]`,
+        );
+        action += ` (${cleared} cached translation(s) cleared)`;
+      } else {
+        action += " (its cached translations would be cleared)";
       }
     } else {
       action = "INVALIDATED (no clear correct option / low confidence) — pulled from live pools";
@@ -118,4 +144,7 @@ async function main() {
   console.log("Sweep complete.");
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+// Runs only as a script, so the tests can import writeKeyFix.
+if (/fix-reported-questions\.[cm]?[jt]s$/.test(process.argv[1] ?? "")) {
+  main().catch((e) => { console.error(e); process.exit(1); });
+}

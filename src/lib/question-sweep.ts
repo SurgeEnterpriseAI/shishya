@@ -8,9 +8,13 @@
 //   - No correct option / MEDIUM/LOW confidence      → question invalidated
 //     (validated=false pulls it from every live pool) — the safe default.
 //   - Reports marked resolved (resolvedBy tag provided by the caller).
+//   - A key fix clears the question's cached translations in the same
+//     transaction (14 Oct 2026, src/lib/question-translation-cache.ts): they
+//     translate the old solution, which argues for the old key.
 
 import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "@/lib/db/prisma";
+import { clearQuestionTranslations } from "@/lib/question-translation-cache";
 import { anthropic, MODEL } from "@/lib/ai/client";
 import { recordAiUsage } from "@/lib/ai/usage";
 import { createNotification } from "@/lib/db/notifications";
@@ -101,6 +105,27 @@ Rules: work the problem fully before choosing. If your computed answer is not am
   return JSON.parse(best) as Verdict;
 }
 
+/** The solution after a key fix: the old one with the correction note (UTC day). */
+export function keyFixSolution(solution: string | null, newKey: string, reasoning: string, now: Date = new Date()): string {
+  return (
+    (solution ?? "") +
+    `\n\n[Correction ${now.toISOString().slice(0, 10)}: answer key corrected to ${newKey} after student report + independent re-verification. ${reasoning}]`
+  );
+}
+
+/** Writes a key fix and clears the question's cached translations, in one
+ *  transaction: every cached translation is of the old solution, which argues
+ *  for the old key (13 Oct 2026 review: 34 rows on 26 questions this sweep had
+ *  fixed were still served). Returns how many cache rows went. */
+async function writeKeyFix(questionId: string, newKey: string, solution: string): Promise<number> {
+  return prisma.$transaction(async (tx) => {
+    await tx.question.update({ where: { id: questionId }, data: { answerKey: newKey, solution } });
+    return clearQuestionTranslations(tx, questionId);
+  });
+}
+
+const clearedNote = (n: number) => (n > 0 ? `; ${n} cached translation${n === 1 ? "" : "s"} cleared` : "");
+
 export interface SweepResult {
   questionId: string;
   action: "confirmed" | "key-fixed" | "invalidated" | "error";
@@ -141,16 +166,8 @@ export async function adjudicateQuestion(
     verdict.correctKey &&
     options.some((o) => o.key === verdict.correctKey)
   ) {
-    await prisma.question.update({
-      where: { id: questionId },
-      data: {
-        answerKey: verdict.correctKey,
-        solution:
-          (q.solution ?? "") +
-          `\n\n[Correction ${new Date().toISOString().slice(0, 10)}: answer key corrected to ${verdict.correctKey} after student report + independent re-verification. ${verdict.reasoning}]`,
-      },
-    });
-    result = { questionId, action: "key-fixed", detail: `${q.answerKey} → ${verdict.correctKey}` };
+    const cleared = await writeKeyFix(questionId, verdict.correctKey, keyFixSolution(q.solution, verdict.correctKey, verdict.reasoning));
+    result = { questionId, action: "key-fixed", detail: `${q.answerKey} → ${verdict.correctKey}${clearedNote(cleared)}` };
   } else {
     await prisma.question.update({ where: { id: questionId }, data: { validated: false } });
     result = {
@@ -217,16 +234,8 @@ export async function sweepReportedQuestions(opts: {
       verdict.correctKey &&
       options.some((o) => o.key === verdict.correctKey)
     ) {
-      await prisma.question.update({
-        where: { id: qid },
-        data: {
-          answerKey: verdict.correctKey,
-          solution:
-            q.solution +
-            `\n\n[Correction ${new Date().toISOString().slice(0, 10)}: answer key corrected to ${verdict.correctKey} after student report + independent re-verification. ${verdict.reasoning}]`,
-        },
-      });
-      results.push({ questionId: qid, action: "key-fixed", detail: `${q.answerKey} → ${verdict.correctKey}` });
+      const cleared = await writeKeyFix(qid, verdict.correctKey, keyFixSolution(q.solution, verdict.correctKey, verdict.reasoning));
+      results.push({ questionId: qid, action: "key-fixed", detail: `${q.answerKey} → ${verdict.correctKey}${clearedNote(cleared)}` });
     } else {
       await prisma.question.update({ where: { id: qid }, data: { validated: false } });
       results.push({

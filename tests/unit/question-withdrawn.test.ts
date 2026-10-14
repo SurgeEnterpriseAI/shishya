@@ -86,8 +86,8 @@ function matches(row: any, where: any): boolean {
 vi.mock("@/lib/admin", () => ({
   requireAdmin: vi.fn(async () => ({ userId: "admin1", email: "admin@shishya.in" })),
 }));
-vi.mock("@/lib/db/prisma", () => ({
-  prisma: {
+vi.mock("@/lib/db/prisma", () => {
+  const prisma: any = {
     question: {
       count: vi.fn(async ({ where }: any) => db.rows.filter((r) => matches(r, where)).length),
       findMany: vi.fn(async ({ where, take }: any) =>
@@ -112,8 +112,15 @@ vi.mock("@/lib/db/prisma", () => ({
       }),
     },
     topic: { findFirst: vi.fn(async () => null) },
-  },
-}));
+    // The admin PATCH writes in an interactive transaction and clears the
+    // question's cached translations when its text changes (14 Oct 2026,
+    // tests/unit/admin-question-translations.test.ts); the in-memory client
+    // is its own transaction client.
+    questionTranslation: { deleteMany: vi.fn(async () => ({ count: 0 })) },
+    $transaction: vi.fn(async (fn: (tx: any) => Promise<unknown>) => fn(prisma)),
+  };
+  return { prisma };
+});
 
 import { POST as bulkValidate } from "@/app/api/admin/questions/bulk-validate/route";
 import { PATCH as patchQuestion } from "@/app/api/admin/questions/[id]/route";

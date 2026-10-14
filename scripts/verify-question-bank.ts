@@ -153,6 +153,7 @@ import {
 } from "../src/lib/ai/batch";
 import type { Difficulty } from "../src/lib/ai/types";
 import { WITHDRAWN_TAG } from "../src/lib/question-withdrawn";
+import { changedTranslatedFields, clearQuestionTranslations } from "../src/lib/question-translation-cache";
 
 const prisma = new PrismaClient();
 
@@ -286,16 +287,22 @@ async function applyVerdict(r: Row, solve: SolveResult, v: VerifyVerdict, at: st
   };
 
   if (!DRY) {
-    await prisma.question.update({
-      where: { id: r.id },
-      data: {
-        validated: pass,
-        validatedBy: pass ? "factory:verify-v1" : r.validated ? "factory:verify-v1:removed" : r.validatedBy,
-        validatedAt: pass ? new Date() : undefined,
-        ...(corrected ? { answerKey: v.correctKey!, ...(bestRun?.reasoning ? { solution: bestRun.reasoning } : {}) } : {}),
-        ...(pass && r.source === "AI_GENERATED" ? { source: "AI_VALIDATED" as const } : {}),
-        metadata: { ...(isObj(r.metadata) ? r.metadata : {}), factoryVerify } as Prisma.InputJsonValue,
-      },
+    const data = {
+      validated: pass,
+      validatedBy: pass ? "factory:verify-v1" : r.validated ? "factory:verify-v1:removed" : r.validatedBy,
+      validatedAt: pass ? new Date() : undefined,
+      ...(corrected ? { answerKey: v.correctKey!, ...(bestRun?.reasoning ? { solution: bestRun.reasoning } : {}) } : {}),
+      ...(pass && r.source === "AI_GENERATED" ? { source: "AI_VALIDATED" as const } : {}),
+      metadata: { ...(isObj(r.metadata) ? r.metadata : {}), factoryVerify } as Prisma.InputJsonValue,
+    };
+    // A corrected key or a replaced solution: the cached translations are of
+    // the old solution, so they go in the same transaction (14 Oct 2026,
+    // src/lib/question-translation-cache.ts; 1,199 such rows were cleared by
+    // hand on 13 Oct).
+    const textChanged = changedTranslatedFields(r, data).length > 0;
+    await prisma.$transaction(async (tx) => {
+      await tx.question.update({ where: { id: r.id }, data });
+      if (textChanged) await clearQuestionTranslations(tx, r.id);
     });
   }
   if (DRY) {
