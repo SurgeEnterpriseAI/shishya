@@ -40,6 +40,7 @@ import type { ExamPhase } from "@prisma/client";
 import { anthropic, MODEL } from "./client";
 import { recordAiUsage } from "./usage";
 import { webSearchTool } from "./web-search";
+import { localResearch, localResearchOn, normUrl } from "./local-research";
 import { classifyTutorFailure } from "./tutor-failure";
 import type { ScrapedSnippet } from "@/lib/scrape/types";
 import { istDay } from "@/lib/exam-week";
@@ -266,6 +267,19 @@ Otherwise publish the article via the publish_phase_article tool. Follow the per
 ${inputBundle}
 ────────────────────`;
 
+  // 13 Oct 2026: a web-grounded article goes to Surge's server first
+  // (ai/local-research.ts), with a stricter gate than Claude's web path:
+  // every cited source must be a page the server actually opened. A
+  // decline, a failed gate or any error falls through to Claude below.
+  const webFeature = `${usageFeature}-web`;
+  if (webGrounded && localResearchOn(webFeature)) {
+    const local = await localPhaseArticle(phase, userPrompt, examCode, webFeature).catch((err) => {
+      console.warn(`[phase-summariser] ${examCode}:${phase} local research failed → Claude: ${String((err as Error)?.message ?? err).slice(0, 160)}`);
+      return null;
+    });
+    if (local) return local;
+  }
+
   try {
     const res = await anthropic.messages.create({
       model: MODEL,
@@ -337,6 +351,60 @@ ${inputBundle}
     console.error("[phase-summariser] Claude call failed:", err);
     return null;
   }
+}
+
+const LOCAL_OUTPUT = `OUTPUT FOR THIS RUN: there is no publish_phase_article tool here. When you have finished researching, answer with ONE of:
+- the article as a single JSON object {"title": string, "summarySnippet": string, "bodyMarkdown": string, "sourcesUsed": [{"url": string, "type": "reddit"|"rss"|"telegram"|"youtube"|"news"|"manual", "label": string}]} — same rules as the publish tool, and every sourcesUsed URL must be a page you opened with fetch_page;
+- or exactly NO_ARTICLE when you did not find at least ${MIN_ARTICLE_SOURCES} substantive sources about THIS exam sitting.`;
+
+/**
+ * The web-grounded article on Surge's server. Null when the model declines
+ * or the article fails the gate (the caller then asks Claude): at least
+ * MIN_ARTICLE_SOURCES sources, each a page the loop opened, and no
+ * placeholder body.
+ */
+async function localPhaseArticle(phase: ExamPhase, userPrompt: string, examCode: string, feature: string): Promise<SummaryResult | null> {
+  const r = await localResearch({
+    system: `${PHASE_SYSTEM[phase]}\n\n${LOCAL_OUTPUT}`,
+    prompt: userPrompt,
+    maxSearches: 6,
+    maxFetches: 6,
+    maxTokens: 4000,
+    deadlineMs: 240_000,
+    pageChars: 8_000,
+  });
+  recordAiUsage(feature, { usage: r.usage, model: r.model }, { model: r.model, ref: `${examCode}:${phase}`, latencyMs: r.latencyMs });
+  if (/^\s*NO_ARTICLE\s*$/.test(r.text)) {
+    console.info(`[phase-summariser] ${examCode}:${phase} — local declined (no real sources) → Claude`);
+    return null;
+  }
+  const a = r.text.indexOf("{");
+  const b = r.text.lastIndexOf("}");
+  let input: Partial<SummaryResult> | null = null;
+  try {
+    input = a >= 0 && b > a ? JSON.parse(r.text.slice(a, b + 1)) : null;
+  } catch {
+    input = null;
+  }
+  if (!input?.title || !input.bodyMarkdown || !Array.isArray(input.sourcesUsed)) return null;
+  const seen = new Set<string>();
+  const sources = input.sourcesUsed.filter((s) => {
+    if (!s || typeof s.url !== "string" || !s.type) return false;
+    const url = s.url.trim();
+    if (!/^https?:\/\//i.test(url) || !r.opened.has(normUrl(url)) || seen.has(url)) return false;
+    seen.add(url);
+    return true;
+  });
+  if (sources.length < MIN_ARTICLE_SOURCES || isPlaceholderArticle(input.bodyMarkdown)) {
+    console.warn(`[phase-summariser] ${examCode}:${phase} local article rejected (${sources.length} opened source(s)) → Claude`);
+    return null;
+  }
+  return {
+    title: input.title,
+    summarySnippet: input.summarySnippet?.slice(0, 220).trim() || firstSentenceFromMarkdown(input.bodyMarkdown),
+    bodyMarkdown: input.bodyMarkdown,
+    sourcesUsed: sources,
+  };
 }
 
 /**

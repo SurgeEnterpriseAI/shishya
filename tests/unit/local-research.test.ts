@@ -94,3 +94,14 @@ describe("localResearch", () => {
     await expect((await load()).localResearch({ system: "S", prompt: "P" })).rejects.toThrow(/cut off/);
   });
 });
+
+describe("fitContext", () => {
+  it("shortens the oldest tool results first and keeps the newest whole", async () => {
+    const m = await load();
+    const big = "x".repeat(20_000);
+    const msgs: any[] = [{ role: "system", content: "S" }, { role: "tool", content: big }, { role: "tool", content: big }, { role: "tool", content: big }];
+    m.fitContext(msgs, 12_000);
+    expect(msgs[1].content.length).toBeLessThan(2_000);
+    expect(msgs[3].content.length).toBe(20_000);
+  });
+});

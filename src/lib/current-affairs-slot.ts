@@ -30,6 +30,7 @@
 // written, and the next slot tries again.
 
 import { generateDailyCurrentAffairs, type CurrentAffairItem } from "@/lib/current-affairs";
+import { localResearchOn } from "@/lib/ai/local-research";
 import { CA_CALL_TX_TIMEOUT_MS, caCallLockKey, caRunDecision, istDateStr, type CaRunDecision } from "@/lib/current-affairs-run";
 import { prisma } from "@/lib/db/prisma";
 
@@ -77,7 +78,12 @@ export async function runCurrentAffairsSlot(
         const heldBy = opts.gate ? await opts.gate() : null;
         if (heldBy) return { kind: "held", istDate, reason: heldBy };
         attempt = decision.attempt;
-        const r = await generateDailyCurrentAffairs({ istDate, tx });
+        // Surge's server takes the day's first try (13-14 Oct 2026): once a
+        // day, logged under "<date>:local" so it never counts as a paid
+        // call. If it stores nothing, the later slots ask Claude as before.
+        const local =
+          localResearchOn("current-affairs") && (await tx.aiUsage.count({ where: { feature: "current-affairs", ref: `${istDate}:local` } })) === 0;
+        const r = await generateDailyCurrentAffairs({ istDate, tx, local });
         if (r.written === 0) {
           return { kind: "written-by-another-run", istDate, attempt, inputTokens: r.inputTokens, outputTokens: r.outputTokens };
         }

@@ -21,6 +21,8 @@
 import { localChatCompletion, localKey, localServerDown, localToolsBase, LOCAL_MODEL } from "./local-llm";
 
 const URL_BASE = process.env.LOCAL_LLM_URL?.replace(/\/+$/, "") ?? "";
+/** The server's context window (vLLM --max-model-len). */
+const CONTEXT_TOKENS = Number(process.env.LOCAL_LLM_CONTEXT_TOKENS ?? 32_768);
 const RESEARCH_FEATURES = new Set(
   (process.env.LOCAL_LLM_RESEARCH_FEATURES ?? "")
     .split(",")
@@ -50,6 +52,10 @@ export interface ResearchResult {
   text: string;
   /** Normalised URLs the loop saw: search hits, fetched pages, links on fetched pages. */
   seen: Set<string>;
+  /** Normalised URLs of the pages it actually opened and read (requested and final URL). */
+  opened: Set<string>;
+  /** Text of each opened page (as the model read it), by normalised URL — for callers that check claims against it. */
+  pages: Map<string, string>;
   searches: Array<{ query: string; hits: number }>;
   fetches: Array<{ url: string; status: number; chars: number; error?: string }>;
   usage: { input_tokens: number; output_tokens: number };
@@ -123,6 +129,28 @@ const RULES = (o: { maxSearches: number; maxFetches: number; allowedDomains?: re
 - State a fact only if a page you fetched says it; otherwise say it is not found.
 - When you have enough, stop calling tools and give the final answer in exactly the format the task asks.`;
 
+/** Rough tokens of a message list (3 characters a token; Indian scripts run heavier, hence the margin). */
+function approxTokens(messages: any[]): number {
+  return Math.ceil(messages.reduce((n, m) => n + String(m.content ?? "").length + JSON.stringify(m.tool_calls ?? "").length, 0) / 2.6) + 400;
+}
+
+/**
+ * Keep the conversation inside the window (14 Oct 2026: a current-affairs run
+ * opened 4 long pages in one turn and hit 32k). The OLDEST tool results are
+ * shortened first, to 1,500 characters, then to 400; the newest stay whole.
+ */
+export function fitContext(messages: any[], budget: number): void {
+  for (const keep of [1_500, 400]) {
+    for (let i = 0; i < messages.length && approxTokens(messages) > budget; i++) {
+      const m = messages[i];
+      if (m.role !== "tool" || typeof m.content !== "string" || m.content.length <= keep + 60) continue;
+      if (messages.slice(i + 1).every((x) => x.role !== "tool")) continue; // the newest result stays whole
+      m.content = `${m.content.slice(0, keep)}
+[…shortened to save space; open the page again if you need more]`;
+    }
+  }
+}
+
 /**
  * Run the research loop on Surge's server. Throws when the server or the
  * gateway fails, the deadline passes or no final answer comes back; the
@@ -146,6 +174,8 @@ export async function localResearch(opts: {
   const started = Date.now();
   const deadline = started + (opts.deadlineMs ?? 150_000);
   const seen = new Set<string>();
+  const opened = new Set<string>();
+  const pages = new Map<string, string>();
   const searches: ResearchResult["searches"] = [];
   const fetches: ResearchResult["fetches"] = [];
   const usage = { input_tokens: 0, output_tokens: 0 };
@@ -181,6 +211,7 @@ export async function localResearch(opts: {
     // Offer only the tools that still have budget (13 Oct, SSC CHSL: the model
     // kept asking for searches after its 3, and ran out of turns).
     const offered = TOOLS.filter((t) => (t.function.name === "web_search" ? searches.length < maxSearches : fetches.length < maxFetches));
+    fitContext(messages, CONTEXT_TOKENS - (opts.maxTokens ?? 1500) - 1_500);
     const r = await localChatCompletion(
       { messages, tools: budgetLeft && offered.length ? offered : undefined, maxTokens: opts.maxTokens ?? 1500 },
       { url: URL_BASE, timeoutMs: Math.max(5_000, Math.min(left(), 120_000)) },
@@ -208,7 +239,7 @@ export async function localResearch(opts: {
         nudged = true;
         continue;
       }
-      return { text, seen, searches, fetches, usage, model: `local:${LOCAL_MODEL}`, latencyMs: Date.now() - started };
+      return { text, seen, opened, pages, searches, fetches, usage, model: `local:${LOCAL_MODEL}`, latencyMs: Date.now() - started };
     }
     messages.push({ role: "assistant", content: r.message.content ?? "", tool_calls: calls });
     for (const c of calls) {
@@ -237,6 +268,12 @@ export async function localResearch(opts: {
           fetches.push({ url: args.url, status: p.status, chars: p.text.length, error: p.error });
           seen.add(normUrl(p.url));
           seen.add(normUrl(p.final_url));
+          if (!p.error) {
+            opened.add(normUrl(args.url));
+            opened.add(normUrl(p.final_url));
+            pages.set(normUrl(args.url), p.text);
+            pages.set(normUrl(p.final_url), p.text);
+          }
           const links = (p.links ?? []).filter((l) => /^https?:/i.test(l.url));
           for (const l of links) seen.add(normUrl(l.url));
           out = p.error

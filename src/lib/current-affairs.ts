@@ -40,6 +40,7 @@ import { recordAiUsageAwaited } from "@/lib/ai/usage";
 import { anthropic } from "./ai/client";
 import { parseJson } from "./ai/client";
 import { webSearchTool } from "./ai/web-search";
+import { localResearch, normUrl } from "./ai/local-research";
 import { prisma } from "./db/prisma";
 
 const MODEL = "claude-sonnet-4-5-20250929";
@@ -239,10 +240,75 @@ export async function writeDigestDay(istDate: string, items: readonly CurrentAff
  * locked one); without it, in a transaction of their own. The ledger row of a
  * paid call is awaited before anything else (it never throws).
  */
+/** Numbers an item states (₹ amounts, %, counts, years): each must be printed on its source page. */
+function itemNumbers(it: CurrentAffairItem): string[] {
+  return [...`${it.title} ${it.summary}`.matchAll(/\d[\d,]*(?:\.\d+)?/g)].map((m) => m[0].replace(/,/g, "")).filter((n) => n.length >= 2);
+}
+
+/**
+ * The local path (13-14 Oct 2026): Surge's server researches the day (ai/
+ * local-research.ts) and an item is kept only when its source is a page the
+ * server opened and every number it states is printed on that page. Fewer
+ * than MIN_DIGEST_ITEMS kept → CurrentAffairsReplyError, nothing written; the
+ * later slots then ask Claude (current-affairs-slot.ts). The ledger row's ref
+ * is "<date>:local", so it never counts as the slot's paid call.
+ */
+async function generateLocally(opts: { istDate: string; tx?: DigestTx; dry?: boolean }) {
+  const r = await localResearch({
+    system: SYSTEM.replace("Use your web_search tool", "Use your web_search and fetch_page tools"),
+    prompt: `${digestRequest(opts.istDate)}\nPrefer official and national sources (pib.gov.in, rbi.org.in, the ministries, The Hindu, Indian Express, Hindustan Times, Business Standard, Livemint). Open each story's page with fetch_page before you use it: the "source" of every item must be a page you opened, and every number in an item must be printed on that page.`,
+    maxSearches: 6,
+    maxFetches: 10,
+    maxTokens: 4000,
+    deadlineMs: 210_000,
+    pageChars: 6_000,
+    expectJson: true,
+  });
+  await recordAiUsageAwaited("current-affairs", { usage: r.usage, model: r.model }, { model: r.model, ref: `${opts.istDate}:local` });
+  let parsed: { items?: unknown };
+  try {
+    parsed = parseJson<{ items?: unknown }>(r.text);
+  } catch (err) {
+    throw new CurrentAffairsReplyError("unparseable", `local: ${(err as Error).message}`, { stopReason: "local", chars: r.text.length });
+  }
+  const returned = Array.isArray(parsed?.items) ? parsed.items.length : 0;
+  const items = usableItems(parsed?.items).filter((it) => {
+    const page = r.pages.get(normUrl(it.source ?? ""));
+    if (!page) {
+      console.warn(`[current-affairs] local: dropped "${it.title.slice(0, 80)}" — source not opened (${(it.source ?? "").slice(0, 100)})`);
+      return false;
+    }
+    const flat = page.replace(/,/g, "");
+    const missing = itemNumbers(it).filter((n) => !flat.includes(n));
+    if (missing.length) console.warn(`[current-affairs] local: dropped "${it.title.slice(0, 80)}" — not on its page: ${missing.join(", ")}`);
+    return missing.length === 0;
+  });
+  if (items.length < MIN_DIGEST_ITEMS) {
+    console.warn("[current-affairs] local: too few checked items; nothing stored", JSON.stringify({ returned, kept: items.length, opened: r.opened.size }));
+    throw new CurrentAffairsReplyError("too-few-items", `local: ${items.length} checked item(s) of ${returned}; at least ${MIN_DIGEST_ITEMS} are needed`, {
+      stopReason: "local",
+      chars: r.text.length,
+      usable: items.length,
+      returned,
+    });
+  }
+  if (opts.dry) return { items, written: 0, inputTokens: r.usage.input_tokens, outputTokens: r.usage.output_tokens };
+  const written = opts.tx ? await writeDigestRows(opts.tx, opts.istDate, items) : await writeDigestDay(opts.istDate, items);
+  return { items, written, inputTokens: r.usage.input_tokens, outputTokens: r.usage.output_tokens };
+}
+
+/** The local digest checked but not stored (scripts / evals). */
+export function previewLocalDigest(istDate: string) {
+  return generateLocally({ istDate, dry: true });
+}
+
 export async function generateDailyCurrentAffairs(opts: {
   istDate: string; // "YYYY-MM-DD"
   tx?: DigestTx;
+  /** Run on Surge's server (current-affairs-slot.ts decides: once a day, the first slot). */
+  local?: boolean;
 } ): Promise<{ items: CurrentAffairItem[]; written: number; inputTokens: number; outputTokens: number }> {
+  if (opts.local) return generateLocally(opts);
   // The shared web_search tool (13 Oct 2026, ./ai/web-search.ts).
   const tools: Anthropic.Messages.Tool[] = [webSearchTool(6) as unknown as Anthropic.Messages.Tool];
   const res = await anthropic.messages.create(

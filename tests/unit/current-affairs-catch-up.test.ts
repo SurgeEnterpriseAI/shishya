@@ -265,7 +265,8 @@ describe("daily-current-affairs route", () => {
     expect(lockStrings.join("?")).toContain("pg_try_advisory_xact_lock(hashtext(?))");
     expect(lockValues).toEqual([caCallLockKey(DAY)]);
     expect(h.generate).toHaveBeenCalledTimes(1);
-    expect(h.generate).toHaveBeenCalledWith({ istDate: DAY, tx: expect.objectContaining({ aiUsage: slotTx.aiUsage }) });
+    // local: false — LOCAL_LLM_RESEARCH_FEATURES is not set here (14 Oct 2026: Surge's server takes the day's first try only when listed).
+    expect(h.generate).toHaveBeenCalledWith({ istDate: DAY, tx: expect.objectContaining({ aiUsage: slotTx.aiUsage }), local: false });
     expect(h.aiUsageCount).toHaveBeenCalledWith({ where: { feature: "current-affairs", ref: DAY } });
   });
 
