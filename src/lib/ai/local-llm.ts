@@ -21,6 +21,7 @@
 // student never sees the home server's state.
 
 import type Anthropic from "@anthropic-ai/sdk";
+import { after } from "next/server";
 
 const URL_BASE = process.env.LOCAL_LLM_URL?.replace(/\/+$/, "") ?? "";
 const KEY = process.env.LOCAL_LLM_KEY ?? "";
@@ -84,10 +85,22 @@ function close(): void {
   downUntil = 0;
 }
 
-/** One quick GET <url>/models at a time; true = the server answered. A failed check opens the breaker. */
-function checkServer(): Promise<boolean> {
-  if (checking) return checking;
-  const startedAt = Date.now();
+let checkingSince = 0;
+
+/**
+ * One quick GET <url>/models at a time; true = the server answered. A failed check opens the breaker.
+ *
+ * 14 Oct 2026: on Vercel a background promise is frozen once the response
+ * that started it is sent, so a check could stay "in flight" for good and
+ * every later call reused it — the breaker stayed open, silently, for hours
+ * (local routes off from 15:25 IST, no further log line). Now a check older
+ * than twice its timeout is treated as lost and a fresh one starts, and the
+ * check is handed to after() so the function stays alive until it ends.
+ */
+function checkServer(now: number = Date.now()): Promise<boolean> {
+  if (checking && now - checkingSince < CHECK_TIMEOUT_MS * 2) return checking;
+  const startedAt = now;
+  checkingSince = now;
   checking = (async () => {
     try {
       const res = await fetch(`${URL_BASE}/models`, {
@@ -102,9 +115,16 @@ function checkServer(): Promise<boolean> {
       return false;
     }
   })().finally(() => {
-    checking = null;
+    if (checkingSince === startedAt) checking = null;
   });
-  return checking;
+  const mine = checking;
+  try {
+    // Inside a request / cron scope: keep the function alive until the check ends.
+    after(() => mine.then(() => undefined));
+  } catch {
+    // Outside a request scope (scripts, tests): a plain promise is fine.
+  }
+  return mine;
 }
 
 /**
@@ -115,7 +135,7 @@ function checkServer(): Promise<boolean> {
 export function localServerDown(now: number = Date.now()): boolean {
   if (downMisses === 0) return false;
   if (now < downUntil) return true;
-  void checkServer();
+  void checkServer(now);
   return true;
 }
 

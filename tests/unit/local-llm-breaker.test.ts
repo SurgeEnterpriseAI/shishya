@@ -182,3 +182,32 @@ describe("the breaker", () => {
     expect(r.localResearchOn("akr-check")).toBe(false);
   });
 });
+
+describe("a check frozen by the platform does not hold the breaker open (14 Oct 2026)", () => {
+  it("a check older than twice its timeout is dropped and a fresh one runs", async () => {
+    const m = await load();
+    // 1st chat call fails at the network → breaker opens.
+    let frozen = true;
+    const calls = server(
+      async () => {
+        throw netError();
+      },
+      () => (frozen ? new Promise<Response>(() => {}) : Promise.resolve(models())), // the first check never settles
+    );
+    await m.localFirst("explain", req as any, claude).catch(() => null);
+    expect(m.localServerDown()).toBe(true);
+    // Pause over → a check starts and hangs (as a frozen background promise would).
+    vi.setSystemTime(new Date(Date.now() + 61_000));
+    expect(m.localServerDown()).toBe(true);
+    await flush();
+    expect(calls.models).toBe(1);
+    // Later the server is back; the stale check must not block a new one.
+    frozen = false;
+    vi.setSystemTime(new Date(Date.now() + 15_000));
+    m.localServerDown();
+    await flush();
+    await flush();
+    expect(calls.models).toBe(2);
+    expect(m.localServerDown()).toBe(false);
+  });
+});
