@@ -9,6 +9,8 @@ Environment=SURGE_TOOLS_PORT=8100
 Environment=SEARXNG_URL=http://127.0.0.1:8888
 ExecStart=/usr/bin/python3 /opt/surge-tools/surge_tools.py
 DynamicUser=yes
+# Read-only access to the nightly research results (/var/lib/research-shadow is 0750 surgeuser:surgeuser).
+SupplementaryGroups=surgeuser
 NoNewPrivileges=yes
 ProtectSystem=strict
 ProtectHome=yes

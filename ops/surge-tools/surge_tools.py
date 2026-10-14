@@ -277,6 +277,42 @@ def do_search(q, n, allowed):
     return out
 
 
+RESEARCH_DIR = os.environ.get("RESEARCH_SHADOW_DIR", "/var/lib/research-shadow")
+ITEM_KEYS = ("kind", "label", "date", "evidence", "sourceUrl", "official", "verified")
+NEWS_KEYS = ("title", "date", "evidence", "sourceUrl", "official", "verified")
+
+
+def do_research(code):
+    """The latest (up to 3) nightly research runs for one exam: verified dates and news with
+    the sentence each was quoted from. Read-only over RESEARCH_DIR (14 Oct 2026)."""
+    if not re.fullmatch(r"[A-Z0-9_]{2,40}", code or ""):
+        raise ValueError("bad exam code")
+    runs = []
+    days = sorted((d for d in os.listdir(RESEARCH_DIR) if re.fullmatch(r"\d{4}-\d{2}-\d{2}", d)), reverse=True)
+    for day in days:
+        for run in sorted(os.listdir(os.path.join(RESEARCH_DIR, day)), reverse=True):
+            path = os.path.join(RESEARCH_DIR, day, run, f"{code}.json")
+            if not os.path.isfile(path):
+                continue
+            with open(path, encoding="utf-8") as f:
+                d = json.load(f)
+            started = None
+            summ = os.path.join(RESEARCH_DIR, day, run, "summary.json")
+            if os.path.isfile(summ):
+                with open(summ, encoding="utf-8") as f:
+                    started = json.load(f).get("startedAt")
+            runs.append({
+                "run": f"{day}/{run}",
+                "startedAt": started,
+                "manual": run.endswith("-manual"),
+                "items": [{k: it.get(k) for k in ITEM_KEYS} for it in (d.get("items") or [])],
+                "news": [{k: n.get(k) for k in NEWS_KEYS} for n in (d.get("news") or [])],
+            })
+            if len(runs) >= 3:
+                return {"code": code, "runs": runs}
+    return {"code": code, "runs": runs}
+
+
 class Handler(BaseHTTPRequestHandler):
     server_version = "surge-tools/1.0"
 
@@ -319,6 +355,8 @@ class Handler(BaseHTTPRequestHandler):
             if route == "/fetch":
                 url = str(body.get("url") or "").strip()
                 return self._send(200, do_fetch(url, max(1000, min(int(body.get("max_chars") or 60000), 300_000)), allowed))
+            if route == "/research":
+                return self._send(200, do_research(str(body.get("code") or "").strip()))
             self._send(404, {"error": "not found"})
         except ValueError as e:
             self._send(400, {"error": str(e)[:200]})

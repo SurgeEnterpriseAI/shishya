@@ -32,6 +32,8 @@
 import { prisma } from "@/lib/db/prisma";
 import { REAL_EXAM_WHERE } from "@/lib/db/exam-scope";
 import { generateExamInfo } from "@/lib/ai/exam-info";
+import { verifiedExamInfo } from "@/lib/verified-research";
+import { recordAiUsage } from "@/lib/ai/usage";
 import { writeExamInfo, GEN_SOURCE } from "@/lib/exam-data-writer";
 import { loadExamWeekExams } from "@/lib/exam-week-aeo";
 import type { ExamWeekPhase } from "@/lib/exam-week";
@@ -71,6 +73,8 @@ export interface ExamRefreshLogEntry {
   /** Generated rows the writer dropped (suppressed, beside a curated row, uncited answer key). */
   datesDropped?: number;
   newsSuppressed?: number;
+  /** Where the rows came from: the nightly verified research, or Claude (14 Oct 2026). */
+  source?: "verified-research" | "claude";
   err?: string;
 }
 
@@ -230,7 +234,16 @@ export async function runExamDataRefresh(opts: ExamRefreshRunOptions = {}): Prom
       // Web search is enabled in the cron so refresh runs always surface
       // the freshest official notifications (and, on exam evening, the
       // key / question-paper pages the conducting body just posted).
-      const info = await generateExamInfo(
+      // 14 Oct 2026: an exam on the verified list takes the nightly official-
+      // site research (lib/verified-research.ts) when it is fresh and settled;
+      // otherwise, and for every other exam, Claude researches as before.
+      const verified = await verifiedExamInfo(exam.code, exam.eligibility?.officialUrl ?? null);
+      if (verified) {
+        if (laneEntry) laneSpent -= COST_PER_EXAM_USD;
+        else tailSpent -= COST_PER_EXAM_USD;
+        recordAiUsage(feature, { usage: { input_tokens: 0, output_tokens: 0 }, model: "local:research-verified" }, { model: "local:research-verified", ref: exam.code });
+      }
+      const info = verified ?? await generateExamInfo(
         {
           examCode: exam.code,
           examName: exam.name,
@@ -248,7 +261,7 @@ export async function runExamDataRefresh(opts: ExamRefreshRunOptions = {}): Prom
       // not re-confirm, stores absolute dates at midnight UTC, persists
       // cited URLs. Students can still browse history via the archive page.
       const w = await writeExamInfo(prisma, exam.id, info);
-      log.push({ code: exam.code, ok: true, lane: laneEntry?.phase, news: w.news, dates: w.dates, datesDropped: w.datesDropped, newsSuppressed: w.newsSuppressed });
+      log.push({ code: exam.code, ok: true, lane: laneEntry?.phase, source: verified ? "verified-research" : "claude", news: w.news, dates: w.dates, datesDropped: w.datesDropped, newsSuppressed: w.newsSuppressed });
     } catch (err) {
       log.push({ code: exam.code, ok: false, lane: laneEntry?.phase, err: (err as Error).message });
       if (opts.guard && (await opts.guard.noteFailure(feature, err))) {
