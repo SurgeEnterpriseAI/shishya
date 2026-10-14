@@ -32,9 +32,70 @@ const BULK_URL = process.env.LOCAL_LLM_BULK_URL?.replace(/\/+$/, "") || URL_BASE
 const TIMEOUT_MS = Number(process.env.LOCAL_LLM_TIMEOUT_MS ?? 25_000);
 const BULK_TIMEOUT_MS = Number(process.env.LOCAL_LLM_BULK_TIMEOUT_MS ?? 120_000);
 
+// Server-down breaker (14 Oct 2026). That morning the home server dropped off
+// the network for over half an hour, and every local-eligible call waited its
+// full timeout (25-120 s) before Claude ran. Now, when a call cannot reach the
+// server (a network error, a timeout before any reply, or 502/503/504 from the
+// Funnel), every local route is skipped until downUntil, so Claude answers at
+// once; the first call after that probes the server again. The pause doubles
+// on each further miss (1, 2, 4 ... minutes, at most 10) and a reply resets
+// it. Module state, so it lives as long as the server instance does.
+const DOWN_MS = Number(process.env.LOCAL_LLM_DOWN_MS ?? 60_000);
+const DOWN_MAX_MS = 10 * 60_000;
+let downUntil = 0;
+let downMisses = 0;
+
+/** True while the breaker holds every local route off (the server could not be reached). */
+export function localServerDown(now: number = Date.now()): boolean {
+  return now < downUntil;
+}
+
+/** A network error, a timeout or a gateway status: the server is not there (not a bad request). */
+export function isUnreachable(err: unknown): boolean {
+  const e = err as { name?: string; message?: string; cause?: { code?: string } } | null;
+  if (!e) return false;
+  if (e.name === "TimeoutError" || e.name === "AbortError") return true;
+  if (e.name === "TypeError" && /fetch failed|network|socket|ECONN|ENOTFOUND|EAI_AGAIN|ETIMEDOUT|UND_ERR/i.test(`${e.message ?? ""} ${e.cause?.code ?? ""}`)) return true;
+  return /^local-llm (502|503|504)\b|no first token in time/.test(e.message ?? "");
+}
+
+function markDown(now: number = Date.now()): void {
+  downMisses += 1;
+  downUntil = now + Math.min(DOWN_MS * 2 ** (downMisses - 1), DOWN_MAX_MS);
+  console.warn(`[local-llm] server unreachable; local routes off for ${Math.round((downUntil - now) / 1000)} s`);
+}
+
+function markUp(): void {
+  downMisses = 0;
+  downUntil = 0;
+}
+
+/**
+ * fetch to Surge's server (model or tools gateway) that feeds the breaker: an
+ * unreachable server trips it, any HTTP reply below 502 resets it.
+ */
+export async function localFetch(url: string, init: RequestInit): Promise<Response> {
+  let res: Response;
+  try {
+    res = await fetch(url, init);
+  } catch (err) {
+    if (isUnreachable(err)) markDown();
+    throw err;
+  }
+  if (res.status === 502 || res.status === 503 || res.status === 504) markDown();
+  else markUp();
+  return res;
+}
+
+/** Test hook: forget the breaker's state. */
+export function resetLocalBreaker(): void {
+  markUp();
+}
+
 /** Which local endpoint serves this feature, or null when it stays on Claude. */
 function routeFor(feature: string | undefined): { url: string; timeoutMs: number } | null {
   if (!KEY || !feature) return null;
+  if (localServerDown()) return null;
   if (FEATURES.has(feature) && URL_BASE) return { url: URL_BASE, timeoutMs: TIMEOUT_MS };
   if (BULK_FEATURES.has(feature) && BULK_URL) return { url: BULK_URL, timeoutMs: BULK_TIMEOUT_MS };
   return null;
@@ -163,7 +224,7 @@ export async function callLocal(
     // Qwen hybrid models: answer directly, no hidden reasoning pass.
     chat_template_kwargs: { enable_thinking: false },
   };
-  const res = await fetch(`${route.url}/chat/completions`, {
+  const res = await localFetch(`${route.url}/chat/completions`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${KEY}` },
     body: JSON.stringify(body),
@@ -200,7 +261,7 @@ export async function localChatCompletion(
   body: { messages: unknown[]; tools?: unknown[]; toolChoice?: "auto" | "none"; maxTokens: number; temperature?: number },
   route: { url: string; timeoutMs: number },
 ): Promise<{ message: { content?: string | null; tool_calls?: Array<{ id: string; function: { name: string; arguments: string } }> }; finish: string; usage: { in: number; out: number } }> {
-  const res = await fetch(`${route.url}/chat/completions`, {
+  const res = await localFetch(`${route.url}/chat/completions`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${KEY}` },
     body: JSON.stringify({
@@ -393,7 +454,7 @@ export async function* streamLocal(
     timer = setTimeout(() => ctrl.abort(new Error("local-llm: stream went silent")), STREAM_IDLE_MS);
   };
   try {
-    const res = await fetch(`${route.url}/chat/completions`, {
+    const res = await localFetch(`${route.url}/chat/completions`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${KEY}` },
       body: JSON.stringify({

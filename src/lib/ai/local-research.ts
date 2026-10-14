@@ -18,7 +18,7 @@
 //
 // On for a feature only when it is in LOCAL_LLM_RESEARCH_FEATURES.
 
-import { localChatCompletion, localKey, localToolsBase, LOCAL_MODEL } from "./local-llm";
+import { localChatCompletion, localFetch, localKey, localServerDown, localToolsBase, LOCAL_MODEL } from "./local-llm";
 
 const URL_BASE = process.env.LOCAL_LLM_URL?.replace(/\/+$/, "") ?? "";
 const RESEARCH_FEATURES = new Set(
@@ -59,7 +59,7 @@ export interface ResearchResult {
 
 /** Whether `feature` may run its web research on Surge's server. */
 export function localResearchOn(feature: string): boolean {
-  return RESEARCH_FEATURES.has(feature) && !!URL_BASE && !!localKey() && !!localToolsBase();
+  return RESEARCH_FEATURES.has(feature) && !!URL_BASE && !!localKey() && !!localToolsBase() && !localServerDown();
 }
 
 /** One form of a URL for "did the loop see it": no scheme case, no www., no fragment, no trailing slash. */
@@ -75,7 +75,7 @@ export function normUrl(u: string): string {
 }
 
 async function gateway<T>(path: string, body: unknown, timeoutMs: number): Promise<T> {
-  const res = await fetch(`${localToolsBase()}${path}`, {
+  const res = await localFetch(`${localToolsBase()}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${localKey()}` },
     body: JSON.stringify(body),
