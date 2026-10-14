@@ -34,62 +34,115 @@ const BULK_TIMEOUT_MS = Number(process.env.LOCAL_LLM_BULK_TIMEOUT_MS ?? 120_000)
 
 // Server-down breaker (14 Oct 2026). That morning the home server dropped off
 // the network for over half an hour, and every local-eligible call waited its
-// full timeout (25-120 s) before Claude ran. Now, when a call cannot reach the
-// server (a network error, a timeout before any reply, or 502/503/504 from the
-// Funnel), every local route is skipped until downUntil, so Claude answers at
-// once; the first call after that probes the server again. The pause doubles
-// on each further miss (1, 2, 4 ... minutes, at most 10) and a reply resets
-// it. Module state, so it lives as long as the server instance does.
+// full timeout (25-120 s) before Claude ran. The breaker opens only on proof
+// the server is gone:
+// - a network error (fetch failed: refused, reset, DNS, connect timeout) or a
+//   502/503/504 from the model URL opens it at once;
+// - a timeout alone does not (a long answer from a healthy server looks the
+//   same: vLLM sends no headers until a non-streamed answer is done), so it
+//   starts one quick check, GET <url>/models in 5 s, and only a failed check
+//   opens it.
+// While open, every local route is skipped, so Claude answers at once. When
+// the pause ends the routes stay off until one quick check succeeds (one
+// check per instance, never a student's request). The pause is 1 minute
+// (LOCAL_LLM_DOWN_MS), doubling on each failed check up to 10 minutes;
+// failures from requests that started before the breaker opened add nothing.
+// Only the model server feeds it: the research tools gateway answers 502 for
+// a government site that will not load, which says nothing about the model.
+// Module state, so it lives as long as the server instance does.
 const DOWN_MS = Number(process.env.LOCAL_LLM_DOWN_MS ?? 60_000);
 const DOWN_MAX_MS = 10 * 60_000;
+const CHECK_TIMEOUT_MS = 5_000;
 let downUntil = 0;
 let downMisses = 0;
+let openedAt = 0;
+let checking: Promise<boolean> | null = null;
 
-/** True while the breaker holds every local route off (the server could not be reached). */
-export function localServerDown(now: number = Date.now()): boolean {
-  return now < downUntil;
-}
-
-/** A network error, a timeout or a gateway status: the server is not there (not a bad request). */
-export function isUnreachable(err: unknown): boolean {
+/** fetch failed before any reply: refused, reset, DNS, connect timeout. */
+export function isNetworkError(err: unknown): boolean {
   const e = err as { name?: string; message?: string; cause?: { code?: string } } | null;
-  if (!e) return false;
-  if (e.name === "TimeoutError" || e.name === "AbortError") return true;
-  if (e.name === "TypeError" && /fetch failed|network|socket|ECONN|ENOTFOUND|EAI_AGAIN|ETIMEDOUT|UND_ERR/i.test(`${e.message ?? ""} ${e.cause?.code ?? ""}`)) return true;
-  return /^local-llm (502|503|504)\b|no first token in time/.test(e.message ?? "");
+  return !!e && e.name === "TypeError" && /fetch failed|network|socket|ECONN|ENOTFOUND|EAI_AGAIN|ETIMEDOUT|UND_ERR/i.test(`${e.message ?? ""} ${e.cause?.code ?? ""}`);
 }
 
-function markDown(now: number = Date.now()): void {
+/** Our own deadline ran out (a dead server or a long, healthy answer: a check tells them apart). */
+export function isLocalTimeout(err: unknown): boolean {
+  const e = err as { name?: string; message?: string } | null;
+  return !!e && (e.name === "TimeoutError" || /no first token in time/.test(e.message ?? ""));
+}
+
+function open(startedAt: number, now: number = Date.now()): void {
+  // A request that started before the breaker last opened is the same outage.
+  if (downMisses > 0 && startedAt < openedAt) return;
   downMisses += 1;
+  openedAt = now;
   downUntil = now + Math.min(DOWN_MS * 2 ** (downMisses - 1), DOWN_MAX_MS);
   console.warn(`[local-llm] server unreachable; local routes off for ${Math.round((downUntil - now) / 1000)} s`);
 }
 
-function markUp(): void {
+function close(): void {
   downMisses = 0;
   downUntil = 0;
 }
 
+/** One quick GET <url>/models at a time; true = the server answered. A failed check opens the breaker. */
+function checkServer(): Promise<boolean> {
+  if (checking) return checking;
+  const startedAt = Date.now();
+  checking = (async () => {
+    try {
+      const res = await fetch(`${URL_BASE}/models`, {
+        headers: { Authorization: `Bearer ${KEY}` },
+        signal: AbortSignal.timeout(CHECK_TIMEOUT_MS),
+      });
+      if (res.status >= 502 && res.status <= 504) throw new Error(`models ${res.status}`);
+      close();
+      return true;
+    } catch {
+      open(startedAt);
+      return false;
+    }
+  })().finally(() => {
+    checking = null;
+  });
+  return checking;
+}
+
 /**
- * fetch to Surge's server (model or tools gateway) that feeds the breaker: an
- * unreachable server trips it, any HTTP reply below 502 resets it.
+ * True while the breaker holds every local route off. After the pause it
+ * stays true until one quick check (started here, in the background) finds
+ * the server again.
+ */
+export function localServerDown(now: number = Date.now()): boolean {
+  if (downMisses === 0) return false;
+  if (now < downUntil) return true;
+  void checkServer();
+  return true;
+}
+
+/**
+ * fetch to the model server that feeds the breaker: a network error or a
+ * 502/503/504 opens it, a timeout starts a quick check, and any other reply
+ * closes it.
  */
 export async function localFetch(url: string, init: RequestInit): Promise<Response> {
+  const startedAt = Date.now();
   let res: Response;
   try {
     res = await fetch(url, init);
   } catch (err) {
-    if (isUnreachable(err)) markDown();
+    if (isNetworkError(err)) open(startedAt);
+    else if (isLocalTimeout(err)) void checkServer();
     throw err;
   }
-  if (res.status === 502 || res.status === 503 || res.status === 504) markDown();
-  else markUp();
+  if (res.status >= 502 && res.status <= 504) open(startedAt);
+  else close();
   return res;
 }
 
 /** Test hook: forget the breaker's state. */
 export function resetLocalBreaker(): void {
-  markUp();
+  close();
+  checking = null;
 }
 
 /** Which local endpoint serves this feature, or null when it stays on Claude. */

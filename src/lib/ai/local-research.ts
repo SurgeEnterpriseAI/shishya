@@ -18,7 +18,7 @@
 //
 // On for a feature only when it is in LOCAL_LLM_RESEARCH_FEATURES.
 
-import { localChatCompletion, localFetch, localKey, localServerDown, localToolsBase, LOCAL_MODEL } from "./local-llm";
+import { localChatCompletion, localKey, localServerDown, localToolsBase, LOCAL_MODEL } from "./local-llm";
 
 const URL_BASE = process.env.LOCAL_LLM_URL?.replace(/\/+$/, "") ?? "";
 const RESEARCH_FEATURES = new Set(
@@ -75,7 +75,7 @@ export function normUrl(u: string): string {
 }
 
 async function gateway<T>(path: string, body: unknown, timeoutMs: number): Promise<T> {
-  const res = await localFetch(`${localToolsBase()}${path}`, {
+  const res = await fetch(`${localToolsBase()}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${localKey()}` },
     body: JSON.stringify(body),
