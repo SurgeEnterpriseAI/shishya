@@ -1,6 +1,8 @@
 // /terms — Terms of Service. Plain-language, honest, and specific to
 // what Shishya actually is: a free platform with one optional paid
 // human service (mentor sessions, ₹9 incl. GST from the second session).
+// 16 Oct 2026: section 8, our YouTube videos and the YouTube Terms of
+// Service, which the YouTube API audit and quota form asks to see.
 
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -16,7 +18,7 @@ export default function TermsPage() {
   return (
     <main className="container-prose max-w-3xl py-10 text-sm leading-relaxed text-ink-700">
       <h1 className="text-2xl font-bold text-ink-900">Terms of Service</h1>
-      <p className="mt-1 text-xs text-ink-500">Last updated: 27 September 2026</p>
+      <p className="mt-1 text-xs text-ink-500">Last updated: 16 October 2026</p>
 
       <h2 className="mt-6 text-base font-bold text-ink-900">1. Who we are</h2>
       <p className="mt-2">
@@ -76,7 +78,20 @@ export default function TermsPage() {
         session.
       </p>
 
-      <h2 className="mt-6 text-base font-bold text-ink-900">8. Changes and governing law</h2>
+      <h2 className="mt-6 text-base font-bold text-ink-900">8. Our videos on YouTube</h2>
+      <p className="mt-2">
+        Shishya&apos;s practice videos are published on our YouTube channel,{" "}
+        <a className="text-saffron-700 underline" href="https://www.youtube.com/@itv-tech">iTV (@itv-tech)</a>, with internal Surge tools
+        that use YouTube API Services. These Terms are also the terms of use of those tools: by using
+        them, you agree to be bound by the{" "}
+        <a className="text-saffron-700 underline" href="https://www.youtube.com/t/terms">YouTube Terms of Service</a>. Watching our videos
+        on YouTube is governed by those terms and the{" "}
+        <a className="text-saffron-700 underline" href="http://www.google.com/policies/privacy">Google Privacy Policy</a>. How the tools use
+        YouTube data, and how to remove their access or ask us to delete it, is in our{" "}
+        <Link href="/privacy" className="text-saffron-700 underline">Privacy Policy</Link>.
+      </p>
+
+      <h2 className="mt-6 text-base font-bold text-ink-900">9. Changes and governing law</h2>
       <p className="mt-2">
         We may update these terms; material changes will be noted on this page with a new date.
         These terms are governed by the laws of India; courts at Bengaluru, Karnataka have

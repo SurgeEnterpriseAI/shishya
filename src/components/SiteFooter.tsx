@@ -8,6 +8,8 @@ import Link from "next/link";
 // page ride along with the footer — the once-only home-screen offer and
 // the field web-vitals beacon. Both render nothing most of the time.
 import { InstallOffer } from "./InstallOffer";
+// 16 Oct 2026: the ITV YouTube link beside Privacy, home page only (see the file).
+import { HomeYouTubeLink } from "./HomeYouTubeLink";
 import { WebVitals } from "./WebVitals";
 // 26 Sep 2026 (whole-education identity): every page links the independent
 // sections (src/lib/site-description.ts SECTION_LINKS) so crawlers reach
@@ -55,6 +57,7 @@ export function SiteFooter() {
           <Link href="/pricing" className="hover:text-ink-800">Pricing</Link>
           <Link href="/terms" className="hover:text-ink-800">Terms</Link>
           <Link href="/privacy" className="hover:text-ink-800">Privacy</Link>
+          <HomeYouTubeLink />
           <Link href="/refunds" className="hover:text-ink-800">Refunds</Link>
           <Link href="/contact" className="hover:text-ink-800">Contact</Link>
         </p>
