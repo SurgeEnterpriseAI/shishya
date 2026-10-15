@@ -292,7 +292,11 @@ async function generateLocally(opts: { istDate: string; tx?: DigestTx; dry?: boo
       returned,
     });
   }
-  if (opts.dry) return { items, written: 0, inputTokens: r.usage.input_tokens, outputTokens: r.usage.output_tokens };
+  if (opts.dry) {
+    // The preview also returns each kept item's source text (for checking it).
+    const evidence = Object.fromEntries(items.map((it) => [it.source ?? "", (r.pages.get(normUrl(it.source ?? "")) ?? "").slice(0, 2500)]));
+    return { items, written: 0, inputTokens: r.usage.input_tokens, outputTokens: r.usage.output_tokens, evidence };
+  }
   const written = opts.tx ? await writeDigestRows(opts.tx, opts.istDate, items) : await writeDigestDay(opts.istDate, items);
   return { items, written, inputTokens: r.usage.input_tokens, outputTokens: r.usage.output_tokens };
 }
