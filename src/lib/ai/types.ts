@@ -128,6 +128,8 @@ export interface TutorInput {
   studentState: StudentState;
   syllabus: SyllabusContext;
   history: ChatTurn[];
+  /** Ids of the bank questions the last tutor reply showed (ai/answer-grading.ts): an answer to them is graded in code. */
+  pendingQuestionIds?: string[];
   userMessage: string;
   language: Language;
   /** Topic the student is currently focused on (set when the chat was

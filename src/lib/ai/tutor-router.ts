@@ -53,7 +53,7 @@ const SERIES = /\b(next (?:number|term)|missing (?:number|term)|find the (?:next
 // Affairs" is a signed-in weak-topic request the tools answer (router eval 13 Oct).
 const QUIZ_REVIEW = /(^|\n)\s*\(?[A-D]\)[\s\S]*\n\s*\(?[B-D]\)|\bexplain (?:these|the) questions\b/i;
 // "next", "next mistake": a short turn that continues a tool flow, not a guess at intent.
-const CONTINUE_FLOW = /^(?:next|next (?:mistake|one|question)|show (?:the )?next(?: mistake)?|continue|go on|one more)[.!]?$/i;
+const CONTINUE_FLOW = /^(?:next|next (?:mistake|one|question|topic)|show (?:the )?next(?: mistake)?|continue|go on|one more)[.!]?$/i;
 
 // A turn that asks for the answer in an Indian language ("Hindi m trick bta do",
 // "explain in Telugu"): the reply must switch language, which Qwen missed in the

@@ -503,7 +503,7 @@ describe("POST /api/chat — the school path (source)", () => {
 
   it("loads the turn's context and builds the tutor input through src/lib/tutor-turn.ts", () => {
     expect(src).toContain("const turnContext = await loadTutorTurnContext(turnScope);");
-    expect(src).toContain("tutorStream(tutorStreamArgs({ scope: turnScope, context: turnContext, history, language: replyLanguage }))");
+    expect(src).toContain("tutorStream(tutorStreamArgs({ scope: turnScope, context: turnContext, history, language: replyLanguage, pendingQuestionIds }))");
     expect(src).toContain("schoolBand: schoolProfile?.band ?? null,");
     expect(src).toContain("topicCode: body.topicCode ?? null,");
   });

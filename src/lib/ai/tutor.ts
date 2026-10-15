@@ -33,6 +33,7 @@ import { routeTutorTurn, unsupportedFacts } from "./tutor-router";
 import { groundFromBank, groundingBlock } from "./grounding";
 import { cleanActions, gateUnit, takeSentences, type GateStats } from "./sentence-gate";
 import { prisma } from "@/lib/db/prisma";
+import { gradeAnswers, gradingBlock, gradingConsistent, loadGradedQuestions, parseAnswerTurn, shownQuestionIds, type GradedAnswer } from "./answer-grading";
 import { siteFeaturesBlock } from "./site-facts";
 import { buildTutorExamFacts, examFactsBlock } from "./exam-facts";
 import { SCHOOL_TUTOR_STATIC_PROMPT, schoolClassBlock, schoolTurnContext, type SchoolTurn, type SchoolTutorScope } from "@/lib/school/tutor-persona";
@@ -248,13 +249,25 @@ export async function* tutorStream(
   input: TutorStreamInput
 ): AsyncGenerator<
   | { delta: string }
-  | { tool: { name: string; args: any; ok: boolean; ms: number } }
+  | { tool: { name: string; args: any; ok: boolean; ms: number; shown?: string[] } }
   | { done: TutorOutput }
 > {
   // The request is built by tutorRequest (1 Oct 2026 — moved there unchanged).
   const school = input.school ?? null;
   const ctx = school ? undefined : input.ctx;
-  const { system: systemBlocks, messages } = tutorRequest(input);
+  const { system: baseSystem, messages } = tutorRequest(input);
+  // 16 Oct 2026: an answer to bank questions the tutor just showed ("b",
+  // "1.b 2.c") is graded here against the verified key (ai/answer-grading.ts);
+  // whichever model answers gets the grading as a fixed fact.
+  let graded: GradedAnswer[] | null = null;
+  if (ctx && input.pendingQuestionIds?.length) {
+    const answers = parseAnswerTurn(input.userMessage, input.pendingQuestionIds.length);
+    if (answers) {
+      const qs = await loadGradedQuestions(prisma as never, input.pendingQuestionIds).catch(() => null);
+      graded = qs ? gradeAnswers(qs, answers) : null;
+    }
+  }
+  const systemBlocks = graded ? [...baseSystem, { type: "text" as const, text: gradingBlock(graded) }] : baseSystem;
 
   let finalText = "";
   let toolTurns = 0;
@@ -292,7 +305,11 @@ export async function* tutorStream(
   const ROUTER_ON = process.env.LOCAL_LLM_TUTOR_ROUTER !== "0";
   let grounding = "";
   let hold = false;
-  if (route && ROUTER_ON) {
+  if (route && ROUTER_ON && graded) {
+    // A code-graded answer runs local, held and checked whole (it would
+    // otherwise be a "very short turn" for Claude).
+    hold = true;
+  } else if (route && ROUTER_ON) {
     const turn = routeTutorTurn(input.userMessage);
     if (turn.route === "claude") {
       console.info(`[local-llm] ${feature}: router → Claude (${turn.reasons.join(", ")})`);
@@ -414,7 +431,7 @@ export async function* tutorStream(
         for (const c of calls) {
           const tStart = Date.now();
           const result = await executeTool(ctx, c.name, c.input);
-          yield { tool: { name: c.name, args: c.input, ok: result.ok, ms: Date.now() - tStart } };
+          yield { tool: { name: c.name, args: c.input, ok: result.ok, ms: Date.now() - tStart, shown: shownQuestionIds(c.name, result) } };
           results.push({
             type: "tool_result",
             tool_use_id: c.id,
@@ -442,6 +459,8 @@ export async function* tutorStream(
         // The fact check on the whole reply: anything unsupported → Claude, nothing shown.
         const bad = unsupportedFacts(final.reply, contextText());
         if (bad.length) throw new Error(`fact check: ${bad.slice(0, 3).join(" | ")}`);
+        const why = graded ? gradingConsistent(final.reply, graded) : null;
+        if (why) throw new Error(`grading check: ${why}`);
         shown = true;
         shownText = final.reply;
         yield { delta: final.reply };
@@ -568,7 +587,7 @@ export async function* tutorStream(
       const result = await executeTool(ctx, tu.name, tu.input);
       const ms = Date.now() - tStart;
       yield {
-        tool: { name: tu.name, args: tu.input, ok: result.ok, ms },
+        tool: { name: tu.name, args: tu.input, ok: result.ok, ms, shown: shownQuestionIds(tu.name, result) },
       };
       toolResults.push({
         type: "tool_result",

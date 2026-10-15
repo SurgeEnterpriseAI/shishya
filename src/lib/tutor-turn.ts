@@ -25,6 +25,7 @@
 //   • a general / guest / school turn gets a minimal student state carrying
 //     preferredLang (anon = EN); a school turn carries the stored band.
 
+import { pendingQuestionIdsFromMetadata } from "@/lib/ai/answer-grading";
 import { prisma } from "@/lib/db/prisma";
 import { getStudentState } from "@/lib/db/student-state";
 import { getStudentJourney } from "@/lib/db/student-journey";
@@ -165,12 +166,26 @@ export function historyFromRows(rows: readonly HistoryRow[], excludeId: string |
   return history;
 }
 
+/**
+ * The bank questions the latest ASSISTANT row before this turn showed (16 Oct
+ * 2026, ai/answer-grading.ts): ids from its stored tool calls, or [] when
+ * the student has written anything since (a later USER row breaks the link).
+ */
+export function pendingQuestionIdsFromRows(rows: readonly (HistoryRow & { metadata?: unknown })[], excludeId: string | null): string[] {
+  const kept = rows.filter((m) => m.id !== excludeId);
+  const last = kept[kept.length - 1];
+  if (!last || last.role === "USER") return [];
+  return pendingQuestionIdsFromMetadata(last.metadata);
+}
+
 /** The tutorStream() input for a turn — the one place both callers build it. */
 export function tutorStreamArgs(a: {
   scope: TutorTurnScope;
   context: TutorTurnContext;
   history: { role: "user" | "assistant"; content: string }[];
   language: TutorInput["language"];
+  /** Bank questions the last tutor reply showed (pendingQuestionIdsFromRows). */
+  pendingQuestionIds?: string[];
 }): Parameters<typeof tutorStream>[0] {
   const { scope, context, history } = a;
   const { userId, schoolCtx, examCode: examCodeForChat } = scope;
@@ -187,6 +202,7 @@ export function tutorStreamArgs(a: {
     },
     // history is already normalised to {role, content}.
     history,
+    pendingQuestionIds: a.pendingQuestionIds,
     // A bare language name after an answer means "say that again in X"
     // (stored as typed; only the model sees the explicit request).
     userMessage: tutorMessageFor(scope.message, history.some((t) => t.role === "assistant")),

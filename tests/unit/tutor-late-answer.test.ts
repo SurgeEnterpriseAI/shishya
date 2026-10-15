@@ -1210,14 +1210,14 @@ describe("source seams", () => {
     // The one other model call is the 1-token probe, with no system prompt.
     expect(db.match(/messages\.create\(/g)).toHaveLength(1);
     expect(db).toContain('anthropic.messages.create({ model: MODEL, max_tokens: 1, messages: [{ role: "user", content: "ping" }] })');
-    // tutorStream sends exactly what tutorRequest builds.
+    // tutorStream sends what tutorRequest builds (plus, on a code-graded answer turn, the grading block — 16 Oct 2026).
     const tutor = read("src/lib/ai/tutor.ts");
-    expect(tutor).toContain("const { system: systemBlocks, messages } = tutorRequest(input);");
+    expect(tutor).toContain("const { system: baseSystem, messages } = tutorRequest(input);");
     expect(tutor).toContain("maxCalls: ctx ? MAX_TOOL_TURNS + 2 : 1");
     // The chat route builds the same input through the same helpers.
     const route = read("src/app/api/chat/route.ts");
     expect(route).toContain("await loadTutorTurnContext(turnScope)");
-    expect(route).toContain("tutorStream(tutorStreamArgs({ scope: turnScope, context: turnContext, history, language: replyLanguage }))");
+    expect(route).toContain("tutorStream(tutorStreamArgs({ scope: turnScope, context: turnContext, history, language: replyLanguage, pendingQuestionIds }))");
     expect(route).toContain("historyFromRows(rows, reusedRowId)");
     // tutor.ts books the run's calls under its own feature, prompt untouched.
     expect(tutor).toContain('input.usage?.feature ?? (school ? "tutor-school" : ctx ? "tutor" : "tutor-anon")');

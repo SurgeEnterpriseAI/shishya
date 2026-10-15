@@ -56,7 +56,7 @@ import { prisma } from "@/lib/db/prisma";
 import { realExamKey } from "@/lib/db/exam-scope";
 import { ensureEnrollment } from "@/lib/db/enrollment";
 import { tutorStream } from "@/lib/ai";
-import { historyFromRows, loadTutorTurnContext, tutorStreamArgs, type TutorTurnScope } from "@/lib/tutor-turn";
+import { historyFromRows, loadTutorTurnContext, pendingQuestionIdsFromRows, tutorStreamArgs, type TutorTurnScope } from "@/lib/tutor-turn";
 import { classifyTutorFailure } from "@/lib/ai/tutor-failure";
 import { isAiUnavailable, tutorUnavailableCode, tutorUnavailableState, tutorUnavailableText, type TutorFailReason } from "@/lib/tutor-unavailable";
 import { tutorAnswerEmailable } from "@/lib/db/tutor-answer-email";
@@ -808,7 +808,9 @@ async function handleChat(req: Request, turn: TurnRow): Promise<Response> {
         // focus and any stored band (tools off; guests too since 27 Sep
         // 2026), and tools only for a signed-in exam chat — the one builder
         // the late answer uses too.
-        const ai = tutorStream(tutorStreamArgs({ scope: turnScope, context: turnContext, history, language: replyLanguage }));
+        // 16 Oct 2026: the bank questions the last reply showed, so an answer to them is graded in code (ai/answer-grading.ts).
+        const pendingQuestionIds = userId && chatSession ? pendingQuestionIdsFromRows(rows, reusedRowId) : [];
+        const ai = tutorStream(tutorStreamArgs({ scope: turnScope, context: turnContext, history, language: replyLanguage, pendingQuestionIds }));
 
         let actions: any = undefined;
         const toolCalls: any[] = [];
