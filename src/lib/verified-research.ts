@@ -71,6 +71,10 @@ export function pickVerified(runs: ResearchRun[], officialUrl: string | null | u
   if (rows.some((i) => i.kind === "EXAM" && quotesDateRange(i.evidence ?? ""))) return null;
   if (!prev || Date.parse(latest.startedAt!) - Date.parse(prev.startedAt!) > PREV_MS || key(prev) !== key(latest)) return null;
   const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  // 16 Oct 2026: only past dates (SBI PO, NEET UG, IBPS PO: every stage found
+  // is over) would replace Claude's upcoming stages and next-cycle estimates
+  // with history. The student needs what comes next, so Claude keeps those.
+  if (!rows.some((i) => Date.parse(`${i.date}T00:00:00Z`) >= today)) return null;
   const dates: ImportantDate[] = rows.map((i) => ({
     label: String(i.label ?? i.kind).slice(0, 120),
     daysFromNow: Math.round((Date.parse(`${i.date}T00:00:00Z`) - today) / DAY),

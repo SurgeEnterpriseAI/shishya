@@ -45,3 +45,14 @@ describe("quotesDateRange (16 Oct 2026)", () => {
     expect(quotesDateRange("Date of Examination : 01/11/2026")).toBe(false);
   });
 });
+
+describe("pickVerified needs something still ahead (16 Oct 2026)", () => {
+  it("only past dates (every stage over) → null, so Claude keeps the next stages", () => {
+    const past = [item("APPLICATION_START", "2026-07-01"), item("APPLICATION_END", "2026-07-26")];
+    expect(pickVerified([run("2026-10-14T23:00:00Z", past), run("2026-10-14T20:30:00Z", past)], null, NOW)).toBeNull();
+  });
+  it("one date today or later is enough", () => {
+    const mixed = [item("APPLICATION_END", "2026-09-09"), item("EXAM", "2026-11-01")];
+    expect(pickVerified([run("2026-10-14T23:00:00Z", mixed), run("2026-10-14T20:30:00Z", mixed)], null, NOW)).not.toBeNull();
+  });
+});
