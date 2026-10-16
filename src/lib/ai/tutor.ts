@@ -28,7 +28,8 @@ import {
 } from "./prompts";
 import type { TutorInput, TutorOutput } from "./types";
 import { tutorTools, executeTool, type ToolContext } from "./tools";
-import { localRouteFor, streamLocal, ReplyStreamFilter, LOCAL_MODEL, type LocalToolCall } from "./local-llm";
+import { isEnglishOnly, localRouteFor, streamLocal, ReplyStreamFilter, LOCAL_MODEL, type LocalToolCall } from "./local-llm";
+import { indicReplyProblem } from "./indic-reply-guard";
 import { routeTutorTurn, unsupportedFacts } from "./tutor-router";
 import { groundFromBank, groundingBlock } from "./grounding";
 import { cleanActions, gateUnit, takeSentences, type GateStats } from "./sentence-gate";
@@ -303,14 +304,19 @@ export async function* tutorStream(
   // 0 losses of 16, criticals Claude 10 vs local 0; guest 5/14 → guest stays
   // on Claude (leave tutor-anon out of LOCAL_LLM_FEATURES).
   const ROUTER_ON = process.env.LOCAL_LLM_TUTOR_ROUTER !== "0";
+  // A Hindi/Marathi turn (LOCAL_LLM_INDIC_TUTOR): local because of its
+  // language, so the router's language reasons are no reason to leave, and
+  // the reply is always held and checked whole.
+  const indicTurn = !!route && !isEnglishOnly(systemBlocks, messages);
   let grounding = "";
-  let hold = false;
+  let hold = indicTurn;
   if (route && ROUTER_ON && graded) {
     // A code-graded answer runs local, held and checked whole (it would
     // otherwise be a "very short turn" for Claude).
     hold = true;
   } else if (route && ROUTER_ON) {
-    const turn = routeTutorTurn(input.userMessage);
+    let turn = routeTutorTurn(input.userMessage);
+    if (indicTurn && turn.route === "claude" && turn.reasons.every((r) => r === "Hinglish" || r === "asks for an Indian language")) turn = { route: "general", reasons: [] };
     if (turn.route === "claude") {
       console.info(`[local-llm] ${feature}: router → Claude (${turn.reasons.join(", ")})`);
       route = null;
@@ -461,6 +467,13 @@ export async function* tutorStream(
         if (bad.length) throw new Error(`fact check: ${bad.slice(0, 3).join(" | ")}`);
         const why = graded ? gradingConsistent(final.reply, graded) : null;
         if (why) throw new Error(`grading check: ${why}`);
+        if (indicTurn) {
+          const toolText = convo
+            .flatMap((m) => (typeof m.content === "string" ? [] : m.content.filter((b: any) => b.type === "tool_result").map((b: any) => (typeof b.content === "string" ? b.content : JSON.stringify(b.content)))))
+            .join("\n");
+          const problem = indicReplyProblem(final.reply, toolText);
+          if (problem) throw new Error(`language check: ${problem}`);
+        }
         shown = true;
         shownText = final.reply;
         yield { delta: final.reply };

@@ -266,6 +266,31 @@ export function isHindiOnly(system: Block[], messages: Msg[]): boolean {
   return langs > 0;
 }
 
+// 16 Oct 2026 (founder: "use the model for the intelligence; the harness keeps
+// the quality"): with LOCAL_LLM_INDIC_TUTOR=1 a signed-in tutor turn whose
+// reply language is Hindi or Marathi may go local too. tutor.ts holds such a
+// reply whole and checks it (ai/indic-reply-guard.ts) before anyone sees it.
+const INDIC_TUTOR = process.env.LOCAL_LLM_INDIC_TUTOR === "1";
+const DEVANAGARI_REPLY = new Set(["HI", "HINDI", "MR", "MARATHI"]);
+
+/** Every "Reply language" line asks for Hindi or Marathi and the conversation holds no other Indian script. */
+export function isDevanagariReplyOnly(system: Block[], messages: Msg[]): boolean {
+  const convo: string[] = [];
+  for (const m of messages) {
+    const t = convoTextOf(m.content);
+    if (t == null) return false;
+    convo.push(t);
+  }
+  if (OTHER_INDIC.test(convo.join("\n"))) return false;
+  const all = [...system.map((b) => b.text), ...convo].join("\n");
+  let langs = 0;
+  for (const m of all.matchAll(REPLY_LANG)) {
+    if (!DEVANAGARI_REPLY.has(m[1].toUpperCase())) return false;
+    langs++;
+  }
+  return langs > 0;
+}
+
 /** Share of the letters in `text` that are Devanagari (0..1). */
 export function devanagariShare(text: string): number {
   const letters = text.replace(/[\s\d\p{P}\p{S}]/gu, "");
@@ -282,6 +307,7 @@ export function localEligible(
   if (!routeFor(feature)) return false;
   if (req.tools && !opts.allowTools) return false;
   if (isEnglishOnly(req.system, req.messages)) return true;
+  if (INDIC_TUTOR && feature === "tutor" && isDevanagariReplyOnly(req.system, req.messages)) return true;
   return !!feature && HINDI_FEATURES.has(feature) && isHindiOnly(req.system, req.messages);
 }
 
