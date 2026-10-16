@@ -45,6 +45,19 @@ const key = (r: ResearchRun) =>
     .sort()
     .join(",");
 
+const MONTH = "(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)";
+const DATE_MENTION = new RegExp(String.raw`\b\d{1,2}\s?(?:st|nd|rd|th)?\s*(?:of\s+)?${MONTH}\b|\b\d{1,2}[./-]\d{1,2}[./-]\d{2,4}\b`, "gi");
+
+/**
+ * The quote gives an exam WINDOW ("30th November to 31st December"), not a day
+ * (16 Oct 2026: SSC CHSL Tier-I was kept as "31 December" alone). One date of
+ * a range would mislead a student, so such an exam stays with Claude.
+ */
+export function quotesDateRange(evidence: string): boolean {
+  const mentions = evidence.match(DATE_MENTION)?.length ?? 0;
+  return mentions >= 2 && /\b(?:to|till|until)\b|[–—]/i.test(evidence);
+}
+
 /**
  * The runs → an ExamInfoResult, or null when they are not fresh and settled
  * (see the file header). Pure: the caller fetches the runs.
@@ -55,6 +68,7 @@ export function pickVerified(runs: ResearchRun[], officialUrl: string | null | u
   if (!latest || now.getTime() - Date.parse(latest.startedAt!) > FRESH_MS) return null;
   const rows = officialRows(latest);
   if (rows.length < 2) return null;
+  if (rows.some((i) => i.kind === "EXAM" && quotesDateRange(i.evidence ?? ""))) return null;
   if (!prev || Date.parse(latest.startedAt!) - Date.parse(prev.startedAt!) > PREV_MS || key(prev) !== key(latest)) return null;
   const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
   const dates: ImportantDate[] = rows.map((i) => ({

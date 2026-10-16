@@ -33,3 +33,15 @@ describe("pickVerified", () => {
     expect(r.dates).toHaveLength(2);
   });
 });
+
+describe("quotesDateRange (16 Oct 2026)", () => {
+  it("an exam window is a range; one day, or two days joined by 'and', is not", async () => {
+    const { quotesDateRange } = await import("@/lib/verified-research");
+    expect(quotesDateRange("3. Combined Higher Secondary (10+2) Tier-I 30th November, to Level Examination, 2026 (CBE) 31st December, 2026")).toBe(true);
+    expect(quotesDateRange("Tier-I from 12.11.2026 to 30.11.2026")).toBe(true);
+    expect(quotesDateRange("PRELIMINARY EXAMINATION held on 1 st August 2026 and 2 nd August 2026")).toBe(false);
+    expect(quotesDateRange("will be conducted on 12th and 13th December 2026")).toBe(false);
+    expect(quotesDateRange("Level 1 Exam Date 2: 6 th October 2026")).toBe(false);
+    expect(quotesDateRange("Date of Examination : 01/11/2026")).toBe(false);
+  });
+});
