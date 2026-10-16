@@ -47,3 +47,21 @@ export function indicReplyProblem(reply: string, toolText: string): string | nul
   if (options >= 3 && !/"options"\s*:/.test(toolText)) return "shows question options no tool returned";
   return null;
 }
+
+const LANG_NAME: Record<string, string> = { HI: "Hindi", HINDI: "Hindi", MR: "Marathi", MARATHI: "Marathi" };
+
+/**
+ * The local model's own rule for a Hindi/Marathi turn (16 Oct 2026 eval: with
+ * only the prompt's "Reply language: HI" line it answered 10 of 18 such turns
+ * in English). Null when the prompt asks for neither language.
+ */
+export function indicLanguageRule(systemText: string): string | null {
+  const m = /Reply language:\s*([A-Za-z]+)/.exec(systemText);
+  const name = m ? LANG_NAME[m[1].toUpperCase()] : undefined;
+  if (!name) return null;
+  return (
+    `Language rule: write your ENTIRE reply in ${name}, in Devanagari script — every heading, sentence and explanation. ` +
+    `Keep exam names, formulas, numbers, option letters and links exactly as they are. ` +
+    `Talk about the student's own mistakes or questions only when a tool returned them; if none came back, say so and offer to fetch them — never write questions yourself.`
+  );
+}

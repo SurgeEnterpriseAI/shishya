@@ -29,7 +29,7 @@ import {
 import type { TutorInput, TutorOutput } from "./types";
 import { tutorTools, executeTool, type ToolContext } from "./tools";
 import { isEnglishOnly, localRouteFor, streamLocal, ReplyStreamFilter, LOCAL_MODEL, type LocalToolCall } from "./local-llm";
-import { indicReplyProblem } from "./indic-reply-guard";
+import { indicLanguageRule, indicReplyProblem } from "./indic-reply-guard";
 import { routeTutorTurn, unsupportedFacts } from "./tutor-router";
 import { groundFromBank, groundingBlock } from "./grounding";
 import { cleanActions, gateUnit, takeSentences, type GateStats } from "./sentence-gate";
@@ -310,6 +310,7 @@ export async function* tutorStream(
   const indicTurn = !!route && !isEnglishOnly(systemBlocks, messages);
   let grounding = "";
   let hold = indicTurn;
+  const indicRule = indicTurn ? indicLanguageRule(systemBlocks.map((b) => b.text).join("\n")) : null;
   if (route && ROUTER_ON && graded) {
     // A code-graded answer runs local, held and checked whole (it would
     // otherwise be a "very short turn" for Claude).
@@ -394,6 +395,7 @@ export async function* tutorStream(
             system: [
               ...systemBlocks,
               ...(ctx ? [{ type: "text" as const, text: LOCAL_TOOL_RULES }] : []),
+              ...(indicRule ? [{ type: "text" as const, text: indicRule }] : []),
               ...(grounding ? [{ type: "text" as const, text: grounding }] : []),            ],
             messages: convo,
             maxTokens: TOKEN_LIMITS.tutor,
