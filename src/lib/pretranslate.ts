@@ -9,6 +9,10 @@
 // (13 Oct read: 8,794 of 14,785), so a question translated tonight is
 // usually asked for again.
 //
+// 16 Oct 2026: also the exam's questions not yet served (served ones first,
+// then by language demand). Live translation was still 247 Claude rows of
+// Tamil in a week: mocks keep drawing questions no attempt had served yet.
+//
 // Only the languages the eval passed (Tamil, Telugu, Gujarati, Kannada);
 // PRETRANSLATE_LOCALES overrides. A question whose local translation fails
 // the check is marked in Question.metadata.pretranslateReject[locale] and
@@ -49,12 +53,13 @@ export async function pickPretranslateWork(maxQuestions: number): Promise<Pretra
      SELECT d.locale, q.id
        FROM demand d
        JOIN "Question" q ON q."examId" = d."examId"
-       JOIN served s ON s.qid = q.id
+       LEFT JOIN served s ON s.qid = q.id
       WHERE q.language = 'EN'
+        AND q.validated = true
         AND q.body !~ '[ऀ-෿]'
         AND (q.metadata -> 'pretranslateReject' -> d.locale) IS NULL
         AND NOT EXISTS (SELECT 1 FROM "QuestionTranslation" t WHERE t."questionId" = q.id AND t.locale = d.locale)
-      ORDER BY s.c * d.n DESC, q.id
+      ORDER BY COALESCE(s.c, 0) * d.n DESC, d.n DESC, q.id
       LIMIT $2`,
     PRETRANSLATE_LOCALES,
     maxQuestions,
