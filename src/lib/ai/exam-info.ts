@@ -197,7 +197,7 @@ Open each notice or page with fetch_page before you cite it: an "official" date 
       recordAiUsage(feature, { usage: r.usage, model: r.model }, { model: r.model, ref: input.examCode, latencyMs: r.latencyMs });
       const local = parseExamInfoText(r.text, input, today);
       if (local) {
-        const checked = checkAgainstPages(local, r);
+        const checked = checkAgainstPages(local, r, { name: input.examName, shortName: input.examShortName, officialUrl: input.officialUrl });
         // At least 2 page-verified OFFICIAL dates (14 Oct truth-set eval: with
         // "any 2 rows" the local answer was accepted on exams where it had only
         // estimates, and the site showed 42 of 94 true dates against Claude's 54).
@@ -331,6 +331,23 @@ export function dateOnPage(iso: string, page: string): boolean {
   return new RegExp(`(^|[^0-9])${dayWord}[ ,-]*(of )?${word}[ ,-]*${y}`).test(text) || new RegExp(`${word}[ ,-]*${dayWord}[ ,-]+${y}`).test(text);
 }
 
+const NAME_STOP = new Set(["exam", "examination", "test", "the", "of", "and", "for", "recruitment", "level", "board", "commission", "services", "service", "state", "public", "india", "indian", "national", "all"]);
+
+/**
+ * Does the page name this exam? Its short name (spaces optional, "SSC CGL" =
+ * "ssccgl") or most of the distinctive words of its full name.
+ */
+export function pageNamesExam(page: string, exam: { name: string; shortName: string }): boolean {
+  const text = page.toLowerCase();
+  const squashed = text.replace(/[^a-z0-9]+/g, "");
+  const short = exam.shortName.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  if (short.length >= 3 && squashed.includes(short)) return true;
+  const words = exam.name.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length >= 3 && !NAME_STOP.has(w));
+  if (!words.length) return false;
+  const hit = words.filter((w) => new RegExp(`(^|[^a-z0-9])${w}([^a-z0-9]|$)`).test(text)).length;
+  return hit / words.length >= 0.6;
+}
+
 /**
  * The page check on Surge's server's reply (fail closed): an "official" date
  * stays only when its cited page was opened and prints the date; a news item
@@ -340,13 +357,24 @@ export function dateOnPage(iso: string, page: string): boolean {
 export function checkAgainstPages(
   info: { news: NewsItem[]; dates: ImportantDate[] },
   r: Pick<ResearchResult, "opened" | "pages">,
+  exam?: { name: string; shortName: string; officialUrl?: string | null },
 ): { news: NewsItem[]; dates: ImportantDate[] } {
   const pageOf = (u: string | null | undefined) => (u ? r.pages.get(normUrl(u)) : undefined);
-  const dates = info.dates.filter((d) => {
-    if (d.confidence !== "official") return !d.source || !!pageOf(d.source);
+  const dates: ImportantDate[] = [];
+  for (const d of info.dates) {
+    if (d.confidence !== "official") {
+      if (!d.source || pageOf(d.source)) dates.push(d);
+      continue;
+    }
     const page = pageOf(d.source);
-    return !!page && !!d.date && dateOnPage(d.date, page);
-  });
+    if (!page || !d.date || !dateOnPage(d.date, page)) continue;
+    // 16 Oct 2026 (truth-set eval: MP MPESB's local dates were printed on
+    // the board's site but belonged to other recruitments): the page must
+    // name this exam, and only the conducting body's own host is "official"
+    // — a date on a news page stays as "expected".
+    if (exam && !pageNamesExam(page, exam)) continue;
+    dates.push(exam && !isOfficialSource(d.source, exam.officialUrl) ? { ...d, confidence: "expected" } : d);
+  }
   const news = info.news.filter((n) => !n.source || r.opened.has(normUrl(n.source)));
   return { news, dates };
 }
