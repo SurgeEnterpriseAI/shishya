@@ -72,7 +72,9 @@ describe("each cron asks the guard before its model calls, with its own label", 
 
   it("the labels reach the ledger: exam news and exam-week pages write the label the guard caps", () => {
     expect(read("src/lib/exam-refresh-run.ts")).toContain("{ useWebSearch: true, usageFeature: feature }");
-    expect(read("src/lib/ai/exam-info.ts")).toContain('recordAiUsage(opts.usageFeature ?? "exam-info"');
+    // Since 14 Oct 2026 the label is read once (`feature`) and used by both the local and the Claude path.
+    expect(read("src/lib/ai/exam-info.ts")).toContain('const feature = opts.usageFeature ?? "exam-info";');
+    expect(read("src/lib/ai/exam-info.ts").match(/recordAiUsage\(feature, /g)?.length).toBe(2);
     expect(read("src/lib/refresh-phase-articles.ts")).toMatch(/usageFeature,\n\s+\}\);/);
     expect(read("src/lib/ai/answer-key-check.ts")).toContain('opts.usageFeature ?? "akr-check"');
   });
