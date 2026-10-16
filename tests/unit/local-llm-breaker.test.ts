@@ -17,6 +17,7 @@ const ON = {
   LOCAL_LLM_FEATURES: "explain",
   LOCAL_LLM_BULK_FEATURES: "coach-day",
   LOCAL_LLM_RESEARCH_FEATURES: "akr-check",
+  LOCAL_LLM_NETWORK_RETRY_MS: "0",
 };
 
 async function load(env: Record<string, string> = ON) {
@@ -81,7 +82,7 @@ describe("the breaker", () => {
     expect(m.localRouteFor("explain", req)).toBeNull();
     expect(m.localEligible("coach-day", req)).toBe(false);
     expect((await m.localFirst("explain", req, claude)).local).toBe(false);
-    expect(calls.chat).toBe(1); // no second wait on the dead server
+    expect(calls.chat).toBe(2); // the first call and its one retry; no wait at all on the second call
   });
 
   it("a slow but healthy answer (timeout) does not trip it: the quick check finds the server", async () => {
@@ -209,5 +210,25 @@ describe("a check frozen by the platform does not hold the breaker open (14 Oct 
     await flush();
     expect(calls.models).toBe(2);
     expect(m.localServerDown()).toBe(false);
+  });
+});
+
+describe("one network blip is retried before Claude (16 Oct 2026)", () => {
+  it("a single fetch failure, then a reply: served locally, breaker stays closed", async () => {
+    const m = await load();
+    let n = 0;
+    const calls = server(async () => (n++ === 0 ? Promise.reject(netError()) : okReply()), async () => models());
+    const out = await m.localFirst("explain", req, claude);
+    expect(out.local).toBe(true);
+    expect(calls.chat).toBe(2);
+    expect(m.localServerDown()).toBe(false);
+  });
+  it("two failures in a row: Claude answers and the breaker opens", async () => {
+    const m = await load();
+    const calls = server(async () => Promise.reject(netError()), async () => models());
+    const out = await m.localFirst("explain", req, claude);
+    expect(out.local).toBe(false);
+    expect(calls.chat).toBe(2);
+    expect(m.localServerDown()).toBe(true);
   });
 });

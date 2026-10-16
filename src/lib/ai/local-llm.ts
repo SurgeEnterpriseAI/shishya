@@ -52,6 +52,7 @@ const BULK_TIMEOUT_MS = Number(process.env.LOCAL_LLM_BULK_TIMEOUT_MS ?? 120_000)
 // a government site that will not load, which says nothing about the model.
 // Module state, so it lives as long as the server instance does.
 const DOWN_MS = Number(process.env.LOCAL_LLM_DOWN_MS ?? 60_000);
+const NETWORK_RETRY_MS = Number(process.env.LOCAL_LLM_NETWORK_RETRY_MS ?? 800);
 const DOWN_MAX_MS = 10 * 60_000;
 const CHECK_TIMEOUT_MS = 5_000;
 let downUntil = 0;
@@ -148,7 +149,16 @@ export async function localFetch(url: string, init: RequestInit): Promise<Respon
   const startedAt = Date.now();
   let res: Response;
   try {
-    res = await fetch(url, init);
+    try {
+      res = await fetch(url, init);
+    } catch (err) {
+      // 16 Oct 2026: one network blip (17:07 IST, "fetch failed" in 3.6 s
+      // while the server was healthy) sent a coach plan to Claude and would
+      // have held every local route off for 60 s. One retry first.
+      if (!isNetworkError(err) || init.signal?.aborted) throw err;
+      await new Promise((r) => setTimeout(r, NETWORK_RETRY_MS));
+      res = await fetch(url, init);
+    }
   } catch (err) {
     if (isNetworkError(err)) open(startedAt);
     else if (isLocalTimeout(err)) void checkServer();
