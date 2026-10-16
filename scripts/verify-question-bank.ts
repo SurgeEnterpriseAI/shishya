@@ -108,6 +108,14 @@
 //   --allow-shared-key  no ANTHROPIC_BULK_API_KEY: run the batches on the
 //                  shared ANTHROPIC_API_KEY (founder decision, 30 Sep 2026)
 //   --resume ID    continue a journaled run (poll / collect / retry / write)
+//   --local        Surge's server first (16 Oct 2026, founder: "move everything
+//                  to our server without losing quality"): every blind solve
+//                  runs on the local model; a malformed or failed one goes to
+//                  the batch as before. The examiner verdict runs locally too,
+//                  and is KEPT only when it is CORRECT, the three local solves
+//                  all chose the stored key, the verdict names that key and its
+//                  confidence clears the gate; every other question (a dispute,
+//                  ambiguity, low agreement) gets Claude's verdict in the batch.
 //   --force        start a fresh run even though an open journal covers rows
 
 import path from "node:path";
@@ -154,6 +162,8 @@ import {
 import type { Difficulty } from "../src/lib/ai/types";
 import { WITHDRAWN_TAG } from "../src/lib/question-withdrawn";
 import { changedTranslatedFields, clearQuestionTranslations } from "../src/lib/question-translation-cache";
+import { callLocal } from "../src/lib/ai/local-llm";
+import { recordAiUsage } from "../src/lib/ai/usage";
 
 const prisma = new PrismaClient();
 
@@ -176,6 +186,7 @@ const ALLOW_SHARED_KEY = process.argv.includes(ALLOW_SHARED_KEY_FLAG);
 /** 30 Sep 2026: this runner accepts --founder-manages-credits in place of --i-confirm-auto-reload. */
 const GUARD_OPTS: GuardFlagOpts = { founderCreditsAck: true };
 const RESUME = arg("--resume") ?? null;
+const LOCAL = process.argv.includes("--local");
 const JOURNAL_DIR = "D:/CodexProjects/shishya-data/bank-verify-batches";
 const JOURNAL_FILE = arg("--journal") ?? null;
 const POLL_MS = Math.max(5, Number(arg("--poll-seconds") ?? 60)) * 1000;
@@ -446,6 +457,51 @@ function printEstimate(title: string, solveReqs: MessageParams[], verifyReqs: Me
 }
 
 /** `apply` is null on a dry run; on --apply it carries the guard main() built, the pre-flight probe it already passed and the Batches client on the key it resolved. */
+/**
+ * --local: run a phase's unsubmitted requests on Surge's server, two at a
+ * time. `take` says what to do with each reply: keep it (succeeded), or
+ * leave the request "built" so the batch sends it to Claude. A local error
+ * also leaves it for Claude.
+ */
+async function localPhase(
+  journal: Journal,
+  file: string,
+  phase: string,
+  feature: string,
+  build: (r: JournalRequest) => MessageParams,
+  take: (r: JournalRequest, m: Anthropic.Messages.Message) => "keep" | "claude",
+) {
+  const todo = Object.values(journal.requests).filter((r) => r.phase === phase && r.status === "built");
+  const route = { url: (process.env.LOCAL_LLM_URL ?? "").replace(/\/+$/, ""), timeoutMs: 180_000 };
+  if (!route.url) throw new Error("--local needs LOCAL_LLM_URL");
+  let next = 0;
+  let kept = 0;
+  let toClaude = 0;
+  let errors = 0;
+  const worker = async () => {
+    for (;;) {
+      const r = todo[next++];
+      if (!r) return;
+      try {
+        const p = build(r);
+        const system = typeof p.system === "string" ? [{ type: "text" as const, text: p.system }] : ((p.system ?? []) as { type: "text"; text: string }[]);
+        const m = await callLocal({ system, messages: p.messages as never, maxTokens: p.max_tokens, temperature: 0.3 }, route);
+        recordAiUsage(feature, m, { model: m.model, ref: r.questionId });
+        if (take(r, m) === "keep") {
+          r.status = "succeeded";
+          kept++;
+        } else toClaude++;
+      } catch {
+        errors++;
+      }
+      if ((kept + toClaude + errors) % 50 === 0) saveJournal(file, journal);
+    }
+  };
+  await Promise.all([worker(), worker()]);
+  saveJournal(file, journal);
+  console.log(`   local ${phase}: ${kept} kept on Surge's server · ${toClaude} left for Claude · ${errors} local errors (left for Claude) of ${todo.length}`);
+}
+
 async function runBatchMode(apply: { guard: SpendGuard; preflight: ProbeResult; api: BatchesApi } | null) {
   // 1. journal
   let journal: Journal;
@@ -568,6 +624,13 @@ async function runBatchMode(apply: { guard: SpendGuard; preflight: ProbeResult; 
     journal.phase = "solve";
     saveJournal(file, journal);
   }
+  if (LOCAL)
+    await localPhase(journal, file, SOLVE, BANK_SOLVE, buildSolve, (r, message) => {
+      const run = parseSolveRun(message);
+      if (!run) return "claude";
+      (journal.outputs.solve[r.questionId] ??= {})[String(r.runIndex)] = run;
+      return "keep";
+    });
   const solveOut = await runJournalPhase(
     journal,
     file,
@@ -626,6 +689,34 @@ async function runBatchMode(apply: { guard: SpendGuard; preflight: ProbeResult; 
     journal.phase = "verify";
     saveJournal(file, journal);
   }
+  if (LOCAL)
+    await localPhase(
+      journal,
+      file,
+      VERIFY,
+      BANK_VERIFY,
+      (r) => buildVerifyRequest(candidates.get(r.questionId)!, solves.get(r.questionId)!),
+      (r, message) => {
+        const cand = candidates.get(r.questionId)!;
+        const solve = solves.get(r.questionId)!;
+        let v: VerifyVerdict;
+        try {
+          v = parseVerifyVerdict(message, cand);
+        } catch {
+          return "claude";
+        }
+        const consensus =
+          v.verdict === "CORRECT" &&
+          solve.agreement === 1 &&
+          solve.runs.length === SOLVE_RUNS &&
+          solve.majority === cand.answerKey &&
+          (v.correctKey ?? cand.answerKey) === cand.answerKey &&
+          v.confidence >= DEFAULT_CONFIG.minVerifyConfidence;
+        if (!consensus) return "claude";
+        journal.outputs.verify[r.questionId] = v;
+        return "keep";
+      },
+    );
   const verifyOut = await runJournalPhase(
     journal,
     file,
