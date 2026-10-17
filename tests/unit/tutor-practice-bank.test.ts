@@ -84,6 +84,7 @@ describe("find_questions_on_topic — up to 10 per call", () => {
     expect(msg).toContain("Shishya's checked bank has no questions on 'quant.percentage' yet");
     expect(msg).toContain("do not write practice questions of your own");
     expect(msg).toContain("Offer the nearest real option");
+    expect(msg).toContain("the mock builder (only where this exam has it)");
   });
 });
 
@@ -102,6 +103,9 @@ describe("practice questions come only from the checked bank — every Claude pa
     expect(PRACTICE_FROM_BANK_RULE).toContain("up to 10");
     expect(PRACTICE_FROM_BANK_RULE).toContain("If the bank has nothing on that topic, say so plainly in one line — never fill the gap with questions of your own");
     expect(PRACTICE_FROM_BANK_RULE).toContain("follow MOCK REQUESTS in the syllabus block");
+    // Review (17 Oct 2026): no builder link promised on an exam without the builder.
+    expect(PRACTICE_FROM_BANK_RULE).toContain("its builder link, where this exam has the builder");
+    expect(PRACTICE_FROM_BANK_RULE).toContain("the mock builder (only where this exam has it)");
     expect(PRACTICE_FROM_BANK_RULE).toContain("start_adaptive_quiz");
     expect(PRACTICE_FROM_BANK_RULE).toContain("a worked example of your own inside an explanation is fine");
   });

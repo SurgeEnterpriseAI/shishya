@@ -396,7 +396,7 @@ async function findQuestionsOnTopic(
       questions: [],
       // 17 Oct 2026: an empty bank is said plainly — the tutor must not fill
       // the gap with questions it writes itself (not answer-checked).
-      message: `Shishya's checked bank has no questions on '${topicCode}' yet. Tell the student so plainly in one line and do not write practice questions of your own. Offer the nearest real option: a close topic from the syllabus, the mock builder or the exam's mocks, or a walk-through of the concept.`,
+      message: `Shishya's checked bank has no questions on '${topicCode}' yet. Tell the student so plainly in one line and do not write practice questions of your own. Offer the nearest real option: a close topic from the syllabus, the mock builder (only where this exam has it) or the exam's mocks, or a walk-through of the concept.`,
     };
   }
   return {

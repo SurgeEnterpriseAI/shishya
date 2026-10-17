@@ -370,8 +370,11 @@ describe("the exam tutor's shared 1-hour prefix is byte-identical to before scho
   // (tests/unit/tutor-practice-bank.test.ts). The failing run expected exactly
   // the previous pins. Before: signedIn 82b7a62d…, guest 46f804b7…, general
   // f0fcffbd….
+  // Review, same day: signedIn only, re-pinned ON PURPOSE — the practice rule
+  // names the builder link only "where this exam has the builder" (MOCK
+  // REQUESTS drops it on exams without one). Before: signedIn 933344a9….
   const PINNED = {
-    signedIn: "933344a9e45c973a4b3fcc893587e677c07e8d61d03faeef9129d24112af11e2",
+    signedIn: "e34468cbb681149a2195018da03baa62acbfd0364b4c6f52cca6babeb2a3d0df",
     guest: "bf27ce0deaf501fe171182b3bcc76528f9ea18b2e6dd4c5908e7d61364d4dd0b",
     general: "f2aeefc19ebfcef382ebd393b4a2378377a8691550fa3f3d191db271988a71a0",
   };

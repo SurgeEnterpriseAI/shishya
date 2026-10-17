@@ -184,7 +184,15 @@ const ASK_VERB =
 // "hindu" is one letter from "hindi"; a word near two languages ("hindhi":
 // hindi, sindhi) is left alone. The requests themselves are still only the
 // patterns below, so a typo of a name in a question is not a request.
-const NOT_A_LANGUAGE_TYPO = new Set(["maratha", "marathas", "marathe", "bangle", "bangles", "sanskriti"]);
+// Review (17 Oct 2026): "sindhi" and "bangla" are read exactly only. Their
+// one-typo neighbours are everyday words — "sandhi" (a Hindi grammar topic,
+// 35 student messages to date; a bare "sandhi" would have set Sindhi for a
+// year), "sindhu", "siddhi", "sidhi", "kangla", "banga" in the bank — and
+// students rarely ask for either language. "maruthi" (a name) and "kanada"
+// (Canada; the sage Kanada) are real words too. ("hindhi" now sits near
+// hindi alone, a 5-letter name, so it is still left alone.)
+const NOT_A_LANGUAGE_TYPO = new Set(["maratha", "marathas", "marathe", "bangle", "bangles", "sanskriti", "maruthi", "kanada"]);
+const EXACT_ONLY_NAMES = new Set(["sindhi", "bangla"]);
 const LATIN_LANGUAGE_NAMES: ReadonlyArray<readonly [Locale, string]> = LANGUAGE_WORDS.flatMap(([locale, words]) =>
   words.filter((w) => /^[a-z]+$/.test(w)).map((w) => [locale, w] as const),
 );
@@ -205,7 +213,7 @@ function withinOneTypo(a: string, b: string): boolean {
 function fixLanguageTypos(text: string): string {
   return text.replace(/[a-z]{5,}/g, (word) => {
     if (NOT_A_LANGUAGE_TYPO.has(word) || LATIN_LANGUAGE_NAMES.some(([, w]) => w === word)) return word;
-    const near = LATIN_LANGUAGE_NAMES.filter(([, w]) => !w.startsWith(word) && withinOneTypo(word, w));
+    const near = LATIN_LANGUAGE_NAMES.filter(([, w]) => !EXACT_ONLY_NAMES.has(w) && !w.startsWith(word) && withinOneTypo(word, w));
     if (!near.length || new Set(near.map(([l]) => l)).size > 1 || near.some(([, w]) => w.length < 6)) return word;
     return near[0][1];
   });

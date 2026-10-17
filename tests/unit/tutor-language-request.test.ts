@@ -50,6 +50,17 @@ describe("detectLanguageRequest — a language the student asks the tutor for", 
     expect(detectLanguageRequest("explain article 370 in kashmir")).toBeNull();
     expect(detectLanguageRequest("explain in hindu")).toBeNull();
     expect(detectLanguageRequest("explain in hindhi")).toBeNull();
+    // Review (17 Oct 2026): one typo from "sindhi" / "bangla" / "kannada" /
+    // "marathi" but everyday words — a bare "sandhi" read as Sindhi set it for a year.
+    expect(detectLanguageRequest("sandhi")).toBeNull();
+    expect(detectLanguageRequest("give me 10 questions in sandhi")).toBeNull();
+    expect(detectLanguageRequest("explain in sindhu ghati sabhyata")).toBeNull();
+    expect(detectLanguageRequest("explain in sidhi bhasha")).toBeNull();
+    expect(detectLanguageRequest("tell me about the revolt in banga")).toBeNull();
+    expect(detectLanguageRequest("tell me about jobs in kanada")).toBeNull();
+    expect(detectLanguageRequest("give this answer to maruthi")).toBeNull();
+    expect(detectLanguageRequest("sindhi")).toBe("sd"); // the exact names still read
+    expect(detectLanguageRequest("in bangla please")).toBe("bn");
     expect(bareLanguageRequest("Marathit")).toBe("mr");
     expect(tutorMessageFor("maratgi", true)).toBe("Please give your previous answer again, in full, in Marathi.");
   });
