@@ -171,13 +171,19 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (Number(changed) === 0) {
       return Response.json({ ok: false, error: "not-released", message: "Nothing to release — the session is paid or already closed. Refresh the desk." }, { status: 409 });
     }
+    // 17 Oct 2026 (review, src/lib/mentor-request.ts): this mail said "back at
+    // the front of the queue" (the desk lists NEW by createdAt, so it goes back
+    // to its own place), "your free session is still yours" (not for a later
+    // session) and "a mentor will pick it up again shortly" (requests waited
+    // 5-48 days), and offered a line on the report page that only exists while
+    // the request has a thread. Now only what holds.
     if (reqRow.student_email) {
       await sendEmail({
         to: reqRow.student_email,
         subject: `Your Shishya mentor session — let's find you another time`,
         html: `<p>Namaste ${reqRow.student_name ?? ""},</p>
-<p>That session couldn't happen, so we've put your request back at the front of the queue — <b>your free session is still yours</b>, nothing was used up.</p>
-<p>A mentor will pick it up again shortly. You can also add a line about when you're usually free on your <a href="https://shishya.in/me/report">report page</a> — it helps them reach you at the right time.</p>
+<p>That session couldn't happen, so we've put your request back in the queue — <b>nothing was used up</b>.</p>
+<p>Mentors take requests as they are available, so there is no set time. When a mentor takes it, you get an email again, and it shows on your <a href="https://shishya.in/me/report">report page</a>.</p>
 <p>Meanwhile your mocks, plan and daily study pack are all where you left them.</p>
 <p>— Shishya</p>`,
         tag: "mentor-session",

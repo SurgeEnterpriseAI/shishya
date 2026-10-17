@@ -55,7 +55,10 @@ const pricingFaq = {
       name: "What does the ₹9 mentor session fee cover?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "₹9 (inclusive of 18% GST) pays only for a human mentor's personal time — a ~10-minute one-on-one session with a verified mentor who has cleared that exam. It is never a platform charge. The first mentor session is completely free; the fee applies from the second session onwards, and is collected only after a mentor accepts the request.",
+        // 17 Oct 2026 (src/lib/mentor-request.ts): no "who has cleared that
+        // exam" — any approved mentor takes any exam's request, and the one
+        // approved mentor applied for one exam.
+        text: "₹9 (inclusive of 18% GST) pays only for a human mentor's personal time — a ~10-minute one-on-one session with a verified mentor from Shishya's mentor network, which is new and small, so there is no set waiting time. It is never a platform charge. The first mentor session is completely free; the fee applies from the second session onwards, and is collected only after a mentor accepts the request.",
       },
     },
     {
@@ -90,7 +93,7 @@ export default function PricingPage() {
       <div className="mt-4 rounded-xl border border-ink-200 bg-white p-5">
         <p className="text-base font-bold text-ink-900">Mentor sessions (optional): first free, then ₹9</p>
         <ul className="mt-2 list-disc space-y-1 pl-5">
-          <li>A live ~10-minute one-on-one session with a verified mentor who has cleared your exam.</li>
+          <li>A live ~10-minute one-on-one session with a verified mentor from Shishya&apos;s mentor network. The network is new and small: there is no set waiting time, and there may be no mentor for your exam yet.</li>
           <li><b>Your first session is free.</b></li>
           <li>From the second session: <b>₹9 per session, inclusive of 18% GST</b> (₹7.63 + ₹1.37 tax, SAC 999293).</li>
           <li>You pay only after a mentor accepts your request; the session room unlocks on payment.</li>

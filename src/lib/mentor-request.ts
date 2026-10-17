@@ -27,7 +27,9 @@
 // there is no set time, there may be no mentor for the exam yet — and when
 // one takes it, the student gets an email with the session link (that email
 // is sent by PATCH /api/mentor-sessions/[id] "take", to the account's email)
-// and the room shows on the report.
+// and the room shows on the report. For a later session (one DONE before)
+// that mail carries the ₹9 payment link instead, and the room opens on the
+// report once it is paid — so the words say so (review, same day).
 //
 // Pure: no React, no DB. Tests: tests/unit/mentor-request.test.ts.
 
@@ -56,9 +58,9 @@ export function mentorRequestOpen(i: { examCode?: string | null; goalCodes?: rea
 export const MENTOR_REQUEST_COPY = {
   formTitle: "🤝 Ask for a mentor session — free",
   formBody:
-    "Mentors are real people on Shishya's mentor network, which is new and small. A mentor takes requests as they are available, so there is no set waiting time, and there may be no mentor for your exam yet. When a mentor takes your request, you get an email with the session link.",
+    "Mentors are real people on Shishya's mentor network, which is new and small. A mentor takes requests as they are available, so there is no set waiting time, and there may be no mentor for your exam yet. When a mentor takes your request, you get an email with the session link — for a later session, with the ₹9 step that unlocks it.",
   fee: "Your first session is free. Later sessions are ₹9 — only for the mentor's time, never for the platform: everything you use on Shishya stays free forever.",
   sentTitle: "✅ Request sent",
   sentBody:
-    "Your request is waiting for a mentor. Mentors take requests as they are available — there is no set time, and it can take a while. When a mentor takes it, you get an email with the session link, and it shows on this page. Your report goes with the request, so the talk starts from what you need.",
+    "Your request is waiting for a mentor. Mentors take requests as they are available — there is no set time, and it can take a while. When a mentor takes it, you get an email with the session link — for a later session, the ₹9 step that unlocks it — and it shows on this page. Your report goes with the request, so the talk starts from what you need.",
 } as const;

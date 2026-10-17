@@ -37,7 +37,7 @@ export default function TermsPage() {
 
       <h2 className="mt-6 text-base font-bold text-ink-900">3. Mentor sessions (the one paid service)</h2>
       <ul className="mt-2 list-disc space-y-1 pl-5">
-        <li>A student preparing for an exam may optionally request a live session with a verified human mentor who has cleared that exam.</li>
+        <li>A student preparing for an exam may optionally request a live session with a verified human mentor from Shishya&apos;s mentor network. The network is new and small: a request has no set waiting time, and there may be no mentor for that exam yet.</li>
         <li><b>The first mentor session is free.</b> From the second session onwards, a session (approximately 10 minutes) costs <b>₹9, inclusive of GST at 18%</b> (SAC 999293 — commercial training and coaching services).</li>
         <li>Payment is collected only <b>after</b> a mentor accepts your request, via our payment partner. The session room unlocks on payment.</li>
         <li>The fee honours the mentor&apos;s time. It is not a charge for using Shishya.</li>

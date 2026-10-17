@@ -177,8 +177,8 @@ describe("the words keep only what the product keeps", () => {
   });
 
   it("the one promise — an email with the session link when a mentor takes it — is the take route's own mail to the student", () => {
-    expect(MENTOR_REQUEST_COPY.formBody).toMatch(/When a mentor takes your request, you get an email with the session link/);
-    expect(MENTOR_REQUEST_COPY.sentBody).toMatch(/When a mentor takes it, you get an email with the session link, and it shows on this page/);
+    expect(MENTOR_REQUEST_COPY.formBody).toMatch(/When a mentor takes your request, you get an email with the session link — for a later session, with the ₹9 step that unlocks it\./);
+    expect(MENTOR_REQUEST_COPY.sentBody).toMatch(/When a mentor takes it, you get an email with the session link — for a later session, the ₹9 step that unlocks it — and it shows on this page/);
     const take = code("src/app/api/mentor-sessions/[id]/route.ts");
     const branch = take.slice(take.indexOf('if (body?.action === "take") {'), take.indexOf('if (body?.action === "done") {'));
     expect(branch).toContain("SET status = 'TAKEN'");
@@ -187,9 +187,28 @@ describe("the words keep only what the product keeps", () => {
     // Both versions of that mail carry the way in: the room link, or the payment link that unlocks it on the report.
     expect(branch).toContain('<a href="${meetUrl}">${meetUrl}</a>');
     expect(branch).toContain("https://shishya.in/me/report");
+    // A later session (one DONE before) gets the ₹9 payment link, not the room — the words say "the ₹9 step".
+    expect(branch).toContain("let feeDue = (prior[0]?.n ?? 0) >= 1;");
+    expect(branch).toContain('<a href="${payLink.shortUrl}">');
     // … and say only that a mentor took it.
     expect(branch).not.toMatch(/cleared this path|who cleared your exam/);
     // "it shows on this page": the report reads the TAKEN request and the card shows the room.
     expect(card).toContain('if (existing?.status === "TAKEN") {');
+  });
+
+  it("the release mail (a session that could not happen) sets no time and claims no queue place or free session", () => {
+    const route = code("src/app/api/mentor-sessions/[id]/route.ts");
+    const release = route.slice(route.indexOf('if (body?.action === "release") {'));
+    expect(release).toContain("sendEmail({");
+    expect(release).not.toMatch(/shortly|front of the queue|free session is still yours|add a line/i);
+    expect(release).toContain("Mentors take requests as they are available, so there is no set time.");
+  });
+
+  it("/pricing, /about and /terms promise no mentor 'who has cleared your exam' (any approved mentor takes any exam's request)", () => {
+    for (const f of ["src/app/pricing/page.tsx", "src/app/about/page.tsx", "src/app/terms/page.tsx"]) {
+      const src = code(f);
+      expect(src, f).not.toMatch(/who has cleared (?:your|that|this) exam|someone who has cleared/i);
+      expect(src, f).toMatch(/mentor network/);
+    }
   });
 });

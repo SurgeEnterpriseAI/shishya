@@ -106,7 +106,7 @@ export default async function AboutPage() {
       <p className="mt-3">
         The platform is AI-first and runs with a tiny team, which is why it can stay free for
         students permanently. The only thing that ever carries a price is optional <b>human</b>{" "}
-        time: a short mentor session with someone who has cleared your exam, first session free,
+        time: a short one-on-one session with a verified mentor from Shishya&apos;s mentor network, first session free,
         then {MENTOR_FEE} per session inclusive of GST (see <Link href="/pricing" className="text-saffron-700 underline">Pricing</Link>).
       </p>
       <p className="mt-3">
