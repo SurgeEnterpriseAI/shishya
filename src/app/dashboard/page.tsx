@@ -66,6 +66,7 @@ import { loadPickup } from "@/lib/db/pickup";
 import { pickupView } from "@/lib/pickup";
 import { PickupCard } from "@/components/PickupCard";
 import { AnonQuizRecall } from "@/components/AnonQuizRecall";
+import { holdsKidsGoal } from "@/lib/mentor-request";
 import type { Metadata } from "next";
 
 // 3 Oct 2026 (fix C13): a private page carries its own noindex and title — a
@@ -301,6 +302,10 @@ async function renderDashboard(searchParams: Promise<DashboardSearchParams>) {
       // Today's 5 topic from the one picker /today uses (rotation included).
       pickDailyFive(userId).catch(() => null),
     ]);
+
+  // 17 Oct 2026 (under-13 safety): an account holding a kids' exam gets no
+  // "Talk to a mentor" door on this page (src/lib/mentor-request.ts).
+  const kidsGoal = holdsKidsGoal(enrollments.map((e) => e.exam.code));
 
   // ── School-only account (26 Sep 2026, student mode — fixer) ──────────
   // A school account with NO real-exam enrolment gets its own small home —
@@ -831,7 +836,7 @@ async function renderDashboard(searchParams: Promise<DashboardSearchParams>) {
         {/* From your educator — batch assignments + doubt channel.
             Renders only for students enrolled in an educator's batch
             (the B2B layer); everyone else sees nothing. */}
-        <EducatorCard userId={session.user.id} />
+        <EducatorCard userId={session.user.id} doubtForm={!kidsGoal} />
 
         {/* Two-paths explainer. Shown after the welcome heading until
             the user clicks "Got it ×" once. Sets expectations about
@@ -903,7 +908,7 @@ async function renderDashboard(searchParams: Promise<DashboardSearchParams>) {
               href="/me/report"
               className="mt-2 block text-right text-xs font-medium text-saffron-700 hover:text-saffron-800"
             >
-              📊 See your full preparation report — strengths, weak areas, and a mentor to talk them through →
+              📊 See your full preparation report — strengths, weak areas and today&apos;s study pack →
             </Link>
             <FlashHint
               id="report-doorway"
@@ -1206,19 +1211,23 @@ async function renderDashboard(searchParams: Promise<DashboardSearchParams>) {
                         </ul>
                         {/* Human escalation at the weak-areas moment — the
                             A mentor gives specific guidance (and
-                            routes to nearby coaching where useful). */}
-                        <div className="mt-2">
-                          <TalkToTeacher
-                            surface="weak-areas"
-                            examCode={weakest3[0]?.exam.code ?? null}
-                            topicCode={weakest3[0]?.topic.code ?? null}
-                            contextLabel={weakest3[0]?.topic.name}
-                            defaultName={session.user.name ?? null}
-                            defaultEmail={session.user.email ?? null}
-                            variant="link"
-                            linkLabel="📞 Talk to a mentor about these →"
-                          />
-                        </div>
+                            routes to nearby coaching where useful).
+                            17 Oct 2026: not for an account holding a kids'
+                            goal (src/lib/mentor-request.ts holdsKidsGoal). */}
+                        {!kidsGoal && (
+                          <div className="mt-2">
+                            <TalkToTeacher
+                              surface="weak-areas"
+                              examCode={weakest3[0]?.exam.code ?? null}
+                              topicCode={weakest3[0]?.topic.code ?? null}
+                              contextLabel={weakest3[0]?.topic.name}
+                              defaultName={session.user.name ?? null}
+                              defaultEmail={session.user.email ?? null}
+                              variant="link"
+                              linkLabel="📞 Talk to a mentor about these →"
+                            />
+                          </div>
+                        )}
                       </div>
                     )}
                     {strongest3.length > 0 && (

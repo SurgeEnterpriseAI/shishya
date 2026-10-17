@@ -7,10 +7,13 @@
 // 8-12); the browser's own last page decides only for a generic callback,
 // and only when that last page itself names an exam; the page language is
 // stored only when it is not English and the enum has it.
+// 17 Oct 2026: a kids' exam is never set by itself (autoGoalAllowed — the
+// under-13 guard src/lib/signin-cta.ts under13ExamGuard, the one list).
 // No DB, no network. Run: npx vitest run tests/unit/signup-goal.test.ts
 
 import { describe, expect, it } from "vitest";
-import { callbackAllowsTrailGoal, goalFromTrail, signupGoalOf, signupLanguage } from "@/lib/signup-goal";
+import { autoGoalAllowed, callbackAllowsTrailGoal, goalFromTrail, signupGoalOf, signupLanguage } from "@/lib/signup-goal";
+import { UNDER13_ENTRY_EXAM_CODES, UNDER13_OLYMPIAD_CODES, under13ExamGuard } from "@/lib/signin-cta";
 
 describe("signupGoalOf: the page the account was made from", () => {
   it("an exam hub and every exam sub-page (absolute callback cookie or path)", () => {
@@ -110,5 +113,31 @@ describe("signupLanguage: the page language, when not English", () => {
     expect(signupLanguage({ callback: null, cookie: "kok" })).toBeNull();
     expect(signupLanguage({ callback: null, cookie: null })).toBeNull();
     expect(signupLanguage({ callback: "/exams/SSC_CGL", cookie: "garbage;" })).toBeNull();
+  });
+});
+
+describe("autoGoalAllowed: sign-up never sets a kids' exam by itself (17 Oct 2026, under-13 safety)", () => {
+  // The guard's own lists, plus members of its prefix families — never a list typed here.
+  const KIDS = [...UNDER13_OLYMPIAD_CODES, ...UNDER13_ENTRY_EXAM_CODES, "SOF_IMO", "SOF_NSO", "SOF_IEO", "SOF_IGKO", "SZF_IOM", "SZF_IOEL", "NSTSE"];
+
+  it("every kids' exam is refused — the same answer as the under-13 guard", () => {
+    for (const c of KIDS) {
+      expect(under13ExamGuard(c), c).toBe(true);
+      expect(autoGoalAllowed(c), c).toBe(false);
+    }
+  });
+
+  it("a real exam for older students is allowed (IOQM and NSEJS are not kids' exams)", () => {
+    for (const c of ["SSC_CGL", "NEET_UG", "JEE_MAIN", "IOQM", "NSEJS", "NDA", "UPSC_CSE"]) expect(autoGoalAllowed(c), c).toBe(true);
+  });
+
+  it("a school container, a kids' code in another case, or nothing is refused (fails closed)", () => {
+    for (const c of ["NCERT_C09", "NCERT_C05", "CISCE_C12", "sof_imo", " SZF_IOM ", "", "  ", null, undefined]) expect(autoGoalAllowed(c as string | null), String(c)).toBe(false);
+  });
+
+  it("the page reading is unchanged — a kids' page still NAMES its exam (signupGoalOf is callbackGoal's twin); signup-profile drops it", () => {
+    expect(signupGoalOf("/exams/SOF_IMO")).toEqual({ kind: "exam", code: "SOF_IMO" });
+    expect(signupGoalOf("/chat?examCode=SZF_IOM")).toEqual({ kind: "exam", code: "SZF_IOM" });
+    expect(goalFromTrail(["/login", "/exams/SOF_IMO/quiz", "/exams/SSC_CGL"])).toEqual({ kind: "exam", code: "SOF_IMO" });
   });
 });

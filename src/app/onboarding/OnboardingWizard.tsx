@@ -24,7 +24,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { contextualExamFilter } from "@/lib/exam-aliases";
 import { useRouter } from "next/navigation";
-import { STAGE_OPTIONS, statesForWizard } from "@/lib/onboarding-options";
+import { STAGE_OPTIONS, autoPrepCodes, statesForWizard } from "@/lib/onboarding-options";
 import {
   isLanguageCode,
   LANGUAGE_CODES,
@@ -166,7 +166,8 @@ export function OnboardingWizard({
         // suggested code outside the page's exam list was ticked invisibly —
         // counted in "N exams selected" and, if active, enrolled — with no
         // chip to untick it (NSEJS for Class 9–10).
-        if (opt) setPrepCodes(opt.suggestedPrepCodes.filter((c) => exams.some((e) => e.code === c)));
+        // 17 Oct 2026: never a kids' exam ticked by itself (autoPrepCodes).
+        if (opt) setPrepCodes(autoPrepCodes(opt.suggestedPrepCodes).filter((c) => exams.some((e) => e.code === c)));
       }
     }
     if (stepIdx === 1 && !langTouched) {

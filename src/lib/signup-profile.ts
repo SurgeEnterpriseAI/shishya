@@ -13,6 +13,9 @@
 //      it is. /chat?examCode already enrolled silently (chat/page.tsx); now
 //      the exam hub, PYQ, quiz, build-mock and mock returns do too. The
 //      "Your Shishya is ready" strip names it and changes it in one tap.
+//      17 Oct 2026 (under-13 safety): NEVER a kids' exam — the resolved
+//      exam (callback, trail or a mock's exam) must pass autoGoalAllowed
+//      (src/lib/signup-goal.ts → under13ExamGuard), else no goal is set.
 //   2. LANGUAGE: a /hi or /te callback, else a non-English shishya-lang
 //      cookie, fills User.preferredLang while it is still the default EN
 //      (the same raw UPDATE as /api/me/preferences).
@@ -29,7 +32,7 @@ import { prisma } from "./db/prisma";
 import { realExamKey, realExamOrNull } from "./db/exam-scope";
 import { ensureEnrollment } from "./db/enrollment";
 import { normaliseEmail } from "./exam-alerts";
-import { callbackAllowsTrailGoal, goalFromTrail, signupGoalOf, signupLanguage, type SignupGoal } from "./signup-goal";
+import { autoGoalAllowed, callbackAllowsTrailGoal, goalFromTrail, signupGoalOf, signupLanguage, type SignupGoal } from "./signup-goal";
 import { WELCOME_COOKIE, WELCOME_COOKIE_MAX_AGE_S, WELCOME_COOKIE_VALUE } from "./welcome-strip";
 
 export interface SignupProfileInput {
@@ -65,8 +68,15 @@ async function readCookie(name: string): Promise<string | null> {
   }
 }
 
-/** The real, active exam the sign-up names, or null. */
+/** The real, active exam the sign-up names, or null — and null for a kids'
+ *  exam however it was named (autoGoalAllowed, 17 Oct 2026). */
 async function resolveGoalExam(i: SignupProfileInput): Promise<GoalExam | null> {
+  const exam = await namedGoalExam(i);
+  return exam && autoGoalAllowed(exam.code) ? exam : null;
+}
+
+/** The real, active exam the sign-up's page (or trail, or mock) names, or null. */
+async function namedGoalExam(i: SignupProfileInput): Promise<GoalExam | null> {
   let goal: SignupGoal | null = signupGoalOf(i.callback);
   if (!goal && i.anonId && callbackAllowsTrailGoal(i.callback)) {
     // One indexed read ([anonId, createdAt]): this browser's last pages.

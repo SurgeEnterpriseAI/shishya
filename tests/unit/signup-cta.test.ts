@@ -1495,7 +1495,7 @@ describe("10. /login: the exam is named only when the catalogue has it (review b
 
   it("the name and the code come from the cached catalogue of active, non-school exams — never from the URL alone", () => {
     expect(login).toContain("const catalog: Awaited<ReturnType<typeof getExamCatalog>> = await getExamCatalog().catch(() => []);");
-    expect(login).toContain("const signUpExam = examCode ? catalog.find((e) => e.code === examCode) ?? null : null;");
+    expect(login).toContain("const signUpExam = examCode && !kidsCallback ? catalog.find((e) => e.code === examCode) ?? null : null;");
     const tag = login.match(/<GoogleSignInButton\b[\s\S]*?\/>/)?.[0] ?? "";
     expect(tag).toContain("exam={signUpExam?.shortName ?? null}");
     expect(tag).toContain("examCode={signUpExam ? examCode : null}");
@@ -1523,7 +1523,24 @@ describe("10. /login: the exam is named only when the catalogue has it (review b
     // The page resolves the words itself and hands them to the button.
     const tag = login.match(/<GoogleSignInButton\b[\s\S]*?\/>/)?.[0] ?? "";
     expect(tag).toContain("{...signUp}");
-    expect(login).toMatch(/const signUp = signUpWords\(locale, \{\s*surface: "login",\s*callback: cb,\s*from: sp\.from \?\? null,\s*returning: li\.kind === "return",\s*exam: signUpExam\?\.shortName \?\? null,\s*examCode: signUpExam \? examCode : null,/);
+    expect(login).toMatch(/const signUp = kidsCallback\s*\?\s*signUpPlaceWords\(locale, \{ key: "family\.fallback" \}\)\s*:\s*signUpWords\(locale, \{\s*surface: "login",\s*callback: cb,\s*from: sp\.from \?\? null,\s*returning: li\.kind === "return",\s*exam: signUpExam\?\.shortName \?\? null,\s*examCode: signUpExam \? examCode : null,/);
+  });
+
+  it("17 Oct 2026: a kids' exam callback names no exam and gets the general words — sign-up sets no kids' exam (src/lib/signup-goal.ts autoGoalAllowed)", () => {
+    // The page: a callback to a kids' exam's page, tutor or coach is a kids' callback, by the one guard.
+    expect(login).toContain("const cbGoal = callbackGoal(cb);");
+    expect(login).toContain('const kidsCallback = under13ExamGuard(examCode) || (cbGoal?.kind === "exam" && under13ExamGuard(cbGoal.code));');
+    for (const cb of ["/exams/SOF_IMO", "/chat?examCode=SZF_IOM", "/coach?exam=PRIL", "/hi/exams/NSTSE/pyq/2024"]) {
+      const g = callbackGoal(cb);
+      expect(g?.kind === "exam" && signinCtaMod.under13ExamGuard(g.code), cb).toBe(true);
+    }
+    // What the words would have said for a kids' hub: "… is set up as your exam" — no longer true.
+    const before = signUpWords("en", { surface: "login", callback: "/exams/SOF_IMO", from: null, exam: "SOF IMO", examCode: "SOF_IMO", olympiad: true });
+    expect(before.text).toMatch(/set up as your exam/);
+    // What it says now: the general sentence, which claims no exam is set.
+    const now = signUpPlaceWords("en", { key: "family.fallback" });
+    expect(now.text).not.toMatch(/set up as your exam|becomes your exam/);
+    expect(now.text).toContain("the exam you choose");
   });
 
   it("/login wears the light button and opens its tooltip above — 'Try 5 questions first' sits under it, as a quiet outline", () => {

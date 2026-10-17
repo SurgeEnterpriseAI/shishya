@@ -96,7 +96,8 @@ describe("the coach intake plans only toward an exam with practice", () => {
   it("/coach offers and recommends only exams with practice", () => {
     const page = code("src/app/coach/page.tsx");
     expect(page).toContain("return rows.filter((r) => !practiceCodes || practiceCodes.has(r.code)).map((r) => ({");
-    expect(page).toContain("const hit = rows.find((r) => !practiceCodes || practiceCodes.has(r.code)) ?? null;");
+    // 17 Oct 2026: and never a kids' exam (tests/unit/kids-auto-goal.test.ts).
+    expect(page).toContain("const hit = rows.find((r) => !under13ExamGuard(r.code) && (!practiceCodes || practiceCodes.has(r.code))) ?? null;");
     expect(page).toMatch(/ORDER BY \(en\."userId" IS NOT NULL\) DESC, MIN\(d\.date\) ASC\s*LIMIT 10`/);
   });
 });

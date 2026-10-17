@@ -27,6 +27,7 @@ import { computeCoachPlan } from "@/lib/coach-plan";
 import { examSignUpFacts, loadExamPracticeStates, practiceExamCodes } from "@/lib/db/exam-practice";
 import { coachTaskDoneFlags } from "@/lib/coach-done";
 import { dateRowTier } from "@/lib/official-source";
+import { under13ExamGuard } from "@/lib/signin-cta";
 import { CoachIntake, type CoachRollover, type ExamOption } from "./CoachIntake";
 import { CoachPlanView } from "./CoachPlanView";
 
@@ -82,7 +83,10 @@ async function loadRollover(userId: string, fromCode: string): Promise<RolloverD
     return [] as { id: string; code: string; short: string; date: Date; enrolled: boolean }[];
   });
   const practiceCodes = rows.length > 0 ? await practiceExamCodes() : null;
-  const hit = rows.find((r) => !practiceCodes || practiceCodes.has(r.code)) ?? null;
+  // 17 Oct 2026 (under-13 safety): the intake is never pre-filled with a
+  // KIDS' exam (src/lib/signin-cta.ts under13ExamGuard) — a kids' exam is
+  // never set for a student by itself; they can still pick one from the list.
+  const hit = rows.find((r) => !under13ExamGuard(r.code) && (!practiceCodes || practiceCodes.has(r.code))) ?? null;
   const next = hit ? { id: hit.id, code: hit.code, short: hit.short, day: new Date(hit.date).toISOString().slice(0, 10) } : null;
 
   let overlap: string[] = [];

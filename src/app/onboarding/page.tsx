@@ -33,6 +33,7 @@ import { getT } from "@/lib/i18n-server";
 import { localeToLanguage } from "@/lib/preferred-lang";
 import { OnboardingWizard } from "./OnboardingWizard";
 import { findPersona } from "@/data/personas";
+import { autoPrepCodes } from "@/lib/onboarding-options";
 import { resultsReturnPath } from "@/lib/results-next-step";
 
 export const metadata: Metadata = {
@@ -130,7 +131,8 @@ export default async function OnboardingPage({
         label: persona.label,
         pageTitle: persona.pageTitle,
         stage: persona.stage,
-        prepCodes: persona.examCodes,
+        // 17 Oct 2026: never a kids' exam pre-pinned (autoPrepCodes).
+        prepCodes: autoPrepCodes(persona.examCodes),
       }
     : null;
 

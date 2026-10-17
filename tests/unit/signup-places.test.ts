@@ -696,7 +696,8 @@ describe("A2. the wiring: server pages resolve their words; client doors pass wh
   it.each(SERVER)("%s resolves the words of door %s on the server", (file, door) => {
     const src = code(file);
     expect(src).not.toMatch(/^\s*["']use client["']/m);
-    expect(src).toContain('import { signUpWords } from "@/lib/signup-place-words";');
+    // /login also takes signUpPlaceWords: a kids' exam callback gets the general entry (17 Oct 2026).
+    expect(src).toMatch(/import \{ (?:signUpPlaceWords, )?signUpWords \} from "@\/lib\/signup-place-words";/);
     expect(src).toMatch(new RegExp(`signUpWords\\([^{]{0,60}\\{\\s*surface: "${door}"`));
     // … and hands them to the button (spread: `text` and `short`).
     expect(src).toMatch(/\{\.\.\.(?:signUpWords\(|pyqSignUp\}|topSignUp\}|signUp\})/);

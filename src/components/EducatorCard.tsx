@@ -20,7 +20,10 @@ interface Asg {
   batchId: string;
 }
 
-export async function EducatorCard({ userId }: { userId: string }) {
+/** `doubtForm` false (an account holding a kids' goal — src/lib/mentor-request.ts
+ *  holdsKidsGoal, 17 Oct 2026): no "Ask your educator a doubt" form, which
+ *  takes a phone number, name, email and city. */
+export async function EducatorCard({ userId, doubtForm = true }: { userId: string; doubtForm?: boolean }) {
   const enrollments = await prisma.batchEnrollment
     .findMany({
       where: { userId, status: "ACTIVE" },
@@ -91,12 +94,16 @@ export async function EducatorCard({ userId }: { userId: string }) {
       )}
 
       <div className="mt-3 flex items-center justify-between gap-2">
-        <TalkToTeacher
-          surface="batch"
-          variant="link"
-          linkLabel="🙋 Ask your educator a doubt →"
-          contextLabel={`batch: ${enrollments[0].batch.name}`}
-        />
+        {doubtForm ? (
+          <TalkToTeacher
+            surface="batch"
+            variant="link"
+            linkLabel="🙋 Ask your educator a doubt →"
+            contextLabel={`batch: ${enrollments[0].batch.name}`}
+          />
+        ) : (
+          <span />
+        )}
         <LeaveBatchLink batchId={enrollments[0].batchId} batchName={enrollments[0].batch.name} />
       </div>
     </div>

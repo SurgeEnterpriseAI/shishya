@@ -412,7 +412,8 @@ describe("D. /login: the headings invite sign-up; one line tells a returning mem
     }
     // The other languages have no such key; where the line shows for them it is the English one (below).
     for (const l of Object.keys(dict)) if (!["en", "hi", "te"].includes(l)) expect("login.member" in (dict as Record<string, Record<string, string>>)[l], l).toBe(false);
-    expect(page).toContain('import { isSignUpLocale } from "@/lib/signup-cta-copy";');
+    // 17 Oct 2026: + callbackGoal (a kids' exam callback gets the general words).
+    expect(page).toMatch(/import \{ (?:callbackGoal, )?isSignUpLocale \} from "@\/lib\/signup-cta-copy";/);
     // Left-aligned small text, like the button's caption above it. Review, same night: the mock, coach, chat and
     // school cards exist in en / hi / te only, so another language reads their English "Sign up with Google once …"
     // over its own "Continue with Google" button — the line shows there too (`intent !== null`). Not on another

@@ -3,8 +3,13 @@
 // The funnel gate on the Student-360 report. Consent is the whole
 // point: the aspirant explicitly chooses to share their preparation
 // data with a verified mentor — it is never shared silently.
+// 17 Oct 2026 (src/lib/mentor-request.ts): no NEW request in a kids' context
+// (`allowNew` false — the page decides with mentorRequestOpen; a request the
+// student already has still shows its state), and words the product keeps:
+// no promise that a mentor who cleared the exam will pick it up.
 
 import { useState } from "react";
+import { MENTOR_REQUEST_COPY as COPY } from "@/lib/mentor-request";
 
 interface Existing {
   status: string;
@@ -15,7 +20,16 @@ interface Existing {
   paymentLink?: string | null;
 }
 
-export function MentorRequestCard({ examCode, existing }: { examCode: string | null; existing: Existing | null }) {
+export function MentorRequestCard({
+  examCode,
+  existing,
+  allowNew = true,
+}: {
+  examCode: string | null;
+  existing: Existing | null;
+  /** False in a kids' context (mentorRequestOpen): no form, no new request. */
+  allowNew?: boolean;
+}) {
   const [note, setNote] = useState("");
   const [consent, setConsent] = useState(false);
   const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
@@ -28,8 +42,8 @@ export function MentorRequestCard({ examCode, existing }: { examCode: string | n
         </p>
         <p className="mt-1 text-sm text-ink-700">
           One small step: <b>₹9 (incl. GST)</b> — and to be clear about what it&apos;s for:{" "}
-          <b>this is only for your mentor&apos;s personal time</b>, a real person who cleared your
-          exam sitting down just for you. Everything else on Shishya — every mock, note, plan and
+          <b>this is only for your mentor&apos;s personal time</b>, a real person sitting down just
+          for you. Everything else on Shishya — every mock, note, plan and
           report — is free and stays free forever. Less than a cup of chai, for a conversation that
           can reshape your preparation.
         </p>
@@ -66,29 +80,25 @@ export function MentorRequestCard({ examCode, existing }: { examCode: string | n
   if (existing?.status === "NEW" || state === "sent") {
     return (
       <div className="rounded-xl border-2 border-saffron-300 bg-saffron-50 p-5">
-        <p className="text-sm font-bold text-ink-900">✅ Request sent</p>
-        <p className="mt-1 text-sm text-ink-700">
-          A mentor who has cleared this path will pick up your request and reach you by email with a session link. Your report travels with it, so the conversation starts from what you actually need.
-        </p>
+        <p className="text-sm font-bold text-ink-900">{COPY.sentTitle}</p>
+        <p className="mt-1 text-sm text-ink-700">{COPY.sentBody}</p>
       </div>
     );
   }
 
+  // A kids' context: nothing new is offered or stored.
+  if (!allowNew) return null;
+
   return (
     <div className="rounded-xl border-2 border-saffron-300 bg-white p-5">
-      <p className="text-sm font-bold text-ink-900">🤝 Talk this through with a mentor — free</p>
+      <p className="text-sm font-bold text-ink-900">{COPY.formTitle}</p>
       {existing?.status === "DONE" && existing.sessionNote && (
         <div className="mt-2 rounded-lg bg-ink-50 p-3 text-sm text-ink-700">
           <span className="font-semibold">Your mentor&apos;s last next-steps note:</span> {existing.sessionNote}
         </div>
       )}
-      <p className="mt-1 text-sm text-ink-600">
-        A real person who has cleared this exam looks at this report with you and helps you decide the next steps.
-      </p>
-      <p className="mt-1 text-xs text-ink-500">
-        Your first session is free. Later sessions are ₹9 — only for the mentor&apos;s time, never
-        for the platform: everything you use on Shishya stays free forever.
-      </p>
+      <p className="mt-1 text-sm text-ink-600">{COPY.formBody}</p>
+      <p className="mt-1 text-xs text-ink-500">{COPY.fee}</p>
       <textarea
         value={note}
         onChange={(e) => setNote(e.target.value)}

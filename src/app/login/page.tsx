@@ -43,9 +43,9 @@ import { getExamCatalog } from "@/lib/db/exam-cache";
 import { INDIAN_LANGUAGE_COUNT } from "@/lib/languages";
 import { isSameOriginPath } from "@/lib/login-return";
 import { loginIntent } from "@/lib/login-intent";
-import { loginCallbackFamily } from "@/lib/signin-cta";
-import { isSignUpLocale } from "@/lib/signup-cta-copy";
-import { signUpWords } from "@/lib/signup-place-words";
+import { loginCallbackFamily, under13ExamGuard } from "@/lib/signin-cta";
+import { callbackGoal, isSignUpLocale } from "@/lib/signup-cta-copy";
+import { signUpPlaceWords, signUpWords } from "@/lib/signup-place-words";
 import { examSignUpFacts } from "@/lib/db/exam-practice";
 import { OLYMPIAD_CATEGORY } from "@/lib/school-age";
 
@@ -119,7 +119,14 @@ export default async function LoginPage({
   // exams — the same rows sign-up enrols) has that code, with the exam's own
   // short name; an unknown code gets the general sentence. examLabel above
   // stays for the card's heading only (it promises nothing about the account).
-  const signUpExam = examCode ? catalog.find((e) => e.code === examCode) ?? null : null;
+  // 17 Oct 2026 (under-13 safety): sign-up never sets a KIDS' exam as the
+  // account's exam (src/lib/signup-goal.ts autoGoalAllowed), so a callback to
+  // a kids' exam's page, tutor or coach (/login?callbackUrl=/exams/SOF_IMO — a
+  // typed link: those pages offer no sign-up) names no exam and gets the
+  // general words, never "… is set up as your exam".
+  const cbGoal = callbackGoal(cb);
+  const kidsCallback = under13ExamGuard(examCode) || (cbGoal?.kind === "exam" && under13ExamGuard(cbGoal.code));
+  const signUpExam = examCode && !kidsCallback ? catalog.find((e) => e.code === examCode) ?? null : null;
   // 2 Oct 2026, later (founder: every button's explanation is its own): the
   // button shows the sentence of the door the visitor pressed (?from=), when
   // the callback is that door's — the sentence they hovered a moment ago —
@@ -128,16 +135,18 @@ export default async function LoginPage({
   // needs to know the exam can serve one: the same cached practice read the
   // exam pages make. A failed read leaves it unknown — no mock is promised.
   const signUpFacts = signUpExam ? await examSignUpFacts(signUpExam.code) : null;
-  const signUp = signUpWords(locale, {
-    surface: "login",
-    callback: cb,
-    from: sp.from ?? null,
-    returning: li.kind === "return",
-    exam: signUpExam?.shortName ?? null,
-    examCode: signUpExam ? examCode : null,
-    practice: signUpFacts?.practice,
-    olympiad: signUpExam ? String(signUpExam.category) === OLYMPIAD_CATEGORY : undefined,
-  });
+  const signUp = kidsCallback
+    ? signUpPlaceWords(locale, { key: "family.fallback" })
+    : signUpWords(locale, {
+        surface: "login",
+        callback: cb,
+        from: sp.from ?? null,
+        returning: li.kind === "return",
+        exam: signUpExam?.shortName ?? null,
+        examCode: signUpExam ? examCode : null,
+        practice: signUpFacts?.practice,
+        olympiad: signUpExam ? String(signUpExam.category) === OLYMPIAD_CATEGORY : undefined,
+      });
   // 27 Sep 2026: a Class 8-12 school page or school chat, and Ask Shishya
   // (/chat), get their own card — sign-in there only keeps practice or
   // chats; reading, the chapter practice and the tutor need no account.

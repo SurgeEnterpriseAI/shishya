@@ -3,6 +3,7 @@
 // the database; the wizard API validates them before persisting.
 
 import { STATES } from "./state-info";
+import { under13ExamGuard } from "./signin-cta";
 
 export interface StageOption {
   value: string;
@@ -66,4 +67,16 @@ export function statesForWizard(): Array<{ value: string; label: string }> {
   return Object.values(STATES)
     .map((s) => ({ value: s.code, label: s.name }))
     .sort((a, b) => a.label.localeCompare(b.label));
+}
+
+/** The exams the wizard may tick by ITSELF — a persona's pre-pinned set (the
+ *  1-click confirm writes them without a separate pick) and a stage's
+ *  suggestions (17 Oct 2026, under-13 safety). Never a kids' exam
+ *  (src/lib/signin-cta.ts under13ExamGuard: SOF, Silverzone, NSTSE, PRIL,
+ *  ZIO, JNVST — the "I'm in Class 10" persona pre-pinned SOF_NSO and
+ *  SOF_IMO): a kids' exam is never set for a student automatically. The
+ *  chips on the exam step still list every active exam, so a student can
+ *  pick one themselves. Order kept. */
+export function autoPrepCodes(codes: readonly string[]): string[] {
+  return codes.filter((c) => !under13ExamGuard(c));
 }

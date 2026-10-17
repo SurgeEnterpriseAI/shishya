@@ -9,6 +9,8 @@
 //     and (generic callback only) the browser's last page; real, active
 //     exams only (realExamKey); an exam the account already holds is left
 //     as it is; nothing on a school sign-in;
+//   • 17 Oct 2026: NEVER a kids' exam — however it is named (hub, tutor,
+//     coach, a kids' mock, the trail), no goal and no enrolment;
 //   • the page language fills preferredLang only while it is EN;
 //   • live guest challenges (creatorAnonId) and email alerts are linked —
 //     challenges never on a school sign-in;
@@ -89,12 +91,17 @@ import { dict } from "@/lib/i18n";
 
 const SSC: ExamRow = { id: "e-ssc", code: "SSC_CGL", shortName: "SSC CGL", category: "GOVT_JOBS", active: true };
 const OLD: ExamRow = { id: "e-old", code: "OLD_EXAM", shortName: "Old", category: "GOVT_JOBS", active: false };
+// Kids' exams (src/lib/signin-cta.ts under13ExamGuard), real and active in the catalogue.
+const IMO: ExamRow = { id: "e-imo", code: "SOF_IMO", shortName: "SOF IMO", category: "OLYMPIAD", active: true };
+const SZF: ExamRow = { id: "e-szf", code: "SZF_IOM", shortName: "Silverzone IOM", category: "OLYMPIAD", active: true };
+const PRIL: ExamRow = { id: "e-pril", code: "PRIL", shortName: "PRIL", category: "OLYMPIAD", active: true };
+const IOQM: ExamRow = { id: "e-ioqm", code: "IOQM", shortName: "IOQM", category: "OLYMPIAD", active: true };
 const BASE = { userId: "u-1", email: "Student@Example.com", anonId: "11111111-2222-3333-4444-555555555555", school: false };
 
 beforeEach(() => {
   state.cookies = {};
   state.set = [];
-  state.exams = { SSC_CGL: SSC, OLD_EXAM: OLD };
+  state.exams = { SSC_CGL: SSC, OLD_EXAM: OLD, SOF_IMO: IMO, SZF_IOM: SZF, PRIL, IOQM };
   state.mocks = {};
   state.pageViews = [];
   state.existing = null;
@@ -150,6 +157,35 @@ describe("the exam goal (never asked — the page the account was made from)", (
       expect(r.goal, cb).toBeNull();
     }
     expect(state.enrolments).toEqual([]);
+  });
+
+  it("17 Oct 2026: a KIDS' exam is never set — hub, PYQ, tutor, coach, /hi twin (under-13 safety)", async () => {
+    for (const cb of ["/exams/SOF_IMO", "https://shishya.in/exams/SOF_IMO?start=practice", "/exams/SZF_IOM/pyq/2024", "/hi/exams/PRIL", "/chat?examCode=SOF_IMO", "/coach?exam=SZF_IOM"]) {
+      const r = await applySignupProfile({ ...BASE, callback: cb });
+      expect(r.goal, cb).toBeNull();
+    }
+    expect(state.enrolments).toEqual([]);
+    // An olympiad for older students is still a goal (IOQM: Class 8-12).
+    expect((await applySignupProfile({ ...BASE, callback: "/exams/IOQM" })).goal?.code).toBe("IOQM");
+  });
+
+  it("17 Oct 2026: a kids' exam's mock, or a kids' page as the browser's last page, sets nothing — and no older page is taken instead", async () => {
+    state.mocks.cm1kidsmockxxxxxxxxxxxxx = { exam: IMO };
+    expect((await applySignupProfile({ ...BASE, callback: "/mocks/cm1kidsmockxxxxxxxxxxxxx" })).goal).toBeNull();
+    state.pageViews = [{ path: "/login" }, { path: "/exams/SOF_IMO/quiz" }, { path: "/exams/SSC_CGL" }];
+    for (const cb of [null, "/", "/dashboard", "/chat", "/coach"]) {
+      expect((await applySignupProfile({ ...BASE, callback: cb })).goal, String(cb)).toBeNull();
+    }
+    expect(state.enrolments).toEqual([]);
+    // The rest of the profile still happens (language, guest records, the strip's cookie).
+    const r = await applySignupProfile({ ...BASE, callback: "/exams/SOF_IMO" });
+    expect(r).toMatchObject({ goal: null, challengesLinked: 2, alertsLinked: 1, welcomeCookie: true });
+  });
+
+  it("the rule is the under-13 guard's, read through autoGoalAllowed on the RESOLVED exam (source)", () => {
+    const src = read("src/lib/signup-profile.ts");
+    expect(src).toContain("return exam && autoGoalAllowed(exam.code) ? exam : null;");
+    expect(read("src/lib/signup-goal.ts")).toContain("return !under13ExamGuard(code) && !under13ExamGuard(code.trim().toUpperCase());");
   });
 
   it("an exam the account already holds is left exactly as it is (an off one stays off)", async () => {

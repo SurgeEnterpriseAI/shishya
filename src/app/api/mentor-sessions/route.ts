@@ -2,11 +2,16 @@
 // fired from the Student-360 report. Consent is REQUIRED: it's the
 // privacy gate that lets a verified mentor see their behavioural 360.
 // One open request per student — a repeat POST returns the existing one.
+// 17 Oct 2026 (under-13 safety, src/lib/mentor-request.ts): refused (403
+// "kids-exam") when the request's exam or one of the account's active exams
+// is a kids' exam — before anything is stored or mailed. The report page
+// shows no form there; this is the rule for a direct call.
 
 import { randomUUID } from "crypto";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db/prisma";
 import { sendEmail } from "@/lib/email";
+import { mentorRequestOpen } from "@/lib/mentor-request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,6 +27,17 @@ export async function POST(req: Request) {
   }
   const note = typeof body?.note === "string" ? body.note.slice(0, 1000) : null;
   const examCode = typeof body?.examCode === "string" ? body.examCode.slice(0, 40) : null;
+  if (!mentorRequestOpen({ examCode })) {
+    return Response.json({ ok: false, error: "kids-exam" }, { status: 403 });
+  }
+  // The account's own active exams ("kids' goals"). A failed read refuses: fail closed.
+  const goalCodes = await prisma.enrollment
+    .findMany({ where: { userId, active: true }, select: { exam: { select: { code: true } } } })
+    .then((rows) => rows.map((r) => r.exam.code))
+    .catch(() => null);
+  if (goalCodes === null || !mentorRequestOpen({ examCode, goalCodes })) {
+    return Response.json({ ok: false, error: "kids-exam" }, { status: 403 });
+  }
 
   const open = await prisma.$queryRaw<any[]>`
     SELECT id, status FROM "MentorSessionRequest"

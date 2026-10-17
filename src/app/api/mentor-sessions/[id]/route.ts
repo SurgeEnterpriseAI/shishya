@@ -43,6 +43,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   if (body?.action === "take") {
     if (reqRow.status !== "NEW") return Response.json({ ok: false, error: "already-taken" }, { status: 409 });
+    // 17 Oct 2026 (src/lib/mentor-request.ts): the student's email below is
+    // the "you get an email with the session link" the report card promises
+    // — and the mail says only what holds: a mentor took it (any approved
+    // mentor can take any exam's request, so no "who has cleared this path").
     const meetUrl = `https://meet.jit.si/ShishyaMentor-${id.slice(0, 12)}`;
 
     // Founder policy: first session free forever; from the second, ₹9
@@ -74,13 +78,13 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (reqRow.student_email) {
       const html = feeDue && payLink
         ? `<p>Namaste ${reqRow.student_name ?? ""},</p>
-<p><b>${mentor.name}</b> — who has cleared this path before — has accepted your session request and can see your preparation report.</p>
-<p>One small step before the room opens: <b>₹9 (inclusive of GST)</b> — and we want to be clear about what it is. <b>This is only for your mentor's personal time</b> — a real person who cleared your exam, sitting down just for you. Everything else on Shishya — every mock, note, plan and report — is free and stays free forever. Less than a cup of chai, for a conversation that can reshape your preparation.</p>
+<p><b>${mentor.name}</b> has accepted your session request and can see your preparation report.</p>
+<p>One small step before the room opens: <b>₹9 (inclusive of GST)</b> — and we want to be clear about what it is. <b>This is only for your mentor's personal time</b> — a real person sitting down just for you. Everything else on Shishya — every mock, note, plan and report — is free and stays free forever. Less than a cup of chai, for a conversation that can reshape your preparation.</p>
 <p><a href="${payLink.shortUrl}">Honour your mentor's time — pay ₹9 and unlock the room →</a></p>
 <p>The room link appears on your report page the moment payment completes: https://shishya.in/me/report</p>
 <p>— Shishya</p>`
         : `<p>Namaste ${reqRow.student_name ?? ""},</p>
-<p><b>${mentor.name}</b> — who has cleared this path before — has picked up your request and can see your preparation report.</p>
+<p><b>${mentor.name}</b> has picked up your request and can see your preparation report.</p>
 <p>Join your session room here (works in any browser, no install):<br/>
 <a href="${meetUrl}">${meetUrl}</a></p>
 <p><b>When you enter the room</b>, tap "🎥 I'm in the room — ping my mentor" on your <a href="https://shishya.in/me/report">report page</a> — your mentor gets an instant email and joins you. You can also message them there to fix a better time.</p>

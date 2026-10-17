@@ -15,6 +15,7 @@ import { WeekCompareView } from "@/components/WeekCompareView";
 import { MentorRequestCard } from "@/components/MentorRequestCard";
 import { SessionThread } from "@/components/SessionThread";
 import { FlashHint } from "@/components/FlashHint";
+import { mentorRequestOpen } from "@/lib/mentor-request";
 
 export const metadata: Metadata = {
   title: "My preparation report — Shishya",
@@ -29,6 +30,16 @@ export default async function ReportPage() {
 
   const [p, wk] = await Promise.all([buildStudent360(userId), buildWeekCompare(userId)]);
   if (!p) redirect("/dashboard");
+
+  // 17 Oct 2026 (under-13 safety, src/lib/mentor-request.ts): no NEW mentor
+  // request when the report's exam or one of the account's active exams is a
+  // kids' exam. A failed read offers none (fails closed); a request the
+  // student already has still shows its state.
+  const goalCodes = await prisma.enrollment
+    .findMany({ where: { userId, active: true }, select: { exam: { select: { code: true } } } })
+    .then((rows) => rows.map((r) => r.exam.code))
+    .catch(() => null);
+  const mentorOpen = goalCodes !== null && mentorRequestOpen({ examCode: p.exam?.code ?? null, goalCodes });
 
   const reqRows = await prisma.$queryRaw<any[]>`
     SELECT r.id, r.status, r."meetUrl", r."sessionNote", r."feeDue", r."paymentLinkId",
@@ -130,7 +141,7 @@ export default async function ReportPage() {
       )}
 
       <div className="mt-6">
-        <MentorRequestCard examCode={p.exam?.code ?? null} existing={existing} />
+        <MentorRequestCard examCode={p.exam?.code ?? null} existing={existing} allowNew={mentorOpen} />
         {row && (row.status === "TAKEN" || threadMsgs.length > 0) && (
           <div className="mt-3 rounded-xl border border-ink-200 bg-white p-4">
             <SessionThread
@@ -145,7 +156,9 @@ export default async function ReportPage() {
         )}
       </div>
       <p className="mt-6 text-xs text-ink-400">
-        This report is private to you. It is shown to a mentor only if you explicitly choose to share it above.
+        {mentorOpen || row?.status === "NEW" || row?.status === "TAKEN"
+          ? "This report is private to you. It is shown to a mentor only if you explicitly choose to share it above."
+          : "This report is private to you."}
       </p>
     </main>
   );

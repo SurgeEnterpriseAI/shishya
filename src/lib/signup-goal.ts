@@ -24,10 +24,21 @@
 //     /login decide instead (goalFromTrail) — a student who signed up from
 //     /colleges/… is not given an exam from an older page;
 //   • the page language (/hi or /te callback, else the shishya-lang cookie)
-//     becomes User.preferredLang when it is not English.
+//     becomes User.preferredLang when it is not English;
+//   • 17 Oct 2026 (under-13 safety, founder: "go ahead with the safety
+//     fixes"): a KIDS' exam is never set by itself — autoGoalAllowed below,
+//     the under-13 guard every kids' rule uses (src/lib/signin-cta.ts
+//     under13ExamGuard: SOF, Silverzone, NSTSE, PRIL, ZIO, JNVST). The
+//     signup reads a page as before (signupGoalOf stays the exact twin of
+//     src/lib/signup-cta-copy.ts callbackGoal); src/lib/signup-profile.ts
+//     drops the exam it resolves — from the callback, the trail or a mock —
+//     when this says no. 12 of the 51 kids' enrolments held on 17 Oct were
+//     made by this sign-up goal itself, 9 of them in the 15 days before
+//     (SELECT-only read); none since 14 Oct, when kids' pages lost sign-up.
 // Pure: no React, no Next, no DB.
 
 import { schoolContainerClassOf } from "@/lib/school/student-classes";
+import { under13ExamGuard } from "@/lib/signin-cta";
 import { localeToLanguage, type LanguageCode } from "@/lib/preferred-lang";
 
 export type SignupGoal = { kind: "exam"; code: string } | { kind: "mock"; id: string };
@@ -72,6 +83,19 @@ export function signupGoalOf(url: string | null | undefined): SignupGoal | null 
   const mock = /^\/mocks\/([^/]+)(?:\/|$)/.exec(path);
   if (mock && MOCK_ID.test(mock[1])) return { kind: "mock", id: mock[1] };
   return null;
+}
+
+/** True when sign-up may make this exam the new account's goal by itself
+ *  (17 Oct 2026). Never a kids' exam — children from Class 1 sit them and a
+ *  child under 13 gives us no data (under13ExamGuard, the one under-13
+ *  rule) — and never a school container. A member may still pick a kids'
+ *  exam themselves (the hub, the tutor, the wizard's chips); that is not
+ *  this rule. Fails closed on no code; a kids' code is matched as stored and
+ *  upper-cased. */
+export function autoGoalAllowed(code: string | null | undefined): boolean {
+  if (typeof code !== "string" || code.trim() === "") return false;
+  if (schoolContainerClassOf(code) !== null) return false;
+  return !under13ExamGuard(code) && !under13ExamGuard(code.trim().toUpperCase());
 }
 
 /** True when the callback is a generic return — no page of its own to name
