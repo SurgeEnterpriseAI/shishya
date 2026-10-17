@@ -22,6 +22,12 @@ describe("parseAnswerTurn", () => {
     expect(parseAnswerTurn("2.c / 3.c /", 3)).toEqual([{ index: 1, letter: "C" }, { index: 2, letter: "C" }]);
     expect(parseAnswerTurn("1) a, 2) d", 2)).toEqual([{ index: 0, letter: "A" }, { index: 1, letter: "D" }]);
   });
+  it("reads all ten answers when ten bank questions were shown (17 Oct 2026: cap 10)", () => {
+    const ten = "1 - b, 2 - c, 3 - a, 4 - d, 5 - b, 6 - c, 7 - a, 8 - d, 9 - b, 10 - c";
+    expect(ten.length).toBeGreaterThan(60);
+    expect(parseAnswerTurn(ten, 10)?.map((a) => a.letter).join("")).toBe("BCADBCADBC");
+    expect(parseAnswerTurn(ten, 5)).toBeNull(); // only five were shown
+  });
   it("refuses anything that is not purely an answer", () => {
     expect(parseAnswerTurn("b", 2)).toBeNull(); // which question?
     expect(parseAnswerTurn("why is b wrong", 1)).toBeNull();

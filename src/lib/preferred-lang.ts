@@ -174,10 +174,47 @@ const POLITE = "(?:please|pls|plz|language|bhasha|bhasa|only|medium|me|mein)";
 const ASK_VERB =
   "(?:btao|batao|bataiye|batayiye|samjhao|samjhaiye|samjhayiye|bolo|boliye|likho|jawab|answer|explain|cheppu|cheppandi|chepandi|sang|sanga|samjav|samjava|बताओ|बताइए|बताइये|समझाओ|समझाइए|सांगा|समजावून|చెప్పండి|చెప్పు|వివరించండి)";
 
+// 17 Oct 2026: "give me in maratgi" (one key off) was not read as Marathi, so
+// the tutor got "Reply language: EN" and answered, in Marathi, that it could
+// not answer in Marathi. A Latin word one typo (a letter added, dropped,
+// changed or two swapped) away from ONE language's name of 6+ letters now
+// reads as that name. Not when it is the start of the name — Bengal, Punjab,
+// Gujarat, Konkan, Nepal, Sindh, Kashmir and Manipur are places — nor one of
+// the real words below; 5-letter names (hindi, tamil) are left exact, since
+// "hindu" is one letter from "hindi"; a word near two languages ("hindhi":
+// hindi, sindhi) is left alone. The requests themselves are still only the
+// patterns below, so a typo of a name in a question is not a request.
+const NOT_A_LANGUAGE_TYPO = new Set(["maratha", "marathas", "marathe", "bangle", "bangles", "sanskriti"]);
+const LATIN_LANGUAGE_NAMES: ReadonlyArray<readonly [Locale, string]> = LANGUAGE_WORDS.flatMap(([locale, words]) =>
+  words.filter((w) => /^[a-z]+$/.test(w)).map((w) => [locale, w] as const),
+);
+
+/** True when a and b differ by at most one insertion, deletion, substitution or adjacent swap. */
+function withinOneTypo(a: string, b: string): boolean {
+  if (a === b) return true;
+  if (Math.abs(a.length - b.length) > 1) return false;
+  let i = 0;
+  while (i < a.length && i < b.length && a[i] === b[i]) i++;
+  if (a.length === b.length) {
+    if (a.slice(i + 1) === b.slice(i + 1)) return true;
+    return a[i] === b[i + 1] && a[i + 1] === b[i] && a.slice(i + 2) === b.slice(i + 2);
+  }
+  return a.length > b.length ? a.slice(i + 1) === b.slice(i) : a.slice(i) === b.slice(i + 1);
+}
+
+function fixLanguageTypos(text: string): string {
+  return text.replace(/[a-z]{5,}/g, (word) => {
+    if (NOT_A_LANGUAGE_TYPO.has(word) || LATIN_LANGUAGE_NAMES.some(([, w]) => w === word)) return word;
+    const near = LATIN_LANGUAGE_NAMES.filter(([, w]) => !w.startsWith(word) && withinOneTypo(word, w));
+    if (!near.length || new Set(near.map(([l]) => l)).size > 1 || near.some(([, w]) => w.length < 6)) return word;
+    return near[0][1];
+  });
+}
+
 /** The language a tutor message explicitly asks for, or null. */
 function matchLanguageRequest(message: string | null | undefined): { locale: Locale; bare: boolean } | null {
   if (!message) return null;
-  const text = message.normalize("NFC").trim().toLowerCase().replace(/[.!?।,;:]+$/u, "").trim();
+  const text = fixLanguageTypos(message.normalize("NFC").trim().toLowerCase().replace(/[.!?।,;:]+$/u, "").trim());
   if (!text || text.length > 200) return null;
   for (const [locale, words] of LANGUAGE_WORDS) {
     for (const w of words) {

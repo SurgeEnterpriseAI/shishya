@@ -27,7 +27,7 @@ import {
   journeyBlock,
 } from "./prompts";
 import type { TutorInput, TutorOutput } from "./types";
-import { tutorTools, executeTool, type ToolContext } from "./tools";
+import { tutorTools, executeTool, FIND_QUESTIONS_MAX, type ToolContext } from "./tools";
 import { isEnglishOnly, localRouteFor, streamLocal, ReplyStreamFilter, LOCAL_MODEL, type LocalToolCall } from "./local-llm";
 import { indicLanguageRule, indicReplyProblem } from "./indic-reply-guard";
 import { routeTutorTurn, unsupportedFacts } from "./tutor-router";
@@ -50,13 +50,28 @@ const SITE_FEATURES = siteFeaturesBlock();
 // common pattern (one mastery lookup + one practice question lookup).
 const MAX_TOOL_TURNS = 2;
 
+// 17 Oct 2026: practice questions on Claude come from the checked bank too.
+// On 13 Oct only Qwen got this rule (LOCAL_TOOL_RULES below, "Claude does
+// neither"), but Claude wrote its own MCQs when asked for "20 questions",
+// "quiz me" or "one easy question to start" — 51 of 66 recent quiz answers
+// were to questions the tutor wrote itself, which answer-grading.ts cannot
+// mark (no verified key). Its first sentence is LOCAL_TOOL_RULES' own. Part
+// of the signed-in guide, so every model and the late-answer run get it;
+// guest, general and school chats have their own line (prompts.ts
+// SIGNIN_NUDGE, GENERAL_MODE_NOTE; the school persona).
+export const PRACTICE_FROM_BANK_RULE = `Practice questions come only from Shishya's checked bank
+- Any practice question you show must come from find_questions_on_topic, shown exactly as returned with its options A-D; never write your own question. Shishya marks answers only against the bank's verified key, so a question you write is never answer-checked. This holds however the student asks — "give me 20 questions on X", "test me", "quiz", "MCQs", "with timer", "one easy question, then harder" — and in every language.
+- Ask the tool for the number the student wants, up to ${FIND_QUESTIONS_MAX}, and show the questions without answers or solutions so they all fit. For "start easy, then harder", fetch one EASY question, then MEDIUM and HARD ones on later turns. For a test, a timed set or more than ${FIND_QUESTIONS_MAX} questions, follow MOCK REQUESTS in the syllabus block (the builder link); you may also offer up to ${FIND_QUESTIONS_MAX} here. A generic "quiz me" with no topic named goes to start_adaptive_quiz.
+- If the bank has nothing on that topic, say so plainly in one line — never fill the gap with questions of your own — and offer the nearest real option: a close topic from the syllabus, the mock builder or the exam's mocks, or a walk-through of the concept.
+- Teaching is not limited: a worked example of your own inside an explanation is fine — solve it there; do not set it to the student as practice or a quiz.`;
+
 const TOOL_USE_GUIDE = `Tools available
 ───────────────
 You have tools to look up real student data. Use them when relevant — never invent stats.
 
 - get_my_mastery → student's weakest topics (mastery %, attempt count). Call this when asked about weaknesses, what to study, or where to focus.
 - get_recent_attempts → last few mock attempts (score, topic mix, date). Call when student references "my last test" or asks about progress.
-- find_questions_on_topic → real validated practice questions on a topic. Call when student asks "quiz me", "give me a question on X", or you want to anchor an explanation in a real exam-format question.
+- find_questions_on_topic → real validated practice questions on a topic, up to ${FIND_QUESTIONS_MAX} per call. Call when student asks "quiz me on X", "give me a question on X", "give me 10 questions on X", or you want to anchor an explanation in a real exam-format question.
 - get_attempt_mistakes → questions a student got wrong on a specific attempt. Call when reviewing a past attempt (after get_recent_attempts gave you the attempt_id).
 - predict_rank → maps a mock-test percentage to a likely real-exam rank window + the colleges/posts typically reached at that band. Call when student asks "what rank can I get with X%", "will this score get me into [college]", "is my score enough for [post]", or any cut-off/outcome question. If they don't give a score, fetch their latest via get_recent_attempts first.
 
@@ -66,7 +81,9 @@ IMPORTANT — skip tool calls when the user has already supplied the data in the
 - "Quiz me on Profit & Loss" → ONE find_questions_on_topic call is enough; don't chain.
 Each tool call adds ~5 seconds of latency the student is staring at "Thinking…" — every avoidable call hurts.
 
-When find_questions_on_topic returns a question, present it WITHOUT the answer first. Let the student attempt; only reveal the solution after they respond.`;
+When find_questions_on_topic returns a question, present it WITHOUT the answer first. Let the student attempt; only reveal the solution after they respond.
+
+${PRACTICE_FROM_BANK_RULE}`;
 
 /**
  * The tutor's system blocks, in cache order. Pure (no model call) and
@@ -284,6 +301,8 @@ export async function* tutorStream(
   // part of the answer, looked something up, then wrote it all again; and it
   // sometimes wrote its own practice question instead of fetching a checked
   // one from the bank. Claude does neither, so these rules go to Qwen only.
+  // (17 Oct 2026: Claude did write its own questions — the practice rule is
+  // now also in the signed-in guide for every model, PRACTICE_FROM_BANK_RULE.)
   const LOCAL_TOOL_RULES =
     "Tool rules: when you need a tool, call it FIRST, before writing anything to the student, and make all the calls you need before you start the answer. " +
     "Any practice question you show must come from find_questions_on_topic, shown exactly as returned with its options A-D; never write your own question.";

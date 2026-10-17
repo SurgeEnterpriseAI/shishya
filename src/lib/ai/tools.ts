@@ -28,6 +28,14 @@ export interface ToolContext {
   examCode: string;
 }
 
+// 17 Oct 2026: find_questions_on_topic returns up to 10 bank questions per
+// call (was 5). Students ask for "10 questions on X"; with a cap of 5 the
+// tutor showed a student who asked for 10 five, and put it down to the system
+// (5 Oct). A signed-in practice ask on every model now comes from the bank
+// (tutor.ts PRACTICE_FROM_BANK_RULE), so the cap is what a student gets in
+// the chat.
+export const FIND_QUESTIONS_MAX = 10;
+
 export const tutorTools: Anthropic.Messages.Tool[] = [
   {
     name: "get_my_mastery",
@@ -62,7 +70,7 @@ export const tutorTools: Anthropic.Messages.Tool[] = [
   {
     name: "find_questions_on_topic",
     description:
-      "Find 1-3 validated practice questions to walk through IN THE CHAT for teaching purposes — e.g. 'show me an example of a percentage word problem' or 'illustrate this concept with a question'. Returned questions include body, options, and correct answer, which you discuss conversationally. Show each question as returned, with all its options labelled A–D, so the student can pick one. Do NOT call this when the student wants to actually take a timed mock — for that, use start_adaptive_quiz instead. Never recite the answer to the student before they attempt.",
+      `Find validated practice questions from Shishya's checked bank (up to ${FIND_QUESTIONS_MAX} per call) to show IN THE CHAT — e.g. 'quiz me on percentage', 'give me 10 questions on blood relations', 'show me an example of a percentage word problem' or 'illustrate this concept with a question'. Returned questions include body, options, and correct answer, which you discuss conversationally. Show each question as returned, with all its options labelled A–D, so the student can pick one. Do NOT call this when the student wants to actually take a timed mock — for that, use start_adaptive_quiz instead. Never recite the answer to the student before they attempt.`,
     input_schema: {
       type: "object",
       properties: {
@@ -77,7 +85,7 @@ export const tutorTools: Anthropic.Messages.Tool[] = [
         },
         limit: {
           type: "number",
-          description: "Max questions to return. Defaults to 3, max 5.",
+          description: `Max questions to return. Defaults to 3, max ${FIND_QUESTIONS_MAX}: when the student names a number, ask for that many (up to ${FIND_QUESTIONS_MAX}).`,
         },
       },
       required: ["topic_code"],
@@ -209,7 +217,7 @@ export async function executeTool(
             ctx,
             String(input?.topic_code ?? ""),
             input?.difficulty,
-            Math.min(5, Math.max(1, Number(input?.limit ?? 3)))
+            Math.min(FIND_QUESTIONS_MAX, Math.max(1, Number(input?.limit ?? 3)))
           ),
         };
       case "get_attempt_mistakes":
@@ -386,7 +394,9 @@ async function findQuestionsOnTopic(
   if (qs.length === 0) {
     return {
       questions: [],
-      message: `No validated questions on '${topicCode}' yet. Suggest a different topic, or offer to walk through the concept conceptually.`,
+      // 17 Oct 2026: an empty bank is said plainly — the tutor must not fill
+      // the gap with questions it writes itself (not answer-checked).
+      message: `Shishya's checked bank has no questions on '${topicCode}' yet. Tell the student so plainly in one line and do not write practice questions of your own. Offer the nearest real option: a close topic from the syllabus, the mock builder or the exam's mocks, or a walk-through of the concept.`,
     };
   }
   return {

@@ -28,6 +28,32 @@ describe("detectLanguageRequest — a language the student asks the tutor for", 
     expect(detectLanguageRequest("in hindi and bhakti to koi ras hai hi nhi 10 ras me")).toBe("hi");
   });
 
+  // 17 Oct 2026: "give me in maratgi" got "Reply language: EN" and a reply,
+  // in Marathi, that the tutor could not answer in Marathi. Over the last 60
+  // days of student messages (6,482) the change reads exactly two more asks:
+  // that one and "Marathit".
+  it("a language name one typo off (6+ letters, one language only)", () => {
+    expect(detectLanguageRequest("give me in maratgi ")).toBe("mr");
+    expect(detectLanguageRequest("Marathit")).toBe("mr");
+    expect(detectLanguageRequest("explain in marahti")).toBe("mr");
+    expect(detectLanguageRequest("telgu lo cheppandi")).toBe("te");
+    expect(detectLanguageRequest("reply in gujrati")).toBe("gu");
+    expect(detectLanguageRequest("answer in panjabi please")).toBe("pa");
+    expect(detectLanguageRequest("in inglish")).toBe("en");
+  });
+
+  it("a place, a real word, a 5-letter name or a word near two languages is not read as a typo", () => {
+    expect(detectLanguageRequest("Explain the role of the Peshwas in Maratha")).toBeNull();
+    expect(detectLanguageRequest("explain partition in bengal")).toBeNull();
+    expect(detectLanguageRequest("tell me about farmers in punjab")).toBeNull();
+    expect(detectLanguageRequest("explain floods in gujarat")).toBeNull();
+    expect(detectLanguageRequest("explain article 370 in kashmir")).toBeNull();
+    expect(detectLanguageRequest("explain in hindu")).toBeNull();
+    expect(detectLanguageRequest("explain in hindhi")).toBeNull();
+    expect(bareLanguageRequest("Marathit")).toBe("mr");
+    expect(tutorMessageFor("maratgi", true)).toBe("Please give your previous answer again, in full, in Marathi.");
+  });
+
   it("a question about a language is not a request", () => {
     expect(detectLanguageRequest("Hindi sandhi ke bhed")).toBeNull();
     expect(detectLanguageRequest("Is Marathi compulsory for MPSC?")).toBeNull();

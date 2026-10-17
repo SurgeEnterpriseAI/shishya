@@ -61,7 +61,9 @@ const L = "([A-Da-d])";
 export function parseAnswerTurn(message: string, shownCount: number): StudentAnswer[] | null {
   if (shownCount < 1) return null;
   const t = message.trim().replace(/[.!]+$/, "");
-  if (t.length > 60) return null;
+  // 17 Oct 2026: up to 10 questions are shown now (tools.ts FIND_QUESTIONS_MAX);
+  // "1 - b, 2 - c, … 10 - a" runs past 60 characters, so the limit grows with them.
+  if (t.length > Math.max(60, shownCount * 12)) return null;
   const single =
     new RegExp(`^\\(?${L}\\)?$`).exec(t) ??
     new RegExp(`^(?:my\\s+)?(?:option|ans(?:wer)?|choice)\\s*(?:is|:|-)?\\s*\\(?${L}\\)?$`, "i").exec(t) ??

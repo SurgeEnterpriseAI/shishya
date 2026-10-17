@@ -362,10 +362,18 @@ describe("the exam tutor's shared 1-hour prefix is byte-identical to before scho
   // (src/lib/ai/prompts.ts). The worktree had no other prefix change: the
   // failing run expected exactly the previous pins. Before: signedIn
   // 4fef5e77…, guest b0a0f34b…, general 1e90807a….
+  // 17 Oct 2026 (tutor honesty): re-pinned ON PURPOSE for the practice-from-
+  // the-bank rules (PRACTICE_FROM_BANK_RULE in the signed-in tools guide, the
+  // no-own-questions line in SIGNIN_NUDGE and GENERAL_MODE_NOTE), the
+  // find_questions_on_topic cap of 10 in the guide, and the "you can write
+  // every listed language" line in ANSWER_FORMAT_RULES
+  // (tests/unit/tutor-practice-bank.test.ts). The failing run expected exactly
+  // the previous pins. Before: signedIn 82b7a62d…, guest 46f804b7…, general
+  // f0fcffbd….
   const PINNED = {
-    signedIn: "82b7a62db0e84fb0973fbb57499139695ebe1b7cac9363257f6d6027629f5f77",
-    guest: "46f804b71934c59c50600aff57a687fbd72f555edf298d9635a74610557b1e76",
-    general: "f0fcffbdb8a2f7dfa178a89dfd86be83c8ee0ae850b6ce1b2b0912912c3e3eef",
+    signedIn: "933344a9e45c973a4b3fcc893587e677c07e8d61d03faeef9129d24112af11e2",
+    guest: "bf27ce0deaf501fe171182b3bcc76528f9ea18b2e6dd4c5908e7d61364d4dd0b",
+    general: "f2aeefc19ebfcef382ebd393b4a2378377a8691550fa3f3d191db271988a71a0",
   };
 
   it("signed-in (tools on), guest (tools off) and general mode", () => {
