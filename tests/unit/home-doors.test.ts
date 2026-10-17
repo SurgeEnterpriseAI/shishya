@@ -24,6 +24,10 @@
 import fs from "node:fs";
 import path from "node:path";
 import { describe, it, expect } from "vitest";
+import * as React from "react";
+import * as jsxRuntime from "react/jsx-runtime";
+import { renderToStaticMarkup } from "react-dom/server";
+import ts from "typescript";
 import { CAREERS } from "@/data/careers";
 import { BOARDS, findBoard } from "@/lib/schooling-data";
 import { HOME_DOORS_COPY, homeDoorsCopy, type HomeDoorsCopy } from "@/lib/home-doors-copy";
@@ -567,3 +571,91 @@ describe("src/app/page.tsx — the Doors page", () => {
 // an unused-import lint never removes the shape from this file's checks.
 const _shape: keyof HomeDoorsCopy = "doors";
 void _shape;
+
+// ── 7. data promises (17 Oct 2026, founder) ────────────────────────────
+// The home page's "What we promise about your data" block may only repeat what
+// the privacy policy promises, and must never say where data is kept: the
+// database and site servers are in Singapore and most AI calls go to Claude, so
+// "stays in Bengaluru / India" would be untrue until that changes.
+
+/** HomeTrust is a server component (TSX); vitest here cannot import TSX, so it is
+ *  transpiled the way tests/unit/chat-first-answer.test.ts loads FirstAnswerOffer. */
+function loadHomeTrust(): React.FC<{ copy: HomeDoorsCopy }> {
+  const file = path.join(ROOT, "src/components/home/HomeTrust.tsx");
+  const out = ts.transpileModule(fs.readFileSync(file, "utf8"), {
+    fileName: file,
+    compilerOptions: { jsx: ts.JsxEmit.ReactJSX, module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true },
+  }).outputText;
+  const STUBS: Record<string, unknown> = {
+    react: React,
+    "react/jsx-runtime": jsxRuntime,
+    "next/link": { __esModule: true, default: ({ href, children, ...rest }: { href: string; children?: React.ReactNode }) => React.createElement("a", { href, ...rest }, children) },
+  };
+  const mod = { exports: {} as Record<string, unknown> };
+  const req = (spec: string): unknown => {
+    if (spec in STUBS) return STUBS[spec];
+    if (spec === "@/lib/home-doors-copy") return {};
+    throw new Error(`HomeTrust imports an unexpected module: ${spec}`);
+  };
+  new Function("require", "module", "exports", "process", out)(req, mod, mod.exports, process);
+  return mod.exports.HomeTrust as React.FC<{ copy: HomeDoorsCopy }>;
+}
+
+describe("home data promises — only what the privacy policy promises", () => {
+  const policy = read("src/app/privacy/page.tsx").replace(/\s+/g, " ");
+  const TRUST_KEYS = Object.keys(EN).filter((k) => k.startsWith("trust."));
+
+  it("the policy still makes every promise the block repeats", () => {
+    expect(policy).toContain("Sell or rent your personal data to anyone");
+    expect(policy).toContain("with advertisers");
+    expect(policy).toContain("Publish your scores with your name");
+    expect(policy).toContain("permanently delete your account and data; deletion completes within 30 days");
+    expect(policy).toContain("corp@surgesoftware.co.in");
+    expect(read("src/components/home/HomeTrust.tsx")).toContain('"corp@surgesoftware.co.in"');
+  });
+
+  it("no ad network is loaded anywhere in src (the block says: no ads)", () => {
+    const AD = /adsbygoogle|googlesyndication|doubleclick\.net|googletagservices|amazon-adsystem/i;
+    const walk = (dir: string): string[] =>
+      fs.readdirSync(path.join(ROOT, dir), { withFileTypes: true }).flatMap((d) =>
+        d.isDirectory() ? walk(`${dir}/${d.name}`) : /\.(tsx?|jsx?|mjs)$/.test(d.name) ? [`${dir}/${d.name}`] : [],
+      );
+    const hits = walk("src").filter((f) => AD.test(read(f)));
+    expect(hits).toEqual([]);
+  });
+
+  it("no locale claims where data is kept or processed", () => {
+    const WHERE = /(stor|host|kept|keep|stay|leave|process|server|data cent)[^.]*\b(India|Bengaluru|Bangalore)\b|\b(India|Bengaluru|Bangalore)\b[^.]*(stor|host|kept|server|data cent)/i;
+    const WHERE_HI = /(भारत|बेंगलुरु|बंगलौर)[^।]*(सर्वर|स्टोर|रखा|रहता)|(सर्वर|स्टोर)[^।]*(भारत|बेंगलुरु)/;
+    const WHERE_TE = /(భారత|బెంగళూరు)[^.]*(సర్వర్|నిల్వ|స్టోర్)|(సర్వర్|నిల్వ|స్టోర్)[^.]*(భారత|బెంగళూరు)/;
+    expect(TRUST_KEYS.length).toBe(8);
+    for (const k of TRUST_KEYS) {
+      expect(WHERE.test(EN[k]), `en ${k}: ${EN[k]}`).toBe(false);
+      expect(WHERE_HI.test(HI[k]), `hi ${k}: ${HI[k]}`).toBe(false);
+      expect(WHERE_TE.test(TE[k]), `te ${k}: ${TE[k]}`).toBe(false);
+    }
+  });
+
+  it("every locale keeps the 30-day deletion window and the maker's name", () => {
+    for (const L of [EN, HI, TE]) {
+      expect(L["trust.delete"]).toContain("30");
+      expect(L["trust.maker"]).toContain("Surge Software Solutions Pvt Ltd");
+    }
+  });
+
+  it("the page renders the block once, after How Shishya works", () => {
+    const page = read("src/app/page.tsx");
+    expect(page.match(/<HomeTrust copy=\{copy\} \/>/g)?.length).toBe(1);
+    expect(page.indexOf("<HomeTrust")).toBeGreaterThan(page.indexOf("<HomeHowItWorks"));
+  });
+
+  it("renders every promise, the deletion address and the policy link, in each locale", () => {
+    for (const [loc, L] of [["en", EN], ["hi", HI], ["te", TE]] as const) {
+      const html = renderToStaticMarkup(React.createElement(loadHomeTrust(), { copy: HOME_DOORS_COPY[loc] }));
+      for (const k of TRUST_KEYS) expect(html, `${loc} ${k}`).toContain(L[k].replace(/&/g, "&amp;"));
+      expect(html).toContain('href="mailto:corp@surgesoftware.co.in"');
+      expect(html).toContain('href="/privacy"');
+      expect(html).not.toMatch(/sign[ -]?(in|up)/i);
+    }
+  });
+});

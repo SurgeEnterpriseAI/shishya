@@ -56,6 +56,12 @@ export interface HomeDoorsCopy {
     s4b: string;
     ask: string;
   };
+  /** "What we promise about your data" (17 Oct 2026, founder): only the promises
+   *  the privacy policy already makes (src/app/privacy/page.tsx). The founder asked
+   *  for "no data leaves Bengaluru"; that is not true today (database and site
+   *  servers in Singapore, most AI calls on Claude), so no line says where data is
+   *  kept — tests/unit/home-doors.test.ts pins both. */
+  trust: { h2: string; lead: string; sell: string; ads: string; names: string; delete: string; maker: string; policy: string };
   signin: { cta: string; line: string; back: string };
   foot: { mentor: string };
 }
@@ -160,6 +166,16 @@ export const HOME_DOORS_COPY: Readonly<Record<HomeCopyLocale, HomeDoorsCopy>> = 
       s4b: "Exam pages carry mocks and past-year sets, each answer checked. Sign up with Google to save scores, see weak topics and get a day-by-day plan. School practice: on the chapters marked as having it.",
       ask: "Stuck at any step? Ask Shishya's tutor — {n} Indian languages, no sign-in →",
     },
+    trust: {
+      h2: "What we promise about your data",
+      lead: "For students, parents and teachers.",
+      sell: "We never sell or rent your personal data.",
+      ads: "No ads on Shishya, and your preparation data is never shared with advertisers.",
+      names: "Your scores are never published with your name. Public activity on Shishya is anonymous.",
+      delete: "Email us from your registered address to delete your account and data at any time. It is done within 30 days.",
+      maker: "Shishya is made in Bengaluru by Surge Software Solutions Pvt Ltd.",
+      policy: "Read the full privacy policy →",
+    },
     signin: {
       cta: "Sign in free",
       line: "Signed in, Shishya remembers you: this page opens where you left off, with your exams, weak topics, saved results and a personal plan. Free — we get only your name, email and profile picture from Google.",
@@ -246,6 +262,16 @@ export const HOME_DOORS_COPY: Readonly<Record<HomeCopyLocale, HomeDoorsCopy>> = 
       s4b: "परीक्षा पेज पर मॉक और पिछले सालों के सेट, हर जवाब जाँचा हुआ। Google से साइन अप करने पर स्कोर सेव, कमज़ोर टॉपिक और रोज़-ब-रोज़ प्लान। स्कूल का अभ्यास: जिन अध्यायों पर चिह्न है, उन पर।",
       ask: "कहीं भी अटकें? Shishya के ट्यूटर से पूछिए — {n} भारतीय भाषाओं में, बिना साइन-इन →",
     },
+    trust: {
+      h2: "आपके डेटा के बारे में हमारे वादे",
+      lead: "छात्रों, माता-पिता और शिक्षकों के लिए।",
+      sell: "हम आपका निजी डेटा कभी नहीं बेचते, न किराये पर देते हैं।",
+      ads: "Shishya पर कोई विज्ञापन नहीं है, और आपकी तैयारी का डेटा किसी विज्ञापनदाता को नहीं दिया जाता।",
+      names: "आपके अंक कभी आपके नाम के साथ सार्वजनिक नहीं किए जाते। Shishya पर सार्वजनिक गतिविधि गुमनाम रहती है।",
+      delete: "अपने पंजीकृत ईमेल से हमें लिखकर कभी भी अपना खाता और डेटा मिटवा सकते हैं। यह 30 दिनों के भीतर हो जाता है।",
+      maker: "Shishya को बेंगलुरु में Surge Software Solutions Pvt Ltd बनाती है।",
+      policy: "पूरी प्राइवेसी पॉलिसी पढ़िए →",
+    },
     signin: {
       cta: "मुफ़्त साइन-इन",
       line: "साइन इन करने पर Shishya आपको याद रखता है: यह पेज वहीं से खुलता है जहाँ आपने छोड़ा — आपकी परीक्षाएँ, कमज़ोर टॉपिक, सेव परिणाम और आपका प्लान। मुफ़्त — Google से हमें केवल आपका नाम, ईमेल और प्रोफ़ाइल फ़ोटो मिलती है।",
@@ -331,6 +357,16 @@ export const HOME_DOORS_COPY: Readonly<Record<HomeCopyLocale, HomeDoorsCopy>> = 
       s4t: "సాధన చేయండి, స్కోరు ఉంచుకోండి",
       s4b: "పరీక్ష పేజీల్లో మాక్‌లు, గత సంవత్సరాల సెట్లు, ప్రతి జవాబు సరిచూసినదే. Google తో సైన్ అప్ చేస్తే స్కోర్లు సేవ్, బలహీన టాపిక్‌లు, రోజువారీ ప్లాన్. స్కూల్ సాధన: గుర్తు ఉన్న అధ్యాయాల్లో.",
       ask: "ఎక్కడైనా ఆగిపోయారా? Shishya ట్యూటర్‌ను అడగండి — {n} భారతీయ భాషల్లో, సైన్-ఇన్ అక్కర్లేదు →",
+    },
+    trust: {
+      h2: "మీ డేటా గురించి మా హామీలు",
+      lead: "విద్యార్థులు, తల్లిదండ్రులు, ఉపాధ్యాయుల కోసం.",
+      sell: "మీ వ్యక్తిగత డేటాను మేము ఎప్పుడూ అమ్మము, అద్దెకు ఇవ్వము.",
+      ads: "Shishya లో ప్రకటనలు లేవు, మీ ప్రిపరేషన్ డేటాను ఏ ప్రకటనదారుకూ ఇవ్వము.",
+      names: "మీ స్కోర్లను మీ పేరుతో ఎప్పుడూ బహిరంగంగా ప్రచురించము. Shishya లో బహిరంగ కార్యకలాపాలు అనామకంగానే ఉంటాయి.",
+      delete: "మీ నమోదైన ఈమెయిల్ నుంచి మాకు రాసి, ఎప్పుడైనా మీ ఖాతాను, డేటాను తొలగించుకోవచ్చు. ఇది 30 రోజుల్లో పూర్తవుతుంది.",
+      maker: "Shishya ను బెంగళూరులో Surge Software Solutions Pvt Ltd రూపొందిస్తుంది.",
+      policy: "పూర్తి ప్రైవసీ పాలసీ చదవండి →",
     },
     signin: {
       cta: "ఉచిత సైన్-ఇన్",

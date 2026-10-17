@@ -84,6 +84,7 @@ import { HomeDoors } from "@/components/home/HomeDoors";
 import { HomeFinder } from "@/components/home/HomeFinder";
 import { HomeRails } from "@/components/home/HomeRails";
 import { HomeHowItWorks } from "@/components/home/HomeHowItWorks";
+import { HomeTrust } from "@/components/home/HomeTrust";
 import { HomeSignIn } from "@/components/home/HomeSignIn";
 import { SignupPitch } from "@/components/SignupPitch";
 import { HomeBeacons } from "@/components/home/HomeBeacons";
@@ -617,6 +618,9 @@ export default async function HomePage({
         />
 
         <HomeHowItWorks copy={copy} languageCount={INDIAN_LANGUAGE_COUNT} />
+
+        {/* 17 Oct 2026 (founder): the privacy promises, in the reader's language. */}
+        <HomeTrust copy={copy} />
 
         <HomeSignIn copy={copy} signedIn={signedIn} />
       </div>
